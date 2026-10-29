@@ -2,9 +2,13 @@
 
 Turbasert zombie-overlevelse på et stilisert, ekte kart over Stavanger. Spillteksten er på norsk (bokmål) med tørr, lokal humor.
 
+**Spillreglene står i [docs/spilldesign.md](docs/spilldesign.md).** Den er sannheten. Når koden og dokumentet er uenige, er det enten en feil i koden eller en endring som skal inn i dokumentet.
+
 ## Arkitektur
 
 - **Motoren er ren og deterministisk.** All spillogikk ligger i `src/engine/` og bruker aldri DOM. All tilfeldighet går gjennom `rand(s)` med seed i `state.rng`, aldri `Math.random()`. Samme tilstand og samme ordre skal alltid gi samme resultat. Dette er grunnlaget for asynkron multiplayer, der en server kjører `resolveDay()`.
+- **Innhold ligger i `src/engine/content/`.** Utstyrskort, encounters, tokt, quests og mutasjoner er data der. Reglene som bruker dem ligger i motormodulene (`cards.ts`, `encounters.ts`, `tokt.ts`, `phases.ts`). Nytt innhold skal ikke kreve nye regler.
+- **Valg om dagen lagres som ventende.** Encounters, tokt-beslutninger og valg av ny leder løses aldri inne i `resolveDay()`. Dagen legger dem i `state.pending`, `state.tokts` (med `awaiting`) eller `state.needLeader`, og spilleren velger før neste dag (`canEndDay`). `resolveDay()` er ett steg med ordre inn og resultat ut.
 - **UI-koden endrer ikke spillregler.** `src/ui/` leser tilstanden og setter ordre (`crew.task`). Selve regnestykket skjer i motoren.
 - **Kartet bygges på forhånd.** OpenStreetMap-data hentes med `tools/fetch_osm.sh` og bygges til `src/data/map.json` med `tools/build_map.py`. Nettleseren skal aldri spørre Overpass direkte: alle spillere må få samme kart, og tjenesten tåler ikke trafikken.
 - **Ingen sanntid.** Zombier er tall per sektor, ikke figurer som beveger seg. Ikke innfør Phaser, game loops eller object pooling.
@@ -33,4 +37,4 @@ Vanskelighetsgrad og zombieevner hentes fra fasetabellen i `src/engine/phases.ts
 
 ## Balanse
 
-Etter regelendringer: kjør `npm run sim -- 300` (en enkel bot mot motoren). `tests/balance.test.ts` feiler hvis balansen glipper. Mål for fase 1 er at nesten alle runder kan vinnes, på rundt 20–30 dager for en god spiller.
+Etter regelendringer: kjør `npm run sim -- 300` og `npm run sim -- 300 --combos` (boten i `tools/bot.ts` mot motoren, med standardcrewet og fire andre nabokombinasjoner). `tests/balance.test.ts` feiler hvis balansen glipper. Målene for fase 1 (kapittel 11 i spilldesignet): boten vinner minst 85 % med hver kombinasjon, median 20–40 dager til seier (20–30 for en god spiller), median sultedager per runde 2 eller mindre, og sult er ikke den vanligste grunnen til tap. Juster tall i `data.ts`, `phases.ts` og regelkonstantene øverst i motormodulene før du endrer regler.
