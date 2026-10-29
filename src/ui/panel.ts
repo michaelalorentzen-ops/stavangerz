@@ -135,7 +135,7 @@ export function renderSel() {
     const mine = (c: CrewMember) => !!gtask && sameTask(c.task, gtask);
     box.innerHTML = `<div class="card"><span class="badge ${st.level ? 'clr' : 'inf'}">Sperring · nivå ${st.level}/3</span><h2>${gd.name}</h2><p>${gd.desc}</p>
       <div><div class="hint">${st.level >= 3 ? 'Fullt utbygd.' : `Fram til nivå ${st.level + 1}: ${pct}%`}</div><div class="prog"><i style="width:${pct}%"></i></div></div>
-      <p class="hint">${ready ? 'Mekk teller mest. Hver arbeidsdag bruker tre og skrap.' : `Klarer ${SECTORS[gd.sector].short} før dere kan bygge her.`}</p>
+      <p class="hint">${ready ? 'Mekk teller mest. Hver arbeidsdag bruker tre og skrap.' : `Rydd ${SECTORS[gd.sector].short} før dere kan bygge her.`}</p>
       ${gacts.length > 1 ? `<div class="seg" role="group">${gacts.map((a) => `<button data-act="${a}" aria-pressed="${a === ui.selAction}">${ACT_LABEL[a]}</button>`).join('')}</div>` : ''}
       ${gtask ? `<p class="eyebrow" style="margin:0">Send til ${ACT_LABEL[gtask.type]!.toLowerCase()}</p>${crewChips(mine)}` : ''}</div>`;
     box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));

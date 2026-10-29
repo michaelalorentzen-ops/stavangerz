@@ -5,6 +5,7 @@ import { NEIGHBORS, PLAYABLE } from './data';
 import { addNeighbor, canRecruit } from './crew';
 import { addGateWork, checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
+import { newCard } from './cards';
 import { acceptQuest } from './tokt';
 import { clamp, pick, rand } from './rng';
 import { bestOf, checkOddsFor } from './skills';
@@ -47,7 +48,7 @@ export const EVENTS: EventDef[] = [
     text: () => 'En mann i dunvest banker på. Han vil lade Teslaen sin på aggregatet deres. «Jeg skal bare til Forus», sier han. Det er zombier i baksetet hans.',
     choices: [
       { label: 'Si nei', run: () => 'Han rygger ut og kjører inn i Obs Bygg. Dere hører alarmen i en time.' },
-      { label: 'Overtal ham til å gi fra seg bilen', check: 'prat', run: (s, ok) => { if (ok) { s.res.drivstoff += 4; s.res.skrap += 3; return 'Han gir dere bilen mot at dere sier han kjører «en ekte fremtidsbil». Dere tapper alt brukbart.'; } s.moral -= 3; return 'Han blir fornærmet og kjører. Zombiene i baksetet vinker.'; } },
+      { label: 'Overtal ham til å gi fra seg bilen', check: 'prat', run: (s, ok) => { if (ok) { s.res.drivstoff += 4; s.res.skrap += 3; s.res.mat += 2; return 'Han gir dere bilen mot at dere sier han kjører «en ekte fremtidsbil». Dere tapper alt brukbart og tar med niste fra hanskerommet.'; } s.moral -= 3; return 'Han blir fornærmet og kjører. Zombiene i baksetet vinker.'; } },
     ],
   },
   {
@@ -72,7 +73,7 @@ export const EVENTS: EventDef[] = [
     when: (s) => recruitable(s).length > 0,
     text: (s) => { const n = recruitable(s)[0]; return `En Kolumbus-hurtigbåt driver forbi Tømmerodden uten fører. Én person står på dekk og vinker: ${n.name} (${n.age}), ${n.role.toLowerCase()}. «${n.quip}»`; },
     choices: [
-      { label: 'Hent personen i land', check: 'kondis', run: (s, ok) => { const n = recruitable(s)[0]; if (!canRecruit(s)) return `${n.name} står klar på kaia, men det er ikke plass til flere. Dere har ikke senger til ${s.crew.length + 1}. Båten fortsetter mot Tau.`; if (ok) { addNeighbor(s, n.id); return `${n.name} er med i crewet. Neste gang dere ser hurtigbåten, kjører den mot Tau.`; } s.flags[`gone_${n.id}`] = true; return `Dere når ikke fram. ${n.name} vinker tappert mens båten forsvinner mot Tau.`; } },
+      { label: 'Hent personen i land', check: 'kondis', run: (s, ok) => { const n = recruitable(s)[0]; if (!canRecruit(s)) { s.flags[`gone_${n.id}`] = true; return `${n.name} står klar på kaia, men det er ikke plass til flere. Dere har ikke senger til ${s.crew.length + 1}. Båten fortsetter mot Tau.`; } if (ok) { addNeighbor(s, n.id); return `${n.name} er med i crewet. Neste gang dere ser hurtigbåten, kjører den mot Tau.`; } s.flags[`gone_${n.id}`] = true; return `Dere når ikke fram. ${n.name} vinker tappert mens båten forsvinner mot Tau.`; } },
       { label: 'Vi har nok munner å mette', run: (s) => { const n = recruitable(s)[0]; s.flags[`gone_${n.id}`] = true; s.moral -= 4; return 'Båten forsvinner i regnet. Det føles feil.'; } },
     ],
   },
@@ -106,7 +107,7 @@ export const EVENTS: EventDef[] = [
     when: (s) => s.crew.some((c) => c.trait === 'hms'),
     text: () => 'Kjell har kalt inn til ekstraordinært årsmøte. Sak 1: Zombier. Sak 2: Hvem som har parkert på gjesteplassen.',
     choices: [
-      { label: 'Delta på møtet', run: (s) => { s.moral += 8; return 'Møtet varer i tre timer. Vedtak: zombier er ikke tillatt i fellesarealene. Alle føler seg tryggere.'; } },
+      { label: 'Delta på møtet', run: (s) => { s.moral += 8; s.res.mat += 2; return 'Møtet varer i tre timer. Vedtak: zombier er ikke tillatt i fellesarealene. Alle føler seg tryggere, og kaka etter sak 2 er det eneste som blir spist opp.'; } },
       { label: 'Send fullmakt og jobb videre', run: (s) => { s.res.skrap += 3; s.moral -= 3; return 'Kjell er skuffet, men dere finner skrap i sykkelboden mens alle andre sitter i møte.'; } },
     ],
   },
@@ -123,7 +124,7 @@ export const EVENTS: EventDef[] = [
     when: (s) => s.day >= 4,
     text: () => 'En gruppe i oransje kjeledresser kommer gående fra Tømmerodden. De har nettopp kommet fra en tre ukers turnus i Nordsjøen og vet ingenting om noe.',
     choices: [
-      { label: 'Forklar situasjonen', check: 'prat', run: (s, ok) => { if (ok) { s.res.skrap += 4; s.res.drivstoff += 3; s.moral += 4; return 'De tar det overraskende pent, gir dere utstyret sitt og drar for å finne familiene sine.'; } return '«Er dette en sikkerhetsøvelse?» De går videre for å finne en kaffemaskin.'; } },
+      { label: 'Forklar situasjonen', check: 'prat', run: (s, ok) => { if (ok) { s.res.skrap += 4; s.res.drivstoff += 3; s.res.mat += 3; s.moral += 4; return 'De tar det overraskende pent, gir dere utstyret og turnusmaten sin og drar for å finne familiene sine.'; } return '«Er dette en sikkerhetsøvelse?» De går videre for å finne en kaffemaskin.'; } },
       { label: 'Be dem om hjelp til gjerdet', run: (s) => { addGateWork(s, 'ros', 5); return 'De bygger på gjerdet i én dag, med full sikkerhetsbrief først.'; } },
     ],
   },
@@ -171,6 +172,32 @@ export const EVENTS: EventDef[] = [
     choices: [
       { label: 'Gjør det nødvendige', check: 'nerver', run: (s, ok) => { s.flags.svein = true; if (ok) { s.res.tre += 2; return 'Det er gjort. Dere låner hekksaksen hans. Han hadde ikke noe imot det.'; } s.moral -= 6; return 'Ingen klarer det. Til slutt gjør Svein det selv ved å gå inn i bassenget.'; } },
       { label: 'La Svein klippe hekken', run: (s) => { s.flags.svein = true; s.moral += 2; return 'Hekken har aldri vært penere. Respekt, Svein.'; } },
+    ],
+  },
+  {
+    id: 'fryseboks', title: 'Fryseboksen',
+    text: () => 'I kjellerboden hos naboen står en fryseboks som har holdt seg kald på nødstrøm. Øverst ligger elgkjøttdeig fra jakta i fjor, pent merket med dato og «IKKE TIL HUNDEN».',
+    choices: [
+      { label: 'Ta med hele boksen hjem', run: (s) => { s.res.mat += 8; s.moral += 3; return 'Elgkjøttdeig til alle. Det blir taco fredag, uansett hvilken dag det er.'; } },
+      { label: 'Ta halvparten og lås igjen', run: (s) => { s.res.mat += 4; s.sectors.hjem.control = Math.min(100, s.sectors.hjem.control + 5); return 'Dere tar det dere trenger. Resten blir stående, i tilfelle naboen kommer tilbake og vil ha oppvasken sin også.'; } },
+    ],
+  },
+  {
+    id: 'garasjesalg', title: 'Garasjesalget',
+    when: (s) => s.day >= 2,
+    text: () => 'Noen har satt opp et skilt på Buøy: «GARASJESALG – alt må vekk – kun kontant». Bordet står der fortsatt. Det gjør også en kasse med verktøy ingen har kommet for å hente.',
+    choices: [
+      { label: 'Ta kassa og legg igjen en lapp', run: (s) => { const k = newCard(s, 'jernia_kasse'); s.stash.push(k); return 'Dere legger igjen en lapp med «mange takk, vi skylder deg en kasse». Verktøykassa fra Jernia havner på lageret.'; } },
+      { label: 'Gå gjennom resten av bordet', check: 'snoking', run: (s, ok) => { if (ok) { s.res.skrap += 3; s.res.tre += 2; return 'Under duken ligger planker og en kasse med skruer. Prisen var uansett «kom med bud».'; } return 'Bare barneklær og en stekepanne uten skaft. Kontant, selvfølgelig.'; } },
+    ],
+  },
+  {
+    id: 'ryktet', title: 'Rykter ved bussholdeplassen',
+    when: (s) => s.day >= 3 && s.sectors.obs.control < 100,
+    text: () => 'Noen har skrevet med tusj på ruta ved bussholdeplassen: «Obs Bygg: tomt for folk, fullt av hermetikk». Skrifta ligner mistenkelig på Sveins.',
+    choices: [
+      { label: 'Gå dit og sjekk', check: 'snoking', run: (s, ok) => { if (ok) { s.sectors.obs.seen = true; s.sectors.obs.searched = Math.min(100, s.sectors.obs.searched + 10); s.res.mat += 3; return 'Tre bokser pasta og en uåpnet pose Grandiosa. Dere finner også ut hvor lagerinngangen er.'; } s.sectors.obs.control = Math.max(0, s.sectors.obs.control - 5); return 'Rykter er rykter. Og noen har vært der før dere.'; } },
+      { label: 'Visk ut teksten', run: (s) => { s.moral += 2; return 'Ingen trenger å lese det samme som nabolaget. Moralen hever seg litt.'; } },
     ],
   },
   {

@@ -282,3 +282,7 @@ button { cursor: pointer; }
 .toktmark.out .flag { fill: var(--red); }
 .toktmark text { font: 700 20px/1 var(--f-cond); letter-spacing: .12em; fill: var(--ink); text-transform: uppercase; }
 .token.t-tokt circle { stroke: var(--amber); }
+
+/* tutorial */
+.card.tut { border-color: var(--amber); }
+.card.tut .row { display: flex; gap: 8px; justify-content: flex-start; }

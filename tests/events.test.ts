@@ -10,7 +10,8 @@ const fresh = (seed: number) => {
   return s;
 };
 const valid = (s: GameState) => {
-  for (const r of RES) expect(s.res[r]).toBeGreaterThanOrEqual(0);
+  for (const r of RES) { expect(Number.isNaN(s.res[r])).toBe(false); expect(s.res[r]).toBeGreaterThanOrEqual(0); }
+  expect(Number.isNaN(s.moral)).toBe(false);
   expect(s.moral).toBeGreaterThanOrEqual(0);
   expect(s.moral).toBeLessThanOrEqual(100);
   for (const c of s.crew) expect(c.hp).toBeGreaterThanOrEqual(1);
@@ -50,7 +51,37 @@ describe('rekruttering uten plass', () => {
       const r = runChoice(s, ev.choices[0]);
       expect(r.text).toMatch(/plass/);
       expect(s.crew.length).toBe(n);
+      expect(Object.keys(s.flags).filter((k) => k.startsWith('gone_')).length).toBe(1); // kortet gjentas ikke med samme utfall
       valid(s);
     }
+  });
+});
+
+describe('mat fra hendelser', () => {
+  it('minst fire kort kan gi mat, og fryseboksen gir mat uten sjekk', () => {
+    const gives = (ev: (typeof EVENTS)[number]) => {
+      for (let seed = 1; seed <= 20; seed++) for (const ch of ev.choices) {
+        const s = fresh(seed);
+        if ((ev.when && !ev.when(s)) || (ch.when && !ch.when(s))) continue;
+        const before = s.res.mat;
+        runChoice(s, ch);
+        if (s.res.mat > before) return true;
+      }
+      return false;
+    };
+    expect(EVENTS.filter(gives).length).toBeGreaterThanOrEqual(4);
+    const f = EVENTS.find((e) => e.id === 'fryseboks')!;
+    const s = fresh(1);
+    const before = s.res.mat;
+    runChoice(s, f.choices[0]);
+    expect(s.res.mat).toBeGreaterThan(before);
+  });
+
+  it('Garasjesalget gir et kort på lageret', () => {
+    const ev = EVENTS.find((e) => e.id === 'garasjesalg')!;
+    const s = fresh(1);
+    const n = s.stash.length;
+    runChoice(s, ev.choices[0]);
+    expect(s.stash.length).toBe(n + 1);
   });
 });

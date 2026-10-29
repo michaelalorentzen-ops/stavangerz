@@ -201,7 +201,7 @@ export function resolveDay(s: GameState): LogLine[] {
     const up = addGateWork(s, id, work);
     wearTools(s, tm, log);
     xp(tm, 'mekk', 1.5);
-    log(`${names(tm)} befestet ${GATES[id].name} (${used} byggemateriale).${up ? ` Nå nivå ${s.gates[id].level}.` : ''}${used < need ? ' Mangler materialer.' : ''}`, up ? 'good' : '');
+    log(`${names(tm)} befestet ${GATES[id].name} (${used} tre og skrap).${up ? ` Nå nivå ${s.gates[id].level}.` : ''}${used < need ? ' Mangler tre eller skrap.' : ''}`, up ? 'good' : '');
   }
 
   // 3b) Lage utstyr

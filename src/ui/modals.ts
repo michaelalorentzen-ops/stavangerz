@@ -24,7 +24,7 @@ export function titleScreen() {
   modal(`<div class="title" style="display:grid;gap:18px">
     <div class="kick">Et turbasert overlevelsesspill fra byøyene</div>
     <h1>STAVANGER <b>Z</b></h1>
-    <p>Utbruddet starter en tirsdag morgen. Du bor på Buøy. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, klarer øya sektor for sektor og bygg sperringer før natta tar dere.</p>
+    <p>Utbruddet starter en tirsdag morgen. Du bor på Buøy. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, rydd øya sektor for sektor og bygg sperringer før natta tar dere.</p>
     <div class="coords">58°59′N 5°43′Ø · Buøy, Hundvåg bydel</div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
@@ -195,7 +195,7 @@ export function endDay() {
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : endDayBlocker(S) === 'pending' ? 'Encounter venter' : endDayBlocker(S) === 'tokt' ? 'Toktet venter på deg' : endDayBlocker(S) === 'leader' ? 'Hvem tar over?' : `Start dag ${S.day}`}</button></div>`);
+    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : endDayBlocker(S) === 'pending' ? 'Encounter venter' : endDayBlocker(S) === 'tokt' ? 'Toktet venter på deg' : endDayBlocker(S) === 'leader' ? 'Hvem tar over?' : isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`}</button></div>`);
   const after = () => settle(finish);
   on('ok', () => (ev ? showEvent(ev, after) : after()));
 }
