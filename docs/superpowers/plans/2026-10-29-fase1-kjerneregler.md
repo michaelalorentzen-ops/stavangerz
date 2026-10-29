@@ -587,3 +587,10 @@ Når grenen er gjennomgått, kan disse kjøres parallelt som egne agenter. De r�
 - **Naboer og kallenavn:** etter spillerens retning.
 - **Encounters og quests**
 - **Visuelt:** kortillustrasjoner og ikoner.
+
+---
+
+## Tillegg etter brukerønske 29.10
+
+- **Oppgave 3** fikk i tillegg favoritter, sortering, stabling av like kort og demontering til skrap (spesifikasjon kapittel 9).
+- **Oppgave 5** får i tillegg våpenegenskaper: nærkamp eller avstand, støy og tagger. Detaljene står i spesifikasjonen kapittel 9 og i oppgavebeskrivelsen.

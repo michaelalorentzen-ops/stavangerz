@@ -24,6 +24,7 @@ Kodearkitekturen (deterministisk motor, ferdigbygd kart, ingen sanntid) står i 
 - **Dead of Winter:** hendelser og kriser som tvinger fram vonde valg.
 - **Civilization:** byen vokser, du zoomer ut fra gate til region, og du har et forskningstre.
 - **Base building:** perimeter og HQ som oppgraderes.
+- **Fallout Shelter:** folk med våpen, rustning, nivå og trening, og et kortbibliotek du styrer utstyret fra.
 
 ### Søyler
 
@@ -384,6 +385,16 @@ Begge følger en basisverdi for sitt nivå.
 | Holdbarhet | Antall bruk før det ryker. Makeshift ryker fort, ting fra før holder |
 | Tekst | «Funnet bak Obs Bygg. Fortsatt med prislapp.» |
 
+**Våpenegenskaper [Låst]:** Ingen DPS eller angrepshastighet. Våpen har noen få egenskaper som endrer *hva* du gjør:
+- **Nærkamp eller avstand:** avstand gir lavere skaderisiko.
+- **Støy:** stille, normal eller bråk. Bråk trekker zombier til sektoren. Stille gjør knipe mindre sannsynlig.
+- **Spesialtagger:**
+  - *gjennomslag* er godt mot seige og pansrede,
+  - *spredning* er godt mot store grupper,
+  - *rekkevidde* er godt på vakt.
+
+Taggene kobles mot mutasjoner og forskning, og encounter-kort kan sjekke dem.
+
 **Spor [Forslag]:** Hver person har tre spor: ett våpen, én beskyttelse og ett verktøy. Ammo hører til våpenet.
 
 **Nivåtak [Låst]:** Trusselnivå og kortnivå bruker samme skala, 1–5. Et kort som finnes i en sektor, har maks nivå lik sektorens trusselnivå. Det finnes ikke et eget tak per fase.
@@ -391,6 +402,14 @@ Begge følger en basisverdi for sitt nivå.
 **[Forslag]** På Buøy er trusselnivået 1–2.
 
 **Unike kort [Forslag]:** Unike kort plasseres av seeden på bestemte steder. Hagla på Obs Bygg finnes ikke i hver runde. Unike kort kan være ett nivå over sektorens trusselnivå. De er toppen av belønningen for å ta risiko.
+
+**Kortbiblioteket [Låst]:** Lageret er et bibliotek som er lett å sortere, for eksempel etter spor, nivå, sjeldenhet og holdbarhet. Du kan sette favoritt på kortene du liker best.
+
+**Like kort stables [Låst]:** Har du 15 avsagde hagler, ligger de på samme plass i biblioteket med «×15». Der ser du verdiene og holdbarheten til kopiene.
+
+**Demontering [Forslag]:** Kort kan demonteres til materialer, og demonteringsverdien vises på kortet. Makeshift gir nivå + 1 skrap, og ting fra før gir nivå × 2 + 1. Unike kort gir dobbelt. Favoritter kan ikke demonteres ved et uhell.
+
+**Verktøy [Låst]:** Verktøy er et tillegg som gir en ekstra buff til det personen faktisk driver med.
 
 **Fordeling:** Du gir kort til folk i crewet (fase 1–2) eller til ledere (fase 3–4). En våpensmed kan ta over fordelingen i senere faser.
 
