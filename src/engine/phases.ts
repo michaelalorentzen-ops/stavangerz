@@ -1,7 +1,10 @@
 // Fasetabellen. All vanskelighetsgrad og alle zombieevner hentes herfra,
 // aldri fra tall spredt rundt i motoren. Les modifikatorer med mods(s).
-import type { GameState, PhaseId, ZombieTraitId } from './types';
-import { pick, rand } from './rng';
+import type { Branch, GameState, PhaseId } from './types';
+import { BRANCHES, branchMutations, MUTATIONS } from './content/mutations';
+import { rand } from './rng';
+
+export { BRANCHES, BRANCH_LABEL, MUTATIONS } from './content/mutations';
 
 export interface PhaseModifiers {
   /** ganges med zombieantall i nye soner som åpnes i denne fasen */
@@ -34,7 +37,7 @@ export interface PhaseModifiers {
   creepChance: number;
   /** sjanse for et encounter når crewet er ute (brukes i Oppgave 5) */
   encounterChance: number;
-  /** maks antall dager i fasen (brukes i Oppgave 7) */
+  /** maks antall dager i fasen. Når den er nådd, er fasen over */
   turnCap: number;
   /** andelen mat som er igjen i sektorlagrene etter hver 10. dag */
   foodRot: number;
@@ -49,82 +52,87 @@ export interface PhaseDef {
   name: string;
   focus: string;
   mods: PhaseModifiers;
-  /** zombieevner som kan dukke opp når fasen starter */
-  traitPool: ZombieTraitId[];
-  /** hvor mange nye evner som trekkes ved faseskiftet */
-  newTraits: number;
+  /** hvor mange mutasjonspoeng [min, maks] som trekkes når fasen starter */
+  mutationPoints: [number, number];
 }
 
 export const PHASES: Record<PhaseId, PhaseDef> = {
   1: {
     id: 1, name: 'Utbruddet', focus: 'Klarer hjemsonen, let etter utstyr, sett opp perimeter.',
     mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 1, injuryMult: 1, nightBase: 0, nightGrowth: 0.004, nightLevelReduction: 0.15, breachDays: 6, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.18, turnCap: 50, foodRot: 0.85, cardFind: 0.25, noiseAttract: 0.3 },
-    traitPool: [], newTraits: 0,
+    mutationPoints: [0, 0],
   },
   2: {
     id: 2, name: 'Hovedkvarter', focus: 'Finn transport, ta et HQ, fordel roller.',
     mods: { zombieMult: 1.3, hiddenRatio: 0.28, killMult: 0.95, injuryMult: 1.1, nightBase: 0.03, nightGrowth: 0.005, nightLevelReduction: 0.15, breachDays: 5, hiddenOutbreak: 0.11, eventChance: 0.6, factionPressure: 0, controlDecay: 6, searchedDecay: 2, creepChance: 0.15, encounterChance: 0.2, turnCap: 60, foodRot: 0.8, cardFind: 0.25, noiseAttract: 0.35 },
-    traitPool: ['lopere', 'kjellerkrypere'], newTraits: 1,
+    mutationPoints: [1, 2],
   },
   3: {
     id: 3, name: 'Ekspansjon', focus: 'Ta naboområder, få crew-ledere, rekrutter ved porten.',
     mods: { zombieMult: 1.6, hiddenRatio: 0.3, killMult: 0.9, injuryMult: 1.2, nightBase: 0.06, nightGrowth: 0.006, nightLevelReduction: 0.14, breachDays: 4.5, hiddenOutbreak: 0.12, eventChance: 0.55, factionPressure: 0, controlDecay: 7, searchedDecay: 3, creepChance: 0.18, encounterChance: 0.22, turnCap: 70, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4 },
-    traitPool: ['lopere', 'kjellerkrypere', 'flokk', 'seige'], newTraits: 1,
+    mutationPoints: [1, 3],
   },
   4: {
     id: 4, name: 'Bydel', focus: 'Hold hele bydeler, ikke voks fortere enn forsvaret tåler.',
     mods: { zombieMult: 1.9, hiddenRatio: 0.3, killMult: 0.85, injuryMult: 1.3, nightBase: 0.08, nightGrowth: 0.006, nightLevelReduction: 0.13, breachDays: 4, hiddenOutbreak: 0.13, eventChance: 0.5, factionPressure: 0.1, controlDecay: 8, searchedDecay: 3, creepChance: 0.2, encounterChance: 0.24, turnCap: 80, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4 },
-    traitPool: ['lopere', 'kjellerkrypere', 'flokk', 'seige', 'smarte'], newTraits: 1,
+    mutationPoints: [2, 3],
   },
   5: {
     id: 5, name: 'Fraksjoner', focus: 'Andre overlevende vil ha det du har. Handel eller krig.',
     mods: { zombieMult: 1.4, hiddenRatio: 0.25, killMult: 0.85, injuryMult: 1.3, nightBase: 0.02, nightGrowth: 0.003, nightLevelReduction: 0.13, breachDays: 5, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0.4, controlDecay: 8, searchedDecay: 3, creepChance: 0.15, encounterChance: 0.2, turnCap: 90, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.3 },
-    traitPool: ['lopere', 'kjellerkrypere', 'flokk', 'seige', 'smarte'], newTraits: 1,
+    mutationPoints: [1, 2],
   },
 };
 
-export interface ZombieTraitDef {
-  name: string;
-  desc: string;
-  /** endringer som ganges inn i fasens modifikatorer */
-  mult: Partial<Record<keyof PhaseModifiers, number>>;
-}
-
-export const ZOMBIE_TRAITS: Record<ZombieTraitId, ZombieTraitDef> = {
-  lopere: { name: 'Løpere', desc: 'Noen av dem har begynt å jogge. Flere skader i kamp.', mult: { injuryMult: 1.25 } },
-  kjellerkrypere: { name: 'Kjellerkrypere', desc: 'De har lært seg å gjemme seg. Flere kjellere bryter ut.', mult: { hiddenRatio: 1.3, hiddenOutbreak: 1.4 } },
-  flokk: { name: 'Flokk', desc: 'De kommer i grupper. Gjennombrudd blir større.', mult: { breachDays: 0.75 } },
-  seige: { name: 'Seige', desc: 'De tåler mer juling enn før.', mult: { killMult: 0.85 } },
-  smarte: { name: 'Smarte', desc: 'De tester sperringene om natta, igjen og igjen.', mult: { nightBase: 1.5, nightLevelReduction: 0.85 } },
-};
-
-/** Fasens modifikatorer med de aktive zombieevnene ganget inn. */
-export function mods(s: Pick<GameState, 'phase' | 'zombieTraits'>): PhaseModifiers {
+/** Fasens modifikatorer med mutasjonene ganget inn. Kjente mutasjoner får halv effekt. */
+export function mods(s: Pick<GameState, 'phase' | 'mutations' | 'knownMutations'>): PhaseModifiers {
   const m = { ...PHASES[s.phase].mods };
-  for (const t of s.zombieTraits) {
-    for (const [k, f] of Object.entries(ZOMBIE_TRAITS[t].mult) as [keyof PhaseModifiers, number][]) m[k] *= f;
+  for (const id of s.mutations) {
+    const known = s.knownMutations.includes(id);
+    for (const [k, f] of Object.entries(MUTATIONS[id].mult) as [keyof PhaseModifiers, number][]) m[k] *= known ? 1 + (f - 1) * 0.5 : f;
   }
   return m;
 }
 
-/** Er mutasjonen aktiv? Leser foreløpig zombieevnene; mutasjonssystemet kommer i en senere oppgave. */
-export const hasMutation = (s: Pick<GameState, 'zombieTraits'>, id: string): boolean => (s.zombieTraits as string[]).includes(id);
+/** Har zombiene fått mutasjonen? */
+export const hasMutation = (s: Pick<GameState, 'mutations'>, id: string): boolean => s.mutations.includes(id);
+
+/** Neste mutasjon i grenen som ikke er tatt ennå, eller null når grenen er full. */
+function nextInBranch(s: GameState, b: Branch): string | null {
+  return branchMutations(b).find((m) => !s.mutations.includes(m.id))?.id ?? null;
+}
 
 /**
- * Går til neste fase og trekker nye zombieevner tilfeldig fra fasens pott.
- * Returnerer evnene som ble lagt til.
+ * Går til neste fase og trekker mutasjonspoeng. Hvert poeng velger en gren
+ * vektet med branchWeights, blant grener som har en neste mutasjon.
+ * Returnerer mutasjonene som ble lagt til.
  */
-export function advancePhase(s: GameState): ZombieTraitId[] {
+export function advancePhase(s: GameState): string[] {
   if (s.phase >= 5) return [];
   s.phase = (s.phase + 1) as PhaseId;
-  const def = PHASES[s.phase];
-  const added: ZombieTraitId[] = [];
-  const pool = def.traitPool.filter((t) => !s.zombieTraits.includes(t));
-  for (let i = 0; i < def.newTraits && pool.length; i++) {
-    const t = pick(s, pool);
-    pool.splice(pool.indexOf(t), 1);
-    // ikke alle faseskifter gir nye evner, det skal være litt uforutsigbart
-    if (rand(s) < 0.85) { s.zombieTraits.push(t); added.push(t); }
+  s.phaseStartDay = s.day;
+  s.goalDay = null;
+  const [min, max] = PHASES[s.phase].mutationPoints;
+  const points = min + Math.floor(rand(s) * (max - min + 1));
+  const added: string[] = [];
+  for (let i = 0; i < points; i++) {
+    const open = BRANCHES.filter((b) => nextInBranch(s, b));
+    if (!open.length) break;
+    let r = rand(s) * open.reduce((a, b) => a + s.branchWeights[b], 0);
+    const branch = open.find((b) => (r -= s.branchWeights[b]) < 0) ?? open[open.length - 1];
+    const id = nextInBranch(s, branch)!;
+    s.mutations.push(id);
+    added.push(id);
   }
   return added;
+}
+
+/** Kan spilleren avslutte fasen? Fra og med dagen målet først ble nådd. */
+export const canEndPhase = (s: Pick<GameState, 'goalDay'>): boolean => s.goalDay !== null;
+
+/** Avslutter fasen. Fase 1 er foreløpig siste: fase 2 finnes ikke ennå, så runden er vunnet. */
+export function endPhase(s: GameState): string[] {
+  if (!canEndPhase(s) || s.over) return [];
+  if (s.phase === 1) { s.over = 'won'; return []; }
+  return advancePhase(s);
 }

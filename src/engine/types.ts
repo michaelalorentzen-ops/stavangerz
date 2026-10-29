@@ -1,3 +1,5 @@
+import type { PhaseModifiers } from './phases';
+
 export type StatKey = 'muskler' | 'kondis' | 'snoking' | 'nerver' | 'mekk' | 'prat';
 export type Stats = Record<StatKey, number>;
 export type ResKey = 'mat' | 'vann' | 'medisin' | 'tre' | 'skrap' | 'metall' | 'strom' | 'drivstoff';
@@ -12,7 +14,22 @@ export type TraitId =
   | 'lokalkjent' | 'filmnerd' | 'dugnad' | 'hms' | 'nattevakt' | 'sveiser'
   | 'russ' | 'regneark' | 'hv' | 'buss' | 'los' | 'kokk';
 
-export type ZombieTraitId = 'lopere' | 'kjellerkrypere' | 'flokk' | 'seige' | 'smarte';
+export type Branch = 'bevegelse' | 'sanser' | 'kropp' | 'atferd';
+
+/** En mutasjon i zombienes utviklingstre. Rekkefølgen innen grenen er fast. */
+export interface MutationDef {
+  id: string;
+  branch: Branch;
+  /** plass i grenen, fra 1 */
+  order: number;
+  name: string;
+  /** pseudovitenskapelig stammekode */
+  code: string;
+  gene: string;
+  desc: string;
+  /** faktorer som ganges inn i fasens modifikatorer */
+  mult: Partial<Record<keyof PhaseModifiers, number>>;
+}
 
 export type SectorKind = 'hjem' | 'butikk' | 'industri' | 'bolig' | 'natur' | 'kai' | 'offentlig';
 
@@ -146,8 +163,16 @@ export interface GameState {
   rng: number;
   day: number;
   phase: PhaseId;
-  /** zombieevner som er trukket for denne runden, vokser med fasene */
-  zombieTraits: ZombieTraitId[];
+  /** mutasjoner zombiene har fått, vokser med fasene */
+  mutations: string[];
+  /** mutasjoner spilleren har avslørt, de får halv effekt */
+  knownMutations: string[];
+  /** hvor sannsynlig hver gren er for neste mutasjon, trukket ved start */
+  branchWeights: Record<Branch, number>;
+  /** dagen målet for fasen først ble nådd */
+  goalDay: number | null;
+  /** dagen fasen startet, turgrensen telles herfra */
+  phaseStartDay: number;
   moral: number;
   /** kort på lageret, ikke utstyrt */
   stash: CardInst[];
@@ -168,7 +193,7 @@ export interface GameState {
   tokts: ToktState[];
   quests: QuestState[];
   log: { day: number; lines: LogLine[] }[];
-  over: null | 'won' | 'won-seen' | 'dead';
+  over: null | 'won' | 'won-seen' | 'dead' | 'timeout';
   stats: { kills: number; found: number; lost: number };
 }
 

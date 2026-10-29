@@ -8,7 +8,7 @@ const won = games.filter((s) => s.over === 'won');
 const days = won.map((s) => s.day - 1).sort((a, b) => a - b);
 const pct = (k: number) => `${Math.round((k / n) * 100)} %`;
 console.log(`Runder: ${n}`);
-console.log(`Vunnet: ${won.length} (${pct(won.length)}) · Døde: ${games.filter((s) => s.over === 'dead').length} · Uavgjort: ${games.filter((s) => !s.over).length}`);
+console.log(`Vunnet: ${won.length} (${pct(won.length)}) · Døde: ${games.filter((s) => s.over === 'dead').length} · Timeout: ${games.filter((s) => s.over === 'timeout').length} (${pct(games.filter((s) => s.over === 'timeout').length)}) · Uavgjort: ${games.filter((s) => !s.over).length}`);
 if (days.length) console.log(`Dager til seier: median ${days[days.length >> 1]}, min ${days[0]}, maks ${days.at(-1)}`);
 console.log(`Crew mistet per runde: ${(games.reduce((a, s) => a + s.stats.lost, 0) / n).toFixed(2)}`);
 const stuck = games.filter((s) => !s.over).slice(0, 3).map((s) => ({ ...phaseProgress(s), gates: s.gates }));

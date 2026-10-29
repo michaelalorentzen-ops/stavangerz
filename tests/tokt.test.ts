@@ -44,8 +44,9 @@ describe('tokt', () => {
     const card = newCard(s, 'k_ror');
     s.tokts[0].haul = { mat: 3, skrap: 2 };
     s.tokts[0].cards = [card];
-    const before = { mat: s.res.mat, skrap: s.res.skrap }, stash = s.stash.length;
     answer(s);
+    // målt etter encounteret, som selv kan gi bytte
+    const before = { mat: s.res.mat, skrap: s.res.skrap }, stash = s.stash.length;
     const txt = toktDecision(s, 'bybrua', 'snu');
     expect(txt).toBeTruthy();
     expect(s.res.mat).toBe(before.mat + 3);

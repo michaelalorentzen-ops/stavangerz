@@ -5,7 +5,7 @@ import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, leteOverlevende } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
-import { mods } from './phases';
+import { BRANCHES, canEndPhase, endPhase, mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { isOnTokt, expireQuests, resolveTokts, toktAvailable, TOKTS } from './tokt';
@@ -22,7 +22,7 @@ export const GATE_IDS = Object.keys(GATES) as GateId[];
 // ---------- Oppsett ----------
 export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): GameState {
   const s: GameState = {
-    v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
+    v: 3, seed, rng: seed | 0, day: 1, phase: 1, mutations: [], knownMutations: [], branchWeights: { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 }, goalDay: null, phaseStartDay: 1, moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
     flags: {}, crew: [], seenEvents: [], pending: [], tokts: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
@@ -44,6 +44,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   }
   for (const id of GATE_IDS) s.gates[id] = { work: 0, level: 0 };
   placeUniques(s);
+  for (const b of BRANCHES) s.branchWeights[b] = 0.5 + rand(s);
   return s;
 }
 
@@ -57,7 +58,14 @@ export function migrate(raw: unknown): GameState | null {
   (raw as GameState).pending ??= [];
   (raw as GameState).tokts ??= [];
   (raw as GameState).quests ??= [];
-  return raw as GameState;
+  const g = raw as GameState & { zombieTraits?: unknown };
+  delete g.zombieTraits;
+  g.mutations ??= [];
+  g.knownMutations ??= [];
+  g.branchWeights ??= { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 };
+  g.goalDay ??= null;
+  g.phaseStartDay ??= 1;
+  return g;
 }
 
 // ---------- Avledede verdier ----------
@@ -125,6 +133,8 @@ const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
 const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 export function resolveDay(s: GameState): LogLine[] {
+  // bare «Fortsett på Buøy» kan spille videre etter at runden er avgjort
+  if (s.over && s.over !== 'won-seen') return [];
   const M = mods(s);
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
@@ -294,5 +304,11 @@ export function checkEnd(s: GameState) {
   s.tokts = s.tokts.filter((t) => t.crew.length);
   if (s.over) return;
   if (!s.crew.length) { s.over = 'dead'; s.needLeader = false; }
-  else if (phaseProgress(s).done) s.over = 'won';
+  else {
+    if (s.goalDay === null && phaseProgress(s).done) s.goalDay = s.day;
+    if (s.day - s.phaseStartDay >= mods(s).turnCap) {
+      if (canEndPhase(s)) endPhase(s);
+      else s.over = 'timeout';
+    }
+  }
 }

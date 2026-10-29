@@ -2,7 +2,7 @@ import './styles.css';
 import { newGame } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
-import { draft, endDay, endScreen, titleScreen } from './ui/modals';
+import { draft, endDay, endPhaseNow, endScreen, titleScreen } from './ui/modals';
 import { renderStash } from './ui/cards';
 import { renderCrew, renderGoals, renderPlan, renderSel, renderTop } from './ui/panel';
 import { $, MAP, save, ui } from './ui/store';
@@ -29,6 +29,7 @@ function setView(view: 'focus' | 'all') {
 $('v-focus').onclick = () => setView('focus');
 $('v-all').onclick = () => setView('all');
 $('end').onclick = endDay;
+$('goals').addEventListener('click', (e) => { if ((e.target as HTMLElement).id === 'endphase') endPhaseNow(); });
 addEventListener('resize', updateScale);
 
 // Artifact-visningen kan bytte ut siden mens noen spiller; hot lar oss ta med tilstanden over.
@@ -44,7 +45,7 @@ function start(data: { S?: GameState } = {}) {
   if (data.S) {
     ui.S = data.S;
     ui.refresh();
-    if (ui.S.over === 'won' || ui.S.over === 'dead') endScreen();
+    if (ui.S.over === 'won' || ui.S.over === 'dead' || ui.S.over === 'timeout') endScreen();
     return;
   }
   // forhåndsvisning bak tittelskjermen, lagres ikke

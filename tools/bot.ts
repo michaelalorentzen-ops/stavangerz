@@ -1,6 +1,6 @@
 // En enkel bot som spiller fase 1. Brukes av balansetesten og tools/sim.ts.
 // Den er bevisst dum: en tenkende spiller skal gjøre det bedre.
-import { canEndDay, CARDS, describeEncounter, drawEvent, equip, GATE_IDS, newGame, isOnTokt, PLAYABLE, resolveDay, resolveEncounter, runChoice, setLeader, SLOTS, taskOptions } from '../src/engine';
+import { canEndDay, canEndPhase, CARDS, describeEncounter, drawEvent, endPhase, equip, GATE_IDS, newGame, isOnTokt, PLAYABLE, resolveDay, resolveEncounter, runChoice, setLeader, SLOTS, taskOptions } from '../src/engine';
 import type { GameState, GateId, SelfSetup } from '../src/engine';
 
 export const BOT_SELF: SelfSetup = { name: 'Bot', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent' };
@@ -53,7 +53,9 @@ export function playGame(seed: number, neighbors = ['arild', 'mona', 'toregil'],
   while (!s.over && s.day < maxDays) {
     botTurn(s);
     resolveDay(s);
-    const ev = drawEvent(s);
+    // avslutter fasen samme dag målet er nådd
+    if (canEndPhase(s)) endPhase(s);
+    const ev = s.over ? null : drawEvent(s);
     if (ev) runChoice(s, ev.choices.filter((c) => !c.when || c.when(s))[0]);
     // som i spillet: encounters først (de kan drepe lederen), så ny leder
     botEncounters(s);
