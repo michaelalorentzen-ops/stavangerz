@@ -105,6 +105,10 @@ export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
 /** Kan dagen avsluttes? Ikke før en ny leder er valgt og alle ventende encounters er løst. */
 export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.length) && s.pending.length === 0;
 
+/** Hva hindrer at dagen avsluttes nå? Ventende encounters først, så valg av ny leder. Encounters kan drepe lederen, så rekkefølgen er alltid denne. */
+export const endDayBlocker = (s: GameState): 'pending' | 'leader' | null =>
+  s.over ? null : s.pending.length ? 'pending' : s.needLeader && s.crew.length ? 'leader' : null;
+
 /** Nullstiller ordre som ikke lenger er gyldige. */
 export function validateTasks(s: GameState) {
   const valid = taskOptions(s);

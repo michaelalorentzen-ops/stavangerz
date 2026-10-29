@@ -1,6 +1,6 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  canEndDay, dailyFood, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  dailyFood, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, sameTask,
 } from '../engine';
 import type { CrewMember, GateId, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
@@ -175,6 +175,6 @@ export function renderPlan() {
   }
   $('plan').textContent = Object.entries(groups).map(([k, v]) => `${v.join(', ')} ${k}`).join(' · ');
   $('end').textContent = S.pending.length ? `${S.pending.length} encounter${S.pending.length === 1 ? '' : 's'} venter` : `Avslutt dag ${S.day}`;
-  // ventende encounters åpnes fra knappen, så den er ikke sperret av dem
-  $<HTMLButtonElement>('end').disabled = !canEndDay(S) && !S.pending.length;
+  // knappen åpner encounters og ledervalg selv, så den er aldri sperret av dem
+  $<HTMLButtonElement>('end').disabled = false;
 }

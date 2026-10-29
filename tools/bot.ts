@@ -52,10 +52,11 @@ export function playGame(seed: number, neighbors = ['arild', 'mona', 'toregil'],
   while (!s.over && s.day < maxDays) {
     botTurn(s);
     resolveDay(s);
-    if (!canEndDay(s) && s.crew.length) setLeader(s, s.crew[0].id);
     const ev = drawEvent(s);
     if (ev) runChoice(s, ev.choices.filter((c) => !c.when || c.when(s))[0]);
+    // som i spillet: encounters først (de kan drepe lederen), så ny leder
     botEncounters(s);
+    if (!canEndDay(s) && s.crew.length) setLeader(s, s.crew[0].id);
   }
   return s;
 }

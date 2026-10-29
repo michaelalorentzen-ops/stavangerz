@@ -1,10 +1,11 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, canEndDay, checkOdds, describeEncounter, drawEvent, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, checkOdds, describeEncounter, drawEvent, endDayBlocker, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
 import { statPips } from './panel';
+import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
 
 function modal(html: string, wide = false) {
@@ -32,8 +33,7 @@ export function titleScreen() {
   on('new', createSelf);
   on('cont', () => {
     ui.S = saved; closeModal(); ui.refresh();
-    const resume = () => runPending(() => { closeModal(); ui.refresh(); if (saved?.over) endScreen(); });
-    if (saved?.needLeader && saved.crew.length) chooseLeader(resume); else resume();
+    settle(() => { closeModal(); ui.refresh(); if (saved?.over) endScreen(); });
   });
 }
 
@@ -110,13 +110,11 @@ function showEvent(ev: EventDef, done: () => void) {
   }));
 }
 
-const TAG_LABEL = { gjennomslag: 'gjennomslag', spredning: 'spredning', rekkevidde: 'rekkevidde' };
-
 /** Et ventende encounter: samme stil som hendelseskort, med odds og våpentagg. */
 function showEncounter(p: PendingEncounter, done: () => void) {
   const S = game(), v = describeEncounter(S, p);
   const odds = (c: (typeof v.choices)[number]) => c.check
-    ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag]}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
+    ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag].toLowerCase()}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
   modal(`<div class="radio">Samband · ${esc(v.crew.join(' og '))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
     <div class="transcript">${esc(v.text)}</div>
     <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span>${esc(c.label)}</span>${odds(c)}</button>`).join('')}</div>`);
@@ -131,11 +129,12 @@ function showEncounter(p: PendingEncounter, done: () => void) {
   }));
 }
 
-/** Viser ventende encounters ett og ett, til alle er løst eller runden er over. */
-function runPending(done: () => void) {
-  const S = game(), p = S.pending[0];
-  if (!p || S.over) { done(); return; }
-  showEncounter(p, () => runPending(done));
+/** Løser alt som hindrer at dagen avsluttes: encounters først, så ny leder. Gjentas fordi et encounter kan drepe lederen. */
+function settle(done: () => void) {
+  const S = game(), b = endDayBlocker(S);
+  if (b === 'pending') showEncounter(S.pending[0], () => settle(done));
+  else if (b === 'leader') chooseLeader(() => settle(done));
+  else done();
 }
 
 /** Lederen er død: spilleren velger blant de gjenlevende. */
@@ -154,21 +153,16 @@ function chooseLeader(done: () => void) {
 
 export function endDay() {
   const S = game(), day = S.day;
-  if (!canEndDay(S)) {
-    const finish = () => { closeModal(); ui.refresh(); if (S.over) endScreen(); };
-    const pending = () => runPending(finish);
-    if (S.needLeader && S.crew.length) chooseLeader(pending); else pending();
-    return;
-  }
+  const finish = () => { closeModal(); ui.refresh(); if (S.over) endScreen(); };
+  if (endDayBlocker(S)) { settle(finish); return; }
   const lines = resolveDay(S);
   const ev = S.over ? null : drawEvent(S);
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${S.needLeader && !S.over ? 'Hvem tar over?' : ev ? 'Samband: ny melding' : `Start dag ${S.day}`}</button></div>`);
-  const after = () => runPending(() => { closeModal(); ui.refresh(); if (S.over) endScreen(); });
-  const next = () => (ev ? showEvent(ev, after) : after());
-  on('ok', () => (S.needLeader && !S.over && S.crew.length ? chooseLeader(next) : next()));
+    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : endDayBlocker(S) === 'pending' ? 'Encounter venter' : endDayBlocker(S) === 'leader' ? 'Hvem tar over?' : `Start dag ${S.day}`}</button></div>`);
+  const after = () => settle(finish);
+  on('ok', () => (ev ? showEvent(ev, after) : after()));
 }
 
 export function endScreen() {

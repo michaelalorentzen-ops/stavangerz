@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canEndDay, CARDS, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
+  canEndDay, CARDS, endDayBlocker, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
 } from '../src/engine';
 import type { EncounterCtx, GameState, PendingEncounter, SectorId, WeaponTag } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -46,10 +46,9 @@ describe('encounters', () => {
     withChance(5, () => {
       for (let seed = 1; seed <= 20; seed++) {
         const s = fresh(seed);
-        s.crew.push({ ...structuredClone(s.crew[1]), id: 'ekstra', gear: {} });
-        spread(s, FOUR);
+        spread(s, FOUR.slice(0, 3)); // tre Rydde-grupper
         resolveDay(s);
-        expect(s.pending.length).toBeLessThanOrEqual(2);
+        expect(s.pending).toHaveLength(2);
       }
     });
   });
@@ -139,6 +138,48 @@ describe('encounters', () => {
       if (s.crew.reduce((n, c) => n + c.hp, 0) < hp || dur2 < dur) hurt++;
     }
     expect(hurt).toBeGreaterThan(0);
+  });
+});
+
+describe('encounter som dreper lederen', () => {
+  it('lar needLeader stå, sperrer dagen, og setLeader løser det', () => {
+    const s = fresh();
+    const me = s.crew.find((c) => c.me)!;
+    me.hp = 1;
+    pend(s, ENCOUNTERS[0].id, [me.id, 'arild']);
+    expect(endDayBlocker(s)).toBe('pending');
+    // tilbaketrekk skader en tilfeldig person; finn en seed der det rammer lederen
+    let killed = false;
+    for (let seed = 1; seed <= 200 && !killed; seed++) {
+      const t = fresh(seed);
+      const m = t.crew.find((c) => c.me)!;
+      m.hp = 1;
+      for (const c of t.crew) if (c !== m) c.hp = 3;
+      pend(t, ENCOUNTERS[0].id, [m.id]);
+      resolveEncounter(t, 'p1', ENCOUNTERS[0].choices.length - 1);
+      if (t.crew.includes(m)) continue;
+      killed = true;
+      expect(t.crew.length).toBeGreaterThan(0);
+      expect(t.needLeader).toBe(true);
+      expect(canEndDay(t)).toBe(false);
+      expect(endDayBlocker(t)).toBe('leader');
+      expect(setLeader(t, t.crew[0].id)).toBe(true);
+      expect(t.needLeader).toBe(false);
+      expect(canEndDay(t)).toBe(true);
+      expect(endDayBlocker(t)).toBeNull();
+    }
+    expect(killed).toBe(true);
+  });
+
+  it('endDayBlocker: ventende først, så leder, ingenting når over', () => {
+    const s = fresh();
+    expect(endDayBlocker(s)).toBeNull();
+    s.needLeader = true;
+    expect(endDayBlocker(s)).toBe('leader');
+    pend(s, ENCOUNTERS[0].id);
+    expect(endDayBlocker(s)).toBe('pending');
+    s.over = 'dead';
+    expect(endDayBlocker(s)).toBeNull();
   });
 });
 

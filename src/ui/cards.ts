@@ -10,7 +10,7 @@ const bonusText = (d: (typeof CARDS)[string]) =>
 
 const RANGE_LABEL = { naerkamp: 'Nærkamp', avstand: 'Avstand' };
 const NOISE_LABEL = { stille: 'Stille', normal: 'Normal støy', brak: 'Bråk' };
-const TAG_LABEL = { gjennomslag: 'Gjennomslag', spredning: 'Spredning', rekkevidde: 'Rekkevidde' };
+export const TAG_LABEL = { gjennomslag: 'Gjennomslag', spredning: 'Spredning', rekkevidde: 'Rekkevidde' };
 /** Små merker for våpen: nærkamp eller avstand, støy og taggene. */
 export const weaponBadges = (d: (typeof CARDS)[string]): string => d.slot !== 'vapen' ? '' :
   `<div class="gc-tags">${d.range ? `<span class="tagchip">${RANGE_LABEL[d.range]}</span>` : ''}<span class="tagchip n-${d.noise ?? 'normal'}">${NOISE_LABEL[d.noise ?? 'normal']}</span>${(d.tags ?? []).map((t) => `<span class="tagchip t">${TAG_LABEL[t]}</span>`).join('')}</div>`;
