@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advancePhase, canEndPhase, checkEnd, endPhase, isFinished, migrate, hasMutation, MUTATIONS, mods, newGame, PHASES, PLAYABLE, resolveDay } from '../src/engine';
+import { advancePhase, canEndPhase, checkEnd, endPhase, ENCOUNTERS, isFinished, migrate, hasMutation, MUTATIONS, mods, newGame, PHASES, PLAYABLE, resolveDay } from '../src/engine';
 import type { PhaseModifiers } from '../src/engine';
 import type { PhaseId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -173,6 +173,36 @@ describe('faseslutt og turgrense', () => {
     c.day = c.phaseStartDay + PHASES[1].mods.turnCap - 1;
     checkEnd(c);
     expect(c.over).toBeNull();
+  });
+
+  it('turgrensen med nådd mål gir seier selv om noe venter', () => {
+    const s = newGame(1, BOT_SELF, ['arild', 'mona', 'toregil']);
+    const [a, b, c] = s.crew.filter((x) => !x.me);
+    s.goalDay = 30;
+    s.pending.push({ pid: 'e1', def: ENCOUNTERS[0].id, sector: 'obs', crew: [a.id], threat: 2 });
+    b.task = { type: 'tokt', target: 'bybrua' };
+    s.tokts.push({ id: 'bybrua', crew: [b.id], stage: 1, haul: { skrap: 3 }, cards: [], awaiting: true });
+    s.needLeader = true;
+    delete s.crew.find((x) => x.me)!.me;
+    const skrap = s.res.skrap;
+    s.day = s.phaseStartDay + PHASES[1].mods.turnCap;
+    checkEnd(s);
+    expect(s.over).toBe('won');
+    expect(s.pending).toEqual([]);
+    expect(s.tokts).toEqual([]);
+    expect(s.res.skrap).toBe(skrap + 3);
+    expect(b.task).toEqual({ type: 'hvile' });
+    expect(s.needLeader).toBe(false);
+    expect(s.crew.filter((x) => x.me)).toHaveLength(1);
+    expect(c.hp).toBe(3);
+  });
+
+  it('turgrensen uten mål gir timeout også når noe venter', () => {
+    const s = newGame(1, BOT_SELF, ['arild']);
+    s.pending.push({ pid: 'e1', def: ENCOUNTERS[0].id, sector: 'obs', crew: [s.crew[1].id], threat: 2 });
+    s.day = s.phaseStartDay + PHASES[1].mods.turnCap;
+    checkEnd(s);
+    expect(s.over).toBe('timeout');
   });
 
   it('turgrense og mål utløses ikke i won-seen', () => {

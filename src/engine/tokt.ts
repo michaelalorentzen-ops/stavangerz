@@ -99,6 +99,11 @@ function unload(s: GameState, t: ToktState): string {
   return parts.length ? parts.join(', ') : 'ingenting';
 }
 
+/** Henter alle tokt hjem med det de har funnet, uten belønning. Brukes når fasen avsluttes mens noen er ute. */
+export function recallTokts(s: GameState): void {
+  for (const t of [...s.tokts]) { unload(s, t); sendHome(s, t); }
+}
+
 /** Gir belønningen for et fullført tokt. */
 function reward(s: GameState, def: ToktDef): string {
   const parts: string[] = [];

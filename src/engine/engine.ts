@@ -2,13 +2,13 @@
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
-import { addNeighbor, leteOverlevende } from './crew';
+import { addNeighbor, leteOverlevende, setLeader } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { advancePhase, BRANCHES, mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
-import { isOnTokt, expireQuests, resolveTokts, toktAvailable, TOKTS } from './tokt';
+import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
   CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
@@ -134,6 +134,19 @@ export function endPhase(s: GameState): string[] {
   if (!canEndPhase(s) || s.over) return [];
   if (s.phase === 1) { s.over = 'won'; return []; }
   return advancePhase(s);
+}
+
+/**
+ * Turgrensen er nådd etter at målet er nådd: fasen avsluttes selv om noe venter. Ventende encounters
+ * forsvinner, tokt kommer hjem med byttet, og mangler det en leder, tar den første i crewet over.
+ */
+export function forceEndPhase(s: GameState): string[] {
+  if (s.goalDay === null || s.over) return [];
+  s.pending = [];
+  recallTokts(s);
+  if (s.needLeader && s.crew.length) setLeader(s, s.crew[0].id);
+  s.needLeader = false;
+  return endPhase(s);
 }
 
 /** Nullstiller ordre som ikke lenger er gyldige. */
@@ -324,7 +337,7 @@ export function checkEnd(s: GameState) {
   else {
     if (s.goalDay === null && phaseProgress(s).done) s.goalDay = s.day;
     if (s.day - s.phaseStartDay >= mods(s).turnCap) {
-      if (canEndPhase(s)) endPhase(s);
+      if (s.goalDay !== null) forceEndPhase(s);
       else s.over = 'timeout';
     }
   }
