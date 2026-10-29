@@ -6,7 +6,7 @@ import { addNeighbor, canRecruit } from './crew';
 import { addGateWork, checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
 import { clamp, pick, rand } from './rng';
-import { stat } from './skills';
+import { bestOf, checkOddsFor } from './skills';
 import type { CrewMember, GameState, StatKey } from './types';
 
 export interface ChoiceDef {
@@ -24,12 +24,8 @@ export interface EventDef {
   choices: ChoiceDef[];
 }
 
-export function best(s: GameState, k: StatKey): CrewMember {
-  return s.crew.reduce((a, c) => (stat(c, k) > stat(a, k) ? c : a), s.crew[0]);
-}
-export function checkOdds(s: GameState, k: StatKey, base = 0.25): number {
-  return clamp(base + (stat(best(s, k), k) / 10) * 0.12, 0.05, 0.95);
-}
+export const best = (s: GameState, k: StatKey): CrewMember => bestOf(s.crew, k);
+export const checkOdds = (s: GameState, k: StatKey, base = 0.25): number => checkOddsFor(s.crew, k, base);
 const roll = (s: GameState, k: StatKey) => rand(s) < checkOdds(s, k);
 const recruitable = (s: GameState) => NEIGHBORS.filter((n) => !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
 

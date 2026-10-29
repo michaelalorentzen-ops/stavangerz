@@ -1,6 +1,6 @@
 // En enkel bot som spiller fase 1. Brukes av balansetesten og tools/sim.ts.
 // Den er bevisst dum: en tenkende spiller skal gjøre det bedre.
-import { canEndDay, CARDS, drawEvent, equip, GATE_IDS, newGame, PLAYABLE, resolveDay, runChoice, setLeader, SLOTS, taskOptions } from '../src/engine';
+import { canEndDay, CARDS, describeEncounter, drawEvent, equip, GATE_IDS, newGame, PLAYABLE, resolveDay, resolveEncounter, runChoice, setLeader, SLOTS, taskOptions } from '../src/engine';
 import type { GameState, GateId, SelfSetup } from '../src/engine';
 
 export const BOT_SELF: SelfSetup = { name: 'Bot', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent' };
@@ -37,6 +37,16 @@ export function botTurn(s: GameState) {
   });
 }
 
+/** Løser alle ventende encounters: første valg som ikke er tilbaketrekk, men tilbaketrekk om noen har 1 i liv. */
+export function botEncounters(s: GameState) {
+  while (s.pending.length && !s.over) {
+    const p = s.pending[0], v = describeEncounter(s, p);
+    const weak = s.crew.some((c) => p.crew.includes(c.id) && c.hp === 1);
+    const idx = weak ? v.choices.findIndex((c) => c.retreat) : v.choices.findIndex((c) => !c.retreat);
+    resolveEncounter(s, p.pid, idx);
+  }
+}
+
 export function playGame(seed: number, neighbors = ['arild', 'mona', 'toregil'], maxDays = 80): GameState {
   const s = newGame(seed, BOT_SELF, neighbors);
   while (!s.over && s.day < maxDays) {
@@ -45,6 +55,7 @@ export function playGame(seed: number, neighbors = ['arild', 'mona', 'toregil'],
     if (!canEndDay(s) && s.crew.length) setLeader(s, s.crew[0].id);
     const ev = drawEvent(s);
     if (ev) runChoice(s, ev.choices.filter((c) => !c.when || c.when(s))[0]);
+    botEncounters(s);
   }
   return s;
 }

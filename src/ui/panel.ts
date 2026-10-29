@@ -174,6 +174,7 @@ export function renderPlan() {
     (groups[k] ??= []).push(c.name);
   }
   $('plan').textContent = Object.entries(groups).map(([k, v]) => `${v.join(', ')} ${k}`).join(' · ');
-  $('end').textContent = `Avslutt dag ${S.day}`;
-  $<HTMLButtonElement>('end').disabled = !canEndDay(S);
+  $('end').textContent = S.pending.length ? `${S.pending.length} encounter${S.pending.length === 1 ? '' : 's'} venter` : `Avslutt dag ${S.day}`;
+  // ventende encounters åpnes fra knappen, så den er ikke sperret av dem
+  $<HTMLButtonElement>('end').disabled = !canEndDay(S) && !S.pending.length;
 }

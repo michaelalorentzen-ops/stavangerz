@@ -1,13 +1,14 @@
 // Sektorer: Rydde, Sanke, kontroll, forfall og bosetting. Ren logikk.
 import { PLAYABLE, RES, RES_LABEL, SECTORS } from './data';
-import { armorMult, collectDropped, newCard, rollCard, wear } from './cards';
+import { armorMult, collectDropped, hasTag, isRanged, newCard, rollCard, wear } from './cards';
 import { CARDS } from './content/cards';
 import { injure } from './crew';
 import type { LogFn } from './crew';
+import { hasMutation } from './phases';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { detectChance, fightPower, searchPower, stat } from './skills';
-import type { CrewMember, GameState, SectorId, SectorState } from './types';
+import type { CrewMember, GameState, SectorId, SectorState, WeaponTag } from './types';
 
 /** Indeks = trusselnivå 1–5. Indeks 0 er ubrukt. */
 export const THREAT_KILL = [0, 1, 0.9, 0.78, 0.66, 0.55];
@@ -16,6 +17,8 @@ export const THREAT_INJURY = [0, 1, 1.15, 1.35, 1.6, 1.9];
 /** Regelkonstanter for Vakt på sektor og Speide (ikke vanskelighetsknotter). */
 export const WATCH_CONTROL_BASE = 15, WATCH_CONTROL_PER_NERVER = 3;
 export const SPEIDE_INJURY = 0.03;
+/** Våpenegenskaper i Rydde: avstand senker skaderisiko, spredning og gjennomslag øker drap. */
+export const RANGED_INJURY = 0.75, SPREAD_KILL = 1.1, SPREAD_MIN_Z = 8, PIERCE_KILL = 1.15;
 /** Kontroll en sektor får av én dags vakt, etter beste Nerver i teamet. */
 export const watchControl = (team: CrewMember[]) =>
   WATCH_CONTROL_BASE + (Math.max(...team.map((c) => stat(c, 'nerver'))) / 10) * WATCH_CONTROL_PER_NERVER;
@@ -95,13 +98,18 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   if (sec.z > 0) {
     const power = sum(team.map((c) => fightPower(s, c)));
     const before = sec.z;
-    const kills = Math.min(sec.z, sround(s, power * (0.35 + rand(s) * 0.25) * M.killMult * THREAT_KILL[def.threat]));
+    const anyTag = (tag: WeaponTag) => team.some((c) => hasTag(c, tag));
+    let tagMult = 1;
+    if (before >= SPREAD_MIN_Z && anyTag('spredning')) tagMult *= SPREAD_KILL;
+    if (anyTag('gjennomslag') && (hasMutation(s, 'seige') || hasMutation(s, 'pansret'))) tagMult *= PIERCE_KILL;
+    const ranged = new Set(team.filter(isRanged));
+    const kills = Math.min(sec.z, sround(s, power * (0.35 + rand(s) * 0.25) * M.killMult * THREAT_KILL[def.threat] * tagMult));
     for (const c of team) wear(s, c, 'vapen', log);
     sec.z -= kills; s.stats.kills += kills;
     for (let i = 0; i < kills; i++) pick(s, team).kills++;
     log(`${names(team)} ryddet ${kills} ${plural(kills)} i ${def.short}.${sec.z > 0 ? ` ${sec.z} igjen.` : ' Sektoren er tom for synlige zombier.'}`);
     for (const c of team) {
-      const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c), 0.02, 0.45);
+      const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c) * (ranged.has(c) ? RANGED_INJURY : 1), 0.02, 0.45);
       if (rand(s) < risk) injure(s, c, `i ${def.short}`, log);
     }
     if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');

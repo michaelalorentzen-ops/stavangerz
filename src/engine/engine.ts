@@ -1,8 +1,9 @@
 // Spillmotoren. Ren logikk: all tilfeldighet går gjennom state.rng, så samme
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
-import { give, lage, newCard, placeUniques } from './cards';
+import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, leteOverlevende } from './crew';
+import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
@@ -12,6 +13,9 @@ import type {
   CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
 } from './types';
 
+/** Vakter ved porten med et rekkevidde-våpen teller mer om natta. */
+const RANGE_GUARD = 1.25;
+
 export const GATE_IDS = Object.keys(GATES) as GateId[];
 
 // ---------- Oppsett ----------
@@ -19,7 +23,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   const s: GameState = {
     v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
-    flags: {}, crew: [], seenEvents: [], log: [], over: null,
+    flags: {}, crew: [], seenEvents: [], pending: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0 },
@@ -49,6 +53,7 @@ export function migrate(raw: unknown): GameState | null {
   // v3 fra før utstyrskortene mangler lager og kan ikke brukes
   if (s.v !== 3 || !Array.isArray((raw as GameState).stash)) return null;
   (raw as GameState).needLeader ??= false;
+  (raw as GameState).pending ??= [];
   return raw as GameState;
 }
 
@@ -97,8 +102,8 @@ const targetOf = (t: Task): string | null => ('target' in t ? t.target : 'stat' 
 export const taskKey = (t: Task) => `${t.type}:${targetOf(t) ?? ''}`;
 export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
 
-/** Kan dagen avsluttes? Ikke før en ny leder er valgt. */
-export const canEndDay = (s: GameState): boolean => !s.needLeader || !s.crew.length;
+/** Kan dagen avsluttes? Ikke før en ny leder er valgt og alle ventende encounters er løst. */
+export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.length) && s.pending.length === 0;
 
 /** Nullstiller ordre som ikke lenger er gyldige. */
 export function validateTasks(s: GameState) {
@@ -120,10 +125,18 @@ export function resolveDay(s: GameState): LogLine[] {
 
   // 1) Rydde og 2) Sanke
   const groups = {} as Record<SectorId, number>;
+  const loud: SectorId[] = [];
+  let encounters = 0;
   for (const id of PLAYABLE) {
     const ry = team('rydde', id), sa = team('sanke', id);
     groups[id] = (ry.length ? 1 : 0) + (sa.length ? 1 : 0);
-    if (ry.length) { rydde(s, id, ry, M, log); xp(ry, 'muskler', 1.5); xp(ry, 'nerver', 0.5); }
+    if (ry.length) {
+      // støyen avgjøres av våpnene gruppa gikk ut med, før noe rekker å gå i stykker
+      const noise = noiseProfile(ry);
+      if (noise.loud) loud.push(id);
+      rydde(s, id, ry, M, log); xp(ry, 'muskler', 1.5); xp(ry, 'nerver', 0.5);
+      if (encounters < ENC_MAX_PER_DAY && rollEncounter(s, M, id, ry, noise, log)) encounters++;
+    }
     if (sa.length && s.sectors[id].z === 0) { s.sectors[id].seen = true; s.sectors[id].scouted = true; sanke(s, id, sa, log); xp(sa, 'snoking', 1); }
   }
 
@@ -207,7 +220,7 @@ export function resolveDay(s: GameState): LogLine[] {
     const guards = s.crew.filter((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === id);
     if (st.level >= 3 && guards.length) continue;
     if (guards.length) {
-      const k = Math.min(n, sround(s, sum(guards.map((c) => fightPower(s, c))) * 0.35));
+      const k = Math.min(n, sround(s, sum(guards.map((c) => fightPower(s, c) * (hasTag(c, 'rekkevidde') ? RANGE_GUARD : 1))) * 0.35));
       n -= k; s.stats.kills += k;
       if (!n) { log(`Natt: ${k} ${plural(k)} prøvde seg ved ${g.name}. ${names(guards)} holdt vakt.`, 'good'); continue; }
     }
@@ -218,6 +231,13 @@ export function resolveDay(s: GameState): LogLine[] {
     sec.control -= 20;
     if (wasClear) s.moral -= 4;
     log(`Natt: ${n} ${plural(n)} kom forbi ${g.name} og inn i ${SECTORS[target].short}.${wasClear ? ' Sektoren er infisert igjen.' : ''}`, wasClear ? 'bad' : 'warn');
+  }
+
+  // 6b) Natt: bråk fra Rydde trekker zombier
+  for (const id of loud) {
+    if (rand(s) >= M.noiseAttract) continue;
+    s.sectors[id].z++;
+    log(`Natt: Bråket fra ryddingen i ${SECTORS[id].short} trakk til seg en zombie.`, 'warn');
   }
 
   // 7) Natt: glemte kjellere
@@ -253,6 +273,9 @@ export function phaseProgress(s: GameState) {
 }
 
 export function checkEnd(s: GameState) {
+  // ventende encounters der ingen i gruppa lever lenger, forsvinner
+  s.pending = s.pending.filter((p) => p.crew.some((id) => s.crew.some((c) => c.id === id)));
+  if (!s.crew.length) s.pending = [];
   if (s.over) return;
   if (!s.crew.length) { s.over = 'dead'; s.needLeader = false; }
   else if (phaseProgress(s).done) s.over = 'won';

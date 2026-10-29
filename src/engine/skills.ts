@@ -49,3 +49,10 @@ export function buildPower(s: GameState, c: CrewMember): number {
   if (s.flags.aggregat) p *= 1.3;
   return p * toolMult(c) * moralMult(s) * hpMult(c);
 }
+
+/** Den i gruppa med høyest effektiv ferdighet. */
+export const bestOf = (crew: CrewMember[], k: StatKey): CrewMember =>
+  crew.reduce((a, c) => (stat(c, k) > stat(a, k) ? c : a), crew[0]);
+/** Sjansen for å lykkes med en sjekk, etter gruppas beste på ferdigheten. */
+export const checkOddsFor = (crew: CrewMember[], k: StatKey, base = 0.25): number =>
+  clamp(base + (stat(bestOf(crew, k), k) / 10) * 0.12, 0.05, 0.95);

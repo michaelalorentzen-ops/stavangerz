@@ -8,6 +8,13 @@ const RARITY_LABEL = { vanlig: 'Vanlig', sjelden: 'Sjelden', episk: 'Episk', uni
 const bonusText = (d: (typeof CARDS)[string]) =>
   Object.entries(d.bonus ?? {}).map(([k, v]) => `+${v} ${STAT_LABEL[k as keyof typeof STAT_LABEL]}`).join(', ');
 
+const RANGE_LABEL = { naerkamp: 'Nærkamp', avstand: 'Avstand' };
+const NOISE_LABEL = { stille: 'Stille', normal: 'Normal støy', brak: 'Bråk' };
+const TAG_LABEL = { gjennomslag: 'Gjennomslag', spredning: 'Spredning', rekkevidde: 'Rekkevidde' };
+/** Små merker for våpen: nærkamp eller avstand, støy og taggene. */
+export const weaponBadges = (d: (typeof CARDS)[string]): string => d.slot !== 'vapen' ? '' :
+  `<div class="gc-tags">${d.range ? `<span class="tagchip">${RANGE_LABEL[d.range]}</span>` : ''}<span class="tagchip n-${d.noise ?? 'normal'}">${NOISE_LABEL[d.noise ?? 'normal']}</span>${(d.tags ?? []).map((t) => `<span class="tagchip t">${TAG_LABEL[t]}</span>`).join('')}</div>`;
+
 /** Ett kort, eller en stabel med identiske kort. Navn, spor, nivå, bonus, holdbarhet, demonteringsverdi og tekst i kursiv. */
 export function cardHtml(k: CardInst, group: CardInst[] = [k], inStash = false): string {
   const d = CARDS[k.def];
@@ -26,7 +33,8 @@ export function cardHtml(k: CardInst, group: CardInst[] = [k], inStash = false):
       <button class="btn ghost small" data-salvage="${favIds}" ${salvageCopy(group) ? '' : 'disabled'} title="Demonterer kopien med lavest holdbarhet, aldri en favoritt">Demonter +${sv} skrap</button></div>` : '';
   return `<div class="gc r-${d.rarity}" title="${RARITY_LABEL[d.rarity]} · ${d.family === 'makeshift' ? 'Makeshift' : 'Fra før'}">
     <div class="gc-top"><button class="fav${anyFav ? ' on' : ''}" data-fav="${n > 1 ? 'stack:' : ''}${favIds}" aria-pressed="${anyFav}" aria-label="Favoritt" title="Favoritt">${anyFav ? '★' : '☆'}</button><b>${esc(d.name)}${n > 1 ? ` ×${n}` : ''}</b><span class="dots">${dots}</span></div>
-    <div class="gc-slot">${SLOT_LABEL[d.slot]} · ${RARITY_LABEL[d.rarity]}${d.quiet ? ' · stille' : ''}${bonus ? ` · ${bonus}` : ''}</div>
+    <div class="gc-slot">${SLOT_LABEL[d.slot]} · ${RARITY_LABEL[d.rarity]}${bonus ? ` · ${bonus}` : ''}</div>
+    ${weaponBadges(d)}
     <div class="gc-dur" title="Holdbarhet"><i style="width:${pct}%"></i></div>
     <div class="gc-slot">Holdbarhet ${lo === hi ? lo : `${lo}–${hi}`}/${d.durability} · Gir ${sv} skrap</div>
     <p><em>${esc(d.text)}</em></p>${copies}${actions}

@@ -3,7 +3,7 @@ import { CARDS } from './content/cards';
 import type { LogFn } from './crew';
 import { skillLevel } from './levels';
 import { pick, rand } from './rng';
-import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot } from './types';
+import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot, WeaponNoise, WeaponTag } from './types';
 
 export { CARDS };
 export const SLOTS: Slot[] = ['vapen', 'beskyttelse', 'verktoy'];
@@ -45,6 +45,14 @@ export function unequip(s: GameState, crewId: string, slot: Slot): boolean {
 }
 
 export const weaponMult = (c: CrewMember): number => (c.gear.vapen ? [0, 1.0, 1.2, 1.4, 1.6, 1.8][levelOf(c, 'vapen')] : 0.8);
+const weaponDef = (c: CrewMember): CardDef | null => (c.gear.vapen ? CARDS[c.gear.vapen.def] : null);
+/** Støyen fra det utstyrte våpenet, eller null uten våpen. */
+export const noiseOf = (c: CrewMember): WeaponNoise | null => { const d = weaponDef(c); return d ? d.noise ?? 'normal' : null; };
+/** Har personen et utstyrt våpen på avstand? */
+export const isRanged = (c: CrewMember): boolean => weaponDef(c)?.range === 'avstand';
+/** Har personen et utstyrt våpen med taggen? */
+export const hasTag = (c: CrewMember, tag: WeaponTag): boolean => !!weaponDef(c)?.tags?.includes(tag);
+
 /** Ganges med skaderisiko. */
 export const armorMult = (c: CrewMember): number => (c.gear.beskyttelse ? [0, 0.9, 0.8, 0.7, 0.6, 0.5][levelOf(c, 'beskyttelse')] : 1);
 /** Ganges med searchPower og buildPower. */

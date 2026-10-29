@@ -20,6 +20,10 @@ export type Slot = 'vapen' | 'beskyttelse' | 'verktoy';
 export type Family = 'makeshift' | 'for';
 export type Rarity = 'vanlig' | 'sjelden' | 'episk' | 'unik';
 
+export type WeaponRange = 'naerkamp' | 'avstand';
+export type WeaponNoise = 'stille' | 'normal' | 'brak';
+export type WeaponTag = 'gjennomslag' | 'spredning' | 'rekkevidde';
+
 export interface CardDef {
   id: string;
   name: string;
@@ -28,8 +32,12 @@ export interface CardDef {
   level: 1 | 2 | 3 | 4 | 5;
   rarity: Rarity;
   bonus?: Partial<Stats>;
-  /** lydløst, teller for vakt og speiding (Oppgave 4) */
-  quiet?: boolean;
+  /** bare våpen: nærkamp eller på avstand */
+  range?: WeaponRange;
+  /** bare våpen: hvor mye støy det lager, standard 'normal' */
+  noise?: WeaponNoise;
+  /** bare våpen: særegenskaper */
+  tags?: WeaponTag[];
   durability: number;
   text: string;
   /** bare unike kort: sektorene kortet kan ligge i */
@@ -92,6 +100,18 @@ export interface SectorState {
   dropped: CardInst[];
 }
 
+/** Et encounter som venter på at spilleren skal velge ved neste planlegging. */
+export interface PendingEncounter {
+  pid: string;
+  /** id til encounterkortet */
+  def: string;
+  sector: SectorId | null;
+  /** id-ene til gruppa */
+  crew: string[];
+  threat: number;
+  toktId?: string;
+}
+
 export interface GateState {
   work: number;
   level: number;
@@ -121,6 +141,8 @@ export interface GameState {
   sectors: Record<SectorId, SectorState>;
   gates: Record<GateId, GateState>;
   seenEvents: string[];
+  /** encounters som venter på valg */
+  pending: PendingEncounter[];
   log: { day: number; lines: LogLine[] }[];
   over: null | 'won' | 'won-seen' | 'dead';
   stats: { kills: number; found: number; lost: number };

@@ -257,6 +257,13 @@ button { cursor: pointer; }
 .gc-slot { font: 600 10px var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .gc-dur { display: block; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
 .gc-dur i { display: block; height: 100%; background: var(--green); }
+.gc-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+.tagchip { font: 700 9px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; background: var(--line); color: var(--muted); }
+.tagchip.n-brak { background: var(--red-soft); color: #ff8b8e; }
+.tagchip.n-stille { background: rgba(123,196,127,.16); color: var(--green); }
+.tagchip.t { background: var(--amber-soft); color: var(--amber); }
+.choice.retreat { border-style: dashed; }
+.choice small b { color: var(--amber); font-weight: 600; }
 .gc p { margin: 0; font-size: 12px; color: var(--muted); }
 .btn.small { padding: 4px 10px; font-size: 13px; }
 

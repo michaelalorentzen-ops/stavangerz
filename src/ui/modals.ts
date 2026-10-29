@@ -1,9 +1,9 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, canEndDay, checkOdds, drawEvent, INTRO, NEIGHBORS, newGame, resolveDay, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, canEndDay, checkOdds, describeEncounter, drawEvent, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
-import type { EventDef, Stats, TraitId } from '../engine';
+import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
 import { statPips } from './panel';
 import { $, esc, game, load, save, ui, wipe } from './store';
 
@@ -30,7 +30,11 @@ export function titleScreen() {
       ${saved && !saved.over ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
   on('new', createSelf);
-  on('cont', () => { ui.S = saved; closeModal(); ui.refresh(); if (saved?.needLeader && saved.crew.length) chooseLeader(() => { closeModal(); ui.refresh(); }); });
+  on('cont', () => {
+    ui.S = saved; closeModal(); ui.refresh();
+    const resume = () => runPending(() => { closeModal(); ui.refresh(); if (saved?.over) endScreen(); });
+    if (saved?.needLeader && saved.crew.length) chooseLeader(resume); else resume();
+  });
 }
 
 const POOL = 15;
@@ -106,6 +110,34 @@ function showEvent(ev: EventDef, done: () => void) {
   }));
 }
 
+const TAG_LABEL = { gjennomslag: 'gjennomslag', spredning: 'spredning', rekkevidde: 'rekkevidde' };
+
+/** Et ventende encounter: samme stil som hendelseskort, med odds og våpentagg. */
+function showEncounter(p: PendingEncounter, done: () => void) {
+  const S = game(), v = describeEncounter(S, p);
+  const odds = (c: (typeof v.choices)[number]) => c.check
+    ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag]}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
+  modal(`<div class="radio">Samband · ${esc(v.crew.join(' og '))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
+    <div class="transcript">${esc(v.text)}</div>
+    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span>${esc(c.label)}</span>${odds(c)}</button>`).join('')}</div>`);
+  $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
+    const i = Number(b.dataset.i), c = v.choices[i];
+    const r = resolveEncounter(S, p.pid, i);
+    save();
+    const tag = c.check ? `<div class="tag">${r.ok ? 'Lyktes' : 'Mislyktes'}</div>` : '';
+    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result ${c.check ? (r.ok ? 'ok' : 'fail') : ''}">${tag}${esc(r.text)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
+    $('ok').focus();
+    on('ok', done);
+  }));
+}
+
+/** Viser ventende encounters ett og ett, til alle er løst eller runden er over. */
+function runPending(done: () => void) {
+  const S = game(), p = S.pending[0];
+  if (!p || S.over) { done(); return; }
+  showEncounter(p, () => runPending(done));
+}
+
 /** Lederen er død: spilleren velger blant de gjenlevende. */
 function chooseLeader(done: () => void) {
   const S = game();
@@ -122,14 +154,19 @@ function chooseLeader(done: () => void) {
 
 export function endDay() {
   const S = game(), day = S.day;
-  if (!canEndDay(S)) { chooseLeader(() => { closeModal(); ui.refresh(); }); return; }
+  if (!canEndDay(S)) {
+    const finish = () => { closeModal(); ui.refresh(); if (S.over) endScreen(); };
+    const pending = () => runPending(finish);
+    if (S.needLeader && S.crew.length) chooseLeader(pending); else pending();
+    return;
+  }
   const lines = resolveDay(S);
   const ev = S.over ? null : drawEvent(S);
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
     <div class="row"><button class="btn" id="ok">${S.needLeader && !S.over ? 'Hvem tar over?' : ev ? 'Samband: ny melding' : `Start dag ${S.day}`}</button></div>`);
-  const after = () => { closeModal(); ui.refresh(); if (S.over) endScreen(); };
+  const after = () => runPending(() => { closeModal(); ui.refresh(); if (S.over) endScreen(); });
   const next = () => (ev ? showEvent(ev, after) : after());
   on('ok', () => (S.needLeader && !S.over && S.crew.length ? chooseLeader(next) : next()));
 }

@@ -5,6 +5,7 @@ export * from './skills';
 export * from './crew';
 export * from './cards';
 export * from './sectors';
+export * from './encounters';
 export * from './phases';
 export * from './engine';
 export * from './events';
