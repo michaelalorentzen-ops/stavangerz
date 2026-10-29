@@ -5,7 +5,7 @@ import {
   isOnTokt, isSafe, LAGE_COST, newGame, PLAYABLE, resolveDay, resolveEncounter, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
   SLOTS, taskOptions, THREAT_KILL,
 } from '../src/engine';
-import type { CrewMember, GameState, GateId, ResKey, SelfSetup, Task } from '../src/engine';
+import type { CrewMember, GameState, ResKey, SelfSetup, Task } from '../src/engine';
 
 export const BOT_SELF: SelfSetup = { name: 'Bot', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent' };
 export const BOT_NEIGHBORS = ['arild', 'mona', 'toregil'];
@@ -37,7 +37,6 @@ function botEquip(s: GameState) {
 }
 
 const materials = (s: GameState) => s.res.tre + s.res.skrap;
-const breached = (s: GameState, g: GateId) => s.sectors[GATES[g].sector].z > 0;
 
 export function botTurn(s: GameState) {
   botEquip(s);
@@ -63,7 +62,8 @@ export function botTurn(s: GameState) {
     }
   }
 
-  // 3) Vakt ved en port under nivå 2, eller der sektoren bak har fått inn zombier.
+  // 3) Vakt ved en port under nivå 2. En port kan bare voktes og bygges når sektoren bak er tom,
+  //    så et åpent gjennombrudd ryddes i steg 2 først.
   // 4) Befeste porten i stedet når det er materialer, siden byggerne også holder vakt om natta.
   const weakGate = GATE_IDS.filter((g) => s.gates[g].level < 2 && can({ type: 'vakt', target: g }))
     .sort((a, b) => s.gates[a].level - s.gates[b].level || GATES[b].base - GATES[a].base)[0];
@@ -114,7 +114,6 @@ export function botTurn(s: GameState) {
   // Materialene spares til portene under nivå 2 så lenge noen av dem mangler.
   for (const g of [...GATE_IDS].sort((a, b) => s.gates[a].level - s.gates[b].level)) {
     if (!avail().length) break;
-    if (breached(s, g)) continue;
     const c = by((c) => buildPower(s, c))[0];
     const build = s.gates[g].level < 3 && materials(s) > 0 && (s.gates[g].level < 2 || !gatesLeft || materials(s) > 8);
     if (!(build && set(c, { type: 'befeste', target: g }))) set(c, { type: 'vakt', target: g });
