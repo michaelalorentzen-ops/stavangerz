@@ -60,7 +60,9 @@ export type Task =
   | { type: 'trene'; stat: StatKey }
   | { type: 'rydde' | 'sanke' | 'speide' | 'overlevende'; target: SectorId }
   | { type: 'vakt'; target: GateId | SectorId }
-  | { type: 'befeste'; target: GateId };
+  | { type: 'befeste'; target: GateId }
+  /** target er id-en til toktet */
+  | { type: 'tokt'; target: string };
 export type TaskType = Task['type'];
 
 export interface CrewMember {
@@ -112,6 +114,25 @@ export interface PendingEncounter {
   toktId?: string;
 }
 
+/** Et tokt som er ute: gruppa er borte fra byen til de kommer hjem. */
+export interface ToktState {
+  id: string;
+  crew: string[];
+  /** dager ute */
+  stage: number;
+  haul: Partial<Resources>;
+  cards: CardInst[];
+  /** venter på at spilleren velger Fortsett eller Snu */
+  awaiting: boolean;
+}
+
+export interface QuestState {
+  id: string;
+  /** siste dag questen kan fullføres */
+  until: number;
+  done: boolean;
+}
+
 export interface GateState {
   work: number;
   level: number;
@@ -143,6 +164,9 @@ export interface GameState {
   seenEvents: string[];
   /** encounters som venter på valg */
   pending: PendingEncounter[];
+  /** tokt som er ute */
+  tokts: ToktState[];
+  quests: QuestState[];
   log: { day: number; lines: LogLine[] }[];
   over: null | 'won' | 'won-seen' | 'dead';
   stats: { kills: number; found: number; lost: number };

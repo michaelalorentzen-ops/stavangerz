@@ -275,3 +275,10 @@ button { cursor: pointer; }
 .gc-act { display: flex; gap: 6px; }
 .copies summary { font: 600 11px var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
 .copy { display: flex; align-items: center; gap: 4px; font: 500 12px var(--f-mono); }
+
+/* Tokt-merker på kartet */
+.toktmark { cursor: pointer; }
+.toktmark .flag { fill: var(--amber); stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+.toktmark.out .flag { fill: var(--red); }
+.toktmark text { font: 700 20px/1 var(--f-cond); letter-spacing: .12em; fill: var(--ink); text-transform: uppercase; }
+.token.t-tokt circle { stroke: var(--amber); }

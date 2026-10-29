@@ -82,6 +82,16 @@ export function rollEncounter(s: GameState, M: PhaseModifiers, sector: SectorId,
   return true;
 }
 
+/** Et tokt møter alltid noe. Sektoren er null, siden gruppa er langt hjemmefra. */
+export function addToktEncounter(s: GameState, group: CrewMember[], threat: number, toktId: string, log: LogFn) {
+  const ctx: EncounterCtx = { sector: null, crew: group, threat, toktId };
+  const pool = ENCOUNTERS.filter((d) => !d.when || d.when(s, ctx));
+  if (!pool.length) return;
+  const def = pick(s, pool);
+  s.pending.push({ pid: `e${s.nextUid++}`, def: def.id, sector: null, crew: group.map((c) => c.id), threat, toktId });
+  log(`${names(group)} havnet i en knipe på toktet.`, 'warn');
+}
+
 /** Sjansen for å lykke med et valg. 1 når valget ikke har en sjekk. */
 export function encounterOdds(s: GameState, p: PendingEncounter, choiceIdx: number): number {
   const ch = defOf(p.def).choices[choiceIdx];

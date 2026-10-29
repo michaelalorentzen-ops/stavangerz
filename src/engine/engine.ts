@@ -8,6 +8,7 @@ import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data'
 import { mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
+import { isOnTokt, expireQuests, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
   CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
@@ -23,7 +24,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   const s: GameState = {
     v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
-    flags: {}, crew: [], seenEvents: [], pending: [], log: [], over: null,
+    flags: {}, crew: [], seenEvents: [], pending: [], tokts: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0 },
@@ -54,6 +55,8 @@ export function migrate(raw: unknown): GameState | null {
   if (s.v !== 3 || !Array.isArray((raw as GameState).stash)) return null;
   (raw as GameState).needLeader ??= false;
   (raw as GameState).pending ??= [];
+  (raw as GameState).tokts ??= [];
+  (raw as GameState).quests ??= [];
   return raw as GameState;
 }
 
@@ -94,6 +97,7 @@ export function taskOptions(s: GameState): TaskOption[] {
     if (s.gates[id].level < 3) opts.push({ type: 'befeste', target: id, label: `Befeste ${GATES[id].name}` });
     opts.push({ type: 'vakt', target: id, label: `Holde vakt ${GATES[id].name}` });
   }
+  for (const d of TOKTS) if (toktAvailable(s, d)) opts.push({ type: 'tokt', target: d.id, label: `Tokt: ${d.name}` });
   return opts;
 }
 
@@ -102,17 +106,18 @@ const targetOf = (t: Task): string | null => ('target' in t ? t.target : 'stat' 
 export const taskKey = (t: Task) => `${t.type}:${targetOf(t) ?? ''}`;
 export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
 
-/** Kan dagen avsluttes? Ikke før en ny leder er valgt og alle ventende encounters er løst. */
-export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.length) && s.pending.length === 0;
+/** Kan dagen avsluttes? Ikke før alle encounters er løst, tokt har fått beslutning og en ny leder er valgt. */
+export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.length) && s.pending.length === 0 && !s.tokts.some((t) => t.awaiting);
 
-/** Hva hindrer at dagen avsluttes nå? Ventende encounters først, så valg av ny leder. Encounters kan drepe lederen, så rekkefølgen er alltid denne. */
-export const endDayBlocker = (s: GameState): 'pending' | 'leader' | null =>
-  s.over ? null : s.pending.length ? 'pending' : s.needLeader && s.crew.length ? 'leader' : null;
+/** Hva hindrer at dagen avsluttes nå? Ventende encounters først, så tokt-beslutninger, så valg av ny leder. Encounters kan drepe lederen og avslutte toktet, så rekkefølgen er alltid denne. */
+export const endDayBlocker = (s: GameState): 'pending' | 'tokt' | 'leader' | null =>
+  s.over ? null : s.pending.length ? 'pending' : s.tokts.some((t) => t.awaiting) ? 'tokt' : s.needLeader && s.crew.length ? 'leader' : null;
 
 /** Nullstiller ordre som ikke lenger er gyldige. */
 export function validateTasks(s: GameState) {
   const valid = taskOptions(s);
-  for (const c of s.crew) if (!valid.some((o) => sameTask(o, c.task))) c.task = { type: 'hvile' };
+  // de som er ute på tokt er låst til det
+  for (const c of s.crew) if (!isOnTokt(s, c) && !valid.some((o) => sameTask(o, c.task))) c.task = { type: 'hvile' };
 }
 
 // ---------- Dagsoppgjør ----------
@@ -125,6 +130,7 @@ export function resolveDay(s: GameState): LogLine[] {
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
   const team = (type: TaskType, target: string | null) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
   /** Erfaring til de som fortsatt er med i crewet */
+  expireQuests(s, log);
   const xp = (cs: CrewMember[], k: StatKey, n: number) => { for (const c of cs) if (s.crew.includes(c)) gainXp(c, k, n); };
 
   // 1) Rydde og 2) Sanke
@@ -186,6 +192,9 @@ export function resolveDay(s: GameState): LogLine[] {
     const ov = team('overlevende', id);
     if (ov.length) { leteOverlevende(s, id, ov, log); xp(ov, 'prat', 1.5); }
   }
+
+  // 3d2) Tokt
+  resolveTokts(s, M, log);
 
   // 3e) Pleie: de som hviler blir friskere uten medisin
   const nursed = new Set<CrewMember>();
@@ -279,7 +288,10 @@ export function phaseProgress(s: GameState) {
 export function checkEnd(s: GameState) {
   // ventende encounters der ingen i gruppa lever lenger, forsvinner
   s.pending = s.pending.filter((p) => p.crew.some((id) => s.crew.some((c) => c.id === id)));
-  if (!s.crew.length) s.pending = [];
+  if (!s.crew.length) { s.pending = []; s.tokts = []; }
+  // tokt uten levende deltakere er tapt, med alt bytte
+  for (const t of s.tokts) t.crew = t.crew.filter((id) => s.crew.some((c) => c.id === id));
+  s.tokts = s.tokts.filter((t) => t.crew.length);
   if (s.over) return;
   if (!s.crew.length) { s.over = 'dead'; s.needLeader = false; }
   else if (phaseProgress(s).done) s.over = 'won';

@@ -1,6 +1,6 @@
 // En enkel bot som spiller fase 1. Brukes av balansetesten og tools/sim.ts.
 // Den er bevisst dum: en tenkende spiller skal gjøre det bedre.
-import { canEndDay, CARDS, describeEncounter, drawEvent, equip, GATE_IDS, newGame, PLAYABLE, resolveDay, resolveEncounter, runChoice, setLeader, SLOTS, taskOptions } from '../src/engine';
+import { canEndDay, CARDS, describeEncounter, drawEvent, equip, GATE_IDS, newGame, isOnTokt, PLAYABLE, resolveDay, resolveEncounter, runChoice, setLeader, SLOTS, taskOptions } from '../src/engine';
 import type { GameState, GateId, SelfSetup } from '../src/engine';
 
 export const BOT_SELF: SelfSetup = { name: 'Bot', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent' };
@@ -24,6 +24,7 @@ export function botTurn(s: GameState) {
   // en vakt ved en port under nivå 2, så lenge noen kan spares
   const vaktGate = opts.find((o) => o.type === 'vakt' && GATE_IDS.includes(o.target as GateId) && s.gates[o.target as GateId].level < 2);
   s.crew.forEach((c, i) => {
+    if (isOnTokt(s, c)) return; // boten tar aldri tokt, men låste ordre skal ikke røres
     if (c.hp <= 1) { c.task = { type: 'hvile' }; return; }
     const gate = opts.find((o) => o.type === 'befeste' && s.gates[o.target].level < 2);
     const lete = opts.filter((o) => o.type === 'rydde' && s.sectors[o.target].z === 0);

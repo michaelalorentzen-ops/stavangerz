@@ -1,6 +1,6 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
-import { GATE_IDS, GATES, SECTORS, sectorIntel } from '../engine';
+import { GATE_IDS, GATES, SECTORS, sectorIntel, toktAvailable, TOKTS } from '../engine';
 import type { CrewMember } from '../engine';
 import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
@@ -123,7 +123,7 @@ export function renderMap(onSelect: (s: Selection) => void) {
   const tokensBy: Record<string, CrewMember[]> = {};
   for (const c of S.crew) {
     const t = c.task;
-    const key = !('target' in t) ? 'hjem' : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
+    const key = !('target' in t) ? 'hjem' : t.type === 'tokt' ? `t_${t.target}` : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
     (tokensBy[key] ??= []).push(c);
   }
   for (const m of MAP.sectors) {
@@ -158,7 +158,26 @@ export function renderMap(onSelect: (s: Selection) => void) {
     onActivate(g, () => onSelect({ kind: 'gate', id }));
     drawTokens(tokensBy[`g_${id}`], gd.x, gd.y + 50);
   }
+  drawTokts(onSelect, tokensBy);
   for (const z of MAP.zones) svg().querySelector(`[data-zone="${z.id}"]`)?.classList.toggle('sel', sel.kind === 'zone' && sel.id === z.id);
+}
+
+/** Merke ved målet for hvert tokt som er ledig eller ute. Gruppa som er ute vises under merket. */
+function drawTokts(onSelect: (s: Selection) => void, tokensBy: Record<string, CrewMember[]>) {
+  const S = game();
+  for (const d of TOKTS) {
+    const active = S.tokts.find((t) => t.id === d.id);
+    if (!active && !toktAvailable(S, d)) continue;
+    const isGate = d.at in GATES;
+    const p = isGate ? GATES[d.at as keyof typeof GATES] : MAP.sectors.find((m) => m.id === d.at)!;
+    const x = isGate ? (p as { x: number }).x + 78 : (p as { cx: number }).cx + 90;
+    const y = isGate ? (p as { y: number }).y - 34 : (p as { cy: number }).cy - 70;
+    const g = el('g', { class: `toktmark${active ? ' out' : ''}`, transform: `translate(${x} ${y})`, tabindex: 0, role: 'button', 'aria-label': `Tokt: ${d.name}` }, dyn);
+    el('path', { class: 'flag', d: 'M0 22 V-22 L30 -12 L0 -2' }, g);
+    text(g, { x: 14, y: 42, 'text-anchor': 'middle' }, active ? `Dag ${active.stage}/${d.days}` : 'Tokt');
+    onActivate(g, () => onSelect(isGate ? { kind: 'gate', id: d.at as keyof typeof GATES } : { kind: 'sector', id: d.at as never }));
+    drawTokens(tokensBy[`t_${d.id}`], x + 14, y + 90);
+  }
 }
 
 function drawTokens(list: CrewMember[] | undefined, cx: number, cy: number) {

@@ -5,6 +5,7 @@ import { NEIGHBORS, PLAYABLE } from './data';
 import { addNeighbor, canRecruit } from './crew';
 import { addGateWork, checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
+import { acceptQuest } from './tokt';
 import { clamp, pick, rand } from './rng';
 import { bestOf, checkOddsFor } from './skills';
 import type { CrewMember, GameState, StatKey } from './types';
@@ -170,6 +171,16 @@ export const EVENTS: EventDef[] = [
     choices: [
       { label: 'Gjør det nødvendige', check: 'nerver', run: (s, ok) => { s.flags.svein = true; if (ok) { s.res.tre += 2; return 'Det er gjort. Dere låner hekksaksen hans. Han hadde ikke noe imot det.'; } s.moral -= 6; return 'Ingen klarer det. Til slutt gjør Svein det selv ved å gå inn i bassenget.'; } },
       { label: 'La Svein klippe hekken', run: (s) => { s.flags.svein = true; s.moral += 2; return 'Hekken har aldri vært penere. Respekt, Svein.'; } },
+    ],
+  },
+  {
+    id: 'sos_kran', title: 'SOS fra kranføreren',
+    channel: 'Kanal 16 · kortbølge',
+    when: (s) => s.day >= 6 && !s.quests.some((q) => q.id === 'sos_kran'),
+    text: () => '«Er det noen der? Dette er Roger, jeg sitter i kranen på Rosenberg. Jeg har kaffe til to dager og en hord under meg som ser oppover. Jeg har meldt avvik, men ingen svarer.»',
+    choices: [
+      { label: 'Vi kommer', run: (s) => { acceptQuest(s, 'sos_kran'); return 'Roger sier han skal holde ut. Han har tross alt hatt verre mandager. Et tokt til Rosenberg-gjerdet er nå mulig.'; } },
+      { label: 'Beklager, vi har fullt opp', run: (s) => { s.moral -= 3; return 'Stillhet på kanalen. Så: «Skjønner. Jeg skal se om jeg får inn et avviksskjema.» Det kjennes ikke bra.'; } },
     ],
   },
 ];

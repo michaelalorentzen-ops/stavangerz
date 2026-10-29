@@ -1,6 +1,6 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, checkOdds, describeEncounter, drawEvent, endDayBlocker, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, describeEncounter, drawEvent, endDayBlocker, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
@@ -129,10 +129,34 @@ function showEncounter(p: PendingEncounter, done: () => void) {
   }));
 }
 
-/** Løser alt som hindrer at dagen avsluttes: encounters først, så ny leder. Gjentas fordi et encounter kan drepe lederen. */
+/** Etter et tokt-encounter: Fortsett eller Snu. Viser hva gruppa bærer. */
+function showToktDecision(toktId: string, done: () => void) {
+  const S = game(), t = S.tokts.find((x) => x.id === toktId)!, def = toktDef(toktId);
+  const carried = [
+    ...RES.filter((k) => (t.haul[k] ?? 0) > 0).map((k) => `${t.haul[k]} ${RES_LABEL[k].toLowerCase()}`),
+    ...t.cards.map((k) => CARDS[k.def].name),
+  ];
+  const last = t.stage >= def.days;
+  modal(`<div class="radio">Samband · tokt · Dag ${S.day}</div><h2>${esc(def.name)}</h2>
+    <div class="transcript">${esc(`Dag ${t.stage} av ${def.days}. ${last ? 'Dere er framme. Gjør oppdraget ferdig, eller snu med det dere har.' : 'Dere kan gå videre, eller snu og komme hjem i natt.'}`)}</div>
+    <p class="hint">Gruppa bærer: ${carried.length ? esc(carried.join(', ')) : 'ingenting ennå'}.</p>
+    <div class="choices">
+      <button class="choice" data-d="fortsett"><span>Fortsett</span><small>${last ? 'Fullfør og få belønningen' : 'Mer bytte, mer risiko'}</small></button>
+      <button class="choice retreat" data-d="snu"><span>Snu</span><small>Hjem i natt med det dere bærer</small></button></div>`);
+  $('sheet').querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.addEventListener('click', () => {
+    const text = toktDecision(S, toktId, b.dataset.d as 'fortsett' | 'snu');
+    save();
+    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result">${esc(text)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
+    $('ok').focus();
+    on('ok', done);
+  }));
+}
+
+/** Løser alt som hindrer at dagen avsluttes: encounters, så tokt-valg, så ny leder. Gjentas fordi et encounter kan drepe lederen. */
 function settle(done: () => void) {
   const S = game(), b = endDayBlocker(S);
   if (b === 'pending') showEncounter(S.pending[0], () => settle(done));
+  else if (b === 'tokt') showToktDecision(S.tokts.find((t) => t.awaiting)!.id, () => settle(done));
   else if (b === 'leader') chooseLeader(() => settle(done));
   else done();
 }
@@ -160,7 +184,7 @@ export function endDay() {
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : endDayBlocker(S) === 'pending' ? 'Encounter venter' : endDayBlocker(S) === 'leader' ? 'Hvem tar over?' : `Start dag ${S.day}`}</button></div>`);
+    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : endDayBlocker(S) === 'pending' ? 'Encounter venter' : endDayBlocker(S) === 'tokt' ? 'Toktet venter på deg' : endDayBlocker(S) === 'leader' ? 'Hvem tar over?' : `Start dag ${S.day}`}</button></div>`);
   const after = () => settle(finish);
   on('ok', () => (ev ? showEvent(ev, after) : after()));
 }

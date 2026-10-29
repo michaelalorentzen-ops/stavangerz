@@ -1,5 +1,6 @@
 // Crewet: skader, død, ny leder, plass og rekruttering.
 import { dropGear, give, rollStarter, wear } from './cards';
+import { toktDef, toktSector } from './content/tokts';
 import { GATES, HEALTH_LABEL, NEIGHBORS, SECTORS, PLAYABLE } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';
@@ -24,6 +25,7 @@ function taskSector(c: CrewMember): SectorId | 'stash' {
     const sector: SectorId = t.target in GATES ? GATES[t.target as keyof typeof GATES].sector : (t.target as SectorId);
     return sector === 'hjem' ? 'stash' : sector;
   }
+  if (t.type === 'tokt') return toktSector(toktDef(t.target));
   return 'stash';
 }
 

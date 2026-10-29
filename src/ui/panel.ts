@@ -2,8 +2,9 @@
 import {
   dailyFood, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, sameTask,
+  CARDS, isOnTokt, toktAvailable, toktDef, TOKTS,
 } from '../engine';
-import type { CrewMember, GateId, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
+import type { CrewMember, GameState, GateId, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
 import { bindCards, slotsHtml } from './cards';
 import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, ui } from './store';
 
@@ -37,13 +38,14 @@ function taskShort(t: Task): string {
   if (t.type === 'trene') return `trener ${STAT_LABEL[t.stat].toLowerCase()}`;
   if (t.type === 'befeste') return 'bygger';
   if (t.type === 'vakt') return `vakt ${t.target in GATES ? GATES[t.target as GateId].name : SECTORS[t.target as SectorId].short}`;
+  if (t.type === 'tokt') return `på tokt: ${toktDef(t.target).name}`;
   const verb = { rydde: 'rydder', sanke: 'sanker', speide: 'speider', overlevende: 'leter etter overlevende' }[t.type];
   return `${verb} ${SECTORS[t.target].short}`;
 }
 
 /** Ordren uten visningsteksten. */
 const bare = (o: Task & { label?: string }): Task => { const { label: _label, ...t } = o; return t as Task; };
-const ACT_LABEL: Partial<Record<TaskType, string>> = { rydde: 'Rydde', sanke: 'Sanke', speide: 'Speide', vakt: 'Vakt', overlevende: 'Overlevende', befeste: 'Befeste' };
+const ACT_LABEL: Partial<Record<TaskType, string>> = { rydde: 'Rydde', sanke: 'Sanke', speide: 'Speide', vakt: 'Vakt', overlevende: 'Overlevende', befeste: 'Befeste', tokt: 'Tokt' };
 
 function crewChips(isMine: (c: CrewMember) => boolean) {
   return `<div class="chips">${game().crew.map((c) => {
@@ -57,9 +59,42 @@ function crewChips(isMine: (c: CrewMember) => boolean) {
 function bindChips(box: HTMLElement, isMine: (c: CrewMember) => boolean, task: () => Task) {
   box.querySelectorAll<HTMLButtonElement>('[data-crew]').forEach((b) => b.addEventListener('click', () => {
     const c = game().crew.find((x) => x.id === b.dataset.crew)!;
+    if (isOnTokt(game(), c)) return; // de som er ute er låst til toktet
     c.task = isMine(c) ? { type: 'hvile' } : task();
     ui.refresh();
   }));
+}
+
+/** Belønningen for et tokt, som tekst. Unike kort navngis ikke. */
+function rewardText(id: string): string {
+  const r = toktDef(id).reward, parts: string[] = [];
+  for (const [k, n] of Object.entries(r.res ?? {})) parts.push(`${n} ${RES_LABEL[k as keyof typeof RES_LABEL].toLowerCase()}`);
+  for (const c of r.cards ?? []) parts.push(CARDS[c].rarity === 'unik' ? 'et unikt kort' : CARDS[c].name);
+  return parts.join(', ') || 'ingenting';
+}
+
+/** Tokt-kort for et mål: utgjør både ledige tokt (med crew-knapper) og de som er ute. */
+function toktCards(S: GameState, at: string): string {
+  return TOKTS.filter((d) => d.at === at).map((d) => {
+    const active = S.tokts.find((t) => t.id === d.id);
+    if (!active && !toktAvailable(S, d)) return '';
+    const mine = (c: CrewMember) => c.task.type === 'tokt' && c.task.target === d.id;
+    const metrics = `<div class="metrics"><div class="metric"><div class="k">Varighet</div><div class="v">${d.days}<small> dager</small></div></div>
+      <div class="metric"><div class="k">Trussel</div><div class="v">${d.threat}<small>/5</small></div></div></div>`;
+    const body = active
+      ? `<p class="hint">Gruppa er ute: dag ${active.stage} av ${d.days}${active.awaiting ? ', venter på beslutning' : ''}.</p>`
+      : `<p class="eyebrow" style="margin:0">Send på tokt</p>${crewChips(mine)}`;
+    return `<div class="card tokt" data-tokt="${d.id}"><span class="badge ${d.quest ? 'inf' : 'clr'}">${d.quest ? 'Quest' : 'Tokt'}</span><h2>${esc(d.name)}</h2><p>${esc(d.desc)}</p>
+      ${metrics}<p class="hint">Belønning: ${rewardText(d.id)}. Alt som finnes underveis kommer med hjem om dere snur.</p>${body}</div>`;
+  }).join('');
+}
+
+function bindToktCards(box: HTMLElement, S: GameState) {
+  box.querySelectorAll<HTMLElement>('[data-tokt]').forEach((card) => {
+    const d = TOKTS.find((x) => x.id === card.dataset.tokt)!;
+    if (S.tokts.some((t) => t.id === d.id)) return;
+    bindChips(card, (c) => c.task.type === 'tokt' && c.task.target === d.id, () => ({ type: 'tokt', target: d.id }));
+  });
 }
 
 function lootHint(sec: SectorState) {
@@ -103,6 +138,8 @@ export function renderSel() {
       ${gtask ? `<p class="eyebrow" style="margin:0">Send til ${ACT_LABEL[gtask.type]!.toLowerCase()}</p>${crewChips(mine)}` : ''}</div>`;
     box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
     if (gtask) bindChips(box, mine, () => gtask);
+    box.insertAdjacentHTML('beforeend', toktCards(S, id));
+    bindToktCards(box, S);
     return;
   }
 
@@ -141,6 +178,8 @@ export function renderSel() {
   </div>`;
   box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
   if (task) bindChips(box, mine, () => task);
+  box.insertAdjacentHTML('beforeend', toktCards(S, id));
+  bindToktCards(box, S);
 }
 
 /** Ferdigheter som stolpe og nivånavn. Tallene vises aldri. */
@@ -156,7 +195,7 @@ export function renderCrew() {
       <div class="tr"><b>${TRAITS[c.trait].name}.</b> ${TRAITS[c.trait].desc}</div>
       <div class="statrow">${statPips(c.stats)}</div>
       ${slotsHtml(c)}
-      <select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}">${opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</select>
+      ${isOnTokt(S, c) ? `<select data-crew="${c.id}" disabled aria-label="Oppdrag for ${esc(c.name)}"><option>${esc(taskShort(c.task))}</option></select>` : `<select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}">${opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</select>`}
     </div>`).join('');
   bindCards($('crew'));
   $('crew').querySelectorAll<HTMLSelectElement>('select').forEach((s) => s.addEventListener('change', () => {

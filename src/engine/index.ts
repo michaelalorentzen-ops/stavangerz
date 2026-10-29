@@ -6,6 +6,7 @@ export * from './crew';
 export * from './cards';
 export * from './sectors';
 export * from './encounters';
+export * from './tokt';
 export * from './phases';
 export * from './engine';
 export * from './events';
