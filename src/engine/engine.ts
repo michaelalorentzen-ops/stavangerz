@@ -129,8 +129,8 @@ export function resolveDay(s: GameState): LogLine[] {
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
   const team = (type: TaskType, target: string | null) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
-  /** Erfaring til de som fortsatt er med i crewet */
   expireQuests(s, log);
+  /** Erfaring til de som fortsatt er med i crewet */
   const xp = (cs: CrewMember[], k: StatKey, n: number) => { for (const c of cs) if (s.crew.includes(c)) gainXp(c, k, n); };
 
   // 1) Rydde og 2) Sanke

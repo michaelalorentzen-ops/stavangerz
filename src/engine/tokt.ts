@@ -22,13 +22,13 @@ const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 export const toktOf = (s: GameState, crewId: string): ToktState | undefined => s.tokts.find((t) => t.crew.includes(crewId));
 export const isOnTokt = (s: GameState, c: CrewMember): boolean => !!toktOf(s, c.id);
 
-/** Akseptert quest som ikke er løst og ikke har gått ut. */
-const questOpen = (s: GameState, id: string): boolean => s.quests.some((q) => q.id === id && !q.done && s.day <= q.until);
+/** Akseptert quest som ikke er løst, og der toktet rekker å bli ferdig innen fristen: siste dag ute er s.day + days - 1. */
+const questOpen = (s: GameState, id: string, days: number): boolean => s.quests.some((q) => q.id === id && !q.done && s.day + days - 1 <= q.until);
 
 /** Er toktet tilgjengelig som ordre nå? Fritt, eller med en aktiv quest. Aldri mens det allerede er ute. */
 export function toktAvailable(s: GameState, d: ToktDef): boolean {
   if (s.tokts.some((t) => t.id === d.id)) return false;
-  return !d.quest || questOpen(s, d.quest);
+  return !d.quest || questOpen(s, d.quest, d.days);
 }
 
 /** Aksepterer en quest. Fristen regnes fra i dag. Gjør ingenting om den allerede er akseptert. */

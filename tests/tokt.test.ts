@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  acceptQuest, canEndDay, checkEnd, endDayBlocker, injure, newCard, newGame, resolveDay, resolveEncounter, taskKey, taskOptions, toktDecision, validateTasks,
+  acceptQuest, canEndDay, dailyFood, drawEvent, PLAYABLE, checkEnd, endDayBlocker, injure, newCard, newGame, resolveDay, resolveEncounter, taskKey, taskOptions, toktDecision, validateTasks,
   EVENTS, QUESTS, TOKTS,
 } from '../src/engine';
 import type { GameState } from '../src/engine';
@@ -12,7 +12,7 @@ const out = (s: GameState, id = 'bybrua', ids = ['meg', 'arild']) => {
   for (const c of s.crew) if (ids.includes(c.id)) c.task = { type: 'tokt', target: id };
   resolveDay(s);
 };
-/** Svarer på encounteret med siste valg (tilbaketrekning). */
+/** Svarer på alle ventende encounters med det første valget. */
 const answer = (s: GameState) => { while (s.pending.length) resolveEncounter(s, s.pending[0].pid, 0); };
 const hasOpt = (s: GameState, id: string) => taskOptions(s).some((o) => o.type === 'tokt' && o.target === id);
 
@@ -82,9 +82,12 @@ describe('tokt', () => {
     expect(hasOpt(s, 'kran')).toBe(true);
     const q = s.quests[0];
     expect(q.until).toBe(s.day + 6);
-    s.day = q.until;
+    // toktet tar 2 dager, så siste dag å starte er until - 1
+    s.day = q.until - 1;
     expect(hasOpt(s, 'kran')).toBe(true);
-    // siste dag er fortsatt gyldig. Dagen etter er fristen ute og det logges én gang.
+    s.day = q.until;
+    expect(hasOpt(s, 'kran')).toBe(false);
+    // questen lever til og med until. Dagen etter er fristen ute og det logges én gang.
     expect(resolveDay(s).some((l) => /Fristen/.test(l.t))).toBe(false);
     expect(hasOpt(s, 'kran')).toBe(false);
     expect(resolveDay(s).some((l) => /Fristen/.test(l.t))).toBe(true);
@@ -180,11 +183,79 @@ describe('tokt', () => {
     expect(ev.when!(s)).toBe(false);
   });
 
-  it('crew på tokt gjør ikke andre oppgaver, men spiser', () => {
+  it('crew på tokt teller i dailyFood, så de spiser', () => {
     const s = fresh();
-    s.sectors.hjem.z = 0;
-    const food = s.res.mat;
+    expect(s.crew).toHaveLength(4);
+    const before = s.res.mat, food = dailyFood(s);
     out(s);
-    expect(s.res.mat).toBeLessThan(food); // alle spiser, også de som er ute
+    expect(s.tokts[0].crew).toHaveLength(2);
+    expect(food).toBe(3); // ceil(4 * 0.6), ikke ceil(2 * 0.6)
+    expect(s.res.mat).toBe(before - food);
+  });
+
+  it('crew på tokt står ikke vakt ved porten om natta', () => {
+    // Sørporten er på nivå 3. En vakt der stopper alle angrep, så uten vakt må noen slippe gjennom.
+    let breaches = 0, guarded = 0;
+    for (let seed = 1; seed <= 150; seed++) {
+      const s = fresh(seed);
+      s.gates.sor.level = 3;
+      s.sectors.sorspissen.z = 0;
+      out(s);
+      if (s.log.at(-1)!.lines.some((l) => /kom forbi Bybrusperringen/.test(l.t))) breaches++;
+      const g = fresh(seed);
+      g.gates.sor.level = 3;
+      g.crew.find((c) => c.id === 'toregil')!.task = { type: 'vakt', target: 'sor' };
+      out(g);
+      if (g.log.at(-1)!.lines.some((l) => /kom forbi Bybrusperringen/.test(l.t))) guarded++;
+    }
+    expect(breaches).toBeGreaterThan(0);
+    expect(guarded).toBe(0);
+  });
+
+  it('crew på tokt gir ikke kontroll i noen sektor', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const s = fresh(seed);
+      for (const c of s.crew) c.task = { type: 'tokt', target: 'bybrua' };
+      const before = PLAYABLE.map((id) => s.sectors[id].control);
+      resolveDay(s);
+      PLAYABLE.forEach((id, i) => expect(s.sectors[id].control).toBeLessThanOrEqual(before[i]));
+    }
+  });
+
+  it('død på tokt til Rosenberg-gjerdet legger utstyret på lageret, siden porten ligger i hjem', () => {
+    const s = fresh();
+    acceptQuest(s, 'sos_kran');
+    out(s, 'kran');
+    const c = s.crew.find((x) => x.id === 'arild')!;
+    const gear = Object.values(c.gear).map((k) => k!.uid);
+    expect(gear.length).toBeGreaterThan(0);
+    c.hp = 1;
+    injure(s, c, 'ved gjerdet', () => {});
+    const stash = s.stash.map((k) => k.uid);
+    for (const uid of gear) expect(stash).toContain(uid);
+    expect(s.sectors.hjem.dropped).toHaveLength(0);
+  });
+
+  it('SOS-hendelsen: å avslå lager ingen quest, og hendelsen kommer ikke igjen', () => {
+    const s = fresh();
+    s.day = 6;
+    const ev = EVENTS.find((e) => e.id === 'sos_kran')!;
+    const moral = s.moral;
+    ev.choices[1].run(s, true);
+    expect(s.quests).toHaveLength(0);
+    expect(s.moral).toBeLessThan(moral);
+    expect(hasOpt(s, 'kran')).toBe(false);
+    // drawEvent merker den som sett
+    s.seenEvents.push('sos_kran');
+    for (let i = 0; i < 100; i++) { const d = drawEvent(s); expect(d?.id).not.toBe('sos_kran'); }
+  });
+
+  it('tokt-belønningskort legges aldri ut som unike kort i sektorer', () => {
+    const rewarded = TOKTS.flatMap((d) => d.reward.cards ?? []);
+    expect(rewarded).toContain('u_kiste');
+    for (let seed = 1; seed <= 300; seed++) {
+      const s = fresh(seed);
+      for (const id of rewarded) expect(Object.values(s.uniques)).not.toContain(id);
+    }
   });
 });

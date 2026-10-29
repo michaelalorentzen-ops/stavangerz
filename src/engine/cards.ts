@@ -1,5 +1,6 @@
 // Utstyrskort: instanser, utstyring, slitasje, funn og Lage utstyr. Ren logikk.
 import { CARDS } from './content/cards';
+import { TOKTS } from './content/tokts';
 import type { LogFn } from './crew';
 import { skillLevel } from './levels';
 import { pick, rand } from './rng';
@@ -117,7 +118,9 @@ export function give(c: CrewMember, card: CardInst) { c.gear[CARDS[card.def].slo
 
 /** Plasserer to unike kort i hver sin sektor. Seedet. */
 export function placeUniques(s: GameState) {
-  const left = Object.values(CARDS).filter((d) => d.rarity === 'unik');
+  // kort et tokt gir som belønning skal ikke også ligge i en sektor
+  const rewarded = new Set(TOKTS.flatMap((d) => d.reward.cards ?? []));
+  const left = Object.values(CARDS).filter((d) => d.rarity === 'unik' && !rewarded.has(d.id));
   for (let n = 0; n < 2 && left.length; n++) {
     const d = left.splice(Math.floor(rand(s) * left.length), 1)[0];
     const free = (d.places ?? []).filter((id) => !s.uniques[id]);
