@@ -125,7 +125,7 @@ export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.le
 
 /** Hva hindrer at dagen avsluttes nå? Ventende encounters først, så tokt-beslutninger, så valg av ny leder. Encounters kan drepe lederen og avslutte toktet, så rekkefølgen er alltid denne. */
 export const endDayBlocker = (s: GameState): 'pending' | 'tokt' | 'leader' | null =>
-  s.over ? null : s.pending.length ? 'pending' : s.tokts.some((t) => t.awaiting) ? 'tokt' : s.needLeader && s.crew.length ? 'leader' : null;
+  isFinished(s) ? null : s.pending.length ? 'pending' : s.tokts.some((t) => t.awaiting) ? 'tokt' : s.needLeader && s.crew.length ? 'leader' : null;
 
 /** Er runden avgjort? Bare «won-seen» kan spille videre. */
 export const isFinished = (s: Pick<GameState, 'over'>): boolean => s.over !== null && s.over !== 'won-seen';
@@ -183,10 +183,12 @@ export function resolveDay(s: GameState): LogLine[] {
   /** Erfaring til de som fortsatt er med i crewet */
   const xp = (cs: CrewMember[], k: StatKey, n: number) => { for (const c of cs) if (s.crew.includes(c)) gainXp(c, k, n); };
 
+  // 0) Tokt først: hver dag ute trekker et kort (kap. 8), så tokt får plass under dagstaket før Rydde
+  let encounters = resolveTokts(s, M, log, ENC_MAX_PER_DAY);
+
   // 1) Rydde og 2) Sanke
   const groups = {} as Record<SectorId, number>;
   const loud: SectorId[] = [];
-  let encounters = 0;
   for (const id of PLAYABLE) {
     const ry = team('rydde', id), sa = team('sanke', id);
     groups[id] = (ry.length ? 1 : 0) + (sa.length ? 1 : 0);
@@ -243,8 +245,6 @@ export function resolveDay(s: GameState): LogLine[] {
     if (ov.length) { leteOverlevende(s, id, ov, log); xp(ov, 'prat', 1.5); }
   }
 
-  // 3d2) Tokt. Encounters derfra teller mot det samme dagstaket som Rydde.
-  encounters += resolveTokts(s, M, log, ENC_MAX_PER_DAY - encounters);
 
   // 3e) Pleie: de som hviler blir friskere uten medisin
   const nursed = new Set<CrewMember>();

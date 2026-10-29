@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  acceptQuest, canEndDay, CARDS, fightPower, guardPower, mods, PIERCE_KILL, RANGE_GUARD, rydde, endDayBlocker, injure, toktDecision, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
+  acceptQuest, canEndDay, CARDS, fightPower, guardPower, mods, PIERCE_KILL, RANGE_GUARD, rydde, endDayBlocker, injure, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
 } from '../src/engine';
 import type { EncounterCtx, GameState, PendingEncounter, SectorId, WeaponTag } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -324,7 +324,7 @@ describe('encounters på tokt og dagstaket', () => {
     }
   });
 
-  it('to tokt og to Rydde-grupper gir høyst to nye encounters, og begge tokt venter på valg', () => {
+  it('to tokt og to Rydde-grupper gir nøyaktig to nye encounters, begge fra toktene', () => {
     withChance(5, () => {
       for (let seed = 1; seed <= 20; seed++) {
         const s = fresh(seed);
@@ -336,29 +336,28 @@ describe('encounters på tokt og dagstaket', () => {
         mona.task = { type: 'rydde', target: 'hjem' };
         toregil.task = { type: 'rydde', target: 'obs' };
         resolveDay(s);
-        expect(s.pending.length, `seed ${seed}`).toBeLessThanOrEqual(2);
-        expect(s.pending.length, `seed ${seed}`).toBe(2);
+        expect(s.pending, `seed ${seed}`).toHaveLength(2);
+        expect(s.pending.map((p) => p.toktId).sort(), `seed ${seed}`).toEqual(['bybrua', 'kran']);
         expect(s.tokts).toHaveLength(2);
         for (const t of s.tokts) expect(t).toMatchObject({ stage: 1, awaiting: true });
       }
     });
   });
 
-  it('et tokt uten plass under taket går videre og kan avgjøres uten encounter', () => {
+  it('ett tokt får sitt kort først, og Rydde fyller resten av taket', () => {
     withChance(5, () => {
-      const s = fresh(3);
-      const [meg, arild, mona, toregil] = s.crew;
-      s.sectors.hjem.z = 3; s.sectors.obs.z = 3;
-      meg.task = { type: 'rydde', target: 'hjem' }; arild.task = { type: 'rydde', target: 'hjem' };
-      mona.task = { type: 'rydde', target: 'obs' };
-      toregil.task = { type: 'tokt', target: 'bybrua' };
-      resolveDay(s);
-      const t = s.tokts[0];
-      expect(t).toMatchObject({ stage: 1, awaiting: true });
-      // begge Rydde-gruppene fikk encounter, så toktet fikk ingen
-      expect(s.pending.every((p) => !p.toktId)).toBe(true);
-      while (s.pending.length) resolveEncounter(s, s.pending[0].pid, describeEncounter(s, s.pending[0]).choices.length - 1);
-      expect(() => toktDecision(s, 'bybrua', 'fortsett')).not.toThrow();
+      for (let seed = 1; seed <= 20; seed++) {
+        const s = fresh(seed);
+        const [meg, arild, mona, toregil] = s.crew;
+        s.sectors.hjem.z = 3; s.sectors.obs.z = 3;
+        meg.task = { type: 'rydde', target: 'hjem' }; arild.task = { type: 'rydde', target: 'hjem' };
+        mona.task = { type: 'rydde', target: 'obs' };
+        toregil.task = { type: 'tokt', target: 'bybrua' };
+        resolveDay(s);
+        expect(s.pending.length, `seed ${seed}`).toBeLessThanOrEqual(2);
+        expect(s.pending.filter((p) => p.toktId === 'bybrua'), `seed ${seed}`).toHaveLength(1);
+        expect(s.tokts[0]).toMatchObject({ stage: 1, awaiting: true });
+      }
     });
   });
 
@@ -409,6 +408,32 @@ describe('resolveDay håndhever canEndDay', () => {
     const s = fresh();
     expect(resolveDay(s).length).toBeGreaterThan(0);
     expect(s.day).toBe(2);
+  });
+});
+
+describe('sandkassa etter seier', () => {
+  it('won-seen viser ventende encounter, sperrer dagen og går videre når det er løst', () => {
+    const s = fresh();
+    s.over = 'won-seen';
+    const p = pend(s, 'heis');
+    expect(endDayBlocker(s)).toBe('pending');
+    expect(canEndDay(s)).toBe(false);
+    expect(resolveDay(s)).toEqual([]);
+    expect(s.day).toBe(1);
+    resolveEncounter(s, p.pid, 0);
+    expect(endDayBlocker(s)).toBeNull();
+    resolveDay(s);
+    expect(s.day).toBe(2);
+  });
+
+  it('won-seen viser også tokt-valg og ledervalg, men ingenting når runden er avgjort', () => {
+    const s = fresh();
+    s.over = 'won-seen';
+    s.needLeader = true;
+    expect(endDayBlocker(s)).toBe('leader');
+    s.tokts.push({ id: 'bybrua', crew: ['meg'], stage: 1, haul: {}, cards: [], awaiting: true });
+    expect(endDayBlocker(s)).toBe('tokt');
+    for (const over of ['won', 'dead', 'timeout'] as const) { s.over = over; expect(endDayBlocker(s)).toBeNull(); }
   });
 });
 
