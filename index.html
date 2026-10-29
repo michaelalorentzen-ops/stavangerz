@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stavanger Z</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><h1>STAVANGER <b>Z</b></h1><span>Fase 1 · Buøy</span></div>
+    <div class="day" id="day">Dag 1</div>
+    <div class="res" id="res"></div>
+  </header>
+  <main class="layout">
+    <section class="mapwrap" aria-label="Kart over Buøy og byøyene">
+      <svg id="map" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="maptools" role="group" aria-label="Kartutsnitt">
+        <button id="v-focus" aria-pressed="true">Buøy</button>
+        <button id="v-all" aria-pressed="false">Byøyene</button>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><i style="background:var(--red)"></i>Infisert</span>
+        <span><i style="background:var(--amber)"></i>Klarert</span>
+        <span><i style="background:#3a0f12;border:1px dashed var(--red)"></i>Horde</span>
+        <span><i style="border:1px dashed var(--faint)"></i>Ukjent sone</span>
+      </div>
+      <div class="scale" id="scale"></div>
+      <div class="attr">Kartdata © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-bidragsytere</div>
+    </section>
+    <aside class="panel">
+      <div class="scroll">
+        <section><p class="eyebrow">Mål for fase 1</p><div id="goals"></div></section>
+        <section id="sel"></section>
+        <section><p class="eyebrow">Crew</p><div class="crew" id="crew"></div></section>
+      </div>
+      <div class="foot">
+        <div class="plan" id="plan"></div>
+        <button class="btn" id="end">Avslutt dag</button>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

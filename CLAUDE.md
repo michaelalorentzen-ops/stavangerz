@@ -4,12 +4,13 @@ Turbasert zombie-overlevelse på et stilisert, ekte kart over Stavanger. Spillte
 
 ## Arkitektur
 
-- **Motoren er ren og deterministisk.** All spillogikk ligger i `src/engine.js` og `src/events.js`. All tilfeldighet går gjennom `rand(s)` med seed i `state.rng`, aldri `Math.random()`. Samme tilstand og samme ordre skal alltid gi samme resultat. Dette er grunnlaget for asynkron multiplayer, der en server kjører `resolveDay()`.
-- **UI-koden endrer ikke spillregler.** `src/ui.js` leser tilstanden og setter ordre (`crew.task`). Selve regnestykket skjer i motoren.
-- **Kartet bygges på forhånd.** OpenStreetMap-data hentes med `tools/fetch_osm.sh` og bygges til `src/map.json` med `tools/build_map.py`. Nettleseren skal aldri spørre Overpass direkte: alle spillere må få samme kart, og tjenesten tåler ikke trafikken.
+- **Motoren er ren og deterministisk.** All spillogikk ligger i `src/engine/` og bruker aldri DOM. All tilfeldighet går gjennom `rand(s)` med seed i `state.rng`, aldri `Math.random()`. Samme tilstand og samme ordre skal alltid gi samme resultat. Dette er grunnlaget for asynkron multiplayer, der en server kjører `resolveDay()`.
+- **UI-koden endrer ikke spillregler.** `src/ui/` leser tilstanden og setter ordre (`crew.task`). Selve regnestykket skjer i motoren.
+- **Kartet bygges på forhånd.** OpenStreetMap-data hentes med `tools/fetch_osm.sh` og bygges til `src/data/map.json` med `tools/build_map.py`. Nettleseren skal aldri spørre Overpass direkte: alle spillere må få samme kart, og tjenesten tåler ikke trafikken.
 - **Ingen sanntid.** Zombier er tall per sektor, ikke figurer som beveger seg. Ikke innfør Phaser, game loops eller object pooling.
 - **Ingen GPS eller posisjonsdata.** Byen er fast.
-- `dist/` og `src/map.json` er generert. Kjør `python3 tools/build.py` etter endringer i `src/`.
+- `dist/` og `src/data/map.json` er generert. `dist/` sjekkes ikke inn.
+- Før commit: `npm test` og `npm run typecheck` skal være grønne.
 
 ## Faser
 
@@ -21,7 +22,7 @@ Alle nye mekanikker skal vurderes mot alle fem fasene, også de som ikke er bygd
 4. **Bydel:** bonuser for hele bydeler, risiko ved å vokse for fort.
 5. **Fraksjoner:** andre overlevende, handel eller krig. Zombietrusselen avtar.
 
-Vanskelighetsgrad og zombieevner skal hentes fra én tabell per fase, ikke fra tall spredt i koden.
+Vanskelighetsgrad og zombieevner hentes fra fasetabellen i `src/engine/phases.ts` via `mods(s)`, aldri fra tall spredt i koden. Nye vanskelighetsknotter legges inn der, for alle fem faser.
 
 ## Designprinsipper
 
@@ -32,4 +33,4 @@ Vanskelighetsgrad og zombieevner skal hentes fra én tabell per fase, ikke fra t
 
 ## Balanse
 
-Etter regelendringer: kjør `node tools/sim.js 300` (en enkel bot mot motoren). Mål for fase 1 er at nesten alle runder kan vinnes, på rundt 20–30 dager for en god spiller.
+Etter regelendringer: kjør `npm run sim -- 300` (en enkel bot mot motoren). `tests/balance.test.ts` feiler hvis balansen glipper. Mål for fase 1 er at nesten alle runder kan vinnes, på rundt 20–30 dager for en god spiller.

@@ -8,7 +8,12 @@ Du starter på Buøy en tirsdag morgen. Bybrua er stengt, Rosenberg er overkjør
 
 ## Spill det
 
-Åpne `dist/index.html` i en nettleser. Fremdriften lagres i nettleseren.
+```bash
+npm install
+npm run dev
+```
+
+Eller bygg en frittstående fil med `npm run build` og åpne `dist/index.html`. Fremdriften lagres i nettleseren.
 
 ## Faser
 
@@ -25,32 +30,43 @@ Zombiene blir sterkere og mer uforutsigbare fra fase til fase.
 ## Struktur
 
 ```
+index.html            sideoppsett (Vite)
 src/
-  template.html   markup og CSS
-  engine.js       spillmotor (ren logikk, seedet tilfeldighet)
-  events.js       hendelseskort
-  ui.js           kart, panel og modaler
-  map.json        ferdigbygget kart (generert)
+  main.ts             oppstart og kobling mellom UI og motor
+  styles.css
+  engine/             spillmotoren, ren TypeScript uten DOM
+    types.ts          spilltilstand og ordre
+    phases.ts         fasetabellen og zombieevner
+    data.ts           sektorer, sperringer, naboer, egenskaper
+    engine.ts         newGame, resolveDay, taskOptions …
+    events.ts         hendelseskort
+    rng.ts            seedet tilfeldighet
+  ui/                 kart, panel og dialoger
+  data/map.json       ferdigbygget kart (generert)
+tests/                Vitest-tester for motoren, fasene, hendelsene og balansen
 tools/
-  fetch_osm.sh    henter rådata fra OpenStreetMap til data/osm.json
-  build_map.py    gjør rådata om til kart og soner (src/map.json)
-  build.py        setter sammen alt til dist/
-dist/             ferdig spill (generert)
+  bot.ts, sim.ts      enkel bot og balansesimulering
+  fetch_osm.sh        henter rådata fra OpenStreetMap til data/osm.json
+  build_map.py        gjør rådata om til kart og soner
+  artifact.mjs        lager dist/artifact.html for publisering som Claude-artifact
 ```
 
-## Bygg
+## Kommandoer
 
-```bash
-python3 tools/build.py
-```
+| Kommando | Hva den gjør |
+|---|---|
+| `npm run dev` | utviklingsserver |
+| `npm test` | alle tester |
+| `npm run typecheck` | typesjekk |
+| `npm run sim -- 300` | spiller 300 runder med boten og viser balansen |
+| `npm run build` | typesjekk og bygg til `dist/` |
 
 Bygg kartet på nytt fra OpenStreetMap (krever Python 3 og shapely):
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
 tools/fetch_osm.sh
-.venv/bin/python tools/build_map.py data/osm.json src/map.json
-python3 tools/build.py
+.venv/bin/python tools/build_map.py data/osm.json src/data/map.json
 ```
 
 ## Kartdata
