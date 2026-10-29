@@ -3,6 +3,7 @@ export * from './rng';
 export * from './data';
 export * from './skills';
 export * from './crew';
+export * from './cards';
 export * from './sectors';
 export * from './phases';
 export * from './engine';

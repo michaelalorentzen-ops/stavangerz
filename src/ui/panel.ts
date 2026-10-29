@@ -1,9 +1,10 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  dailyFood, dailyWater, GATE_STEPS, GATES, GEAR, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  dailyFood, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, skillLevel, STAT_LABEL, STATS, TRAITS, taskOptions, ZONE_INFO, sameTask,
 } from '../engine';
 import type { CrewMember, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
+import { bindCards, slotsHtml } from './cards';
 import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, ui } from './store';
 
 export function renderTop() {
@@ -25,12 +26,13 @@ export function renderGoals() {
   $('goals').innerHTML = `<div class="goals">
     ${row('Gjør alle sektorer på Buøy trygge', `${p.safe}/${p.total}`, p.safe === p.total)}
     ${p.gates.map((g) => row(`${g.name} på nivå 2`, `${g.level}/2`, g.level >= 2)).join('')}
-    <div class="hint">Utstyr: ${GEAR[S.gear].name} · Crew ${S.crew.length}/${housing(S)} senger</div>
+    <div class="hint">Utstyr på lager: ${S.stash.length} · Crew ${S.crew.length}/${housing(S)} senger</div>
   </div>`;
 }
 
 function taskShort(t: Task): string {
   if (t.type === 'hvile') return 'hviler';
+  if (t.type === 'lage') return 'lager utstyr';
   if (t.type === 'befeste') return 'bygger';
   const verb = { rydde: 'rydder', sanke: 'sanker' }[t.type];
   return `${verb} ${SECTORS[t.target].short}`;
@@ -138,8 +140,10 @@ export function renderCrew() {
       <div class="hp h${c.hp}" title="${HEALTH_LABEL[c.hp]}">${[1, 2, 3].map((i) => `<i class="${i <= c.hp ? 'on' : ''}"></i>`).join('')}</div>
       <div class="tr"><b>${TRAITS[c.trait].name}.</b> ${TRAITS[c.trait].desc}</div>
       <div class="statrow">${statPips(c.stats)}</div>
+      ${slotsHtml(c)}
       <select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}">${opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</select>
     </div>`).join('');
+  bindCards($('crew'));
   $('crew').querySelectorAll<HTMLSelectElement>('select').forEach((s) => s.addEventListener('change', () => {
     const c = S.crew.find((x) => x.id === s.dataset.crew)!;
     const o = opts.find((o) => taskKey(o) === s.value);

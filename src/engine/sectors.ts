@@ -1,11 +1,12 @@
 // Sektorer: Rydde, Sanke, kontroll, forfall og bosetting. Ren logikk.
 import { PLAYABLE, RES, RES_LABEL, SECTORS } from './data';
+import { armorMult, collectDropped, newCard, rollCard, wear } from './cards';
+import { CARDS } from './content/cards';
 import { injure } from './crew';
 import type { LogFn } from './crew';
-import { detectChance, fightPower, searchPower } from './engine';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
-import { stat } from './skills';
+import { detectChance, fightPower, searchPower, stat } from './skills';
 import type { CrewMember, GameState, SectorId, SectorState } from './types';
 
 /** Indeks = trusselnivå 1–5. Indeks 0 er ubrukt. */
@@ -51,9 +52,28 @@ function checkSpecial(s: GameState, id: SectorId, before: number, log: LogFn) {
   sec.specialFound = true;
   log(sp.text, 'find');
   if (sp.res) for (const r of RES) s.res[r] += sp.res[r] ?? 0;
-  if (sp.gear) s.gear = Math.max(s.gear, sp.gear); // erstattes av kort i Oppgave 3
+  if (sp.card) {
+    const k = newCard(s, sp.card);
+    s.stash.push(k);
+    log(`Crewet fikk med seg ${CARDS[k.def].name}.`, 'find');
+  }
   if (sp.flag) s.flags[sp.flag] = true;
   if (sp.moral) s.moral += sp.moral;
+}
+
+/** Sektorens unike kort tas første gang gjennomsøkt-prosenten krysser 60. */
+function checkUnique(s: GameState, id: SectorId, before: number, log: LogFn) {
+  const def = s.uniques[id];
+  if (!def || before >= 60 || s.sectors[id].searched < 60) return;
+  delete s.uniques[id];
+  const k = newCard(s, def);
+  s.stash.push(k);
+  log(`Gjemt bak et panel i ${SECTORS[id].short} lå ${CARDS[def].name}. ${CARDS[def].text}`, 'find');
+}
+
+/** Slitasje på verktøy for alle i teamet. */
+export function wearTools(s: GameState, team: CrewMember[], log: LogFn) {
+  for (const c of team) wear(s, c, 'verktoy', log);
 }
 
 /** Rydde: kjemp mot synlige zombier, eller gjennomsøk en tom sektor. */
@@ -66,21 +86,30 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
     const power = sum(team.map((c) => fightPower(s, c)));
     const before = sec.z;
     const kills = Math.min(sec.z, sround(s, power * (0.35 + rand(s) * 0.25) * M.killMult * THREAT_KILL[def.threat]));
+    for (const c of team) wear(s, c, 'vapen', log);
     sec.z -= kills; s.stats.kills += kills;
     for (let i = 0; i < kills; i++) pick(s, team).kills++;
     log(`${names(team)} ryddet ${kills} ${plural(kills)} i ${def.short}.${sec.z > 0 ? ` ${sec.z} igjen.` : ' Sektoren er tom for synlige zombier.'}`);
     for (const c of team) {
-      const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat], 0.02, 0.45);
+      const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c), 0.02, 0.45);
       if (rand(s) < risk) injure(s, c, `i ${def.short}`, log);
     }
     if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
     if (team.some((c) => c.trait === 'russ') && rand(s) < 0.25) log('Sondre filmet alt til en TikTok ingen kommer til å se.', 'fun');
     sec.searched = Math.min(100, sec.searched + searchGain(s, team) * 0.3);
     checkSpecial(s, id, searchedBefore, log);
+    checkUnique(s, id, searchedBefore, log);
+    wearTools(s, team, log);
+    pickUp(s, id, team, log);
     return;
   }
 
   // Tom for synlige zombier: gjennomsøk
+  if (rand(s) < M.cardFind) {
+    const k = rollCard(s, def.threat);
+    s.stash.push(k);
+    log(`${names(team)} fant ${CARDS[k.def].name} i ${def.short}.`, 'find');
+  }
   const gain = searchGain(s, team);
   if (sec.hidden > 0) {
     const p = detectChance(team);
@@ -107,6 +136,14 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
     if (rand(s) < 0.15 * M.injuryMult) injure(s, pick(s, team), 'i den siste kjelleren', log);
   }
   checkSpecial(s, id, searchedBefore, log);
+  checkUnique(s, id, searchedBefore, log);
+  wearTools(s, team, log);
+  pickUp(s, id, team, log);
+}
+
+/** Utstyr som ligger igjen hentes av de som er i sektoren. */
+function pickUp(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
+  if (team.some((c) => s.crew.includes(c))) collectDropped(s, id, log);
 }
 
 /** Sanke: hent dagens utbytte fra en sektor uten zombier. */
@@ -121,6 +158,8 @@ export function sanke(s: GameState, id: SectorId, team: CrewMember[], log: LogFn
     if (n > 0) { s.res[r] += n; s.stats.found += n; got.push(`${n} ${RES_LABEL[r].toLowerCase()}`); }
   }
   log(`${names(team)} sanket i ${def.short}: ${got.length ? got.join(', ') : 'ingenting i dag'}.`);
+  wearTools(s, team, log);
+  pickUp(s, id, team, log);
 }
 
 /** Kontroll: +10 per gruppe med Rydde eller Sanke, forfall der ingen er. */

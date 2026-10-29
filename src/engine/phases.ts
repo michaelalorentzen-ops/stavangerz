@@ -38,6 +38,8 @@ export interface PhaseModifiers {
   turnCap: number;
   /** andelen mat som er igjen i sektorlagrene etter hver 10. dag */
   foodRot: number;
+  /** sjanse for at Rydde i en tom sektor gir et utstyrskort */
+  cardFind: number;
 }
 
 export interface PhaseDef {
@@ -54,27 +56,27 @@ export interface PhaseDef {
 export const PHASES: Record<PhaseId, PhaseDef> = {
   1: {
     id: 1, name: 'Utbruddet', focus: 'Klarer hjemsonen, let etter utstyr, sett opp perimeter.',
-    mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 1, injuryMult: 1, nightBase: 0, nightGrowth: 0.004, nightLevelReduction: 0.15, breachDays: 6, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.18, turnCap: 50, foodRot: 0.85 },
+    mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 1, injuryMult: 1, nightBase: 0, nightGrowth: 0.004, nightLevelReduction: 0.15, breachDays: 6, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.18, turnCap: 50, foodRot: 0.85, cardFind: 0.25 },
     traitPool: [], newTraits: 0,
   },
   2: {
     id: 2, name: 'Hovedkvarter', focus: 'Finn transport, ta et HQ, fordel roller.',
-    mods: { zombieMult: 1.3, hiddenRatio: 0.28, killMult: 0.95, injuryMult: 1.1, nightBase: 0.03, nightGrowth: 0.005, nightLevelReduction: 0.15, breachDays: 5, hiddenOutbreak: 0.11, eventChance: 0.6, factionPressure: 0, controlDecay: 6, searchedDecay: 2, creepChance: 0.15, encounterChance: 0.2, turnCap: 60, foodRot: 0.8 },
+    mods: { zombieMult: 1.3, hiddenRatio: 0.28, killMult: 0.95, injuryMult: 1.1, nightBase: 0.03, nightGrowth: 0.005, nightLevelReduction: 0.15, breachDays: 5, hiddenOutbreak: 0.11, eventChance: 0.6, factionPressure: 0, controlDecay: 6, searchedDecay: 2, creepChance: 0.15, encounterChance: 0.2, turnCap: 60, foodRot: 0.8, cardFind: 0.25 },
     traitPool: ['lopere', 'kjellerkrypere'], newTraits: 1,
   },
   3: {
     id: 3, name: 'Ekspansjon', focus: 'Ta naboområder, få crew-ledere, rekrutter ved porten.',
-    mods: { zombieMult: 1.6, hiddenRatio: 0.3, killMult: 0.9, injuryMult: 1.2, nightBase: 0.06, nightGrowth: 0.006, nightLevelReduction: 0.14, breachDays: 4.5, hiddenOutbreak: 0.12, eventChance: 0.55, factionPressure: 0, controlDecay: 7, searchedDecay: 3, creepChance: 0.18, encounterChance: 0.22, turnCap: 70, foodRot: 0.75 },
+    mods: { zombieMult: 1.6, hiddenRatio: 0.3, killMult: 0.9, injuryMult: 1.2, nightBase: 0.06, nightGrowth: 0.006, nightLevelReduction: 0.14, breachDays: 4.5, hiddenOutbreak: 0.12, eventChance: 0.55, factionPressure: 0, controlDecay: 7, searchedDecay: 3, creepChance: 0.18, encounterChance: 0.22, turnCap: 70, foodRot: 0.75, cardFind: 0.25 },
     traitPool: ['lopere', 'kjellerkrypere', 'flokk', 'seige'], newTraits: 1,
   },
   4: {
     id: 4, name: 'Bydel', focus: 'Hold hele bydeler, ikke voks fortere enn forsvaret tåler.',
-    mods: { zombieMult: 1.9, hiddenRatio: 0.3, killMult: 0.85, injuryMult: 1.3, nightBase: 0.08, nightGrowth: 0.006, nightLevelReduction: 0.13, breachDays: 4, hiddenOutbreak: 0.13, eventChance: 0.5, factionPressure: 0.1, controlDecay: 8, searchedDecay: 3, creepChance: 0.2, encounterChance: 0.24, turnCap: 80, foodRot: 0.75 },
+    mods: { zombieMult: 1.9, hiddenRatio: 0.3, killMult: 0.85, injuryMult: 1.3, nightBase: 0.08, nightGrowth: 0.006, nightLevelReduction: 0.13, breachDays: 4, hiddenOutbreak: 0.13, eventChance: 0.5, factionPressure: 0.1, controlDecay: 8, searchedDecay: 3, creepChance: 0.2, encounterChance: 0.24, turnCap: 80, foodRot: 0.75, cardFind: 0.25 },
     traitPool: ['lopere', 'kjellerkrypere', 'flokk', 'seige', 'smarte'], newTraits: 1,
   },
   5: {
     id: 5, name: 'Fraksjoner', focus: 'Andre overlevende vil ha det du har. Handel eller krig.',
-    mods: { zombieMult: 1.4, hiddenRatio: 0.25, killMult: 0.85, injuryMult: 1.3, nightBase: 0.02, nightGrowth: 0.003, nightLevelReduction: 0.13, breachDays: 5, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0.4, controlDecay: 8, searchedDecay: 3, creepChance: 0.15, encounterChance: 0.2, turnCap: 90, foodRot: 0.75 },
+    mods: { zombieMult: 1.4, hiddenRatio: 0.25, killMult: 0.85, injuryMult: 1.3, nightBase: 0.02, nightGrowth: 0.003, nightLevelReduction: 0.13, breachDays: 5, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0.4, controlDecay: 8, searchedDecay: 3, creepChance: 0.15, encounterChance: 0.2, turnCap: 90, foodRot: 0.75, cardFind: 0.25 },
     traitPool: ['lopere', 'kjellerkrypere', 'flokk', 'seige', 'smarte'], newTraits: 1,
   },
 };

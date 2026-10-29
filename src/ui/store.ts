@@ -1,6 +1,6 @@
 // Felles UI-tilstand: spillet, hva som er valgt, og lagring i nettleseren.
 import { migrate } from '../engine';
-import type { GameState, GateId, MapSectorId, SectorKind, TaskType } from '../engine';
+import type { GameState, GateId, MapSectorId, SectorKind, Slot, TaskType } from '../engine';
 import rawMap from '../data/map.json';
 
 export interface MapShape { id: string; d: string; cx: number; cy: number }
@@ -36,6 +36,8 @@ export const ui = {
   sel: { kind: 'sector', id: 'hjem' } as Selection,
   /** valgt handling i sektorkortet */
   selAction: null as TaskType | null,
+  /** åpen kortvelger på et crewkort */
+  picker: null as { crewId: string; slot: Slot } | null,
   /** true mens forhåndsvisningen bak tittelskjermen tegnes, så den ikke lagres */
   previewing: false,
   /** settes av main.ts, tegner alt på nytt */

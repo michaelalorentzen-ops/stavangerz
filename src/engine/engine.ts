@@ -1,11 +1,12 @@
 // Spillmotoren. Ren logikk: all tilfeldighet går gjennom state.rng, så samme
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
-import { GATES, GATE_STEPS, GEAR, NEIGHBORS, PLAYABLE, SECTORS, STATS } from './data';
+import { give, lage, newCard, placeUniques, rollStarter } from './cards';
+import { GATES, GATE_STEPS, NEIGHBORS, PLAYABLE, SECTORS, STATS } from './data';
 import { mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
-import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, updateControl } from './sectors';
-import { stat, toSkill } from './skills';
+import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, updateControl, wearTools } from './sectors';
+import { fightPower, buildPower, stat, toSkill } from './skills';
 import type {
   CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, Stats, Task, TaskType, TraitId,
 } from './types';
@@ -15,14 +16,16 @@ export const GATE_IDS = Object.keys(GATES) as GateId[];
 // ---------- Oppsett ----------
 export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): GameState {
   const s: GameState = {
-    v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, gear: 1,
+    v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, stash: [], uniques: {}, nextUid: 1,
     res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
     flags: {}, crew: [], seenEvents: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0 },
   };
-  s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, me: true });
+  s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true });
+  give(s.crew[0], newCard(s, 'k_ror'));
+  give(s.crew[0], newCard(s, 'baufil'));
   for (const id of neighborIds) addNeighbor(s, id);
   for (const id of PLAYABLE) {
     const d = SECTORS[id];
@@ -34,50 +37,26 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
     };
   }
   for (const id of GATE_IDS) s.gates[id] = { work: 0, level: 0 };
+  placeUniques(s);
   return s;
 }
 
 export function addNeighbor(s: GameState, id: string) {
   const n = NEIGHBORS.find((x) => x.id === id);
   if (!n) throw new Error(`Ukjent nabo: ${id}`);
-  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0 });
+  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {} });
+  give(s.crew[s.crew.length - 1], rollStarter(s));
 }
 
 /** Godtar bare v3. Lagring fra prototypen (v1/v2) forkastes. */
 export function migrate(raw: unknown): GameState | null {
   if (!raw || typeof raw !== 'object') return null;
   const s = raw as { v?: number };
-  return s.v === 3 ? (raw as GameState) : null;
+  // v3 fra før utstyrskortene mangler lager og kan ikke brukes
+  return s.v === 3 && Array.isArray((raw as GameState).stash) ? (raw as GameState) : null;
 }
 
 // ---------- Avledede verdier ----------
-// Styrkeformlene regner i gamle prikkenheter: stat(c, k) / 10.
-const moralMult = (s: GameState) => (s.moral < 25 ? 0.75 : s.moral < 50 ? 0.9 : 1);
-const hpMult = (c: CrewMember) => (c.hp >= 3 ? 1 : c.hp === 2 ? 0.85 : 0.55);
-
-export function fightPower(s: GameState, c: CrewMember): number {
-  let p = (stat(c, 'muskler') * 1.0 + stat(c, 'nerver') * 0.5 + stat(c, 'kondis') * 0.3) / 10;
-  if (c.trait === 'hv') p += 2;
-  return p * GEAR[s.gear].mult * moralMult(s) * hpMult(c);
-}
-export function detectChance(team: CrewMember[]): number {
-  if (!team.length) return 0;
-  const avg = sum(team.map((c) => stat(c, 'snoking') / 10)) / team.length;
-  const p = 0.1 + 0.05 * avg + (team.some((c) => c.trait === 'los') ? 0.1 : 0);
-  return clamp(p, 0.05, 0.6);
-}
-export function searchPower(s: GameState, c: CrewMember): number {
-  let p = (stat(c, 'snoking') + stat(c, 'kondis') * 0.3) / 10;
-  if (c.trait === 'lokalkjent') p += 2;
-  return p * moralMult(s) * hpMult(c);
-}
-export function buildPower(s: GameState, c: CrewMember): number {
-  let p = (stat(c, 'mekk') + stat(c, 'muskler') * 0.4) / 10;
-  if (c.trait === 'sveiser') p += 3;
-  if (c.trait === 'hms' || c.trait === 'dugnad') p += 2;
-  if (s.flags.aggregat) p *= 1.3;
-  return p * moralMult(s) * hpMult(c);
-}
 export const hasTrait = (s: GameState, t: TraitId) => s.crew.some((c) => c.trait === t);
 export const dailyFood = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.6) - (hasTrait(s, 'kokk') ? 1 : 0));
 export const dailyWater = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.5));
@@ -95,7 +74,7 @@ export function addGateWork(s: GameState, id: GateId, work: number): number {
 export type TaskOption = Task & { label: string };
 
 export function taskOptions(s: GameState): TaskOption[] {
-  const opts: TaskOption[] = [{ type: 'hvile', label: 'Hvile hjemme' }];
+  const opts: TaskOption[] = [{ type: 'hvile', label: 'Hvile hjemme' }, { type: 'lage', label: 'Lage utstyr (3 skrap, 1 tre)' }];
   for (const id of PLAYABLE) {
     const sec = s.sectors[id], n = SECTORS[id].short;
     if (sec.z > 0 || sec.searched < 100) opts.push({ type: 'rydde', target: id, label: `Rydde ${n}` });
@@ -124,7 +103,7 @@ export function resolveDay(s: GameState): LogLine[] {
   const M = mods(s);
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
-  const team = (type: TaskType, target: string) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
+  const team = (type: TaskType, target: string | null) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
 
   // 1) Rydde og 2) Sanke
   const groups = {} as Record<SectorId, number>;
@@ -145,8 +124,12 @@ export function resolveDay(s: GameState): LogLine[] {
     if (used < need) work *= (used / need) * 0.7 + 0.3;
     for (let i = 0; i < used; i++) s.res[s.res.skrap > s.res.tre ? 'skrap' : 'tre']--;
     const up = addGateWork(s, id, work);
+    wearTools(s, tm, log);
     log(`${names(tm)} befestet ${GATES[id].name} (${used} byggemateriale).${up ? ` Nå nivå ${s.gates[id].level}.` : ''}${used < need ? ' Mangler materialer.' : ''}`, up ? 'good' : '');
   }
+
+  // 3b) Lage utstyr
+  for (const c of team('lage', null)) lage(s, c, stat(c, 'mekk'), log);
 
   // 4) Hvile
   for (const c of s.crew.filter((c) => c.task.type === 'hvile')) {

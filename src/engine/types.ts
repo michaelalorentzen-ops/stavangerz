@@ -16,7 +16,27 @@ export type ZombieTraitId = 'lopere' | 'kjellerkrypere' | 'flokk' | 'seige' | 's
 
 export type SectorKind = 'hjem' | 'butikk' | 'industri' | 'bolig' | 'natur' | 'kai' | 'offentlig';
 
-/** En kortinstans. Tas i bruk i Oppgave 3. */
+export type Slot = 'vapen' | 'beskyttelse' | 'verktoy';
+export type Family = 'makeshift' | 'for';
+export type Rarity = 'vanlig' | 'sjelden' | 'episk' | 'unik';
+
+export interface CardDef {
+  id: string;
+  name: string;
+  family: Family;
+  slot: Slot;
+  level: 1 | 2 | 3 | 4 | 5;
+  rarity: Rarity;
+  bonus?: Partial<Stats>;
+  /** lydløst, teller for vakt og speiding (Oppgave 4) */
+  quiet?: boolean;
+  durability: number;
+  text: string;
+  /** bare unike kort: sektorene kortet kan ligge i */
+  places?: SectorId[];
+}
+
+/** En kortinstans. */
 export interface CardInst {
   uid: string;
   def: string;
@@ -25,6 +45,7 @@ export interface CardInst {
 
 export type Task =
   | { type: 'hvile' }
+  | { type: 'lage' }
   | { type: 'rydde' | 'sanke'; target: SectorId }
   | { type: 'befeste'; target: GateId };
 export type TaskType = Task['type'];
@@ -39,6 +60,7 @@ export interface CrewMember {
   hp: number;
   task: Task;
   kills: number;
+  gear: Partial<Record<Slot, CardInst>>;
   me?: boolean;
 }
 
@@ -61,7 +83,7 @@ export interface SectorState {
   settled: boolean;
   /** sektorens funn er tatt */
   specialFound: boolean;
-  /** utstyr som ligger igjen i sektoren (Oppgave 3) */
+  /** utstyr som ligger igjen i sektoren */
   dropped: CardInst[];
 }
 
@@ -81,7 +103,11 @@ export interface GameState {
   /** zombieevner som er trukket for denne runden, vokser med fasene */
   zombieTraits: ZombieTraitId[];
   moral: number;
-  gear: number;
+  /** kort på lageret, ikke utstyrt */
+  stash: CardInst[];
+  /** unike kort som ligger i sektorer og ikke er funnet */
+  uniques: Partial<Record<SectorId, string>>;
+  nextUid: number;
   res: Resources;
   flags: Partial<Record<Flag, boolean>>;
   crew: CrewMember[];

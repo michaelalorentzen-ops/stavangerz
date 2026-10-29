@@ -3,6 +3,7 @@ import { newGame } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
 import { draft, endDay, endScreen, titleScreen } from './ui/modals';
+import { renderStash } from './ui/cards';
 import { renderCrew, renderGoals, renderPlan, renderSel, renderTop } from './ui/panel';
 import { $, MAP, save, ui } from './ui/store';
 import type { Selection } from './ui/store';
@@ -16,7 +17,7 @@ function select(s: Selection) {
 }
 
 ui.refresh = () => {
-  renderTop(); renderGoals(); renderSel(); renderCrew(); renderPlan(); renderMap(select);
+  renderTop(); renderGoals(); renderSel(); renderCrew(); renderStash(); renderPlan(); renderMap(select);
   save();
 };
 

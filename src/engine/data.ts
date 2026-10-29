@@ -16,7 +16,7 @@ export interface SectorDef {
   hidden: number;
   loot: Resources;
   /** funn når halve sektoren er gjennomsøkt */
-  special?: { text: string; res?: Partial<Resources>; gear?: number; flag?: Flag; moral?: number };
+  special?: { text: string; res?: Partial<Resources>; card?: string; flag?: Flag; moral?: number };
   locked?: boolean;
 }
 
@@ -65,14 +65,6 @@ export const PHASE_RES: Record<PhaseId, ResKey[]> = {
 
 export const HEALTH_LABEL = ['Bitt', 'Ille ute', 'Skrapt opp', 'Frisk'];
 
-/** indeks = utstyrsnivå (state.gear) */
-export const GEAR: { name: string; mult: number }[] = [
-  { name: 'Bare hender', mult: 0.8 },
-  { name: 'Golfkøller og stekepanner', mult: 1.0 },
-  { name: 'Brekkjern og spikerpistoler', mult: 1.25 },
-  { name: 'Brekkjern, spikerpistoler og en hagle', mult: 1.45 },
-];
-
 export const SECTORS: Record<MapSectorId, SectorDef> = {
   hjem: {
     name: 'Hjemme', short: 'Hjemme',
@@ -96,7 +88,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     desc: 'Ukens tilbud: alt. Gangene er fulle av spikerpistoler, presenning og zombier i arbeidsklær.',
     z: 11, hidden: 3,
     loot: { mat: 4, vann: 4, medisin: 0, tre: 8, skrap: 12, metall: 0, strom: 0, drivstoff: 2 },
-    special: { text: 'Verktøyavdelingen er urørt. Crewet bytter golfkøllene mot brekkjern og spikerpistoler.', gear: 2 },
+    special: { text: 'Verktøyavdelingen er urørt. Crewet bytter golfkøllene mot brekkjern og spikerpistoler.', card: 'spikerpistol_obs' },
   },
   nordkrysset: {
     name: 'Nordkrysset', short: 'Nordkrysset',
@@ -104,7 +96,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     desc: 'Rundkjøringene mot Hundvåg. Rushtidskø fra helvete, bokstavelig talt. Mange biler med full tank.',
     z: 14, hidden: 3,
     loot: { mat: 6, vann: 6, medisin: 2, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 12 },
-    special: { text: 'En politibil står i grøfta. Bagasjerommet har en hagle og en eske patroner. Betjenten trenger dem ikke lenger.', gear: 3 },
+    special: { text: 'En politibil står i grøfta. Bagasjerommet har en hagle og en eske patroner. Betjenten trenger dem ikke lenger.', card: 'hagle_politibil' },
   },
   buoy_nord: {
     name: 'Buøy nord', short: 'Buøy nord',
