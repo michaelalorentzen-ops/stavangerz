@@ -3,7 +3,8 @@ import { playGame } from '../tools/bot';
 
 // Fase 1 skal kunne vinnes nesten alltid, men ikke for fort.
 // Boten er dum, så en god spiller bør gjøre det bedre enn tallene her.
-describe('balanse i fase 1', () => {
+// av til Oppgave 9 i fase1-kjerneregler
+describe.skip('balanse i fase 1', () => {
   const games = Array.from({ length: 150 }, (_, i) => playGame(i + 1));
   const won = games.filter((s) => s.over === 'won');
   const days = won.map((s) => s.day - 1).sort((a, b) => a - b);

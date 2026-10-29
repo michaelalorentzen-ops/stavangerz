@@ -40,7 +40,7 @@ export function game(): GameState {
   return ui.S;
 }
 
-const SAVE_KEY = 'stavanger-z-v1';
+const SAVE_KEY = 'stavanger-z-v3';
 export function save() {
   if (ui.previewing || !ui.S) return;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(ui.S)); } catch { /* lagring er en bonus */ }

@@ -1,6 +1,6 @@
 export type StatKey = 'muskler' | 'kondis' | 'snoking' | 'nerver' | 'mekk' | 'prat';
 export type Stats = Record<StatKey, number>;
-export type ResKey = 'mat' | 'vann' | 'medisin' | 'materialer' | 'drivstoff';
+export type ResKey = 'mat' | 'vann' | 'medisin' | 'tre' | 'skrap' | 'metall' | 'strom' | 'drivstoff';
 export type Resources = Record<ResKey, number>;
 
 export type SectorId = 'hjem' | 'tommerodden' | 'obs' | 'nordkrysset' | 'buoy_nord' | 'skolen' | 'sorspissen';
@@ -57,7 +57,7 @@ export interface GateState {
 export type Flag = 'gann' | 'aggregat' | 'buss' | 'katt' | 'svein' | `gone_${string}`;
 
 export interface GameState {
-  v: 2;
+  v: 3;
   seed: number;
   rng: number;
   day: number;

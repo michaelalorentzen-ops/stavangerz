@@ -1,11 +1,12 @@
 // Spillmotoren. Ren logikk: all tilfeldighet går gjennom state.rng, så samme
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
-import { GATES, GATE_STEPS, GEAR, HEALTH_LABEL, NEIGHBORS, PLAYABLE, RES, RES_LABEL, SECTORS } from './data';
+import { GATES, GATE_STEPS, GEAR, HEALTH_LABEL, NEIGHBORS, PLAYABLE, RES, RES_LABEL, SECTORS, STATS } from './data';
 import { mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
+import { stat, toSkill } from './skills';
 import type {
-  CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Task, TaskType, TraitId,
+  CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, Stats, Task, TaskType, TraitId,
 } from './types';
 
 export const GATE_IDS = Object.keys(GATES) as GateId[];
@@ -14,14 +15,14 @@ const lootLeft = (sec: GameState['sectors'][SectorId]) => sum(Object.values(sec.
 // ---------- Oppsett ----------
 export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): GameState {
   const s: GameState = {
-    v: 2, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, gear: 1,
-    res: { mat: 12, vann: 10, medisin: 2, materialer: 4, drivstoff: 0 },
+    v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, gear: 1,
+    res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
     flags: {}, crew: [], seenEvents: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0 },
   };
-  s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: { ...self.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, me: true });
+  s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, me: true });
   for (const id of neighborIds) addNeighbor(s, id);
   for (const id of PLAYABLE) {
     const d = SECTORS[id];
@@ -37,42 +38,36 @@ export function addNeighbor(s: GameState, id: string) {
   s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0 });
 }
 
-/** Oppgraderer en lagret tilstand fra prototypen (v1). */
+/** Godtar bare v3. Lagring fra prototypen (v1/v2) forkastes. */
 export function migrate(raw: unknown): GameState | null {
   if (!raw || typeof raw !== 'object') return null;
-  const s = raw as Omit<GameState, 'v'> & { v: number };
-  if (s.v === 1) return { ...s, v: 2, phase: 1, zombieTraits: [] };
-  return s.v === 2 ? (s as GameState) : null;
+  const s = raw as { v?: number };
+  return s.v === 3 ? (raw as GameState) : null;
 }
 
 // ---------- Avledede verdier ----------
-export function stat(c: CrewMember, k: StatKey): number {
-  let v = c.stats[k];
-  if (k === 'nerver' && c.trait === 'filmnerd') v += 1;
-  if (k === 'kondis' && c.trait === 'buss' && c.task.type !== 'hvile') v += 1;
-  return v;
-}
+// Styrkeformlene regner i gamle prikkenheter: stat(c, k) / 10.
 const moralMult = (s: GameState) => (s.moral < 25 ? 0.75 : s.moral < 50 ? 0.9 : 1);
 const hpMult = (c: CrewMember) => (c.hp >= 3 ? 1 : c.hp === 2 ? 0.85 : 0.55);
 
 export function fightPower(s: GameState, c: CrewMember): number {
-  let p = stat(c, 'muskler') * 1.0 + stat(c, 'nerver') * 0.5 + stat(c, 'kondis') * 0.3;
+  let p = (stat(c, 'muskler') * 1.0 + stat(c, 'nerver') * 0.5 + stat(c, 'kondis') * 0.3) / 10;
   if (c.trait === 'hv') p += 2;
   return p * GEAR[s.gear].mult * moralMult(s) * hpMult(c);
 }
 export function detectChance(team: CrewMember[]): number {
   if (!team.length) return 0;
-  const avg = sum(team.map((c) => stat(c, 'snoking'))) / team.length;
+  const avg = sum(team.map((c) => stat(c, 'snoking') / 10)) / team.length;
   const p = 0.1 + 0.05 * avg + (team.some((c) => c.trait === 'los') ? 0.1 : 0);
   return clamp(p, 0.05, 0.6);
 }
 export function searchPower(s: GameState, c: CrewMember): number {
-  let p = stat(c, 'snoking') + stat(c, 'kondis') * 0.3;
+  let p = (stat(c, 'snoking') + stat(c, 'kondis') * 0.3) / 10;
   if (c.trait === 'lokalkjent') p += 2;
   return p * moralMult(s) * hpMult(c);
 }
 export function buildPower(s: GameState, c: CrewMember): number {
-  let p = stat(c, 'mekk') + stat(c, 'muskler') * 0.4;
+  let p = (stat(c, 'mekk') + stat(c, 'muskler') * 0.4) / 10;
   if (c.trait === 'sveiser') p += 3;
   if (c.trait === 'hms' || c.trait === 'dugnad') p += 2;
   if (s.flags.aggregat) p *= 1.3;
@@ -186,7 +181,7 @@ export function resolveDay(s: GameState): LogLine[] {
       for (let i = 0; i < kills; i++) pick(s, clr).kills++;
       log(`${names(clr)} ryddet ${kills} ${plural(kills)} i ${SECTORS[id].short}.${sec.z > 0 ? ` ${sec.z} igjen.` : ''}`);
       for (const c of clr) {
-        const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - stat(c, 'kondis') * 0.02) * M.injuryMult, 0.02, 0.45);
+        const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult, 0.02, 0.45);
         if (rand(s) < risk) injure(c, `i ${SECTORS[id].short}`);
       }
       if (clr.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
@@ -242,7 +237,7 @@ export function resolveDay(s: GameState): LogLine[] {
       sec.hidden -= 1; s.stats.kills++;
       const c = pick(s, tm);
       log(`En zombie lå gjemt i en bod i ${SECTORS[id].short}. ${c.name} fikk overraskelsen.`, 'warn');
-      if (rand(s) < (0.35 - stat(c, 'kondis') * 0.04) * M.injuryMult) injure(c, 'av en bodzombie');
+      if (rand(s) < (0.35 - (stat(c, 'kondis') / 10) * 0.04) * M.injuryMult) injure(c, 'av en bodzombie');
     }
   }
 
@@ -252,11 +247,11 @@ export function resolveDay(s: GameState): LogLine[] {
     if (!tm.length) continue;
     let work = sum(tm.map((c) => buildPower(s, c)));
     const need = Math.ceil(work / 3);
-    const used = Math.min(need, s.res.materialer);
+    const used = Math.min(need, s.res.tre + s.res.skrap);
     if (used < need) work *= (used / need) * 0.7 + 0.3;
-    s.res.materialer -= used;
+    for (let i = 0; i < used; i++) s.res[s.res.skrap > s.res.tre ? 'skrap' : 'tre']--;
     const up = addGateWork(s, id, work);
-    log(`${names(tm)} befestet ${GATES[id].name} (${used} materialer).${up ? ` Nå nivå ${s.gates[id].level}.` : ''}${used < need ? ' Mangler materialer.' : ''}`, up ? 'good' : '');
+    log(`${names(tm)} befestet ${GATES[id].name} (${used} byggemateriale).${up ? ` Nå nivå ${s.gates[id].level}.` : ''}${used < need ? ' Mangler materialer.' : ''}`, up ? 'good' : '');
   }
 
   // 4) Hvile

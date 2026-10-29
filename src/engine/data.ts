@@ -1,5 +1,5 @@
 // Statiske spilldata: sektorer, sperringer, egenskaper og naboer i fase 1.
-import type { Flag, GateId, MapSectorId, ResKey, Resources, SectorId, StatKey, Stats, TraitId } from './types';
+import type { Flag, GateId, MapSectorId, PhaseId, ResKey, Resources, SectorId, StatKey, Stats, TraitId } from './types';
 
 export interface SectorDef {
   name: string;
@@ -45,8 +45,16 @@ export const STAT_HINT: Record<StatKey, string> = {
   mekk: 'Bygge, fikse, sveise',
   prat: 'Overtale, rekruttere, handle',
 };
-export const RES: ResKey[] = ['mat', 'vann', 'medisin', 'materialer', 'drivstoff'];
-export const RES_LABEL: Record<ResKey, string> = { mat: 'Mat', vann: 'Vann', medisin: 'Medisin', materialer: 'Materialer', drivstoff: 'Drivstoff' };
+export const RES: ResKey[] = ['mat', 'vann', 'medisin', 'tre', 'skrap', 'metall', 'strom', 'drivstoff'];
+export const RES_LABEL: Record<ResKey, string> = { mat: 'Mat', vann: 'Vann', medisin: 'Medisin', tre: 'Tre', skrap: 'Skrap', metall: 'Metall', strom: 'Strøm', drivstoff: 'Drivstoff' };
+/** ressursene som alltid vises i toppfeltet i hver fase (andre vises når de er over 0) */
+export const PHASE_RES: Record<PhaseId, ResKey[]> = {
+  1: ['mat', 'vann', 'medisin', 'tre', 'skrap'],
+  2: ['mat', 'vann', 'medisin', 'tre', 'skrap', 'metall', 'drivstoff'],
+  3: ['mat', 'vann', 'medisin', 'tre', 'skrap', 'metall', 'drivstoff'],
+  4: ['mat', 'vann', 'medisin', 'tre', 'skrap', 'metall', 'strom', 'drivstoff'],
+  5: ['mat', 'vann', 'medisin', 'tre', 'skrap', 'metall', 'strom', 'drivstoff'],
+};
 
 export const HEALTH_LABEL = ['Bitt', 'Ille ute', 'Skrapt opp', 'Frisk'];
 
@@ -63,55 +71,55 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     name: 'Hjemme', short: 'Hjemme',
     desc: 'Rekkehuset ditt ved motorveien. Kaffetrakteren virker fortsatt. Naboen gjør ikke det.',
     z: 4, hidden: 1,
-    loot: { mat: 10, vann: 12, medisin: 1, materialer: 3, drivstoff: 0 },
+    loot: { mat: 10, vann: 12, medisin: 1, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
     special: { text: 'Naboens fryseboks: 6 kilo elgkjøttdeig og en pose isbiter fra 2019.', res: { mat: 6 } },
   },
   tommerodden: {
     name: 'Tømmerodden', short: 'Tømmerodden',
     desc: 'SOTS sikkerhetssenter og Skoleskipet Gann. Folk her har kurs i å overleve. Kurset dekket ikke dette.',
     z: 9, hidden: 3,
-    loot: { mat: 6, vann: 6, medisin: 7, materialer: 4, drivstoff: 3 },
+    loot: { mat: 6, vann: 6, medisin: 7, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 3 },
     special: { text: 'Skoleskipet Gann ligger fortøyd med fulle tanker. Noter deg det til fase 2. Dere tar med førstehjelpsskapet.', res: { medisin: 4 }, flag: 'gann' },
   },
   obs: {
     name: 'Obs Bygg Buøy', short: 'Obs Bygg',
     desc: 'Ukens tilbud: alt. Gangene er fulle av spikerpistoler, presenning og zombier i arbeidsklær.',
     z: 11, hidden: 3,
-    loot: { mat: 4, vann: 4, medisin: 0, materialer: 20, drivstoff: 2 },
+    loot: { mat: 4, vann: 4, medisin: 0, tre: 8, skrap: 12, metall: 0, strom: 0, drivstoff: 2 },
     special: { text: 'Verktøyavdelingen er urørt. Crewet bytter golfkøllene mot brekkjern og spikerpistoler.', gear: 2 },
   },
   nordkrysset: {
     name: 'Nordkrysset', short: 'Nordkrysset',
     desc: 'Rundkjøringene mot Hundvåg. Rushtidskø fra helvete, bokstavelig talt. Mange biler med full tank.',
     z: 14, hidden: 3,
-    loot: { mat: 6, vann: 6, medisin: 2, materialer: 3, drivstoff: 12 },
+    loot: { mat: 6, vann: 6, medisin: 2, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 12 },
     special: { text: 'En politibil står i grøfta. Bagasjerommet har en hagle og en eske patroner. Betjenten trenger dem ikke lenger.', gear: 3 },
   },
   buoy_nord: {
     name: 'Buøy nord', short: 'Buøy nord',
     desc: 'Eneboliger, barnehage og trampoliner. Rolig nabolag. Var det.',
     z: 10, hidden: 3,
-    loot: { mat: 20, vann: 16, medisin: 3, materialer: 4, drivstoff: 2 },
+    loot: { mat: 20, vann: 16, medisin: 3, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 2 },
     special: { text: 'En garasje med aggregat og hele Biltema-katalogen. Befesting går raskere fra nå.', flag: 'aggregat' },
   },
   skolen: {
     name: 'Buøy skole', short: 'Skolen',
     desc: 'Det var foreldremøte i går kveld. Mange ble igjen. Kantina har frysevafler.',
     z: 16, hidden: 4,
-    loot: { mat: 26, vann: 14, medisin: 3, materialer: 3, drivstoff: 0 },
+    loot: { mat: 26, vann: 14, medisin: 3, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
     special: { text: 'Kantina: 300 frysevafler og en spann syltetøy. Moralen stiger merkbart.', res: { mat: 6 }, moral: 15 },
   },
   sorspissen: {
     name: 'Sørspissen', short: 'Sørspissen',
     desc: 'Rundkjøringen ved Bybrua. Herfra kommer alt som vil inn fra byen.',
     z: 12, hidden: 3,
-    loot: { mat: 8, vann: 6, medisin: 1, materialer: 5, drivstoff: 6 },
+    loot: { mat: 8, vann: 6, medisin: 1, tre: 2, skrap: 3, metall: 0, strom: 0, drivstoff: 6 },
     special: { text: 'En Kolumbus-buss står parkert med nøkkelen i. Rute 6, Hundvåg via sentrum. Transport til fase 2 er sikret.', flag: 'buss' },
   },
   rosenberg: {
     name: 'Rosenberg Verft', short: 'Rosenberg',
     desc: 'Kraner, stål og kaier. Perfekt HQ. Problemet er at hele morgenskiftet fortsatt er på jobb.',
-    z: 0, hidden: 0, loot: { mat: 0, vann: 0, medisin: 0, materialer: 0, drivstoff: 0 },
+    z: 0, hidden: 0, loot: { mat: 0, vann: 0, medisin: 0, tre: 0, skrap: 0, metall: 0, strom: 0, drivstoff: 0 },
     locked: true,
   },
 };
@@ -138,7 +146,7 @@ export const ZONE_INFO: Record<string, string> = {
 
 export const TRAITS: Record<TraitId, { name: string; desc: string }> = {
   lokalkjent: { name: 'Lokalkjent', desc: 'Vet hvor alt er på Buøy. +2 når du leter.' },
-  filmnerd: { name: 'Har sett alle zombiefilmene', desc: '+1 Nerver. Sier «sikt mot hodet» ved enhver anledning.' },
+  filmnerd: { name: 'Har sett alle zombiefilmene', desc: '+10 Nerver. Sier «sikt mot hodet» ved enhver anledning.' },
   dugnad: { name: 'Fast inventar på dugnad', desc: '+2 når du befester. Har alltid med egen drill.' },
   hms: { name: 'HMS-ansvarlig', desc: 'Befestninger blir solide (+2), men fyller ut avviksskjema etter hver kamp.' },
   nattevakt: { name: 'Nattevakt på SUS', desc: 'Lapper sammen crewet. Hviledager helbreder alltid, og sparer ofte medisin.' },
@@ -146,21 +154,21 @@ export const TRAITS: Record<TraitId, { name: string; desc: string }> = {
   russ: { name: 'Russ 2026', desc: 'Løper fort og redd. Har ingen respekt for noe, inkludert zombier.' },
   regneark: { name: 'Regnearket', desc: 'Oljeingeniør. Viser den ekte sikkerhetsprosenten etter klarering.' },
   hv: { name: 'Heimevernet', desc: '+2 i kamp. Forteller om øvelse Cold Response hver kveld.' },
-  buss: { name: 'Kolumbus-sjåfør', desc: 'Kan kjøre hva som helst gjennom hva som helst (fase 2). +1 Kondis på oppdrag.' },
+  buss: { name: 'Kolumbus-sjåfør', desc: 'Kan kjøre hva som helst gjennom hva som helst (fase 2). +10 Kondis på oppdrag.' },
   los: { name: 'Pensjonert los', desc: 'Kjenner hvert skjær. Ser ting andre overser: +0,1 til å finne skjulte zombier.' },
   kokk: { name: 'Kokk på Fisketorget', desc: 'Får mat til å strekke lenger. Crewet bruker 1 porsjon mindre mat per dag.' },
 };
 export const SELF_TRAITS: TraitId[] = ['lokalkjent', 'filmnerd', 'dugnad'];
 
 export const NEIGHBORS: NeighborDef[] = [
-  { id: 'kjell', name: 'Kjell', age: 64, role: 'Styreleder i borettslaget', trait: 'hms', stats: { muskler: 1, kondis: 1, snoking: 3, nerver: 3, mekk: 3, prat: 5 }, quip: 'Har allerede kalt inn til ekstraordinært årsmøte.' },
-  { id: 'mona', name: 'Mona', age: 41, role: 'Sykepleier', trait: 'nattevakt', stats: { muskler: 2, kondis: 3, snoking: 3, nerver: 5, mekk: 1, prat: 3 }, quip: 'Har sett verre på legevakta en lørdag.' },
-  { id: 'arild', name: 'Arild', age: 52, role: 'Sveiser', trait: 'sveiser', stats: { muskler: 4, kondis: 2, snoking: 2, nerver: 3, mekk: 5, prat: 1 }, quip: 'Sier ingenting. Sveiser bare.' },
-  { id: 'sondre', name: 'Sondre', age: 19, role: 'Russ', trait: 'russ', stats: { muskler: 3, kondis: 5, snoking: 2, nerver: 2, mekk: 1, prat: 3 }, quip: 'Russebussen het «Apokalypse 2026». Ironisk nok.' },
-  { id: 'ingrid', name: 'Ingrid', age: 33, role: 'Oljeingeniør', trait: 'regneark', stats: { muskler: 2, kondis: 3, snoking: 4, nerver: 3, mekk: 4, prat: 2 }, quip: 'Har laget et regneark over overlevelsessannsynlighet. Det er ikke oppmuntrende.' },
-  { id: 'toregil', name: 'Tor-Egil', age: 47, role: 'Heimevernet', trait: 'hv', stats: { muskler: 4, kondis: 3, snoking: 2, nerver: 4, mekk: 2, prat: 1 }, quip: 'Har ventet på denne dagen i 25 år.' },
-  { id: 'leah', name: 'Leah', age: 28, role: 'Bussjåfør', trait: 'buss', stats: { muskler: 3, kondis: 3, snoking: 3, nerver: 4, mekk: 3, prat: 2 }, quip: 'Har kjørt nattbussen fra Skagen. Dette er bare en vanlig fredag.' },
-  { id: 'bjarne', name: 'Bjarne', age: 71, role: 'Los', trait: 'los', stats: { muskler: 1, kondis: 1, snoking: 5, nerver: 5, mekk: 3, prat: 3 }, quip: 'Kaller zombiene «turistene».' },
-  { id: 'gunn', name: 'Gunn', age: 58, role: 'Kokk', trait: 'kokk', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 4 }, quip: 'Kan lage fiskesuppe av ingenting. Har gjort det før.' },
+  { id: 'kjell', name: 'Kjell', age: 64, role: 'Styreleder i borettslaget', trait: 'hms', stats: { muskler: 18, kondis: 18, snoking: 38, nerver: 38, mekk: 38, prat: 58 }, quip: 'Har allerede kalt inn til ekstraordinært årsmøte.' },
+  { id: 'mona', name: 'Mona', age: 41, role: 'Sykepleier', trait: 'nattevakt', stats: { muskler: 28, kondis: 38, snoking: 38, nerver: 58, mekk: 18, prat: 38 }, quip: 'Har sett verre på legevakta en lørdag.' },
+  { id: 'arild', name: 'Arild', age: 52, role: 'Sveiser', trait: 'sveiser', stats: { muskler: 48, kondis: 28, snoking: 28, nerver: 38, mekk: 58, prat: 18 }, quip: 'Sier ingenting. Sveiser bare.' },
+  { id: 'sondre', name: 'Sondre', age: 19, role: 'Russ', trait: 'russ', stats: { muskler: 38, kondis: 58, snoking: 28, nerver: 28, mekk: 18, prat: 38 }, quip: 'Russebussen het «Apokalypse 2026». Ironisk nok.' },
+  { id: 'ingrid', name: 'Ingrid', age: 33, role: 'Oljeingeniør', trait: 'regneark', stats: { muskler: 28, kondis: 38, snoking: 48, nerver: 38, mekk: 48, prat: 28 }, quip: 'Har laget et regneark over overlevelsessannsynlighet. Det er ikke oppmuntrende.' },
+  { id: 'toregil', name: 'Tor-Egil', age: 47, role: 'Heimevernet', trait: 'hv', stats: { muskler: 48, kondis: 38, snoking: 28, nerver: 48, mekk: 28, prat: 18 }, quip: 'Har ventet på denne dagen i 25 år.' },
+  { id: 'leah', name: 'Leah', age: 28, role: 'Bussjåfør', trait: 'buss', stats: { muskler: 38, kondis: 38, snoking: 38, nerver: 48, mekk: 38, prat: 28 }, quip: 'Har kjørt nattbussen fra Skagen. Dette er bare en vanlig fredag.' },
+  { id: 'bjarne', name: 'Bjarne', age: 71, role: 'Los', trait: 'los', stats: { muskler: 18, kondis: 18, snoking: 58, nerver: 58, mekk: 38, prat: 38 }, quip: 'Kaller zombiene «turistene».' },
+  { id: 'gunn', name: 'Gunn', age: 58, role: 'Kokk', trait: 'kokk', stats: { muskler: 38, kondis: 28, snoking: 38, nerver: 38, mekk: 28, prat: 48 }, quip: 'Kan lage fiskesuppe av ingenting. Har gjort det før.' },
 ];
 export const START_NEIGHBORS = ['kjell', 'mona', 'arild', 'sondre', 'ingrid', 'toregil', 'leah', 'bjarne'];

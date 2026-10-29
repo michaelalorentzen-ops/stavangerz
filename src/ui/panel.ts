@@ -1,7 +1,7 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  dailyFood, dailyWater, GATE_STEPS, GATES, GEAR, HEALTH_LABEL, phaseProgress, RES_LABEL, SECTORS, sectorIntel,
-  STAT_LABEL, STATS, TRAITS, taskOptions, ZONE_INFO, sameTask,
+  dailyFood, dailyWater, GATE_STEPS, GATES, GEAR, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  skillLevel, STAT_LABEL, STATS, TRAITS, taskOptions, ZONE_INFO, sameTask,
 } from '../engine';
 import type { CrewMember, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
 import { $, esc, game, MAP, ui } from './store';
@@ -12,12 +12,10 @@ export function renderTop() {
   const cell = (k: string, v: number, d = '', low = false) =>
     `<div class="r${low ? ' low' : ''}"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
   $('day').textContent = `Dag ${S.day}`;
+  const shown = RES.filter((k) => PHASE_RES[S.phase].includes(k) || S.res[k] > 0);
+  const detail = (k: string) => (k === 'mat' ? [`−${food}/d`, S.res.mat < food * 2] : k === 'vann' ? [`−${water}/d`, S.res.vann < water * 2] : ['', false]) as [string, boolean];
   $('res').innerHTML =
-    cell('Mat', S.res.mat, `−${food}/d`, S.res.mat < food * 2) +
-    cell('Vann', S.res.vann, `−${water}/d`, S.res.vann < water * 2) +
-    cell('Medisin', S.res.medisin) +
-    cell('Materialer', S.res.materialer) +
-    cell('Drivstoff', S.res.drivstoff) +
+    shown.map((k) => cell(RES_LABEL[k], S.res[k], ...detail(k))).join('') +
     `<div class="r moral"><span class="k">Moral ${S.moral}</span><span class="bar"><i style="width:${S.moral}%;${S.moral < 30 ? 'background:var(--red)' : ''}"></i></span></div>`;
 }
 
@@ -86,7 +84,7 @@ export function renderSel() {
     const mine = (c: CrewMember) => c.task.type === 'befeste' && c.task.target === id;
     box.innerHTML = `<div class="card"><span class="badge ${st.level ? 'clr' : 'inf'}">Sperring · nivå ${st.level}/3</span><h2>${gd.name}</h2><p>${gd.desc}</p>
       <div><div class="hint">${st.level >= 3 ? 'Fullt utbygd.' : `Fram til nivå ${st.level + 1}: ${pct}%`}</div><div class="prog"><i style="width:${pct}%"></i></div></div>
-      <p class="hint">${ready ? 'Mekk teller mest. Hver arbeidsdag bruker materialer.' : `Klarer ${SECTORS[gd.sector].short} før dere kan bygge her.`}</p>
+      <p class="hint">${ready ? 'Mekk teller mest. Hver arbeidsdag bruker tre og skrap.' : `Klarer ${SECTORS[gd.sector].short} før dere kan bygge her.`}</p>
       ${ready && st.level < 3 ? `<p class="eyebrow" style="margin:0">Send til befesting</p>${crewChips(mine)}` : ''}</div>`;
     bindChips(box, mine, () => ({ type: 'befeste', target: id }));
     return;
@@ -118,8 +116,9 @@ export function renderSel() {
   bindChips(box, mine, () => task);
 }
 
+/** Ferdigheter som stolpe og nivånavn. Tallene vises aldri. */
 export function statPips(st: Stats) {
-  return STATS.map((k) => `<div class="st">${STAT_LABEL[k].slice(0, 3)}<div class="pips">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= st[k] ? 'on' : ''}"></i>`).join('')}</div></div>`).join('');
+  return STATS.map((k) => `<div class="st" title="${STAT_LABEL[k]}: ${skillLevel(st[k])}">${STAT_LABEL[k].slice(0, 3)}<div class="sbar"><i style="width:${Math.round(st[k])}%"></i></div><small>${skillLevel(st[k])}</small></div>`).join('');
 }
 
 const taskKey = (t: Task) => `${t.type}:${'target' in t ? t.target : ''}`;

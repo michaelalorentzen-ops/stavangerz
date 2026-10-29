@@ -2,9 +2,10 @@
 // endrer tilstanden og returnerer teksten som vises etterpå. check er en
 // stat-sjekk mot crewets beste på den staten.
 import { NEIGHBORS, PLAYABLE } from './data';
-import { addGateWork, addNeighbor, checkEnd, stat, validateTasks } from './engine';
+import { addGateWork, addNeighbor, checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
 import { clamp, pick, rand } from './rng';
+import { stat } from './skills';
 import type { CrewMember, GameState, StatKey } from './types';
 
 export interface ChoiceDef {
@@ -26,7 +27,7 @@ export function best(s: GameState, k: StatKey): CrewMember {
   return s.crew.reduce((a, c) => (stat(c, k) > stat(a, k) ? c : a), s.crew[0]);
 }
 export function checkOdds(s: GameState, k: StatKey, base = 0.25): number {
-  return clamp(base + stat(best(s, k), k) * 0.12, 0.05, 0.95);
+  return clamp(base + (stat(best(s, k), k) / 10) * 0.12, 0.05, 0.95);
 }
 const roll = (s: GameState, k: StatKey) => rand(s) < checkOdds(s, k);
 const recruitable = (s: GameState) => NEIGHBORS.filter((n) => !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
@@ -36,7 +37,7 @@ export const INTRO: EventDef = {
   channel: 'NRK P1 Rogaland',
   text: () => '«…Bybrua er stengt i begge retninger etter det politiet kaller en «uavklart hendelse». Trafikanter bes unngå området og ikke la seg bite av andre trafikanter. Vi går over til været: regn.»\n\nNoen banker på døra. Rytmisk. Ikke på en hyggelig måte.',
   choices: [
-    { label: 'Barrikader døra med sofaen', run: (s) => { s.res.materialer += 2; s.moral += 5; return 'Sofaen fra Bohus holder. Den var verdt hver krone. Dere finner også litt materialer i boden.'; } },
+    { label: 'Barrikader døra med sofaen', run: (s) => { s.res.tre += 2; s.moral += 5; return 'Sofaen fra Bohus holder. Den var verdt hver krone. Dere finner også litt planker i boden.'; } },
     { label: 'Se ut av vinduet først', run: (s) => { s.sectors.hjem.seen = true; s.sectors.obs.seen = true; s.sectors.buoy_nord.seen = true; return 'Du ser naboen Svein stå i hagen og tygge på en hekk. Du får god oversikt over Hjemme, Obs Bygg og Buøy nord.'; } },
     { label: 'Ring Kjell i borettslaget', run: (s) => { s.moral += 10; return '«Dette må tas opp på årsmøtet», sier Kjell. Det er så normalt at alle roer seg ned. Moralen stiger.'; } },
   ],
@@ -48,7 +49,7 @@ export const EVENTS: EventDef[] = [
     text: () => 'En mann i dunvest banker på. Han vil lade Teslaen sin på aggregatet deres. «Jeg skal bare til Forus», sier han. Det er zombier i baksetet hans.',
     choices: [
       { label: 'Si nei', run: () => 'Han rygger ut og kjører inn i Obs Bygg. Dere hører alarmen i en time.' },
-      { label: 'Overtal ham til å gi fra seg bilen', check: 'prat', run: (s, ok) => { if (ok) { s.res.drivstoff += 4; s.res.materialer += 3; return 'Han gir dere bilen mot at dere sier han kjører «en ekte fremtidsbil». Dere tapper alt brukbart.'; } s.moral -= 3; return 'Han blir fornærmet og kjører. Zombiene i baksetet vinker.'; } },
+      { label: 'Overtal ham til å gi fra seg bilen', check: 'prat', run: (s, ok) => { if (ok) { s.res.drivstoff += 4; s.res.skrap += 3; return 'Han gir dere bilen mot at dere sier han kjører «en ekte fremtidsbil». Dere tapper alt brukbart.'; } s.moral -= 3; return 'Han blir fornærmet og kjører. Zombiene i baksetet vinker.'; } },
     ],
   },
   {
@@ -108,7 +109,7 @@ export const EVENTS: EventDef[] = [
     text: () => 'Kjell har kalt inn til ekstraordinært årsmøte. Sak 1: Zombier. Sak 2: Hvem som har parkert på gjesteplassen.',
     choices: [
       { label: 'Delta på møtet', run: (s) => { s.moral += 8; return 'Møtet varer i tre timer. Vedtak: zombier er ikke tillatt i fellesarealene. Alle føler seg tryggere.'; } },
-      { label: 'Send fullmakt og jobb videre', run: (s) => { s.res.materialer += 3; s.moral -= 3; return 'Kjell er skuffet, men dere finner materialer i sykkelboden mens alle andre sitter i møte.'; } },
+      { label: 'Send fullmakt og jobb videre', run: (s) => { s.res.skrap += 3; s.moral -= 3; return 'Kjell er skuffet, men dere finner skrap i sykkelboden mens alle andre sitter i møte.'; } },
     ],
   },
   {
@@ -124,7 +125,7 @@ export const EVENTS: EventDef[] = [
     when: (s) => s.day >= 4,
     text: () => 'En gruppe i oransje kjeledresser kommer gående fra Tømmerodden. De har nettopp kommet fra en tre ukers turnus i Nordsjøen og vet ingenting om noe.',
     choices: [
-      { label: 'Forklar situasjonen', check: 'prat', run: (s, ok) => { if (ok) { s.res.materialer += 4; s.res.drivstoff += 3; s.moral += 4; return 'De tar det overraskende pent, gir dere utstyret sitt og drar for å finne familiene sine.'; } return '«Er dette en sikkerhetsøvelse?» De går videre for å finne en kaffemaskin.'; } },
+      { label: 'Forklar situasjonen', check: 'prat', run: (s, ok) => { if (ok) { s.res.skrap += 4; s.res.drivstoff += 3; s.moral += 4; return 'De tar det overraskende pent, gir dere utstyret sitt og drar for å finne familiene sine.'; } return '«Er dette en sikkerhetsøvelse?» De går videre for å finne en kaffemaskin.'; } },
       { label: 'Be dem om hjelp til gjerdet', run: (s) => { addGateWork(s, 'ros', 5); return 'De bygger på gjerdet i én dag, med full sikkerhetsbrief først.'; } },
     ],
   },
@@ -170,7 +171,7 @@ export const EVENTS: EventDef[] = [
     when: (s) => s.day >= 2 && !s.flags.svein,
     text: () => 'Naboen Svein står fortsatt i hagen og tygger på hekken. Han var alltid opptatt av hekken. Nå er han bokstavelig talt opptatt av den.',
     choices: [
-      { label: 'Gjør det nødvendige', check: 'nerver', run: (s, ok) => { s.flags.svein = true; if (ok) { s.res.materialer += 2; return 'Det er gjort. Dere låner hekksaksen hans. Han hadde ikke noe imot det.'; } s.moral -= 6; return 'Ingen klarer det. Til slutt gjør Svein det selv ved å gå inn i bassenget.'; } },
+      { label: 'Gjør det nødvendige', check: 'nerver', run: (s, ok) => { s.flags.svein = true; if (ok) { s.res.tre += 2; return 'Det er gjort. Dere låner hekksaksen hans. Han hadde ikke noe imot det.'; } s.moral -= 6; return 'Ingen klarer det. Til slutt gjør Svein det selv ved å gå inn i bassenget.'; } },
       { label: 'La Svein klippe hekken', run: (s) => { s.flags.svein = true; s.moral += 2; return 'Hekken har aldri vært penere. Respekt, Svein.'; } },
     ],
   },

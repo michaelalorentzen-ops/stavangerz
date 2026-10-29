@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addGateWork, GATE_STEPS, migrate, newGame, PLAYABLE, rand, resolveDay, sectorIntel, taskOptions, validateTasks,
+  addGateWork, GATE_STEPS, migrate, newGame, PLAYABLE, rand, resolveDay, sectorIntel, taskOptions, toSkill, validateTasks,
 } from '../src/engine';
 import type { GameState } from '../src/engine';
 import { BOT_SELF, playGame } from '../tools/bot';
@@ -109,18 +109,29 @@ describe('ordre', () => {
 });
 
 describe('lagring', () => {
-  it('oppgraderer en tilstand fra prototypen', () => {
-    const old = { ...fresh(), v: 1 } as Record<string, unknown>;
-    delete old.phase;
-    delete old.zombieTraits;
-    const s = migrate(old)!;
-    expect(s.v).toBe(2);
-    expect(s.phase).toBe(1);
-    expect(s.zombieTraits).toEqual([]);
+  it('forkaster lagring fra prototypen (v1 og v2)', () => {
+    expect(migrate({ v: 2 })).toBeNull();
+    expect(migrate({ v: 1 })).toBeNull();
+  });
+
+  it('godtar en v3-tilstand uendret', () => {
+    const s = fresh();
+    expect(migrate(s)).toEqual(s);
+    expect(s.v).toBe(3);
   });
 
   it('avviser ukjente data', () => {
     expect(migrate(null)).toBeNull();
     expect(migrate({ v: 99 })).toBeNull();
+  });
+});
+
+describe('oppsett', () => {
+  it('starter med de nye ressursene', () => {
+    expect(fresh().res).toEqual({ mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 });
+  });
+
+  it('regner spillerens prikker om til ferdigheter 1–100', () => {
+    expect(fresh().crew[0].stats.muskler).toBe(toSkill(BOT_SELF.stats.muskler));
   });
 });
