@@ -1,6 +1,6 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "stavanger-z", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "5178", "--directory", "dist"], "port": 5178 }
+    { "name": "vite", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "--port", "5173", "--strictPort"], "port": 5173 }
   ]
 }
