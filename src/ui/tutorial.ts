@@ -1,6 +1,6 @@
 // Tutorial for de tre første dagene: et sambandskort øverst i panelet.
 // done() er ren og leser bare tilstanden, så den kan testes uten DOM.
-import { GATES } from '../engine';
+import { GATES, SECTORS } from '../engine';
 import type { GameState } from '../engine';
 
 export interface TutorialStep { day: 1 | 2 | 3; text: string; done(s: GameState): boolean }
@@ -8,13 +8,15 @@ export interface TutorialStep { day: 1 | 2 | 3; text: string; done(s: GameState)
 export const TUTORIAL: TutorialStep[] = [
   {
     day: 1,
-    text: 'Samband: Velg Hjemme på kartet, velg Rydde og send minst to av dere dit. To rydder tryggere enn én, og det er sjelden noen som angrer på å ha med seg nabo. Trykk «Avslutt dag» når ordrene er lagt.',
+    text: 'Samband: Velg Hjemme på kartet, velg Rydde og send alle dere kan. Flere rydder tryggere enn én, og det er sjelden noen som angrer på å ha med seg nabo. Trykk «Avslutt dag» når ordrene er lagt.',
     done: (s) => s.crew.filter((c) => c.task.type === 'rydde' && c.task.target === 'hjem').length >= 2,
   },
   {
     day: 2,
-    text: `Samband: Natta er lang og ${GATES.ros.name} er tynt. Velg det på kartet og sett noen på Befeste eller Vakt. Befeste koster tre og skrap, Vakt holder kontrollen oppe.`,
-    done: (s) => s.crew.some((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === 'ros'),
+    text: `Samband: Natta er lang og ${GATES.ros.name} er tynt. Er ${SECTORS[GATES.ros.sector].short} fortsatt rødt på kartet, rydd det ferdig først: ingen bygger gjerde med zombier i ryggen. Ellers velger du gjerdet på kartet og setter noen på Befeste eller Vakt. Befeste koster tre og skrap, Vakt holder kontrollen oppe.`,
+    // gjerdet kan bare bygges og voktes når sektoren bak er tom, så rydding der teller så lenge den ikke er det
+    done: (s) => s.crew.some((c) => ((c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === 'ros')
+      || (s.sectors[GATES.ros.sector].z > 0 && c.task.type === 'rydde' && c.task.target === GATES.ros.sector)),
   },
   {
     day: 3,

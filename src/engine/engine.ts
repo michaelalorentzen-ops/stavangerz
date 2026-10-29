@@ -15,7 +15,11 @@ import type {
 } from './types';
 
 /** Vakter ved porten med et rekkevidde-våpen teller mer om natta. */
-const RANGE_GUARD = 1.25;
+export const RANGE_GUARD = 1.25;
+
+/** Samlet kampkraft for vaktene ved en port om natta. Rekkevidde-våpen teller mer. */
+export const guardPower = (s: GameState, guards: CrewMember[]): number =>
+  sum(guards.map((c) => fightPower(s, c) * (hasTag(c, 'rekkevidde') ? RANGE_GUARD : 1)));
 
 export const GATE_IDS = Object.keys(GATES) as GateId[];
 
@@ -281,7 +285,7 @@ export function resolveDay(s: GameState): LogLine[] {
     const guards = s.crew.filter((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === id);
     if (st.level >= 3 && guards.length) continue;
     if (guards.length) {
-      const k = Math.min(n, sround(s, sum(guards.map((c) => fightPower(s, c) * (hasTag(c, 'rekkevidde') ? RANGE_GUARD : 1))) * 0.35));
+      const k = Math.min(n, sround(s, guardPower(s, guards) * 0.35));
       n -= k; s.stats.kills += k;
       if (!n) { log(`Natt: ${k} ${plural(k)} prøvde seg ved ${g.name}. ${names(guards)} holdt vakt.`, 'good'); continue; }
     }

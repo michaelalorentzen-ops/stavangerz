@@ -1,6 +1,6 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  canEndPhase, dailyFood, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  canEndPhase, dailyFood, endDayBlocker, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, sameTask,
   CARDS, isOnTokt, toktAvailable, toktDef, TOKTS,
 } from '../engine';
@@ -99,6 +99,25 @@ function bindToktCards(box: HTMLElement, S: GameState) {
   });
 }
 
+/**
+ * Lengden på infeksjonsstolpen i prosent. Null betyr ukjent: for en sektor dere ikke har sett,
+ * vises en ubestemt stolpe, siden den sanne mengden ellers ville lekket ut.
+ */
+export function infBar(sec: Pick<SectorState, 'z' | 'seen'>, startZ: number): number | null {
+  if (sec.z <= 0) return 0;
+  if (!sec.seen) return null;
+  return Math.min(100, (sec.z / Math.max(1, startZ)) * 100);
+}
+
+/** Teksten på knappen når noe hindrer at dagen avsluttes. Samme ordlyd i panelet og i dagsrapporten. */
+export function blockerLabel(s: GameState): string | null {
+  const b = endDayBlocker(s);
+  if (b === 'pending') return s.pending.length > 1 ? `${s.pending.length} encounters venter` : 'Encounter venter';
+  if (b === 'tokt') return 'Toktet venter på deg';
+  if (b === 'leader') return 'Hvem tar over?';
+  return null;
+}
+
 function lootHint(sec: SectorState) {
   const tiers = Object.entries(sec.loot).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
   if (!tiers.length) return 'Tømt for alt nyttig.';
@@ -156,9 +175,9 @@ export function renderSel() {
   const picked = sopts.find((o) => o.type === act);
   const task: Task | null = picked ? bare(picked) : null;
   const mine = (c: CrewMember) => !!task && sameTask(c.task, task);
-  const bar = (cls: string, label: string, pct: number, val: string) =>
-    `<div class="bar-row ${cls}"><span>${label}</span><span class="tr"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></span><b>${val}</b></div>`;
-  const infPct = inf ? Math.min(100, (sec.z / Math.max(1, def.z)) * 100) : 0;
+  const bar = (cls: string, label: string, pct: number | null, val: string) =>
+    `<div class="bar-row ${cls}${pct === null ? ' unknown' : ''}"><span>${label}</span><span class="tr"><i style="width:${pct === null ? 100 : Math.max(0, Math.min(100, pct))}%"></i></span><b>${val}</b></div>`;
+  const infPct = infBar(sec, def.z);
   const housingNote = def.capacity > 0 ? `Plass til ${def.capacity}${sec.settled ? ', bosatt' : ', når den er trygg'}.` : 'Ingen boliger her.';
   box.innerHTML = `<div class="card">
     <span class="badge ${intel.safe ? 'safe' : inf ? 'inf' : 'clr'}">${intel.safe ? 'Trygg' : inf ? 'Infisert' : 'Ryddet'}${id === 'hjem' ? ' · Du bor her' : ''}</span>
@@ -215,7 +234,7 @@ export function renderPlan() {
     (groups[k] ??= []).push(c.name);
   }
   $('plan').textContent = Object.entries(groups).map(([k, v]) => `${v.join(', ')} ${k}`).join(' · ');
-  $('end').textContent = S.pending.length ? `${S.pending.length} encounter${S.pending.length === 1 ? '' : 's'} venter` : `Avslutt dag ${S.day}`;
+  $('end').textContent = blockerLabel(S) ?? `Avslutt dag ${S.day}`;
   // knappen åpner encounters og ledervalg selv, så den er aldri sperret av dem
   $<HTMLButtonElement>('end').disabled = false;
 }

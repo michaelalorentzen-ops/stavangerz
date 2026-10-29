@@ -119,6 +119,8 @@ button { cursor: pointer; }
 .bar-row .tr { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .bar-row .tr i { display: block; height: 100%; background: var(--amber); }
 .bar-row.inf .tr i { background: var(--red); }
+/* ukjent mengde: en ubestemt stolpe som ikke røper det sanne tallet */
+.bar-row.unknown .tr i { background: repeating-linear-gradient(135deg, var(--red) 0 4px, transparent 4px 8px); opacity: .55; }
 .bar-row.ctl .tr i { background: var(--teal); }
 .bar-row b { font: 500 12px var(--f-mono); letter-spacing: 0; text-align: right; color: var(--ink); }
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

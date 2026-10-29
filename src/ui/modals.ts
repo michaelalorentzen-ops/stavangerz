@@ -4,7 +4,7 @@ import {
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
-import { statPips } from './panel';
+import { blockerLabel, statPips } from './panel';
 import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
 
@@ -195,7 +195,7 @@ export function endDay() {
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : endDayBlocker(S) === 'pending' ? 'Encounter venter' : endDayBlocker(S) === 'tokt' ? 'Toktet venter på deg' : endDayBlocker(S) === 'leader' ? 'Hvem tar over?' : isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`}</button></div>`);
+    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : blockerLabel(S) ?? (isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`)}</button></div>`);
   const after = () => settle(finish);
   on('ok', () => (ev ? showEvent(ev, after) : after()));
 }

@@ -1,5 +1,5 @@
 import './styles.css';
-import { isFinished, newGame } from './engine';
+import { isFinished, migrate, newGame } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
 import { draft, endDay, endPhaseNow, endScreen, titleScreen } from './ui/modals';
@@ -43,8 +43,10 @@ const hot = (window as unknown as { claude?: { hot?: Hot } }).claude?.hot;
 
 function start(data: { S?: GameState } = {}) {
   buildStaticMap(select);
-  if (data.S) {
-    ui.S = data.S;
+  // tilstanden fra forrige versjon av siden går gjennom samme migrering som en lagring
+  const carried = data.S ? migrate(data.S) : null;
+  if (carried) {
+    ui.S = carried;
     ui.refresh();
     if (isFinished(ui.S)) endScreen();
     return;

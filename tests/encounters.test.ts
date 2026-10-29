@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  acceptQuest, canEndDay, CARDS, endDayBlocker, injure, toktDecision, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
+  acceptQuest, canEndDay, CARDS, fightPower, guardPower, mods, PIERCE_KILL, RANGE_GUARD, rydde, endDayBlocker, injure, toktDecision, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
 } from '../src/engine';
 import type { EncounterCtx, GameState, PendingEncounter, SectorId, WeaponTag } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -429,5 +429,48 @@ describe('tomt crew i sandkassa', () => {
       checkEnd(s);
       expect(s.over).toBe(over);
     }
+  });
+});
+
+describe('våpentagger: direkte multiplikatorer', () => {
+  /** Drap fra én Rydde-dag med kjedesaga (gjennomslag), med eller uten taggen, summert over mange seeds. */
+  const kills = (mutations: string[], tagged: boolean) => {
+    const saved = CARDS.kjedesag.tags;
+    if (!tagged) CARDS.kjedesag.tags = [];
+    try {
+      let n = 0;
+      for (let seed = 1; seed <= 200; seed++) {
+        const s = fresh(seed);
+        s.mutations = mutations as GameState['mutations'];
+        const c = s.crew[0];
+        c.gear.vapen = newCard(s, 'kjedesag');
+        s.sectors.obs.z = 500;
+        rydde(s, 'obs', [c], mods(s), () => {});
+        n += 500 - s.sectors.obs.z;
+      }
+      return n;
+    } finally { CARDS.kjedesag.tags = saved; }
+  };
+
+  it('gjennomslag gir ×1,15 drap mot seige zombier, og ingenting uten mutasjonen', () => {
+    const ratio = kills(['seige'], true) / kills(['seige'], false);
+    expect(ratio).toBeGreaterThan(PIERCE_KILL - 0.02);
+    expect(ratio).toBeLessThan(PIERCE_KILL + 0.02);
+    expect(kills([], true)).toBe(kills([], false));
+  });
+
+  it('vakt med rekkevidde-våpen teller ×1,25 om natta', () => {
+    const s = fresh(), c = s.crew[0];
+    c.gear.vapen = newCard(s, 'armbrost');
+    const tagged = guardPower(s, [c]);
+    const saved = CARDS.armbrost.tags;
+    CARDS.armbrost.tags = [];
+    try {
+      expect(tagged).toBeCloseTo(guardPower(s, [c]) * RANGE_GUARD, 9);
+    } finally { CARDS.armbrost.tags = saved; }
+    expect(RANGE_GUARD).toBe(1.25);
+    // uten taggen er vaktkraften bare summen av kampkraft
+    const plain = s.crew[1];
+    expect(guardPower(s, [plain])).toBeCloseTo(fightPower(s, plain), 9);
   });
 });
