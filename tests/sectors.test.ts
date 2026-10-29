@@ -49,6 +49,7 @@ describe('rydde', () => {
     for (let day = 0; day < 20 && s.sectors.buoy_nord.searched < 100; day++) {
       assign(s, 'rydde', 'buoy_nord');
       const before = s.sectors.buoy_nord.searched;
+      s.pending = []; // encounters testes for seg
       resolveDay(s);
       calm(s, 'buoy_nord', { searched: s.sectors.buoy_nord.searched }); // natta skal ikke spille inn
       expect(s.sectors.buoy_nord.searched).toBeGreaterThan(before);

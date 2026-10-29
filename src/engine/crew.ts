@@ -40,13 +40,16 @@ export function deathCause(c: CrewMember): DeathCause {
   return 'kamp';
 }
 
-/** Gir ett skadetrinn. Ved 0 er personen bitt og fjernes fra crewet. `cause` overstyrer dødsårsaken i statistikken. */
-export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cause: DeathCause = deathCause(c)) {
+/**
+ * Gir ett skadetrinn. Ved 0 er personen bitt og fjernes fra crewet. `cause` overstyrer dødsårsaken i statistikken,
+ * og `where` stedet utstyret blir liggende (encounters løses etter at ordren kan være nullstilt).
+ */
+export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cause: DeathCause = deathCause(c), where: SectorId | 'stash' = taskSector(c)) {
   c.hp -= 1;
   if (c.hp <= 0) {
     log(`${c.name} ble bitt ${why}. ${pick(s, EULOGY)(c)}`, 'bad');
     s.moral -= 15; s.stats.lost++; s.stats.deaths[cause]++;
-    dropGear(s, c, taskSector(c));
+    dropGear(s, c, where);
     s.crew = s.crew.filter((x) => x !== c);
     if (!s.crew.length) s.needLeader = false;
     else if (c.me) {

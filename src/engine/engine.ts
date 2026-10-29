@@ -161,8 +161,9 @@ const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
 const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 export function resolveDay(s: GameState): LogLine[] {
-  // bare «Fortsett på Buøy» kan spille videre etter at runden er avgjort
-  if (isFinished(s)) return [];
+  // bare «Fortsett på Buøy» kan spille videre etter at runden er avgjort. Dagen kan heller ikke løses mens
+  // noe venter på et valg: serveren skal kunne stole på at motoren håndhever det selv.
+  if (isFinished(s) || !canEndDay(s)) return [];
   const M = mods(s);
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
@@ -231,8 +232,8 @@ export function resolveDay(s: GameState): LogLine[] {
     if (ov.length) { leteOverlevende(s, id, ov, log); xp(ov, 'prat', 1.5); }
   }
 
-  // 3d2) Tokt
-  resolveTokts(s, M, log);
+  // 3d2) Tokt. Encounters derfra teller mot det samme dagstaket som Rydde.
+  encounters += resolveTokts(s, M, log, ENC_MAX_PER_DAY - encounters);
 
   // 3e) Pleie: de som hviler blir friskere uten medisin
   const nursed = new Set<CrewMember>();
@@ -332,13 +333,12 @@ export function checkEnd(s: GameState) {
   // tokt uten levende deltakere er tapt, med alt bytte
   for (const t of s.tokts) t.crew = t.crew.filter((id) => s.crew.some((c) => c.id === id));
   s.tokts = s.tokts.filter((t) => t.crew.length);
+  // et tomt crew avslutter runden, også i sandkassa etter seier
+  if (!s.crew.length && (s.over === null || s.over === 'won-seen')) { s.over = 'dead'; s.needLeader = false; return; }
   if (s.over) return;
-  if (!s.crew.length) { s.over = 'dead'; s.needLeader = false; }
-  else {
-    if (s.goalDay === null && phaseProgress(s).done) s.goalDay = s.day;
-    if (s.day - s.phaseStartDay >= mods(s).turnCap) {
-      if (s.goalDay !== null) forceEndPhase(s);
-      else s.over = 'timeout';
-    }
+  if (s.goalDay === null && phaseProgress(s).done) s.goalDay = s.day;
+  if (s.day - s.phaseStartDay >= mods(s).turnCap) {
+    if (s.goalDay !== null) forceEndPhase(s);
+    else s.over = 'timeout';
   }
 }

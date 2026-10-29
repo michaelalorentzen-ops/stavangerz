@@ -58,9 +58,13 @@ function startTokts(s: GameState, log: LogFn) {
   }
 }
 
-/** En dag ute for alle tokt som ikke venter på valg. */
-export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn) {
+/**
+ * En dag ute for alle tokt som ikke venter på valg. `budget` er hvor mange encounters dagstaket fortsatt
+ * tillater. Er taket fullt, går toktet likevel videre og venter på valg, bare uten knipe. Returnerer antall nye.
+ */
+export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget = Infinity): number {
   startTokts(s, log);
+  let added = 0;
   for (const t of s.tokts) {
     if (t.awaiting) continue;
     const def = toktDef(t.id), group = s.crew.filter((c) => t.crew.includes(c.id));
@@ -77,9 +81,10 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn) {
       found.push(CARDS[k.def].name);
     }
     log(`${names(group)} er på tokt (${def.name}), dag ${t.stage} av ${def.days}.${found.length ? ` Fant ${found.join(', ')}.` : ''}`, found.length ? 'find' : '');
-    addToktEncounter(s, group, def.threat, t.id, log);
+    if (added < budget && addToktEncounter(s, group, def.threat, t.id, log)) added++;
     t.awaiting = true;
   }
+  return added;
 }
 
 /** Sender gruppa hjem og fjerner toktet. */

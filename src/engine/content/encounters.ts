@@ -6,6 +6,7 @@ import { injure } from '../crew';
 import { SECTORS } from '../data';
 import type { EncChoice, EncounterCtx, EncounterDef } from '../encounters';
 import { pick, rand } from '../rng';
+import { toktDef, toktSector } from './tokts';
 import type { GameState } from '../types';
 
 /** Skaden en vanlig tilbaketrekning koster. */
@@ -17,8 +18,9 @@ const who = (ctx: EncounterCtx) => ctx.crew.map((c) => c.name).join(' og ');
 /** Gir en tilfeldig person ett skadetrinn og returnerer logglinjene som tekst. */
 function hurt(s: GameState, ctx: EncounterCtx, why: string): string {
   const lines: string[] = [];
-  // ordren kan ha blitt nullstilt etter dagen, så årsaken settes ut fra encounteret
-  injure(s, pick(s, ctx.crew), why, (t) => lines.push(t), ctx.toktId ? 'tokt' : 'kamp');
+  // ordren kan ha blitt nullstilt etter dagen, så årsaken og stedet settes ut fra encounteret
+  const at = ctx.sector ?? (ctx.toktId ? toktSector(toktDef(ctx.toktId)) : 'stash');
+  injure(s, pick(s, ctx.crew), why, (t) => lines.push(t), ctx.toktId ? 'tokt' : 'kamp', at);
   return lines.join(' ');
 }
 
@@ -88,7 +90,7 @@ export const ENCOUNTERS: EncounterDef[] = [
         return `Bakdøra stod åpen siden 2. juledag. Dere tar ut det som var verdt det (+${ctx.threat} skrap).${foundCard(s, ctx)}`;
       } },
       { label: 'Ta det ut på avstand først', check: 'nerver', tag: 'rekkevidde', run: (s, ctx, ok) => {
-        if (!ok) { s.sectors[ctx.sector ?? 'hjem'].z += 1; return `Skuddet bommer og lager lyd. Én til dukker opp.${setback(s, ctx, 'ved kiosken')}`; }
+        if (!ok) { if (ctx.sector) s.sectors[ctx.sector].z += 1; return `Skuddet bommer og lager lyd. Én til dukker opp.${setback(s, ctx, 'ved kiosken')}`; }
         s.res.mat += 2; s.res.skrap += ctx.threat;
         return `Ett rolig skudd, og luka er åpen. Ingen bråk (+${ctx.threat} skrap, +2 mat).`;
       } },

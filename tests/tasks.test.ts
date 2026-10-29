@@ -48,6 +48,7 @@ describe('Vakt på port', () => {
         for (const c of s.crew) c.task = { type: 'hvile' };
         s.crew[1].task = type === 'befeste' ? { type, target: 'nord' } : { type, target: 'nordkrysset' };
         s.gates.nord.level = 2; s.gates.nord.work = 0;
+        s.pending = []; // encounters fra Rydde testes for seg
         resolveDay(s);
         expect(s.gates.nord.level).toBe(2);
         if (s.sectors.nordkrysset.z > 0) { breaches++; s.sectors.nordkrysset.z = 0; }
