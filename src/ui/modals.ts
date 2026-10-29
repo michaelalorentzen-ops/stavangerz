@@ -1,6 +1,6 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, CARDS, checkOdds, describeEncounter, drawEvent, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
@@ -28,7 +28,7 @@ export function titleScreen() {
     <div class="coords">58°59′N 5°43′Ø · Buøy, Hundvåg bydel</div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
-      ${saved && (!saved.over || saved.over === 'won-seen') ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
+      ${saved && !isFinished(saved) ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
   on('new', createSelf);
   on('cont', () => {
@@ -210,7 +210,7 @@ export function endScreen() {
       <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>Rosenberg Verft</h2>
       <p>Horden på verftet venter. ${S.flags.gann ? 'Skoleskipet Gann ligger klart ved Tømmerodden.' : 'Dere har ingen båt ennå.'} ${S.flags.buss ? 'Kolumbus-bussen på Sørspissen har full tank.' : 'Dere har ikke funnet transport ennå.'}</p></div>
       <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Fortsett på Buøy</button></div>`);
-    on('cont', () => { S.over = 'won-seen'; closeModal(); ui.refresh(); });
+    on('cont', () => { continueAfterWin(S); closeModal(); ui.refresh(); });
   } else if (S.over === 'timeout') {
     modal(`<div class="radio">Samband · tiden er ute</div><h2>Fristen gikk ut</h2>
       <p>Etter ${S.day - S.phaseStartDay} dager er Buøy fortsatt ikke sikret. Kommunen har sluttet å ringe, og Sandnes har begynt å skrive om «den skjebnesvangre Hundvåg-avgjørelsen» i festskriftet sitt.</p>

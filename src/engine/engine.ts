@@ -126,6 +126,13 @@ export const endDayBlocker = (s: GameState): 'pending' | 'tokt' | 'leader' | nul
 /** Er runden avgjort? Bare «won-seen» kan spille videre. */
 export const isFinished = (s: Pick<GameState, 'over'>): boolean => s.over !== null && s.over !== 'won-seen';
 
+/** Spilleren fortsetter på Buøy etter seieren. Runden er da i sandkassa og kan spilles videre. */
+export function continueAfterWin(s: GameState): boolean {
+  if (s.over !== 'won') return false;
+  s.over = 'won-seen';
+  return true;
+}
+
 /** Kan spilleren avslutte fasen? Fra og med dagen målet først ble nådd, og ikke mens noe venter på et valg. */
 export const canEndPhase = (s: GameState): boolean => s.goalDay !== null && endDayBlocker(s) === null;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addGateWork, GATE_STEPS, migrate, newGame, PLAYABLE, rand, resolveDay, sectorIntel, taskOptions, toSkill, validateTasks,
+  addGateWork, continueAfterWin, GATE_STEPS, migrate, newGame, PLAYABLE, rand, resolveDay, sectorIntel, taskOptions, toSkill, validateTasks,
 } from '../src/engine';
 import type { GameState } from '../src/engine';
 import { BOT_SELF, playGame } from '../tools/bot';
@@ -148,5 +148,20 @@ describe('oppsett', () => {
 
   it('regner spillerens prikker om til ferdigheter 1–100', () => {
     expect(fresh().crew[0].stats.muskler).toBe(toSkill(BOT_SELF.stats.muskler));
+  });
+});
+
+describe('fortsett etter seier', () => {
+  it('continueAfterWin gjør won til won-seen og ingenting ellers', () => {
+    const s = fresh();
+    expect(continueAfterWin(s)).toBe(false);
+    expect(s.over).toBeNull();
+    s.over = 'won';
+    expect(continueAfterWin(s)).toBe(true);
+    expect(s.over).toBe('won-seen');
+    expect(resolveDay(s).length).toBeGreaterThan(0);
+    s.over = 'timeout';
+    expect(continueAfterWin(s)).toBe(false);
+    expect(s.over).toBe('timeout');
   });
 });

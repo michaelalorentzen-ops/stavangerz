@@ -348,3 +348,37 @@ describe('utstyrskort', () => {
     expect(salvageCopy([a, b, c])).toBeNull();
   });
 });
+
+describe('vern av utstyr', () => {
+  it('salvage nekter unike kort uten allowUnique', () => {
+    const s = fresh();
+    const u = Object.values(CARDS).find((d) => d.rarity === 'unik')!;
+    const k = newCard(s, u.id);
+    s.stash.push(k);
+    const before = s.res.skrap;
+    expect(salvage(s, k.uid)).toBeNull();
+    expect(s.stash).toContain(k);
+    expect(s.res.skrap).toBe(before);
+    expect(salvage(s, k.uid, { allowUnique: true })).toEqual(salvageValue(u));
+    expect(s.stash).not.toContain(k);
+    // favoritter vernes fortsatt, også med flagget
+    const f = newCard(s, u.id);
+    f.fav = true;
+    s.stash.push(f);
+    expect(salvage(s, f.uid, { allowUnique: true })).toBeNull();
+  });
+
+  it('equip og unequip nektes for de som er på tokt', () => {
+    const s = fresh();
+    const k = newCard(s, 'kobein');
+    s.stash.push(k);
+    s.tokts.push({ id: 'bybrua', crew: ['meg'], stage: 1, haul: {}, cards: [], awaiting: false });
+    const gear = { ...me(s).gear };
+    expect(equip(s, 'meg', k.uid)).toBe(false);
+    expect(unequip(s, 'meg', 'vapen')).toBe(false);
+    expect(me(s).gear).toEqual(gear);
+    expect(s.stash).toContain(k);
+    // de som er hjemme kan fortsatt bytte
+    expect(equip(s, 'arild', k.uid)).toBe(true);
+  });
+});

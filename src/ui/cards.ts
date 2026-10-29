@@ -1,5 +1,5 @@
 // Kortvisning: små brettspillkort, spor på crewkortet, velger og lager.
-import { bestCopy, CARDS, equip, groupStash, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, toggleFavorite, unequip } from '../engine';
+import { bestCopy, CARDS, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, toggleFavorite, unequip } from '../engine';
 import type { CardInst, CrewMember, Slot } from '../engine';
 import { $, esc, game, ui } from './store';
 
@@ -43,11 +43,13 @@ export function cardHtml(k: CardInst, group: CardInst[] = [k], inStash = false):
 
 /** De tre sporene på crewkortet. Klikk åpner velgeren. */
 export function slotsHtml(c: CrewMember): string {
-  const open = ui.picker?.crewId === c.id ? ui.picker.slot : null;
+  // lageret er hjemme: de som er på tokt kan ikke bytte utstyr
+  const away = isOnTokt(game(), c);
+  const open = !away && ui.picker?.crewId === c.id ? ui.picker.slot : null;
   const slots = SLOTS.map((slot) => {
     const k = c.gear[slot];
     const d = k && CARDS[k.def];
-    return `<button class="slot${open === slot ? ' open' : ''}${k ? ' filled' : ''}" data-slot="${slot}" data-crew="${c.id}" aria-pressed="${open === slot}">
+    return `<button class="slot${open === slot ? ' open' : ''}${k ? ' filled' : ''}" data-slot="${slot}" data-crew="${c.id}" aria-pressed="${open === slot}"${away ? ' disabled title="Ute på tokt"' : ''}>
       <small>${SLOT_LABEL[slot]}</small><span>${d ? esc(d.name) : '—'}</span>${k && d ? `<span class="gc-dur"><i style="width:${Math.round((k.dur / d.durability) * 100)}%"></i></span>` : ''}</button>`;
   }).join('');
   return `<div class="slots">${slots}</div>${open ? pickerHtml(c, open) : ''}`;
@@ -83,7 +85,13 @@ export function bindCards(root: HTMLElement) {
   root.querySelectorAll<HTMLButtonElement>('[data-salvage]').forEach((b) => b.addEventListener('click', () => {
     const cards = b.dataset.salvage!.split(',').map((u) => game().stash.find((k) => k.uid === u)).filter((k): k is CardInst => !!k);
     const k = salvageCopy(cards);
-    if (k) salvage(game(), k.uid);
+    if (!k) return;
+    const d = CARDS[k.def];
+    if (d.rarity === 'unik') {
+      // unike kort finnes bare ett av, så demontering må bekreftes
+      if (!confirm(`${d.name} er unik. Det finnes ikke flere av den i Stavanger. Demontere likevel for ${salvageValue(d).skrap} skrap?`)) return;
+      salvage(game(), k.uid, { allowUnique: true });
+    } else salvage(game(), k.uid);
     ui.refresh();
   }));
   root.querySelectorAll<HTMLButtonElement>('[data-equip]').forEach((b) => b.addEventListener('click', () => {

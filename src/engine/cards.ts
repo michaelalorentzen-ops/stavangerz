@@ -23,11 +23,14 @@ export function newCard(s: GameState, defId: string): CardInst {
 const gearOf = (c: CrewMember) => Object.values(c.gear).filter((k): k is CardInst => !!k);
 const levelOf = (c: CrewMember, slot: Slot) => { const k = c.gear[slot]; return k ? CARDS[k.def].level : 0; };
 
-/** Setter et kort fra lageret i sporet sitt. Kortet som lå der går tilbake på lageret. */
+/** Er personen ute på tokt? Lageret er hjemme, så da kan ikke utstyret byttes. */
+const away = (s: GameState, crewId: string) => s.tokts.some((t) => t.crew.includes(crewId));
+
+/** Setter et kort fra lageret i sporet sitt. Kortet som lå der går tilbake på lageret. Nekter for de som er på tokt. */
 export function equip(s: GameState, crewId: string, uid: string): boolean {
   const c = s.crew.find((x) => x.id === crewId);
   const i = s.stash.findIndex((k) => k.uid === uid);
-  if (!c || i < 0) return false;
+  if (!c || i < 0 || away(s, crewId)) return false;
   const [card] = s.stash.splice(i, 1);
   const slot = CARDS[card.def].slot;
   const old = c.gear[slot];
@@ -39,7 +42,7 @@ export function equip(s: GameState, crewId: string, uid: string): boolean {
 export function unequip(s: GameState, crewId: string, slot: Slot): boolean {
   const c = s.crew.find((x) => x.id === crewId);
   const k = c?.gear[slot];
-  if (!c || !k) return false;
+  if (!c || !k || away(s, crewId)) return false;
   s.stash.push(k);
   delete c.gear[slot];
   return true;
@@ -148,10 +151,11 @@ export function salvageValue(def: CardDef): Partial<Resources> {
   return { skrap: def.rarity === 'unik' ? base * 2 : base };
 }
 
-/** Demonterer et kort på lageret til ressurser. Nekter favoritter og kort utenfor lageret. */
-export function salvage(s: GameState, uid: string): Partial<Resources> | null {
+/** Demonterer et kort på lageret til ressurser. Nekter favoritter, kort utenfor lageret og unike kort uten `allowUnique`. */
+export function salvage(s: GameState, uid: string, opts: { allowUnique?: boolean } = {}): Partial<Resources> | null {
   const i = s.stash.findIndex((k) => k.uid === uid);
   if (i < 0 || s.stash[i].fav) return null;
+  if (CARDS[s.stash[i].def].rarity === 'unik' && !opts.allowUnique) return null;
   const [card] = s.stash.splice(i, 1);
   const value = salvageValue(CARDS[card.def]);
   for (const [r, n] of Object.entries(value) as [keyof Resources, number][]) s.res[r] += n;
