@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canEndDay, canRecruit, GATE_IDS, housing, injure, mods, NEIGHBORS, newGame, PLAYABLE, resolveDay, sameTask, sectorIntel,
-  setLeader, stat, taskKey, taskOptions, updateControl, addNeighbor,
+  canEndDay, canRecruit, checkEnd, GATE_IDS, housing, injure, NEIGHBORS, newGame, PLAYABLE, resolveDay, sameTask, sectorIntel,
+  setLeader, stat, taskKey, taskOptions, addNeighbor,
 } from '../src/engine';
 import type { GameState, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -36,33 +36,39 @@ describe('Vakt på port', () => {
     expect(z).toBeGreaterThan(0);
   });
 
-  it('Rydde teller ikke lenger som vakt, men Befeste gjør det', () => {
-    const run = (type: 'rydde' | 'befeste') => {
+  it('Rydde og Sanke teller ikke som vakt, men Befeste gjør det', () => {
+    const run = (type: 'rydde' | 'sanke' | 'befeste') => {
       const s = fresh();
       sealed(s);
       s.sectors.nordkrysset.searched = 50;
-      s.gates.nord.level = 2; s.gates.nord.work = 0;
+      s.res.tre = 0; s.res.skrap = 0;
       let breaches = 0;
       for (let i = 0; i < 150; i++) {
         s.day = 40; s.over = null; s.moral = 80;
         for (const c of s.crew) c.task = { type: 'hvile' };
-        s.crew[1].task = type === 'rydde' ? { type, target: 'nordkrysset' } : { type, target: 'nord' };
-        s.gates.nord.level = 2; s.res.tre = 50; s.res.skrap = 50;
+        s.crew[1].task = type === 'befeste' ? { type, target: 'nord' } : { type, target: 'nordkrysset' };
+        s.gates.nord.level = 2; s.gates.nord.work = 0;
         resolveDay(s);
+        expect(s.gates.nord.level).toBe(2);
         if (s.sectors.nordkrysset.z > 0) { breaches++; s.sectors.nordkrysset.z = 0; }
       }
       return breaches;
     };
-    expect(run('rydde')).toBeGreaterThan(run('befeste'));
+    const guarded = run('befeste');
+    expect(run('rydde')).toBeGreaterThan(guarded);
+    expect(run('sanke')).toBeGreaterThan(guarded);
   });
 
-  it('vakt på sektor gir kontroll etter Nerver', () => {
+  it('vakt på sektor gir kontroll etter beste Nerver, uten forfall', () => {
     const s = fresh();
     sealed(s);
+    for (const id of PLAYABLE) s.sectors[id].control = 20;
     s.sectors.obs.control = 20;
-    const before = s.sectors.obs.control;
-    updateControl(s, mods(s), {} as Record<SectorId, number>, { obs: 15 + (stat(me(s), 'nerver') / 10) * 3 });
-    expect(s.sectors.obs.control).toBeCloseTo(before + 15 + (stat(me(s), 'nerver') / 10) * 3, 5);
+    GATE_IDS.forEach((g, i) => { s.crew[i + 1].task = { type: 'vakt', target: g }; });
+    me(s).task = { type: 'vakt', target: 'obs' };
+    const expected = 20 + 15 + (stat(me(s), 'nerver') / 10) * 3;
+    resolveDay(s);
+    expect(s.sectors.obs.control).toBeCloseTo(expected, 5);
   });
 
   it('vakt kan velges for porter og tomme sektorer, ikke infiserte', () => {
@@ -248,6 +254,21 @@ describe('Ny leder', () => {
     injure(s, me(s), 'på kaia', nobody);
     expect(s.needLeader).toBe(false);
     expect(canEndDay(s)).toBe(true);
+  });
+
+  it('lederen dør og resten av crewet dør samme dag: spillet slutter rent', () => {
+    const s = fresh();
+    const l = me(s);
+    l.hp = 1; l.task = { type: 'rydde', target: 'hjem' };
+    injure(s, l, 'i hjemmet', nobody);
+    expect(s.needLeader).toBe(true);
+    for (const c of [...s.crew]) { c.hp = 1; injure(s, c, 'samme natt', nobody); }
+    expect(s.crew).toHaveLength(0);
+    expect(s.needLeader).toBe(false);
+    expect(canEndDay(s)).toBe(true);
+    checkEnd(s);
+    expect(s.over).toBe('dead');
+    expect(s.needLeader).toBe(false);
   });
 
   it('en annen som dør setter ikke needLeader', () => {

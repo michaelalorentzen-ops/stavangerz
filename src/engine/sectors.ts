@@ -13,6 +13,13 @@ import type { CrewMember, GameState, SectorId, SectorState } from './types';
 export const THREAT_KILL = [0, 1, 0.9, 0.78, 0.66, 0.55];
 export const THREAT_INJURY = [0, 1, 1.15, 1.35, 1.6, 1.9];
 
+/** Regelkonstanter for Vakt på sektor og Speide (ikke vanskelighetsknotter). */
+export const WATCH_CONTROL_BASE = 15, WATCH_CONTROL_PER_NERVER = 3;
+export const SPEIDE_INJURY = 0.03;
+/** Kontroll en sektor får av én dags vakt, etter beste Nerver i teamet. */
+export const watchControl = (s: GameState, team: CrewMember[]) =>
+  WATCH_CONTROL_BASE + (Math.max(...team.map((c) => stat(c, 'nerver'))) / 10) * WATCH_CONTROL_PER_NERVER;
+
 export const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));
 const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
 const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
@@ -145,12 +152,12 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
 }
 
 /** Speide: finn ut trusselnivået uten å ta kamp. Liten risiko for å bli oppdaget. */
-export function speide(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
+export function speide(s: GameState, id: SectorId, team: CrewMember[], M: PhaseModifiers, log: LogFn) {
   const sec = s.sectors[id], def = SECTORS[id];
   sec.seen = true; sec.scouted = true;
   log(`${names(team)} speidet i ${def.short}: trusselnivå ${def.threat} av 5, og ${sec.z} ${plural(sec.z)} i sikte.`);
   if (s.uniques[id]) log(`Rykter om noe spesielt i ${def.short}. Ingen vet hva, men alle har en mening.`, 'find');
-  for (const c of team) if (rand(s) < 0.03 * THREAT_INJURY[def.threat]) injure(s, c, `på speiding i ${def.short}`, log);
+  for (const c of team) if (rand(s) < SPEIDE_INJURY * THREAT_INJURY[def.threat] * M.injuryMult) injure(s, c, `på speiding i ${def.short}`, log);
 }
 
 /** Utstyr som ligger igjen hentes av de som er i sektoren. */

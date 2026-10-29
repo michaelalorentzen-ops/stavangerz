@@ -6,7 +6,7 @@ import { addNeighbor, leteOverlevende } from './crew';
 import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
-import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, wearTools } from './sectors';
+import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
   CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
@@ -98,7 +98,7 @@ export const taskKey = (t: Task) => `${t.type}:${targetOf(t) ?? ''}`;
 export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
 
 /** Kan dagen avsluttes? Ikke før en ny leder er valgt. */
-export const canEndDay = (s: GameState): boolean => !s.needLeader;
+export const canEndDay = (s: GameState): boolean => !s.needLeader || !s.crew.length;
 
 /** Nullstiller ordre som ikke lenger er gyldige. */
 export function validateTasks(s: GameState) {
@@ -130,7 +130,7 @@ export function resolveDay(s: GameState): LogLine[] {
   // 2b) Speide
   for (const id of PLAYABLE) {
     const sp = team('speide', id);
-    if (sp.length) { speide(s, id, sp, log); xp(sp, 'snoking', 1.5); }
+    if (sp.length) { speide(s, id, sp, M, log); xp(sp, 'snoking', 1.5); }
   }
 
   // 2c) Vakt på sektor gir kontroll
@@ -138,7 +138,7 @@ export function resolveDay(s: GameState): LogLine[] {
   for (const id of PLAYABLE) {
     const vk = team('vakt', id);
     if (!vk.length) continue;
-    watch[id] = 15 + (Math.max(...vk.map((c) => stat(c, 'nerver'))) / 10) * 3;
+    watch[id] = watchControl(s, vk);
     log(`${names(vk)} holdt vakt i ${SECTORS[id].short}.`);
     xp(vk, 'nerver', 1);
   }
@@ -254,6 +254,6 @@ export function phaseProgress(s: GameState) {
 
 export function checkEnd(s: GameState) {
   if (s.over) return;
-  if (!s.crew.length) s.over = 'dead';
+  if (!s.crew.length) { s.over = 'dead'; s.needLeader = false; }
   else if (phaseProgress(s).done) s.over = 'won';
 }

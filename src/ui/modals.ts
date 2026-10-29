@@ -30,7 +30,7 @@ export function titleScreen() {
       ${saved && !saved.over ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
   on('new', createSelf);
-  on('cont', () => { ui.S = saved; closeModal(); ui.refresh(); if (saved?.needLeader) chooseLeader(() => { closeModal(); ui.refresh(); }); });
+  on('cont', () => { ui.S = saved; closeModal(); ui.refresh(); if (saved?.needLeader && saved.crew.length) chooseLeader(() => { closeModal(); ui.refresh(); }); });
 }
 
 const POOL = 15;
@@ -128,10 +128,10 @@ export function endDay() {
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${S.needLeader ? 'Hvem tar over?' : ev ? 'Samband: ny melding' : `Start dag ${S.day}`}</button></div>`);
+    <div class="row"><button class="btn" id="ok">${S.needLeader && !S.over ? 'Hvem tar over?' : ev ? 'Samband: ny melding' : `Start dag ${S.day}`}</button></div>`);
   const after = () => { closeModal(); ui.refresh(); if (S.over) endScreen(); };
   const next = () => (ev ? showEvent(ev, after) : after());
-  on('ok', () => (S.needLeader ? chooseLeader(next) : next()));
+  on('ok', () => (S.needLeader && !S.over && S.crew.length ? chooseLeader(next) : next()));
 }
 
 export function endScreen() {

@@ -1,9 +1,12 @@
-// Crewet: skader, død og plass. Mer kommer i senere oppgaver (ny leder, rekruttering).
+// Crewet: skader, død, ny leder, plass og rekruttering.
 import { dropGear, give, rollStarter, wear } from './cards';
 import { GATES, HEALTH_LABEL, NEIGHBORS, SECTORS, PLAYABLE } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';
 import type { CrewMember, GameState, LogKind, SectorId } from './types';
+
+/** Regelkonstanter for Lete etter overlevende (ikke vanskelighetsknotter). */
+const RECRUIT_BASE = 0.15, RECRUIT_PER_PRAT = 0.05, RECRUIT_NOISE = 0.2;
 
 export type LogFn = (t: string, kind?: LogKind) => void;
 
@@ -32,7 +35,8 @@ export function injure(s: GameState, c: CrewMember, why: string, log: LogFn) {
     s.moral -= 15; s.stats.lost++;
     dropGear(s, c, taskSector(c));
     s.crew = s.crew.filter((x) => x !== c);
-    if (c.me && s.crew.length) {
+    if (!s.crew.length) s.needLeader = false;
+    else if (c.me) {
       s.needLeader = true;
       log('Lederen er borte. Noen må ta over, og ingen rekker opp hånda frivillig.', 'warn');
     }
@@ -73,7 +77,7 @@ export const recruitablesNow = (s: GameState) => NEIGHBORS.filter((n) => !s.crew
 export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
   const sec = s.sectors[id], def = SECTORS[id];
   const prat = Math.max(...team.map((c) => stat(c, 'prat')));
-  const chance = clamp(0.15 + (prat / 10) * 0.05, 0, 0.95);
+  const chance = clamp(RECRUIT_BASE + (prat / 10) * RECRUIT_PER_PRAT, 0, 0.95);
   const who = team.map((c) => c.name).join(' og ');
   if (rand(s) < chance) {
     const cands = recruitablesNow(s);
@@ -85,7 +89,7 @@ export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], 
       log(`${who} fant ${n.name} (${n.role.toLowerCase()}) i ${def.short}. ${n.quip}`, 'good');
     }
   } else log(`${who} banket på dører i ${def.short}. Det eneste som svarte var ekko og en radio på lavt volum.`);
-  if (rand(s) < 0.2) {
+  if (rand(s) < RECRUIT_NOISE) {
     const n = 1 + Math.floor(rand(s) * 2);
     sec.z += n;
     log(`Roping i ${def.short} vekket ${n} ${n === 1 ? 'zombie' : 'zombier'}. Det er sånt som skjer.`, 'bad');

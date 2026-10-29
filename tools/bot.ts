@@ -42,7 +42,7 @@ export function playGame(seed: number, neighbors = ['arild', 'mona', 'toregil'],
   while (!s.over && s.day < maxDays) {
     botTurn(s);
     resolveDay(s);
-    if (!canEndDay(s)) setLeader(s, s.crew[0].id);
+    if (!canEndDay(s) && s.crew.length) setLeader(s, s.crew[0].id);
     const ev = drawEvent(s);
     if (ev) runChoice(s, ev.choices.filter((c) => !c.when || c.when(s))[0]);
   }
