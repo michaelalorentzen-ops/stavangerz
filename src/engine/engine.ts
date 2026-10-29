@@ -5,7 +5,7 @@ import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, leteOverlevende } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
-import { BRANCHES, canEndPhase, endPhase, mods } from './phases';
+import { advancePhase, BRANCHES, mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { isOnTokt, expireQuests, resolveTokts, toktAvailable, TOKTS } from './tokt';
@@ -121,6 +121,19 @@ export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.le
 export const endDayBlocker = (s: GameState): 'pending' | 'tokt' | 'leader' | null =>
   s.over ? null : s.pending.length ? 'pending' : s.tokts.some((t) => t.awaiting) ? 'tokt' : s.needLeader && s.crew.length ? 'leader' : null;
 
+/** Er runden avgjort? Bare «won-seen» kan spille videre. */
+export const isFinished = (s: Pick<GameState, 'over'>): boolean => s.over !== null && s.over !== 'won-seen';
+
+/** Kan spilleren avslutte fasen? Fra og med dagen målet først ble nådd, og ikke mens noe venter på et valg. */
+export const canEndPhase = (s: GameState): boolean => s.goalDay !== null && endDayBlocker(s) === null;
+
+/** Avslutter fasen. Fase 1 er foreløpig siste: fase 2 finnes ikke ennå, så runden er vunnet. */
+export function endPhase(s: GameState): string[] {
+  if (!canEndPhase(s) || s.over) return [];
+  if (s.phase === 1) { s.over = 'won'; return []; }
+  return advancePhase(s);
+}
+
 /** Nullstiller ordre som ikke lenger er gyldige. */
 export function validateTasks(s: GameState) {
   const valid = taskOptions(s);
@@ -134,7 +147,7 @@ const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 export function resolveDay(s: GameState): LogLine[] {
   // bare «Fortsett på Buøy» kan spille videre etter at runden er avgjort
-  if (s.over && s.over !== 'won-seen') return [];
+  if (isFinished(s)) return [];
   const M = mods(s);
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });

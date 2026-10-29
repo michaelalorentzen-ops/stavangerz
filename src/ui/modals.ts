@@ -1,6 +1,6 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, CARDS, checkOdds, describeEncounter, drawEvent, endDayBlocker, endPhase, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, describeEncounter, drawEvent, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
@@ -28,12 +28,12 @@ export function titleScreen() {
     <div class="coords">58°59′N 5°43′Ø · Buøy, Hundvåg bydel</div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
-      ${saved && !saved.over ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
+      ${saved && (!saved.over || saved.over === 'won-seen') ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
   on('new', createSelf);
   on('cont', () => {
     ui.S = saved; closeModal(); ui.refresh();
-    settle(() => { closeModal(); ui.refresh(); if (saved?.over) endScreen(); });
+    settle(() => { closeModal(); ui.refresh(); if (saved && isFinished(saved)) endScreen(); });
   });
 }
 
@@ -178,17 +178,17 @@ function chooseLeader(done: () => void) {
 /** Spilleren avslutter fasen fra målpanelet. */
 export function endPhaseNow() {
   const S = game();
-  if (S.over) return;
+  if (!canEndPhase(S)) return;
   endPhase(S);
   save();
   ui.refresh();
-  if (S.over) endScreen();
+  if (isFinished(S)) endScreen();
 }
 
 export function endDay() {
   const S = game(), day = S.day;
-  if (S.over && S.over !== 'won-seen') { endScreen(); return; }
-  const finish = () => { closeModal(); ui.refresh(); if (S.over && S.over !== 'won-seen') endScreen(); };
+  if (isFinished(S)) { endScreen(); return; }
+  const finish = () => { closeModal(); ui.refresh(); if (isFinished(S)) endScreen(); };
   if (endDayBlocker(S)) { settle(finish); return; }
   const lines = resolveDay(S);
   const ev = S.over ? null : drawEvent(S);
@@ -205,7 +205,7 @@ export function endScreen() {
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
     modal(`<div class="radio">Samband · alle stasjoner</div><h2>Buøy er sikret</h2>
-      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager. Poengsum: ${S.day - S.phaseStartDay} dager brukt, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner på Obs Bygg: «BUØY: 1 – APOKALYPSEN: 0».</p>
+      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner på Obs Bygg: «BUØY: 1 – APOKALYPSEN: 0».</p>
       <div class="metrics">${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}${metric('Crew mistet', st.lost)}</div>
       <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>Rosenberg Verft</h2>
       <p>Horden på verftet venter. ${S.flags.gann ? 'Skoleskipet Gann ligger klart ved Tømmerodden.' : 'Dere har ingen båt ennå.'} ${S.flags.buss ? 'Kolumbus-bussen på Sørspissen har full tank.' : 'Dere har ikke funnet transport ennå.'}</p></div>

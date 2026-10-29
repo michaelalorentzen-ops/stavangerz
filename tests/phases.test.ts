@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advancePhase, canEndPhase, checkEnd, endPhase, migrate, hasMutation, MUTATIONS, mods, newGame, PHASES, PLAYABLE, resolveDay } from '../src/engine';
+import { advancePhase, canEndPhase, checkEnd, endPhase, isFinished, migrate, hasMutation, MUTATIONS, mods, newGame, PHASES, PLAYABLE, resolveDay } from '../src/engine';
 import type { PhaseModifiers } from '../src/engine';
 import type { PhaseId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -196,6 +196,34 @@ describe('faseslutt og turgrense', () => {
     const day = s.day;
     resolveDay(s);
     expect(s.day).toBe(day + 1);
+  });
+});
+
+describe('canEndPhase og blokkeringer', () => {
+  it('krever at ingenting venter på et valg', () => {
+    const s = newGame(1, BOT_SELF, []);
+    s.goalDay = 5;
+    expect(canEndPhase(s)).toBe(true);
+    s.pending.push({ pid: 1, crew: ['meg'], sector: null, threat: 3 } as never);
+    expect(canEndPhase(s)).toBe(false);
+    endPhase(s);
+    expect(s.over).toBeNull();
+    s.pending = [];
+    s.tokts.push({ id: 'bybrua', awaiting: true, crew: ['meg'] } as never);
+    expect(canEndPhase(s)).toBe(false);
+    s.tokts[0].awaiting = false;
+    expect(canEndPhase(s)).toBe(true);
+    s.needLeader = true;
+    expect(canEndPhase(s)).toBe(false);
+  });
+
+  it('isFinished er sann for alt unntatt null og won-seen', () => {
+    const f = (over: 'won' | 'won-seen' | 'dead' | 'timeout' | null) => isFinished({ over });
+    expect([f(null), f('won-seen'), f('won'), f('dead'), f('timeout')]).toEqual([false, false, true, true, true]);
+  });
+
+  it('mods() hopper over ukjente mutasjoner', () => {
+    expect(mods({ phase: 2, mutations: ['finnesikke'], knownMutations: [] })).toEqual(PHASES[2].mods);
   });
 });
 

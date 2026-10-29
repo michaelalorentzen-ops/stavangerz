@@ -1,5 +1,5 @@
 import './styles.css';
-import { newGame } from './engine';
+import { isFinished, newGame } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
 import { draft, endDay, endPhaseNow, endScreen, titleScreen } from './ui/modals';
@@ -45,7 +45,7 @@ function start(data: { S?: GameState } = {}) {
   if (data.S) {
     ui.S = data.S;
     ui.refresh();
-    if (ui.S.over === 'won' || ui.S.over === 'dead' || ui.S.over === 'timeout') endScreen();
+    if (isFinished(ui.S)) endScreen();
     return;
   }
   // forhåndsvisning bak tittelskjermen, lagres ikke

@@ -88,6 +88,7 @@ export const PHASES: Record<PhaseId, PhaseDef> = {
 export function mods(s: Pick<GameState, 'phase' | 'mutations' | 'knownMutations'>): PhaseModifiers {
   const m = { ...PHASES[s.phase].mods };
   for (const id of s.mutations) {
+    if (!MUTATIONS[id]) continue; // ukjent id i en gammel lagring
     const known = s.knownMutations.includes(id);
     for (const [k, f] of Object.entries(MUTATIONS[id].mult) as [keyof PhaseModifiers, number][]) m[k] *= known ? 1 + (f - 1) * 0.5 : f;
   }
@@ -125,14 +126,4 @@ export function advancePhase(s: GameState): string[] {
     added.push(id);
   }
   return added;
-}
-
-/** Kan spilleren avslutte fasen? Fra og med dagen målet først ble nådd. */
-export const canEndPhase = (s: Pick<GameState, 'goalDay'>): boolean => s.goalDay !== null;
-
-/** Avslutter fasen. Fase 1 er foreløpig siste: fase 2 finnes ikke ennå, så runden er vunnet. */
-export function endPhase(s: GameState): string[] {
-  if (!canEndPhase(s) || s.over) return [];
-  if (s.phase === 1) { s.over = 'won'; return []; }
-  return advancePhase(s);
 }

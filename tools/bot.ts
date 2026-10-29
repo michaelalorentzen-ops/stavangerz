@@ -53,13 +53,13 @@ export function playGame(seed: number, neighbors = ['arild', 'mona', 'toregil'],
   while (!s.over && s.day < maxDays) {
     botTurn(s);
     resolveDay(s);
-    // avslutter fasen samme dag målet er nådd
-    if (canEndPhase(s)) endPhase(s);
     const ev = s.over ? null : drawEvent(s);
     if (ev) runChoice(s, ev.choices.filter((c) => !c.when || c.when(s))[0]);
     // som i spillet: encounters først (de kan drepe lederen), så ny leder
     botEncounters(s);
     if (!canEndDay(s) && s.crew.length) setLeader(s, s.crew[0].id);
+    // avslutter fasen samme dag målet er nådd, når ingenting venter lenger
+    if (canEndPhase(s)) endPhase(s);
   }
   return s;
 }

@@ -28,7 +28,7 @@ export function renderGoals() {
     ${row('Gjør alle sektorer på Buøy trygge', `${p.safe}/${p.total}`, p.safe === p.total)}
     ${p.gates.map((g) => row(`${g.name} på nivå 2`, `${g.level}/2`, g.level >= 2)).join('')}
     ${S.over === null ? `<div class="goal"><span>Turer igjen i fasen</span><b>${Math.max(0, mods(S).turnCap - (S.day - S.phaseStartDay))}</b></div>` : ''}
-    ${S.over === null && canEndPhase(S) ? `<button class="btn small" id="endphase">Avslutt fase ${S.phase}</button>` : ''}
+    ${canEndPhase(S) && !S.over ? `<button class="btn small" id="endphase">Avslutt fase ${S.phase}</button>` : ''}
     <div class="hint">Utstyr på lager: ${S.stash.length} · Crew ${S.crew.length}/${housing(S)} senger</div>
   </div>`;
 }
