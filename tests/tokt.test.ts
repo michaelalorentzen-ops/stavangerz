@@ -4,7 +4,7 @@ import {
   EVENTS, QUESTS, TOKTS,
 } from '../src/engine';
 import type { GameState } from '../src/engine';
-import { BOT_SELF } from '../tools/bot';
+import { BOT_SELF, playGame, toktStats } from '../tools/bot';
 
 const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
 /** Sender de to første på tokt og løser dagen. */
@@ -258,5 +258,17 @@ describe('tokt', () => {
       const s = fresh(seed);
       for (const id of rewarded) expect(Object.values(s.uniques)).not.toContain(id);
     }
+  });
+});
+
+describe('bot med tokt', () => {
+  it('tar Køen på Bybrua når det er rolig, svarer på valgene og spiller deterministisk', () => {
+    const games = Array.from({ length: 20 }, (_, i) => playGame(i + 1, undefined, { tokt: true }));
+    expect(games.reduce((n, s) => n + toktStats(s).done + toktStats(s).turned, 0)).toBeGreaterThan(0);
+    // ingen runde blir stående med et ubesvart tokt
+    for (const s of games) expect(s.over).not.toBeNull();
+    expect(playGame(5, undefined, { tokt: true })).toEqual(playGame(5, undefined, { tokt: true }));
+    // uten valget tar boten aldri tokt
+    expect(toktStats(playGame(5)).done).toBe(0);
   });
 });

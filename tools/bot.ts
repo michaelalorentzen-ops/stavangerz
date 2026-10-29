@@ -2,7 +2,7 @@
 // Den følger en fast prioritetsliste og tenker ikke langt frem. En god spiller skal slå den.
 import {
   canEndDay, canEndPhase, CARDS, dailyFood, dailyWater, describeEncounter, drawEvent, endPhase, equip, fightPower, GATE_IDS, GATES,
-  isOnTokt, isSafe, LAGE_COST, newGame, PLAYABLE, resolveDay, resolveEncounter, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
+  isOnTokt, isSafe, LAGE_COST, newGame, toktDecision, toktDef, PLAYABLE, resolveDay, resolveEncounter, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
   SLOTS, taskOptions, THREAT_KILL,
 } from '../src/engine';
 import type { CrewMember, GameState, ResKey, SelfSetup, Task } from '../src/engine';
@@ -16,6 +16,14 @@ export const COMBOS: string[][] = [
   ['leah', 'bjarne', 'kjell'],
   ['arild', 'sondre', 'bjarne'],
 ];
+
+/** Valg for boten. `tokt` sender to på «Køen på Bybrua» når det er rolig nok. */
+export interface BotOptions { tokt?: boolean; maxDays?: number }
+
+/** Toktet boten tar, og hvor mange den sender. */
+const BOT_TOKT = 'bybrua', TOKT_TEAM = 2, TOKT_MIN_CREW = 4;
+/** Boten snur etter så mange dager ute, med mindre toktet er ferdig. */
+const TOKT_MAX_STAGES = 2;
 
 /** Maks antall i en Rydde-gruppe. */
 const RYDDE_MAX = 3;
@@ -38,11 +46,11 @@ function botEquip(s: GameState) {
 
 const materials = (s: GameState) => s.res.tre + s.res.skrap;
 
-export function botTurn(s: GameState) {
+export function botTurn(s: GameState, bot: BotOptions = {}) {
   botEquip(s);
   const opts = taskOptions(s);
   const can = (t: Task) => opts.some((o) => sameTask(o, t));
-  const free = s.crew.filter((c) => !isOnTokt(s, c)); // boten tar aldri tokt, men låste ordre skal ikke røres
+  const free = s.crew.filter((c) => !isOnTokt(s, c)); // de som er ute er låst til toktet
   const plan = new Map<CrewMember, Task>();
   const avail = () => free.filter((c) => !plan.has(c));
   const by = (f: (c: CrewMember) => number) => avail().sort((a, b) => f(b) - f(a));
@@ -51,6 +59,16 @@ export function botTurn(s: GameState) {
 
   // 1) Hvile med 1 i liv
   for (const c of free) if (c.hp <= 1) plan.set(c, { type: 'hvile' });
+
+  // 1b) Tokt (bare med bot.tokt): to friske drar når crewet er stort nok og ingenting haster.
+  //     Det haster når en sektor har zombier, noen har 1 i liv, eller mat eller vann er under tre dagers forbruk.
+  //     (Med bare Hjemme som krav dro boten nesten hver dag og vant 19 %: to av fire borte hele tiden.)
+  if (bot.tokt && s.crew.length >= TOKT_MIN_CREW && can({ type: 'tokt', target: BOT_TOKT })) {
+    const urgent = PLAYABLE.some((id) => s.sectors[id].z > 0) || s.crew.some((c) => c.hp <= 1)
+      || s.res.mat < 3 * dailyFood(s) || s.res.vann < 3 * dailyWater(s);
+    const fit = avail().filter((c) => c.hp === 3).sort((a, b) => fightPower(s, b) - fightPower(s, a));
+    if (!urgent && fit.length >= TOKT_TEAM) for (const c of fit.slice(0, TOKT_TEAM)) set(c, { type: 'tokt', target: BOT_TOKT });
+  }
 
   // 2) Rydde den minst infiserte sektoren med inntil 3, så mange som trengs
   const infected = PLAYABLE.filter((id) => s.sectors[id].z > 0).sort((a, b) => s.sectors[a].z - s.sectors[b].z);
@@ -139,15 +157,41 @@ export function botEncounters(s: GameState) {
   }
 }
 
-export function playGame(seed: number, neighbors: string[] = BOT_NEIGHBORS, maxDays = 80): GameState {
+/**
+ * Tokt-valg: fortsett til toktet er ferdig, men snu når noen i gruppa har 1 i liv eller gruppa har vært ute
+ * i TOKT_MAX_STAGES dager uten å bli ferdig. På siste dag betyr «fortsett» å fullføre og få belønningen.
+ */
+export function botTokts(s: GameState) {
+  for (const t of [...s.tokts]) {
+    if (!t.awaiting || s.over || s.pending.some((p) => p.toktId === t.id)) continue;
+    const done = t.stage >= toktDef(t.id).days;
+    const weak = s.crew.some((c) => t.crew.includes(c.id) && c.hp <= 1);
+    const d = done ? 'fortsett' : weak || t.stage >= TOKT_MAX_STAGES ? 'snu' : 'fortsett';
+    toktDecision(s, t.id, d);
+    const st = toktStats(s);
+    if (done) st.done++; else if (d === 'snu') st.turned++;
+  }
+}
+
+/** Telling av bot-tokt per runde, til simuleringen. Ligger utenfor spilltilstanden. */
+const TOKT_STATS = new WeakMap<GameState, { done: number; turned: number }>();
+export const toktStats = (s: GameState) => {
+  let st = TOKT_STATS.get(s);
+  if (!st) TOKT_STATS.set(s, (st = { done: 0, turned: 0 }));
+  return st;
+};
+
+export function playGame(seed: number, neighbors: string[] = BOT_NEIGHBORS, opts: BotOptions = {}): GameState {
   const s = newGame(seed, BOT_SELF, neighbors);
+  const maxDays = opts.maxDays ?? 80;
   while (!s.over && s.day < maxDays) {
-    botTurn(s);
+    botTurn(s, opts);
     resolveDay(s);
     const ev = s.over ? null : drawEvent(s);
     if (ev) runChoice(s, ev.choices.filter((c) => !c.when || c.when(s))[0]);
     // som i spillet: encounters først (de kan drepe lederen), så ny leder
     botEncounters(s);
+    botTokts(s);
     if (!canEndDay(s) && s.crew.length) setLeader(s, s.crew[0].id);
     // avslutter fasen samme dag målet er nådd, når ingenting venter lenger
     if (canEndPhase(s)) endPhase(s);
