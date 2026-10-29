@@ -34,6 +34,8 @@ export function deathCause(c: CrewMember): DeathCause {
   const t = c.task;
   if (t.type === 'tokt') return 'tokt';
   if ((t.type === 'befeste' || t.type === 'vakt') && t.target in GATES) return 'natt';
+  // Hjemme skader ingenting crewet i fase 1 i dag (encounters setter årsaken selv). Kartleggingen er for
+  // senere nattangrep mot basen, så de havner under natt og ikke under kamp.
   if (t.type === 'hvile' || t.type === 'pleie' || t.type === 'lage' || t.type === 'trene') return 'natt';
   return 'kamp';
 }

@@ -10,7 +10,6 @@ const args = process.argv.slice(2);
 const flag = (name: string) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 const n = Number(args.find((a) => /^\d+$/.test(a))) || 300;
 
-
 const median = (xs: number[]) => { const a = [...xs].sort((x, y) => x - y); return a.length ? a[a.length >> 1] : NaN; };
 const pct = (k: number, of: number) => `${Math.round((k / of) * 100)} %`;
 

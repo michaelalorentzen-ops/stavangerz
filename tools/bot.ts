@@ -46,6 +46,7 @@ export function botTurn(s: GameState) {
   const plan = new Map<CrewMember, Task>();
   const avail = () => free.filter((c) => !plan.has(c));
   const by = (f: (c: CrewMember) => number) => avail().sort((a, b) => f(b) - f(a));
+  const planned = (pred: (t: Task) => boolean) => [...plan.values()].some(pred);
   const set = (c: CrewMember | undefined, t: Task) => { if (c && can(t)) { plan.set(c, t); return true; } return false; };
 
   // 1) Hvile med 1 i liv
@@ -72,7 +73,7 @@ export function botTurn(s: GameState) {
     if (!(materials(s) > 0 && set(c, { type: 'befeste', target: weakGate }))) set(c, { type: 'vakt', target: weakGate });
   }
   for (const g of GATE_IDS) {
-    if (s.gates[g].level < 2 && materials(s) > 2 && ![...plan.values()].some((t) => t.type === 'befeste' && t.target === g)) {
+    if (s.gates[g].level < 2 && materials(s) > 2 && !planned((t) => t.type === 'befeste' && t.target === g)) {
       set(by((c) => buildPower(s, c))[0], { type: 'befeste', target: g });
     }
   }
@@ -102,9 +103,12 @@ export function botTurn(s: GameState) {
   for (const id of unsearched) set(by((c) => searchPower(s, c))[0], { type: 'rydde', target: id });
 
   // 7) Vakt på sektoren med lavest kontroll som ikke er trygg, så lenge det er noen å sende
-  const unsafe = () => PLAYABLE.filter((id) => s.sectors[id].z === 0 && !isSafe(s.sectors[id]) && ![...plan.values()].some((t) => 'target' in t && t.target === id))
+  const unsafe = () => PLAYABLE.filter((id) => s.sectors[id].z === 0 && !isSafe(s.sectors[id]) && !planned((t) => 'target' in t && t.target === id))
     .sort((a, b) => s.sectors[a].control - s.sectors[b].control);
-  for (let id = unsafe()[0]; id && avail().length; id = unsafe()[0]) if (!set(by((c) => c.stats.nerver)[0], { type: 'vakt', target: id })) break;
+  while (avail().length) {
+    const id = unsafe()[0];
+    if (!id || !set(by((c) => c.stats.nerver)[0], { type: 'vakt', target: id })) break;
+  }
 
   // 8) Lage utstyr hvis noen mangler våpen
   const unarmed = s.crew.some((c) => !c.gear.vapen) && !s.stash.some((k) => CARDS[k.def].slot === 'vapen');
