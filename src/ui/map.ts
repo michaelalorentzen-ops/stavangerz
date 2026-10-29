@@ -2,7 +2,7 @@
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
 import { GATE_IDS, GATES, SECTORS, sectorIntel } from '../engine';
 import type { CrewMember } from '../engine';
-import { $, game, MAP, ui } from './store';
+import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -127,7 +127,7 @@ export function renderMap(onSelect: (s: Selection) => void) {
   }
   for (const m of MAP.sectors) {
     const id = m.id;
-    const cls = id === 'rosenberg' ? 's-lock' : sectorIntel(S, id).status === 'infisert' ? 's-inf' : 's-clr';
+    const cls = id === 'rosenberg' ? 's-lock' : S.sectors[id].z > 0 ? 's-inf' : sectorIntel(S, id).safe ? 's-safe' : 's-clr';
     const g = el('g', { class: `sector ${cls}${sel.kind === 'sector' && sel.id === id ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': SECTORS[id].name }, dyn);
     el('path', { d: m.d, class: 'fillbase' }, g);
     el('path', { d: m.d, class: 'edge', 'stroke-linejoin': 'round' }, g);
@@ -142,9 +142,10 @@ export function renderMap(onSelect: (s: Selection) => void) {
       continue;
     }
     const intel = sectorIntel(S, m.id);
-    const inf = intel.status === 'infisert';
+    const inf = S.sectors[m.id].z > 0;
+    text(dyn, { ...mid, x: m.cx, y: m.cy - 40, class: 'lab sub kind' }, KIND_ICON[SECTORS[m.id].kind]);
     text(dyn, { ...mid, x: m.cx, y: m.cy - 6, class: 'lab' }, SECTORS[m.id].short);
-    text(dyn, { ...mid, x: m.cx, y: m.cy + 22, class: `lab sub ${inf ? 'inf' : 'clr'}` }, inf ? `${intel.estimate} Z` : `✓ ${intel.conf}%`);
+    text(dyn, { ...mid, x: m.cx, y: m.cy + 22, class: `lab sub ${inf ? 'inf' : intel.safe ? 'safe' : 'clr'}` }, inf ? `${intel.estimate} Z` : intel.safe ? '✓ Trygg' : `${intel.searched} %`);
     drawTokens(tokensBy[m.id], m.cx, m.cy + 58);
   }
   for (const id of GATE_IDS) {

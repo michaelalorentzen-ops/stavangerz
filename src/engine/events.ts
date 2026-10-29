@@ -2,6 +2,7 @@
 // endrer tilstanden og returnerer teksten som vises etterpå. check er en
 // stat-sjekk mot crewets beste på den staten.
 import { NEIGHBORS, PLAYABLE } from './data';
+import { canRecruit } from './crew';
 import { addGateWork, addNeighbor, checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
 import { clamp, pick, rand } from './rng';
@@ -71,10 +72,10 @@ export const EVENTS: EventDef[] = [
   },
   {
     id: 'hurtigbat', title: 'Hurtigbåten',
-    when: (s) => recruitable(s).length > 0 && s.crew.length < 7,
+    when: (s) => recruitable(s).length > 0,
     text: (s) => { const n = recruitable(s)[0]; return `En Kolumbus-hurtigbåt driver forbi Tømmerodden uten fører. Én person står på dekk og vinker: ${n.name} (${n.age}), ${n.role.toLowerCase()}. «${n.quip}»`; },
     choices: [
-      { label: 'Hent personen i land', check: 'kondis', run: (s, ok) => { const n = recruitable(s)[0]; if (ok) { addNeighbor(s, n.id); return `${n.name} er med i crewet. Neste gang dere ser hurtigbåten, kjører den mot Tau.`; } s.flags[`gone_${n.id}`] = true; return `Dere når ikke fram. ${n.name} vinker tappert mens båten forsvinner mot Tau.`; } },
+      { label: 'Hent personen i land', check: 'kondis', run: (s, ok) => { const n = recruitable(s)[0]; if (!canRecruit(s)) return `${n.name} står klar på kaia, men det er ikke plass til flere. Dere har ikke senger til ${s.crew.length + 1}. Båten fortsetter mot Tau.`; if (ok) { addNeighbor(s, n.id); return `${n.name} er med i crewet. Neste gang dere ser hurtigbåten, kjører den mot Tau.`; } s.flags[`gone_${n.id}`] = true; return `Dere når ikke fram. ${n.name} vinker tappert mens båten forsvinner mot Tau.`; } },
       { label: 'Vi har nok munner å mette', run: (s) => { const n = recruitable(s)[0]; s.flags[`gone_${n.id}`] = true; s.moral -= 4; return 'Båten forsvinner i regnet. Det føles feil.'; } },
     ],
   },
@@ -83,7 +84,7 @@ export const EVENTS: EventDef[] = [
     text: () => '«Dette er nødsendingen fra Fylkeshuset. Sandnes har erklært seg selvstendig. Vi gjentar: Sandnes har erklært seg selvstendig.»\n\nIngen i crewet merker noen forskjell.',
     choices: [
       { label: 'Skru av radioen', run: (s) => { s.moral += 3; return 'Det blir stille. Bare regn og fjern stønning. Hjemmekoselig.'; } },
-      { label: 'Lytt videre etter tips', check: 'snoking', run: (s, ok) => { if (ok) { for (const id of PLAYABLE) s.sectors[id].seen = true; return 'Mellom linjene får dere vite mye om Buøy. Alle sektorer er nå speidet.'; } return 'Resten av sendingen er værmelding. Regn.'; } },
+      { label: 'Lytt videre etter tips', check: 'snoking', run: (s, ok) => { if (ok) { for (const id of PLAYABLE) { s.sectors[id].seen = true; s.sectors[id].scouted = true; } return 'Mellom linjene får dere vite mye om Buøy. Alle sektorer er nå speidet.'; } return 'Resten av sendingen er værmelding. Regn.'; } },
     ],
   },
   {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EVENTS, INTRO, newGame, RES, runChoice } from '../src/engine';
+import { EVENTS, housing, INTRO, newGame, RES, runChoice } from '../src/engine';
 import type { GameState } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
@@ -14,6 +14,7 @@ const valid = (s: GameState) => {
   expect(s.moral).toBeGreaterThanOrEqual(0);
   expect(s.moral).toBeLessThanOrEqual(100);
   for (const c of s.crew) expect(c.hp).toBeGreaterThanOrEqual(1);
+  expect(s.crew.length).toBeLessThanOrEqual(housing(s));
 };
 
 describe('hendelseskort', () => {
@@ -37,4 +38,19 @@ describe('hendelseskort', () => {
       }
     });
   }
+});
+
+describe('rekruttering uten plass', () => {
+  it('Hurtigbåten avviser personen med tekst når boligene er fulle', () => {
+    const ev = EVENTS.find((e) => e.id === 'hurtigbat')!;
+    for (let seed = 1; seed <= 20; seed++) {
+      const s = fresh(seed);
+      while (s.crew.length < housing(s)) s.crew.push({ ...s.crew[1], id: `x${s.crew.length}` });
+      const n = s.crew.length;
+      const r = runChoice(s, ev.choices[0]);
+      expect(r.text).toMatch(/plass/);
+      expect(s.crew.length).toBe(n);
+      valid(s);
+    }
+  });
 });

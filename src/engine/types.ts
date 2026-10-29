@@ -14,9 +14,18 @@ export type TraitId =
 
 export type ZombieTraitId = 'lopere' | 'kjellerkrypere' | 'flokk' | 'seige' | 'smarte';
 
+export type SectorKind = 'hjem' | 'butikk' | 'industri' | 'bolig' | 'natur' | 'kai' | 'offentlig';
+
+/** En kortinstans. Tas i bruk i Oppgave 3. */
+export interface CardInst {
+  uid: string;
+  def: string;
+  dur: number;
+}
+
 export type Task =
   | { type: 'hvile' }
-  | { type: 'klarere' | 'lete' | 'finsjekk'; target: SectorId }
+  | { type: 'rydde' | 'sanke'; target: SectorId }
   | { type: 'befeste'; target: GateId };
 export type TaskType = Task['type'];
 
@@ -38,15 +47,22 @@ export interface SectorState {
   z: number;
   /** zombier gjemt i kjellere og boder */
   hidden: number;
+  /** hvor mye av sektoren som er gjennomsøkt, 0–100 */
+  searched: number;
+  /** hvor godt crewet har sektoren under kontroll, 0–100 */
+  control: number;
   loot: Resources;
   lootMax: number;
-  /** sannsynlighet for at skjulte zombier er oversett, null før klarering */
-  miss: number | null;
-  /** feil i crewets magefølelse om sikkerheten */
-  noise: number;
+  /** crewet har sett sektoren, så zombietallet er eksakt */
   seen: boolean;
-  special: boolean;
-  cleared: boolean;
+  /** speidet, så trusselnivået er kjent */
+  scouted: boolean;
+  /** sektoren har vært trygg, og kapasiteten teller som bolig */
+  settled: boolean;
+  /** sektorens funn er tatt */
+  specialFound: boolean;
+  /** utstyr som ligger igjen i sektoren (Oppgave 3) */
+  dropped: CardInst[];
 }
 
 export interface GateState {

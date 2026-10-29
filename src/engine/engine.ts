@@ -1,16 +1,16 @@
 // Spillmotoren. Ren logikk: all tilfeldighet går gjennom state.rng, så samme
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
-import { GATES, GATE_STEPS, GEAR, HEALTH_LABEL, NEIGHBORS, PLAYABLE, RES, RES_LABEL, SECTORS, STATS } from './data';
+import { GATES, GATE_STEPS, GEAR, NEIGHBORS, PLAYABLE, SECTORS, STATS } from './data';
 import { mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
+import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, updateControl } from './sectors';
 import { stat, toSkill } from './skills';
 import type {
   CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, Stats, Task, TaskType, TraitId,
 } from './types';
 
 export const GATE_IDS = Object.keys(GATES) as GateId[];
-const lootLeft = (sec: GameState['sectors'][SectorId]) => sum(Object.values(sec.loot));
 
 // ---------- Oppsett ----------
 export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): GameState {
@@ -26,7 +26,12 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   for (const id of neighborIds) addNeighbor(s, id);
   for (const id of PLAYABLE) {
     const d = SECTORS[id];
-    s.sectors[id] = { z: d.z, hidden: d.hidden, loot: { ...d.loot }, lootMax: sum(Object.values(d.loot)), miss: null, noise: 0, seen: id === 'hjem', special: false, cleared: false };
+    const loot = { ...d.loot, mat: Math.round(d.loot.mat * 1.3) };
+    const home = id === 'hjem';
+    s.sectors[id] = {
+      z: d.z, hidden: d.hidden, searched: 0, control: home ? 60 : 0, loot, lootMax: sum(Object.values(loot)),
+      seen: home, scouted: home, settled: home, specialFound: false, dropped: [],
+    };
   }
   for (const id of GATE_IDS) s.gates[id] = { work: 0, level: 0 };
   return s;
@@ -86,30 +91,6 @@ export function addGateWork(s: GameState, id: GateId, work: number): number {
   return g.level - before;
 }
 
-export interface SectorIntel {
-  status: 'infisert' | 'klarert';
-  estimate: string;
-  conf?: number;
-  confExact?: boolean;
-  searched: number;
-}
-
-/** Hva crewet tror om en sektor. Ekte tall bare der det er rimelig. */
-export function sectorIntel(s: GameState, id: SectorId): SectorIntel {
-  const sec = s.sectors[id];
-  const out: SectorIntel = {
-    status: sec.z > 0 ? 'infisert' : 'klarert',
-    estimate: sec.seen ? `${sec.z}` : `${Math.max(1, Math.round(sec.z * 0.6))}–${Math.round(sec.z * 1.4) + 1}`,
-    searched: Math.round((1 - lootLeft(sec) / Math.max(1, sec.lootMax)) * 100),
-  };
-  if (sec.z === 0) {
-    const real = 1 - (sec.miss ?? 1);
-    if (hasTrait(s, 'regneark')) { out.conf = Math.round(real * 100); out.confExact = true; }
-    else out.conf = clamp(Math.round((real + sec.noise) * 100), 5, 99);
-  }
-  return out;
-}
-
 // ---------- Ordre ----------
 export type TaskOption = Task & { label: string };
 
@@ -117,11 +98,8 @@ export function taskOptions(s: GameState): TaskOption[] {
   const opts: TaskOption[] = [{ type: 'hvile', label: 'Hvile hjemme' }];
   for (const id of PLAYABLE) {
     const sec = s.sectors[id], n = SECTORS[id].short;
-    if (sec.z > 0) opts.push({ type: 'klarere', target: id, label: `Klarere ${n}` });
-    else {
-      if (lootLeft(sec) > 0) opts.push({ type: 'lete', target: id, label: `Lete i ${n}` });
-      opts.push({ type: 'finsjekk', target: id, label: `Finsjekke ${n}` });
-    }
+    if (sec.z > 0 || sec.searched < 100) opts.push({ type: 'rydde', target: id, label: `Rydde ${n}` });
+    if (sec.z === 0) opts.push({ type: 'sanke', target: id, label: `Sanke ${n}` });
   }
   for (const id of GATE_IDS) {
     if (s.gates[id].level < 3 && s.sectors[GATES[id].sector].z === 0) opts.push({ type: 'befeste', target: id, label: `Befeste ${GATES[id].name}` });
@@ -132,23 +110,13 @@ export function taskOptions(s: GameState): TaskOption[] {
 export const sameTask = (a: Task, b: Task) => a.type === b.type && ('target' in a ? a.target : null) === ('target' in b ? b.target : null);
 const targetOf = (t: Task) => ('target' in t ? t.target : null);
 
-/** Holder sektorstatus i takt med zombietallet og nullstiller ugyldige ordre. */
+/** Nullstiller ordre som ikke lenger er gyldige. */
 export function validateTasks(s: GameState) {
-  for (const id of PLAYABLE) {
-    const sec = s.sectors[id];
-    if (sec.z > 0 && sec.cleared) { sec.cleared = false; sec.miss = null; }
-    if (sec.z === 0 && !sec.cleared) { sec.cleared = true; sec.miss = sec.miss ?? 0.7; sec.noise = 0; }
-  }
   const valid = taskOptions(s);
   for (const c of s.crew) if (!valid.some((o) => sameTask(o, c.task))) c.task = { type: 'hvile' };
 }
 
 // ---------- Dagsoppgjør ----------
-const EULOGY: ((c: CrewMember) => string)[] = [
-  (c) => `Hvil i fred, ${c.name}. Vi tar vare på kaffekoppen din.`,
-  (c) => `${c.name} er ikke lenger med oss. Teknisk sett er ${c.name} fortsatt med oss, bare ikke på vår side.`,
-  () => 'Crewet holder ett minutts stillhet. Det blir avbrutt av stønning fra Bybrua.',
-];
 const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
 const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
@@ -157,88 +125,14 @@ export function resolveDay(s: GameState): LogLine[] {
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
   const team = (type: TaskType, target: string) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
-  const injure = (c: CrewMember, why: string) => {
-    c.hp -= 1;
-    if (c.hp <= 0) {
-      log(`${c.name} ble bitt ${why}. ${pick(s, EULOGY)(c)}`, 'bad');
-      s.moral -= 15; s.stats.lost++;
-      s.crew = s.crew.filter((x) => x !== c);
-    } else log(`${c.name} ble skadet ${why} (${HEALTH_LABEL[c.hp].toLowerCase()}).`, 'warn');
-  };
 
-  // 1) Klarering og finsjekk
+  // 1) Rydde og 2) Sanke
+  const groups = {} as Record<SectorId, number>;
   for (const id of PLAYABLE) {
-    const sec = s.sectors[id];
-    const clr = team('klarere', id), fin = team('finsjekk', id);
-    const all = [...clr, ...fin];
-    if (!all.length) continue;
-    sec.seen = true;
-    if (clr.length && sec.z > 0) {
-      const power = sum(clr.map((c) => fightPower(s, c)));
-      const before = sec.z;
-      const kills = Math.min(sec.z, sround(s, power * (0.35 + rand(s) * 0.25) * M.killMult));
-      sec.z -= kills; s.stats.kills += kills;
-      for (let i = 0; i < kills; i++) pick(s, clr).kills++;
-      log(`${names(clr)} ryddet ${kills} ${plural(kills)} i ${SECTORS[id].short}.${sec.z > 0 ? ` ${sec.z} igjen.` : ''}`);
-      for (const c of clr) {
-        const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult, 0.02, 0.45);
-        if (rand(s) < risk) injure(c, `i ${SECTORS[id].short}`);
-      }
-      if (clr.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
-      if (clr.some((c) => c.trait === 'russ') && rand(s) < 0.25) log('Sondre filmet alt til en TikTok ingen kommer til å se.', 'fun');
-    }
-    // Leting etter skjulte zombier i kjellere, boder og garasjer
-    const checkers = sec.z === 0 ? all : fin;
-    if (checkers.length && sec.hidden > 0) {
-      const p = detectChance(checkers) + (fin.length ? 0.1 : 0);
-      let found = 0;
-      for (let i = 0; i < sec.hidden; i++) if (rand(s) < p) found++;
-      if (found) {
-        sec.hidden -= found; s.stats.kills += found;
-        log(`Fant ${found} ${plural(found)} gjemt i kjellerboder i ${SECTORS[id].short}. Tatt hånd om.`, 'good');
-        if (rand(s) < 0.15 * M.injuryMult) injure(pick(s, checkers), 'i en kjellerbod');
-      }
-    }
-    if (sec.z === 0 && checkers.length) {
-      const p = detectChance(checkers) + (fin.length ? 0.1 : 0);
-      sec.miss = (sec.miss ?? 1) * (1 - p);
-    }
-    if (sec.z === 0 && !sec.cleared) {
-      sec.cleared = true;
-      if (sec.miss == null) sec.miss = 1 - detectChance(all);
-      sec.noise = (rand(s) - 0.3) * 0.35;
-      log(`${SECTORS[id].name} er klarert.`, 'good');
-      if (hasTrait(s, 'hms')) log('Kjell har fylt ut avviksskjema for klareringen. I tre eksemplarer.', 'fun');
-    }
-  }
-
-  // 2) Leting
-  for (const id of PLAYABLE) {
-    const sec = s.sectors[id];
-    const tm = team('lete', id);
-    if (!tm.length) continue;
-    const frac = 1 - Math.exp(-sum(tm.map((c) => searchPower(s, c))) * 0.09);
-    const got: string[] = [];
-    for (const r of RES) {
-      const n = Math.min(sec.loot[r], sround(s, sec.loot[r] * frac));
-      if (n > 0) { sec.loot[r] -= n; s.res[r] += n; s.stats.found += n; got.push(`${n} ${RES_LABEL[r].toLowerCase()}`); }
-    }
-    log(`${names(tm)} lette i ${SECTORS[id].short}: ${got.length ? got.join(', ') : 'ingenting av verdi, bare IKEA-møbler'}.`);
-    const sp = SECTORS[id].special;
-    if (sp && !sec.special && lootLeft(sec) / sec.lootMax <= 0.5) {
-      sec.special = true;
-      log(sp.text, 'find');
-      if (sp.res) for (const r of RES) s.res[r] += sp.res[r] ?? 0;
-      if (sp.gear) s.gear = Math.max(s.gear, sp.gear);
-      if (sp.flag) s.flags[sp.flag] = true;
-      if (sp.moral) s.moral += sp.moral;
-    }
-    if (sec.hidden > 0 && rand(s) < 0.15 * sec.hidden) {
-      sec.hidden -= 1; s.stats.kills++;
-      const c = pick(s, tm);
-      log(`En zombie lå gjemt i en bod i ${SECTORS[id].short}. ${c.name} fikk overraskelsen.`, 'warn');
-      if (rand(s) < (0.35 - (stat(c, 'kondis') / 10) * 0.04) * M.injuryMult) injure(c, 'av en bodzombie');
-    }
+    const ry = team('rydde', id), sa = team('sanke', id);
+    groups[id] = (ry.length ? 1 : 0) + (sa.length ? 1 : 0);
+    if (ry.length) rydde(s, id, ry, M, log);
+    if (sa.length && s.sectors[id].z === 0) { s.sectors[id].seen = true; s.sectors[id].scouted = true; sanke(s, id, sa, log); }
   }
 
   // 3) Befesting
@@ -268,13 +162,17 @@ export function resolveDay(s: GameState): LogLine[] {
   if (s.res.vann < 0) { s.res.vann = 0; s.moral -= 12; log('Tomt for vann. I Stavanger. Det er nesten imponerende.', 'bad'); }
   if (rand(s) < 0.4) { const n = 3 + Math.floor(rand(s) * 4); s.res.vann += n; log(`Det regnet. Selvfølgelig. +${n} vann.`, 'fun'); }
 
+  // Kontroll og forfall
+  updateControl(s, M, groups);
+  decay(s, M, log);
+
   // 6) Natt: press mot sperringene. Crew som jobber ved porten tar vakta.
   for (const id of GATE_IDS) {
     const g = GATES[id], st = s.gates[id];
     const chance = clamp(g.base + M.nightBase - st.level * M.nightLevelReduction + s.day * M.nightGrowth, 0.02, 0.9);
     if (rand(s) >= chance) continue;
     let n = Math.max(1, 1 + Math.floor(rand(s) * (1 + s.day / M.breachDays)) - st.level);
-    const guards = s.crew.filter((c) => (c.task.type === 'befeste' && c.task.target === id) || ((c.task.type === 'klarere' || c.task.type === 'finsjekk') && c.task.target === g.sector));
+    const guards = s.crew.filter((c) => (c.task.type === 'befeste' && c.task.target === id) || ((c.task.type === 'rydde' || c.task.type === 'sanke') && c.task.target === g.sector));
     if (guards.length) {
       const k = Math.min(n, sround(s, sum(guards.map((c) => fightPower(s, c))) * 0.35));
       n -= k; s.stats.kills += k;
@@ -284,20 +182,27 @@ export function resolveDay(s: GameState): LogLine[] {
     const sec = s.sectors[target];
     const wasClear = sec.z === 0;
     sec.z += n;
-    if (wasClear) { sec.cleared = false; sec.miss = null; s.moral -= 4; }
+    sec.control -= 20;
+    if (wasClear) s.moral -= 4;
     log(`Natt: ${n} ${plural(n)} kom forbi ${g.name} og inn i ${SECTORS[target].short}.${wasClear ? ' Sektoren er infisert igjen.' : ''}`, wasClear ? 'bad' : 'warn');
   }
 
   // 7) Natt: glemte kjellere
   for (const id of PLAYABLE) {
     const sec = s.sectors[id];
-    if (sec.z === 0 && sec.hidden > 0 && rand(s) < M.hiddenOutbreak * sec.hidden) {
+    if (sec.z === 0 && sec.hidden > 0 && sec.searched < 100 && rand(s) < M.hiddenOutbreak * sec.hidden) {
       const n = sec.hidden + Math.floor(rand(s) * 3);
-      sec.z = n; sec.hidden = 0; sec.cleared = false; sec.miss = null;
+      sec.z = n; sec.hidden = 0; sec.control -= 20;
       s.moral -= 8;
       log(`Natt: Noen glemte å sjekke kjelleren i ${SECTORS[id].short}. ${n} zombier strømmer ut. Sektoren er infisert igjen.`, 'bad');
     }
   }
+
+  floorControl(s);
+
+  // 7b) Bosetting og matråte
+  settle(s, log);
+  rotFood(s, M);
 
   s.moral = clamp(s.moral + 2, 0, 100);
   s.day++;
@@ -309,9 +214,9 @@ export function resolveDay(s: GameState): LogLine[] {
 }
 
 export function phaseProgress(s: GameState) {
-  const cleared = PLAYABLE.filter((id) => s.sectors[id].z === 0).length;
+  const safe = PLAYABLE.filter((id) => isSafe(s.sectors[id])).length;
   const gates = GATE_IDS.map((id) => ({ id, name: GATES[id].name, level: s.gates[id].level }));
-  return { cleared, total: PLAYABLE.length, gates, done: cleared === PLAYABLE.length && gates.every((g) => g.level >= 2) };
+  return { safe, total: PLAYABLE.length, gates, done: safe === PLAYABLE.length && gates.every((g) => g.level >= 2) };
 }
 
 export function checkEnd(s: GameState) {

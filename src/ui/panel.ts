@@ -1,10 +1,10 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
   dailyFood, dailyWater, GATE_STEPS, GATES, GEAR, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
-  skillLevel, STAT_LABEL, STATS, TRAITS, taskOptions, ZONE_INFO, sameTask,
+  housing, skillLevel, STAT_LABEL, STATS, TRAITS, taskOptions, ZONE_INFO, sameTask,
 } from '../engine';
 import type { CrewMember, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
-import { $, esc, game, MAP, ui } from './store';
+import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, ui } from './store';
 
 export function renderTop() {
   const S = game();
@@ -23,16 +23,16 @@ export function renderGoals() {
   const S = game(), p = phaseProgress(S);
   const row = (txt: string, val: string, done: boolean) => `<div class="goal${done ? ' done' : ''}"><span>${done ? '✓ ' : ''}${txt}</span><b>${val}</b></div>`;
   $('goals').innerHTML = `<div class="goals">
-    ${row('Klarer alle sektorer på Buøy', `${p.cleared}/${p.total}`, p.cleared === p.total)}
+    ${row('Gjør alle sektorer på Buøy trygge', `${p.safe}/${p.total}`, p.safe === p.total)}
     ${p.gates.map((g) => row(`${g.name} på nivå 2`, `${g.level}/2`, g.level >= 2)).join('')}
-    <div class="hint">Utstyr: ${GEAR[S.gear].name}</div>
+    <div class="hint">Utstyr: ${GEAR[S.gear].name} · Crew ${S.crew.length}/${housing(S)} senger</div>
   </div>`;
 }
 
 function taskShort(t: Task): string {
   if (t.type === 'hvile') return 'hviler';
   if (t.type === 'befeste') return 'bygger';
-  const verb = { klarere: 'klarerer', lete: 'leter', finsjekk: 'sjekker' }[t.type];
+  const verb = { rydde: 'rydder', sanke: 'sanker' }[t.type];
   return `${verb} ${SECTORS[t.target].short}`;
 }
 
@@ -91,29 +91,37 @@ export function renderSel() {
   }
 
   const id = sel.id as SectorId; // Rosenberg er håndtert over
-  const sec = S.sectors[id], intel = sectorIntel(S, id);
-  const inf = intel.status === 'infisert';
-  const actions: ('klarere' | 'lete' | 'finsjekk')[] = inf ? ['klarere'] : [...(intel.searched < 100 ? ['lete' as const] : []), 'finsjekk'];
-  if (!actions.includes(ui.selAction as never)) ui.selAction = actions[0];
-  const act = ui.selAction as (typeof actions)[number];
-  const actLabel: Record<TaskType, string> = { klarere: 'Klarere', lete: 'Lete', finsjekk: 'Finsjekke', befeste: 'Befeste', hvile: 'Hvile' };
-  const task: Task = { type: act, target: id };
-  const mine = (c: CrewMember) => sameTask(c.task, task);
+  const sec = S.sectors[id], intel = sectorIntel(S, id), def = SECTORS[id];
+  const inf = sec.z > 0;
+  const actions: ('rydde' | 'sanke')[] = [...(inf || sec.searched < 100 ? ['rydde' as const] : []), ...(inf ? [] : ['sanke' as const])];
+  if (!actions.includes(ui.selAction as never)) ui.selAction = actions[0] ?? null;
+  const act = ui.selAction as (typeof actions)[number] | null;
+  const actLabel = { rydde: 'Rydde', sanke: 'Sanke' };
+  const task: Task | null = act ? { type: act, target: id } : null;
+  const mine = (c: CrewMember) => !!task && sameTask(c.task, task);
+  const bar = (cls: string, label: string, pct: number, val: string) =>
+    `<div class="bar-row ${cls}"><span>${label}</span><span class="tr"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></span><b>${val}</b></div>`;
+  const infPct = inf ? Math.min(100, (sec.z / Math.max(1, def.z)) * 100) : 0;
+  const housingNote = def.capacity > 0 ? `Plass til ${def.capacity}${sec.settled ? ', bosatt' : ', når den er trygg'}.` : 'Ingen boliger her.';
   box.innerHTML = `<div class="card">
-    <span class="badge ${inf ? 'inf' : 'clr'}">${inf ? 'Infisert' : 'Klarert'}${id === 'hjem' ? ' · Du bor her' : ''}</span>
-    <h2>${SECTORS[id].name}</h2><p>${SECTORS[id].desc}</p>
+    <span class="badge ${intel.safe ? 'safe' : inf ? 'inf' : 'clr'}">${intel.safe ? 'Trygg' : inf ? 'Infisert' : 'Ryddet'}${id === 'hjem' ? ' · Du bor her' : ''}</span>
+    <h2>${def.name}</h2><p>${def.desc}</p>
     <div class="metrics">
-      <div class="metric"><div class="k">Zombier</div><div class="v">${intel.estimate}${!sec.seen && inf ? ' <small>anslag</small>' : ''}</div></div>
-      <div class="metric"><div class="k">Sikkerhet</div><div class="v">${inf ? '–' : `${intel.conf}% <small>${intel.confExact ? 'regneark' : 'magefølelse'}</small>`}</div></div>
-      <div class="metric"><div class="k">Gjennomsøkt</div><div class="v">${intel.searched}%</div></div>
+      <div class="metric"><div class="k">Type</div><div class="v">${KIND_ICON[def.kind]} <small>${KIND_LABEL[def.kind]}</small></div></div>
+      <div class="metric"><div class="k">Trussel</div><div class="v">${intel.threat ?? '?'}<small>/5</small></div></div>
+      <div class="metric"><div class="k">Bolig</div><div class="v">${def.capacity}${sec.settled && def.capacity ? ' <small>bosatt</small>' : ''}</div></div>
     </div>
-    <p class="hint">${inf ? 'Muskler og Nerver dreper zombier. Snoking finner dem som gjemmer seg i kjellere. Send flere sammen for å unngå skader.' : `${lootHint(sec)} Lav sikkerhet betyr at noe kan ligge igjen i en kjeller.`}</p>
+    <div class="bars">
+      ${bar('inf', 'Infisert', infPct, `${intel.estimate}${!sec.seen && inf ? ' ?' : ''}`)}
+      ${bar('', 'Gjennomsøkt', intel.searched, `${intel.searched}%`)}
+      ${bar('ctl', 'Kontroll', intel.control, `${intel.control}%`)}
+    </div>
+    <p class="hint">${inf ? 'Muskler og Nerver dreper zombier. Rydd flere sammen for å unngå skader.' : `${lootHint(sec)} ${intel.safe ? '' : 'Rydd til sektoren er gjennomsøkt, og hold kontrollen oppe, ellers siver de inn igjen.'}`} ${housingNote}</p>
     ${actions.length > 1 ? `<div class="seg" role="group">${actions.map((a) => `<button data-act="${a}" aria-pressed="${a === act}">${actLabel[a]}</button>`).join('')}</div>` : ''}
-    <p class="eyebrow" style="margin:0">Send til ${actLabel[act].toLowerCase()}</p>
-    ${crewChips(mine)}
+    ${act ? `<p class="eyebrow" style="margin:0">Send til ${actLabel[act].toLowerCase()}</p>${crewChips(mine)}` : '<p class="hint">Ingenting mer å gjøre her.</p>'}
   </div>`;
   box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
-  bindChips(box, mine, () => task);
+  if (task) bindChips(box, mine, () => task);
 }
 
 /** Ferdigheter som stolpe og nivånavn. Tallene vises aldri. */

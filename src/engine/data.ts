@@ -1,10 +1,17 @@
 // Statiske spilldata: sektorer, sperringer, egenskaper og naboer i fase 1.
-import type { Flag, GateId, MapSectorId, PhaseId, ResKey, Resources, SectorId, StatKey, Stats, TraitId } from './types';
+import type { Flag, GateId, MapSectorId, PhaseId, ResKey, Resources, SectorId, SectorKind, StatKey, Stats, TraitId } from './types';
 
 export interface SectorDef {
   name: string;
   short: string;
   desc: string;
+  kind: SectorKind;
+  /** 1–5, styrer hvor seige zombiene er og hvor farlig det er å rydde */
+  threat: 1 | 2 | 3 | 4 | 5;
+  /** boliger sektoren gir når den er bosatt */
+  capacity: number;
+  /** hva Sanke gir per dag */
+  yield: Partial<Resources>;
   z: number;
   hidden: number;
   loot: Resources;
@@ -69,6 +76,7 @@ export const GEAR: { name: string; mult: number }[] = [
 export const SECTORS: Record<MapSectorId, SectorDef> = {
   hjem: {
     name: 'Hjemme', short: 'Hjemme',
+    kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 },
     desc: 'Rekkehuset ditt ved motorveien. Kaffetrakteren virker fortsatt. Naboen gjør ikke det.',
     z: 4, hidden: 1,
     loot: { mat: 10, vann: 12, medisin: 1, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
@@ -76,6 +84,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   tommerodden: {
     name: 'Tømmerodden', short: 'Tømmerodden',
+    kind: 'kai', threat: 2, capacity: 2, yield: { mat: 3 },
     desc: 'SOTS sikkerhetssenter og Skoleskipet Gann. Folk her har kurs i å overleve. Kurset dekket ikke dette.',
     z: 9, hidden: 3,
     loot: { mat: 6, vann: 6, medisin: 7, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 3 },
@@ -83,6 +92,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   obs: {
     name: 'Obs Bygg Buøy', short: 'Obs Bygg',
+    kind: 'butikk', threat: 2, capacity: 0, yield: { skrap: 1 },
     desc: 'Ukens tilbud: alt. Gangene er fulle av spikerpistoler, presenning og zombier i arbeidsklær.',
     z: 11, hidden: 3,
     loot: { mat: 4, vann: 4, medisin: 0, tre: 8, skrap: 12, metall: 0, strom: 0, drivstoff: 2 },
@@ -90,6 +100,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   nordkrysset: {
     name: 'Nordkrysset', short: 'Nordkrysset',
+    kind: 'industri', threat: 2, capacity: 0, yield: { skrap: 2, drivstoff: 1 },
     desc: 'Rundkjøringene mot Hundvåg. Rushtidskø fra helvete, bokstavelig talt. Mange biler med full tank.',
     z: 14, hidden: 3,
     loot: { mat: 6, vann: 6, medisin: 2, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 12 },
@@ -97,6 +108,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   buoy_nord: {
     name: 'Buøy nord', short: 'Buøy nord',
+    kind: 'bolig', threat: 1, capacity: 6, yield: { mat: 1, vann: 1, tre: 1 },
     desc: 'Eneboliger, barnehage og trampoliner. Rolig nabolag. Var det.',
     z: 10, hidden: 3,
     loot: { mat: 20, vann: 16, medisin: 3, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 2 },
@@ -104,6 +116,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   skolen: {
     name: 'Buøy skole', short: 'Skolen',
+    kind: 'offentlig', threat: 2, capacity: 8, yield: { mat: 1, medisin: 1 },
     desc: 'Det var foreldremøte i går kveld. Mange ble igjen. Kantina har frysevafler.',
     z: 16, hidden: 4,
     loot: { mat: 26, vann: 14, medisin: 3, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
@@ -111,6 +124,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   sorspissen: {
     name: 'Sørspissen', short: 'Sørspissen',
+    kind: 'industri', threat: 2, capacity: 0, yield: { skrap: 2 },
     desc: 'Rundkjøringen ved Bybrua. Herfra kommer alt som vil inn fra byen.',
     z: 12, hidden: 3,
     loot: { mat: 8, vann: 6, medisin: 1, tre: 2, skrap: 3, metall: 0, strom: 0, drivstoff: 6 },
@@ -118,6 +132,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   rosenberg: {
     name: 'Rosenberg Verft', short: 'Rosenberg',
+    kind: 'industri', threat: 5, capacity: 0, yield: {},
     desc: 'Kraner, stål og kaier. Perfekt HQ. Problemet er at hele morgenskiftet fortsatt er på jobb.',
     z: 0, hidden: 0, loot: { mat: 0, vann: 0, medisin: 0, tre: 0, skrap: 0, metall: 0, strom: 0, drivstoff: 0 },
     locked: true,

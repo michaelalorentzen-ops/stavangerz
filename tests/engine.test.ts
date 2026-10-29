@@ -22,21 +22,21 @@ describe('determinisme', () => {
   });
 });
 
-describe('klarering', () => {
-  it('reduserer zombier og markerer sektoren som klarert', () => {
+describe('rydding', () => {
+  it('reduserer zombier', () => {
     const s = fresh();
-    for (const c of s.crew) c.task = { type: 'klarere', target: 'hjem' };
     for (let i = 0; i < 5 && s.sectors.hjem.z > 0; i++) {
-      for (const c of s.crew) if (s.sectors.hjem.z > 0) c.task = { type: 'klarere', target: 'hjem' };
+      for (const c of s.crew) c.task = { type: 'rydde', target: 'hjem' };
       resolveDay(s);
     }
-    // natta kan sende nye zombier inn, men hjem skal ha vært klarert minst én gang
+    // natta kan sende nye zombier inn, men crewet skal ha drept noen
     expect(s.stats.kills).toBeGreaterThanOrEqual(4);
   });
 
-  it('viser ikke sikkerhet for en infisert sektor', () => {
+  it('viser ikke trusselnivå for en sektor som ikke er speidet', () => {
     const s = fresh();
-    expect(sectorIntel(s, 'obs').conf).toBeUndefined();
+    expect(sectorIntel(s, 'obs').threat).toBeNull();
+    expect(sectorIntel(s, 'obs').safe).toBe(false);
   });
 
   it('gir et intervall som anslag for usette sektorer', () => {
@@ -49,7 +49,7 @@ describe('klarering', () => {
 describe('skjulte zombier i kjellere', () => {
   const clearedWithHidden = (seed: number, hidden: number) => {
     const s = fresh(seed);
-    s.sectors.obs = { ...s.sectors.obs, z: 0, hidden, cleared: true, miss: 0.5 };
+    s.sectors.obs = { ...s.sectors.obs, z: 0, hidden, searched: 50, control: 40 };
     return s;
   };
 
@@ -96,15 +96,23 @@ describe('sperringer', () => {
 describe('ordre', () => {
   it('nullstiller ordre som ikke lenger er gyldige', () => {
     const s = fresh();
-    s.crew[0].task = { type: 'lete', target: 'skolen' }; // skolen er infisert
+    s.crew[0].task = { type: 'sanke', target: 'skolen' }; // skolen er infisert
     validateTasks(s);
     expect(s.crew[0].task).toEqual({ type: 'hvile' });
   });
 
-  it('tilbyr klarering for alle infiserte sektorer', () => {
+  it('tilbyr Rydde for alle sektorer som ikke er gjennomsøkt', () => {
     const s = fresh();
-    const clearable = taskOptions(s).filter((o) => o.type === 'klarere').length;
-    expect(clearable).toBe(PLAYABLE.filter((id) => s.sectors[id].z > 0).length);
+    expect(taskOptions(s).filter((o) => o.type === 'rydde').length).toBe(PLAYABLE.length);
+    s.sectors.obs.searched = 100; s.sectors.obs.z = 0;
+    expect(taskOptions(s).some((o) => o.type === 'rydde' && o.target === 'obs')).toBe(false);
+  });
+
+  it('tilbyr Sanke bare i sektorer uten zombier', () => {
+    const s = fresh();
+    expect(taskOptions(s).some((o) => o.type === 'sanke')).toBe(false);
+    s.sectors.obs.z = 0;
+    expect(taskOptions(s).some((o) => o.type === 'sanke' && o.target === 'obs')).toBe(true);
   });
 });
 

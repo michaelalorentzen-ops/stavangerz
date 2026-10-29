@@ -48,7 +48,7 @@ describe('stat', () => {
   it('gir bussjåfør +10 Kondis bare på oppdrag', () => {
     const c = member('buss');
     expect(stat(c, 'kondis')).toBe(c.stats.kondis);
-    c.task = { type: 'klarere', target: 'hjem' };
+    c.task = { type: 'rydde', target: 'hjem' };
     expect(stat(c, 'kondis')).toBe(c.stats.kondis + 10);
   });
 });

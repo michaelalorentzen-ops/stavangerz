@@ -60,6 +60,8 @@ button { cursor: pointer; }
 .s-inf .edge { stroke: var(--red); stroke-width: 3; fill: url(#hatchRed); animation: pulse 2.6s ease-in-out infinite; }
 .s-clr .fillbase { fill: var(--amber); fill-opacity: .12; }
 .s-clr .edge { stroke: var(--amber); stroke-width: 3.5; fill: none; }
+.s-safe .fillbase { fill: var(--green); fill-opacity: .12; }
+.s-safe .edge { stroke: var(--green); stroke-width: 3.5; fill: none; }
 .s-lock .fillbase { fill: #3a0f12; fill-opacity: .55; }
 .s-lock .edge { stroke: var(--red); stroke-width: 2; stroke-dasharray: 10 8; fill: url(#hatchDark); }
 .sector.sel .edge { stroke: var(--ink); stroke-width: 6; }
@@ -69,6 +71,8 @@ button { cursor: pointer; }
 .lab.sub { font: 500 22px/1 var(--f-mono); letter-spacing: 0; stroke-width: 6px; }
 .lab.sub.inf { fill: #ff8b8e; }
 .lab.sub.clr { fill: var(--amber); }
+.lab.sub.safe { fill: var(--green); }
+.lab.sub.kind { font-size: 26px; fill: var(--muted); }
 .lab.zone { font-size: 38px; fill: var(--muted); letter-spacing: .2em; }
 .lab.zsub { font: 600 18px/1 var(--f-cond); letter-spacing: .2em; fill: var(--faint); stroke-width: 5px; }
 .lab.big { font: 400 54px/1 var(--f-display); fill: #ff6b6f; letter-spacing: .06em; }
@@ -85,7 +89,7 @@ button { cursor: pointer; }
 .token circle { fill: var(--ink); stroke: var(--sea); stroke-width: 4; }
 .token.hurt circle { fill: #ffb3a8; }
 .token text { font: 700 19px/1 var(--f-cond); fill: var(--sea); text-anchor: middle; dominant-baseline: central; }
-.token.t-lete circle { fill: var(--teal); }
+.token.t-sanke circle { fill: var(--teal); }
 .token.t-befeste circle { fill: var(--amber); }
 @media (prefers-reduced-motion: reduce) { .s-inf .edge { animation: none; } }
 
@@ -107,8 +111,16 @@ button { cursor: pointer; }
 .badge { justify-self: start; font: 700 12px/1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; padding: 4px 7px; border-radius: 3px; }
 .badge.inf { background: var(--red-soft); color: #ff8b8e; }
 .badge.clr { background: var(--amber-soft); color: var(--amber); }
+.badge.safe { background: rgba(123,196,127,.16); color: var(--green); }
 .badge.lock { background: #3a0f12; color: #ff8b8e; }
 .badge.fog { background: var(--line); color: var(--muted); }
+.bars { display: grid; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: 92px 1fr 44px; align-items: center; gap: 8px; font: 600 11px/1.2 var(--f-cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.bar-row .tr { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar-row .tr i { display: block; height: 100%; background: var(--amber); }
+.bar-row.inf .tr i { background: var(--red); }
+.bar-row.ctl .tr i { background: var(--teal); }
+.bar-row b { font: 500 12px var(--f-mono); letter-spacing: 0; text-align: right; color: var(--ink); }
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .metric { border-top: 1px solid var(--line); padding-top: 6px; }
 .metric .k { font: 600 11px/1.2 var(--f-cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }

@@ -12,9 +12,9 @@ export function botTurn(s: GameState) {
   s.crew.forEach((c, i) => {
     if (c.hp <= 1) { c.task = { type: 'hvile' }; return; }
     const gate = opts.find((o) => o.type === 'befeste' && s.gates[o.target].level < 2);
-    const lete = opts.filter((o) => o.type === 'lete');
+    const lete = opts.filter((o) => o.type === 'rydde' && s.sectors[o.target].z === 0);
     if (c.trait === 'sveiser' && gate && bygg > 2) { c.task = gate; return; }
-    if (inf.length && i < 3) { c.task = { type: 'klarere', target: inf[0] }; return; }
+    if (inf.length && i < 3) { c.task = { type: 'rydde', target: inf[0] }; return; }
     if (gate && bygg > 2) { c.task = gate; return; }
     if (lete.length) { c.task = lete[i % lete.length]; return; }
     if (gate) { c.task = gate; return; }

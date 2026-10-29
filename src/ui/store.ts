@@ -1,6 +1,6 @@
 // Felles UI-tilstand: spillet, hva som er valgt, og lagring i nettleseren.
 import { migrate } from '../engine';
-import type { GameState, GateId, MapSectorId, TaskType } from '../engine';
+import type { GameState, GateId, MapSectorId, SectorKind, TaskType } from '../engine';
 import rawMap from '../data/map.json';
 
 export interface MapShape { id: string; d: string; cx: number; cy: number }
@@ -15,6 +15,14 @@ export interface MapData {
   zones: (MapShape & { name: string })[];
   geo: { W: number; N: number; KX: number };
 }
+/** Tekstsymboler (ikke emoji) og navn for sektortypene. \uFE0E tvinger tekstvisning. */
+export const KIND_ICON: Record<SectorKind, string> = {
+  hjem: '⌂\uFE0E', butikk: '▤\uFE0E', industri: '⚙\uFE0E', bolig: '▦\uFE0E', natur: '❦\uFE0E', kai: '⚓\uFE0E', offentlig: '✚\uFE0E',
+};
+export const KIND_LABEL: Record<SectorKind, string> = {
+  hjem: 'Hjem', butikk: 'Butikk', industri: 'Industri', bolig: 'Bolig', natur: 'Natur', kai: 'Kai', offentlig: 'Offentlig',
+};
+
 export const MAP = rawMap as unknown as MapData;
 
 export type Selection =
