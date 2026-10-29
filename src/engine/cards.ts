@@ -3,7 +3,7 @@ import { CARDS } from './content/cards';
 import type { LogFn } from './crew';
 import { skillLevel } from './levels';
 import { pick, rand } from './rng';
-import type { CardDef, CardInst, CrewMember, GameState, SectorId, Slot } from './types';
+import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot } from './types';
 
 export { CARDS };
 export const SLOTS: Slot[] = ['vapen', 'beskyttelse', 'verktoy'];
@@ -115,6 +115,36 @@ export function placeUniques(s: GameState) {
     const free = (d.places ?? []).filter((id) => !s.uniques[id]);
     if (free.length) s.uniques[pick(s, free)] = d.id;
   }
+}
+
+/** Identiske kort (samme def) samlet i rekkefølgen de først forekommer. Bare til visning. */
+export function groupStash(stash: CardInst[]): { def: string; cards: CardInst[] }[] {
+  const groups = new Map<string, CardInst[]>();
+  for (const k of stash) { const g = groups.get(k.def); if (g) g.push(k); else groups.set(k.def, [k]); }
+  return [...groups].map(([def, cards]) => ({ def, cards }));
+}
+
+/** Kopien med mest holdbarhet. Den som tas på fra en stabel. */
+export const bestCopy = (cards: CardInst[]): CardInst => cards.reduce((a, b) => (b.dur > a.dur ? b : a));
+
+/** Kopien som demonteres fra en stabel: lavest holdbarhet, aldri en favoritt. */
+export const salvageCopy = (cards: CardInst[]): CardInst | null =>
+  cards.filter((k) => !k.fav).reduce<CardInst | null>((a, b) => (!a || b.dur < a.dur ? b : a), null);
+
+/** Skrap kortet gir ved demontering. Unike kort gir det dobbelte. */
+export function salvageValue(def: CardDef): Partial<Resources> {
+  const base = def.family === 'makeshift' ? def.level + 1 : def.level * 2 + 1;
+  return { skrap: def.rarity === 'unik' ? base * 2 : base };
+}
+
+/** Demonterer et kort på lageret til ressurser. Nekter favoritter og kort utenfor lageret. */
+export function salvage(s: GameState, uid: string): Partial<Resources> | null {
+  const i = s.stash.findIndex((k) => k.uid === uid);
+  if (i < 0 || s.stash[i].fav) return null;
+  const [card] = s.stash.splice(i, 1);
+  const value = salvageValue(CARDS[card.def]);
+  for (const [r, n] of Object.entries(value) as [keyof Resources, number][]) s.res[r] += n;
+  return value;
 }
 
 /** Slår favoritt av/på for et kort på lageret eller i et spor. */

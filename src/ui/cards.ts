@@ -1,20 +1,35 @@
 // Kortvisning: små brettspillkort, spor på crewkortet, velger og lager.
-import { CARDS, equip, SLOT_LABEL, SLOTS, toggleFavorite, unequip } from '../engine';
+import { bestCopy, CARDS, equip, groupStash, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, toggleFavorite, unequip } from '../engine';
 import type { CardInst, CrewMember, Slot } from '../engine';
 import { $, esc, game, ui } from './store';
 
 const RARITY_LABEL = { vanlig: 'Vanlig', sjelden: 'Sjelden', episk: 'Episk', unik: 'Unik' };
 
-/** Ett kort: navn, spor, nivå som prikker, holdbarhet som stolpe og tekst i kursiv. */
-export function cardHtml(k: CardInst): string {
+const bonusText = (d: (typeof CARDS)[string]) =>
+  Object.entries(d.bonus ?? {}).map(([k, v]) => `+${v} ${STAT_LABEL[k as keyof typeof STAT_LABEL]}`).join(', ');
+
+/** Ett kort, eller en stabel med identiske kort. Navn, spor, nivå, bonus, holdbarhet, demonteringsverdi og tekst i kursiv. */
+export function cardHtml(k: CardInst, group: CardInst[] = [k], inStash = false): string {
   const d = CARDS[k.def];
+  const n = group.length;
   const dots = [1, 2, 3, 4, 5].map((i) => `<i class="${i <= d.level ? 'on' : ''}"></i>`).join('');
-  const pct = Math.round((k.dur / d.durability) * 100);
+  const durs = group.map((c) => c.dur);
+  const lo = Math.min(...durs), hi = Math.max(...durs);
+  const pct = Math.round((hi / d.durability) * 100);
+  const anyFav = group.some((c) => c.fav);
+  const favIds = group.map((c) => c.uid).join(',');
+  const bonus = bonusText(d);
+  const sv = salvageValue(d).skrap ?? 0;
+  const copies = n > 1 ? `<details class="copies"><summary>Kopier</summary>${[...group].sort((a, b) => b.dur - a.dur).map((c) =>
+    `<div class="copy"><button class="fav${c.fav ? ' on' : ''}" data-fav="${c.uid}" aria-pressed="${!!c.fav}" aria-label="Favoritt" title="Favoritt">${c.fav ? '★' : '☆'}</button>${c.dur}/${d.durability}</div>`).join('')}</details>` : '';
+  const actions = inStash ? `<div class="gc-act">
+      <button class="btn ghost small" data-salvage="${favIds}" ${salvageCopy(group) ? '' : 'disabled'} title="Demonterer kopien med lavest holdbarhet, aldri en favoritt">Demonter +${sv} skrap</button></div>` : '';
   return `<div class="gc r-${d.rarity}" title="${RARITY_LABEL[d.rarity]} · ${d.family === 'makeshift' ? 'Makeshift' : 'Fra før'}">
-    <div class="gc-top"><button class="fav${k.fav ? ' on' : ''}" data-fav="${k.uid}" aria-pressed="${!!k.fav}" aria-label="Favoritt" title="Favoritt">${k.fav ? '★' : '☆'}</button><b>${esc(d.name)}</b><span class="dots">${dots}</span></div>
-    <div class="gc-slot">${SLOT_LABEL[d.slot]}${d.quiet ? ' · stille' : ''}</div>
-    <div class="gc-dur" title="Holdbarhet ${k.dur}/${d.durability}"><i style="width:${pct}%"></i></div>
-    <p><em>${esc(d.text)}</em></p>
+    <div class="gc-top"><button class="fav${anyFav ? ' on' : ''}" data-fav="${n > 1 ? 'stack:' : ''}${favIds}" aria-pressed="${anyFav}" aria-label="Favoritt" title="Favoritt">${anyFav ? '★' : '☆'}</button><b>${esc(d.name)}${n > 1 ? ` ×${n}` : ''}</b><span class="dots">${dots}</span></div>
+    <div class="gc-slot">${SLOT_LABEL[d.slot]} · ${RARITY_LABEL[d.rarity]}${d.quiet ? ' · stille' : ''}${bonus ? ` · ${bonus}` : ''}</div>
+    <div class="gc-dur" title="Holdbarhet"><i style="width:${pct}%"></i></div>
+    <div class="gc-slot">Holdbarhet ${lo === hi ? lo : `${lo}–${hi}`}/${d.durability} · Gir ${sv} skrap</div>
+    <p><em>${esc(d.text)}</em></p>${copies}${actions}
   </div>`;
 }
 
@@ -35,7 +50,7 @@ function pickerHtml(c: CrewMember, slot: Slot): string {
   const cur = c.gear[slot];
   return `<div class="picker">
     ${cur ? `<div class="pk"><div class="gc-label">Utstyrt</div>${cardHtml(cur)}<button class="btn ghost small" data-unequip="${slot}" data-crew="${c.id}">Ta av</button></div>` : ''}
-    ${fits.map((k) => `<div class="pk">${cardHtml(k)}<button class="btn small" data-equip="${k.uid}" data-crew="${c.id}">Ta på</button></div>`).join('')}
+    ${groupStash(fits).map((g) => `<div class="pk">${cardHtml(g.cards[0], g.cards)}<button class="btn small" data-equip="${bestCopy(g.cards).uid}" data-crew="${c.id}">Ta på</button></div>`).join('')}
     ${!cur && !fits.length ? `<p class="hint">Ingen ${SLOT_LABEL[slot].toLowerCase()}-kort på lageret.</p>` : ''}
   </div>`;
 }
@@ -48,7 +63,19 @@ export function bindCards(root: HTMLElement) {
     ui.refresh();
   }));
   root.querySelectorAll<HTMLButtonElement>('[data-fav]').forEach((b) => b.addEventListener('click', () => {
-    toggleFavorite(game(), b.dataset.fav!);
+    const id = b.dataset.fav!;
+    if (id.startsWith('stack:')) {
+      // Stabel: har noen kopi favoritt fjernes alle, ellers merkes kopien med mest holdbarhet
+      const cards = id.slice(6).split(',').map((u) => game().stash.find((k) => k.uid === u)).filter((k): k is CardInst => !!k);
+      if (cards.some((k) => k.fav)) cards.filter((k) => k.fav).forEach((k) => toggleFavorite(game(), k.uid));
+      else if (cards.length) toggleFavorite(game(), bestCopy(cards).uid);
+    } else toggleFavorite(game(), id);
+    ui.refresh();
+  }));
+  root.querySelectorAll<HTMLButtonElement>('[data-salvage]').forEach((b) => b.addEventListener('click', () => {
+    const cards = b.dataset.salvage!.split(',').map((u) => game().stash.find((k) => k.uid === u)).filter((k): k is CardInst => !!k);
+    const k = salvageCopy(cards);
+    if (k) salvage(game(), k.uid);
     ui.refresh();
   }));
   root.querySelectorAll<HTMLButtonElement>('[data-equip]').forEach((b) => b.addEventListener('click', () => {
@@ -64,25 +91,26 @@ export function bindCards(root: HTMLElement) {
 const SORTS = { spor: 'Spor', nivå: 'Nivå', sjeldenhet: 'Sjeldenhet', holdbarhet: 'Holdbarhet' } as const;
 const RARITY_ORDER = { unik: 0, episk: 1, sjelden: 2, vanlig: 3 };
 
-/** Favoritter først, så valgt sortering (UI-visning, endrer ikke lageret). */
-function sortedStash(cards: CardInst[]): CardInst[] {
-  const key = (k: CardInst): number => {
-    const d = CARDS[k.def];
+/** Stabler med favoritter først, så valgt sortering (UI-visning, endrer ikke lageret). */
+function sortedStash(cards: CardInst[]) {
+  const key = (g: { def: string; cards: CardInst[] }): number => {
+    const d = CARDS[g.def];
     switch (ui.stashSort) {
       case 'spor': return SLOTS.indexOf(d.slot);
       case 'nivå': return -d.level;
       case 'sjeldenhet': return RARITY_ORDER[d.rarity];
-      case 'holdbarhet': return k.dur / d.durability;
+      case 'holdbarhet': return Math.max(...g.cards.map((k) => k.dur)) / d.durability;
     }
   };
-  return [...cards].sort((a, b) => Number(!!b.fav) - Number(!!a.fav) || key(a) - key(b) || CARDS[b.def].level - CARDS[a.def].level || a.uid.localeCompare(b.uid));
+  const fav = (g: { cards: CardInst[] }) => Number(g.cards.some((k) => k.fav));
+  return groupStash(cards).sort((a, b) => fav(b) - fav(a) || key(a) - key(b) || CARDS[b.def].level - CARDS[a.def].level || a.def.localeCompare(b.def));
 }
 
 export function renderStash() {
   const S = game(), box = $('stash');
   if (!S.stash.length) { box.innerHTML = '<p class="hint">Lageret er tomt. Rydd tomme sektorer for å finne utstyr.</p>'; return; }
   const sorts = (Object.keys(SORTS) as (keyof typeof SORTS)[]).map((k) => `<button data-sort="${k}" aria-pressed="${ui.stashSort === k}">${SORTS[k]}</button>`).join('');
-  box.innerHTML = `<div class="seg" role="group" aria-label="Sorter lageret">${sorts}</div><div class="stash">${sortedStash(S.stash).map(cardHtml).join('')}</div>`;
+  box.innerHTML = `<div class="seg" role="group" aria-label="Sorter lageret">${sorts}</div><div class="stash">${sortedStash(S.stash).map((g) => cardHtml(g.cards[0], g.cards, true)).join('')}</div>`;
   box.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach((b) => b.addEventListener('click', () => { ui.stashSort = b.dataset.sort as typeof ui.stashSort; renderStash(); }));
   bindCards(box);
 }

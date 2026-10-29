@@ -264,3 +264,7 @@ button { cursor: pointer; }
 .fav.on { color: var(--amber); }
 .gc-top b { flex: 1; }
 #stash { display: grid; gap: 6px; }
+
+.gc-act { display: flex; gap: 6px; }
+.copies summary { font: 600 11px var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+.copy { display: flex; align-items: center; gap: 4px; font: 500 12px var(--f-mono); }

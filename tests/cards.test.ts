@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  armorMult, CARDS, equip, injure, lage, newCard, newGame, resolveDay, rollCard, SECTORS, stat, toggleFavorite, toolMult, unequip, weaponMult, wear,
+  armorMult, bestCopy, CARDS, equip, groupStash, injure, lage, salvage, salvageCopy, salvageValue, newCard, newGame, resolveDay, rollCard, SECTORS, stat, toggleFavorite, toolMult, unequip, weaponMult, wear,
 } from '../src/engine';
 import type { GameState, LogFn, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -301,5 +301,50 @@ describe('utstyrskort', () => {
     expect(toggleFavorite(s, worn.uid)).toBe(true);
     expect(worn.fav).toBe(true);
     expect(toggleFavorite(s, 'finnes-ikke')).toBe(false);
+  });
+
+  it('groupStash samler identiske kort, og engine beholder enkeltkort', () => {
+    const s = fresh();
+    const a = newCard(s, 'kobein'), b = newCard(s, 'kobein'), c = newCard(s, 'baufil');
+    a.dur = 3; b.dur = 9;
+    s.stash.push(a, c, b);
+    const g = groupStash(s.stash);
+    expect(g.map((x) => [x.def, x.cards.length])).toEqual([['kobein', 2], ['baufil', 1]]);
+    expect(s.stash).toHaveLength(3);
+    expect(bestCopy(g[0].cards)).toBe(b);
+  });
+
+  it('salvageValue-tabell', () => {
+    const mk = (family: 'makeshift' | 'for', level: 1 | 2 | 3, rarity: 'vanlig' | 'unik' = 'vanlig') => ({ ...CARDS.kobein, family, level, rarity });
+    expect(salvageValue(mk('makeshift', 1))).toEqual({ skrap: 2 });
+    expect(salvageValue(mk('makeshift', 3))).toEqual({ skrap: 4 });
+    expect(salvageValue(mk('for', 1))).toEqual({ skrap: 3 });
+    expect(salvageValue(mk('for', 3))).toEqual({ skrap: 7 });
+    expect(salvageValue(mk('for', 3, 'unik'))).toEqual({ skrap: 14 });
+  });
+
+  it('salvage legger til ressurser, nekter favoritter og kort utenfor lageret', () => {
+    const s = fresh();
+    const k = newCard(s, 'hagle_politibil'); // fra før, nivå 2 -> 5 skrap
+    s.stash.push(k);
+    const before = s.res.skrap;
+    k.fav = true;
+    expect(salvage(s, k.uid)).toBeNull();
+    expect(s.stash).toContain(k);
+    k.fav = false;
+    expect(salvage(s, k.uid)).toEqual({ skrap: 5 });
+    expect(s.res.skrap).toBe(before + 5);
+    expect(s.stash).not.toContain(k);
+    expect(salvage(s, me(s).gear.vapen!.uid)).toBeNull();
+    expect(me(s).gear.vapen).toBeDefined();
+  });
+
+  it('salvageCopy tar laveste holdbarhet som ikke er favoritt', () => {
+    const s = fresh();
+    const a = newCard(s, 'kobein'), b = newCard(s, 'kobein'), c = newCard(s, 'kobein');
+    a.dur = 2; b.dur = 5; c.dur = 8; a.fav = true;
+    expect(salvageCopy([a, b, c])).toBe(b);
+    b.fav = true; c.fav = true;
+    expect(salvageCopy([a, b, c])).toBeNull();
   });
 });
