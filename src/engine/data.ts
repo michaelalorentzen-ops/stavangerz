@@ -76,7 +76,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   tommerodden: {
     name: 'Tømmerodden', short: 'Tømmerodden',
-    kind: 'kai', threat: 2, capacity: 2, yield: { mat: 3 },
+    kind: 'kai', threat: 2, capacity: 2, yield: { mat: 4 },
     desc: 'SOTS sikkerhetssenter og Skoleskipet Gann. Folk her har kurs i å overleve. Kurset dekket ikke dette.',
     z: 9, hidden: 3,
     loot: { mat: 6, vann: 6, medisin: 7, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 3 },

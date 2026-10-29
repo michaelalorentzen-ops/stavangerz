@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canRecruit, GATE_IDS, housing, isSafe, newGame, resolveDay, sectorIntel, SECTORS, sum } from '../src/engine';
+import { canRecruit, GATE_IDS, housing, isSafe, newGame, resolveDay, sectorIntel, SECTORS, sum, raiseSearched, taskOptions } from '../src/engine';
 import type { GameState, SectorId, SectorState } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
@@ -25,7 +25,7 @@ describe('isSafe', () => {
 describe('sektordata', () => {
   it('har type, trussel, kapasitet og utbytte', () => {
     expect(SECTORS.hjem).toMatchObject({ kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 } });
-    expect(SECTORS.tommerodden).toMatchObject({ kind: 'kai', threat: 2, capacity: 2, yield: { mat: 3 } });
+    expect(SECTORS.tommerodden).toMatchObject({ kind: 'kai', threat: 2, capacity: 2, yield: { mat: 4 } });
     expect(SECTORS.skolen).toMatchObject({ kind: 'offentlig', capacity: 8, yield: { mat: 1, medisin: 1 } });
   });
 
@@ -96,6 +96,26 @@ describe('rydde', () => {
     resolveDay(s);
     expect(s.sectors.obs.searched).toBeGreaterThan(0);
     expect(s.sectors.obs.searched).toBeLessThanOrEqual(0.3 * 45 + 1e-9);
+  });
+
+  it('kamp gir aldri 100 % gjennomsøkt mens det er skjulte zombier igjen', () => {
+    const s = fresh();
+    Object.assign(s.sectors.obs, { z: 200, hidden: 2, searched: 98, control: 80 });
+    assign(s, 'rydde', 'obs');
+    resolveDay(s);
+    expect(s.sectors.obs.searched).toBe(99);
+    // når sektoren er tom, kan Rydde fortsatt velges og tar de siste kjellerne
+    Object.assign(s.sectors.obs, { z: 0, hidden: 2 });
+    expect(taskOptions(s).some((o) => o.type === 'rydde' && o.target === 'obs')).toBe(true);
+  });
+
+  it('raiseSearched stopper på 99 med skjulte igjen, og når 100 uten', () => {
+    const sec = { ...base(), searched: 95, hidden: 1 };
+    raiseSearched(sec, 10);
+    expect(sec.searched).toBe(99);
+    sec.hidden = 0;
+    raiseSearched(sec, 10);
+    expect(sec.searched).toBe(100);
   });
 });
 
