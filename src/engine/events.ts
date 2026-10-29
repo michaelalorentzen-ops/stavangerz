@@ -6,6 +6,7 @@ import { addNeighbor, canRecruit } from './crew';
 import { addGateWork, checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
 import { newCard } from './cards';
+import { raiseSearched } from './sectors';
 import { acceptQuest } from './tokt';
 import { clamp, pick, rand } from './rng';
 import { bestOf, checkOddsFor } from './skills';
@@ -196,7 +197,7 @@ export const EVENTS: EventDef[] = [
     when: (s) => s.day >= 3 && s.sectors.obs.control < 100,
     text: () => 'Noen har skrevet med tusj på ruta ved bussholdeplassen: «Obs Bygg: tomt for folk, fullt av hermetikk». Skrifta ligner mistenkelig på Sveins.',
     choices: [
-      { label: 'Gå dit og sjekk', check: 'snoking', run: (s, ok) => { if (ok) { s.sectors.obs.seen = true; s.sectors.obs.searched = Math.min(100, s.sectors.obs.searched + 10); s.res.mat += 3; return 'Tre bokser pasta og en uåpnet pose Grandiosa. Dere finner også ut hvor lagerinngangen er.'; } s.sectors.obs.control = Math.max(0, s.sectors.obs.control - 5); return 'Rykter er rykter. Og noen har vært der før dere.'; } },
+      { label: 'Gå dit og sjekk', check: 'snoking', run: (s, ok) => { if (ok) { s.sectors.obs.seen = true; raiseSearched(s.sectors.obs, 10); s.res.mat += 3; return 'Tre bokser pasta og en uåpnet pose Grandiosa. Dere finner også ut hvor lagerinngangen er.'; } s.sectors.obs.control = Math.max(0, s.sectors.obs.control - 5); return 'Rykter er rykter. Og noen har vært der før dere.'; } },
       { label: 'Visk ut teksten', run: (s) => { s.moral += 2; return 'Ingen trenger å lese det samme som nabolaget. Moralen hever seg litt.'; } },
     ],
   },

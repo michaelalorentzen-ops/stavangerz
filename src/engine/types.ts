@@ -194,8 +194,16 @@ export interface GameState {
   quests: QuestState[];
   log: { day: number; lines: LogLine[] }[];
   over: null | 'won' | 'won-seen' | 'dead' | 'timeout';
-  stats: { kills: number; found: number; lost: number };
+  stats: {
+    kills: number; found: number; lost: number;
+    /** dager der mat eller vann var tomt */
+    starvedDays: number;
+    /** døde etter hvor de var: ute i byen (kamp), hjemme eller ved porten (natt), eller på tokt */
+    deaths: Record<DeathCause, number>;
+  };
 }
+
+export type DeathCause = 'kamp' | 'natt' | 'tokt';
 
 export type LogKind = '' | 'good' | 'warn' | 'bad' | 'fun' | 'find';
 export interface LogLine {

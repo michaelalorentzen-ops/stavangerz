@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canEndDay, canRecruit, checkEnd, GATE_IDS, housing, injure, NEIGHBORS, newGame, PLAYABLE, resolveDay, sameTask, sectorIntel,
-  setLeader, stat, taskKey, taskOptions, addNeighbor,
+  setLeader, stat, taskKey, taskOptions, addNeighbor, TOKTS,
 } from '../src/engine';
 import type { GameState, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -320,5 +320,36 @@ describe('Regnearket', () => {
     expect(sectorIntel(s, 'obs').hidden).toBe(s.sectors.obs.hidden);
     s.sectors.obs.hidden = 7;
     expect(sectorIntel(s, 'obs').hidden).toBe(7);
+  });
+});
+
+describe('Statistikk for balansen', () => {
+  it('starvedDays øker bare de dagene mat eller vann ikke rekker', () => {
+    const s = fresh();
+    s.res.mat = 100; s.res.vann = 100;
+    resolveDay(s);
+    expect(s.stats.starvedDays).toBe(0);
+    s.res.mat = 0;
+    resolveDay(s);
+    expect(s.stats.starvedDays).toBe(1);
+  });
+
+  it('deaths teller etter hvor personen var', () => {
+    const s = fresh();
+    const [a, b, c] = s.crew.filter((x) => !x.me);
+    a.task = { type: 'rydde', target: 'obs' };
+    b.task = { type: 'vakt', target: 'nord' };
+    c.task = { type: 'tokt', target: TOKTS[0].id };
+    for (const x of [a, b, c]) { x.hp = 1; injure(s, x, 'i testen', nobody); }
+    expect(s.stats.deaths).toEqual({ kamp: 1, natt: 1, tokt: 1 });
+    expect(s.stats.lost).toBe(3);
+  });
+
+  it('en oppgitt årsak overstyrer ordren', () => {
+    const s = fresh();
+    const c = s.crew[1];
+    c.task = { type: 'hvile' }; c.hp = 1;
+    injure(s, c, 'i et encounter', nobody, 'kamp');
+    expect(s.stats.deaths.kamp).toBe(1);
   });
 });

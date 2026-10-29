@@ -27,6 +27,15 @@ export const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));
 const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
 const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
+/**
+ * Øker gjennomsøkt-prosenten utenom et vanlig søk (kamp, hendelser). De siste kjellerne sjekkes bare
+ * av Rydde i en tom sektor, så med skjulte zombier igjen stopper den på 99. Ellers ville sektoren stått
+ * på 100 % uten Rydde som valg, og aldri blitt trygg.
+ */
+export function raiseSearched(sec: SectorState, n: number) {
+  sec.searched = Math.min(sec.hidden > 0 ? 99 : 100, sec.searched + n);
+}
+
 export function isSafe(sec: SectorState): boolean {
   return sec.z === 0 && sec.hidden === 0 && sec.searched >= 100 && sec.control >= 50;
 }
@@ -114,7 +123,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
     }
     if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
     if (team.some((c) => c.trait === 'russ') && rand(s) < 0.25) log('Sondre filmet alt til en TikTok ingen kommer til å se.', 'fun');
-    sec.searched = Math.min(100, sec.searched + searchGain(s, team) * 0.3);
+    raiseSearched(sec, searchGain(s, team) * 0.3);
     checkSpecial(s, id, searchedBefore, log);
     checkUnique(s, id, searchedBefore, log);
     wearTools(s, team, log);

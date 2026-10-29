@@ -128,6 +128,13 @@ describe('lagring', () => {
     expect(s.v).toBe(3);
   });
 
+  it('gir en eldre v3-lagring sultedager og dødsårsaker', () => {
+    const s = JSON.parse(JSON.stringify(fresh()));
+    s.stats = { kills: 3, found: 2, lost: 1 };
+    const m = migrate(s)!;
+    expect(m.stats).toEqual({ kills: 3, found: 2, lost: 1, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } });
+  });
+
   it('avviser ukjente data', () => {
     expect(migrate(null)).toBeNull();
     expect(migrate({ v: 99 })).toBeNull();

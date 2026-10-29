@@ -27,7 +27,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
     flags: {}, crew: [], seenEvents: [], pending: [], tokts: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
-    stats: { kills: 0, found: 0, lost: 0 },
+    stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
   };
   s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true });
   give(s.crew[0], newCard(s, 'k_ror'));
@@ -65,6 +65,8 @@ export function migrate(raw: unknown): GameState | null {
   g.branchWeights ??= { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 };
   g.goalDay ??= null;
   g.phaseStartDay ??= 1;
+  g.stats.starvedDays ??= 0;
+  g.stats.deaths ??= { kamp: 0, natt: 0, tokt: 0 };
   return g;
 }
 
@@ -238,6 +240,8 @@ export function resolveDay(s: GameState): LogLine[] {
 
   // 5) Forbruk
   s.res.mat -= dailyFood(s); s.res.vann -= dailyWater(s);
+  // en sultedag er en dag der det ikke var nok mat eller vann til alle
+  if (s.res.mat < 0 || s.res.vann < 0) s.stats.starvedDays++;
   if (s.res.mat < 0) { s.res.mat = 0; s.moral -= 10; log('Det er tomt for mat. Noen foreslo å spise måkene. Ingen lo.', 'bad'); }
   if (s.res.vann < 0) { s.res.vann = 0; s.moral -= 12; log('Tomt for vann. I Stavanger. Det er nesten imponerende.', 'bad'); }
   if (rand(s) < 0.4) { const n = 3 + Math.floor(rand(s) * 4); s.res.vann += n; log(`Det regnet. Selvfølgelig. +${n} vann.`, 'fun'); }

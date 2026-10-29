@@ -17,7 +17,8 @@ const who = (ctx: EncounterCtx) => ctx.crew.map((c) => c.name).join(' og ');
 /** Gir en tilfeldig person ett skadetrinn og returnerer logglinjene som tekst. */
 function hurt(s: GameState, ctx: EncounterCtx, why: string): string {
   const lines: string[] = [];
-  injure(s, pick(s, ctx.crew), why, (t) => lines.push(t));
+  // ordren kan ha blitt nullstilt etter dagen, så årsaken settes ut fra encounteret
+  injure(s, pick(s, ctx.crew), why, (t) => lines.push(t), ctx.toktId ? 'tokt' : 'kamp');
   return lines.join(' ');
 }
 

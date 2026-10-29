@@ -4,7 +4,7 @@ import { toktDef, toktSector } from './content/tokts';
 import { GATES, HEALTH_LABEL, NEIGHBORS, SECTORS, PLAYABLE } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';
-import type { CrewMember, GameState, LogKind, SectorId } from './types';
+import type { CrewMember, DeathCause, GameState, LogKind, SectorId } from './types';
 
 /** Regelkonstanter for Lete etter overlevende (ikke vanskelighetsknotter). */
 const RECRUIT_BASE = 0.15, RECRUIT_PER_PRAT = 0.05, RECRUIT_NOISE = 0.2;
@@ -29,12 +29,21 @@ function taskSector(c: CrewMember): SectorId | 'stash' {
   return 'stash';
 }
 
-/** Gir ett skadetrinn. Ved 0 er personen bitt og fjernes fra crewet. */
-export function injure(s: GameState, c: CrewMember, why: string, log: LogFn) {
+/** Hvor personen var da det skjedde, etter ordren: på tokt, ved porten eller hjemme (natt), ellers ute i en sektor (kamp). */
+export function deathCause(c: CrewMember): DeathCause {
+  const t = c.task;
+  if (t.type === 'tokt') return 'tokt';
+  if ((t.type === 'befeste' || t.type === 'vakt') && t.target in GATES) return 'natt';
+  if (t.type === 'hvile' || t.type === 'pleie' || t.type === 'lage' || t.type === 'trene') return 'natt';
+  return 'kamp';
+}
+
+/** Gir ett skadetrinn. Ved 0 er personen bitt og fjernes fra crewet. `cause` overstyrer dødsårsaken i statistikken. */
+export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cause: DeathCause = deathCause(c)) {
   c.hp -= 1;
   if (c.hp <= 0) {
     log(`${c.name} ble bitt ${why}. ${pick(s, EULOGY)(c)}`, 'bad');
-    s.moral -= 15; s.stats.lost++;
+    s.moral -= 15; s.stats.lost++; s.stats.deaths[cause]++;
     dropGear(s, c, taskSector(c));
     s.crew = s.crew.filter((x) => x !== c);
     if (!s.crew.length) s.needLeader = false;
