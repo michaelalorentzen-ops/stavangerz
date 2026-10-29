@@ -35,19 +35,22 @@ export function setTutorialOff() {
 /** Trinnet som hører til dagen, eller null etter dag 3 og i senere faser. */
 export const stepFor = (s: GameState): TutorialStep | null => (s.phase === 1 && !s.over ? TUTORIAL.find((t) => t.day === s.day) ?? null : null);
 
-let dismissedDay = 0; // «Skjønner» gjelder bare den dagen
-let offThisSession = false;
+/** Nøkkel for «Skjønner»: per runde (seed) og per dag. */
+export const dismissKey = (s: Pick<GameState, 'seed' | 'day'>) => `stavanger-z-tutorial-ok-${s.seed}-${s.day}`;
+const isDismissed = (s: GameState): boolean => { try { return sessionStorage.getItem(dismissKey(s)) === '1'; } catch { return false; } };
+const dismiss = (s: GameState) => { try { sessionStorage.setItem(dismissKey(s), '1'); } catch { /* kortet kommer da tilbake ved neste tegning */ } };
+let offThisSession = false; // dekker tilfellet der localStorage ikke virker
 
 /** Tegner kortet i #tutorial. Kalles fra refresh. */
 export function renderTutorial(S: GameState | null, onChange: () => void) {
   const box = document.getElementById('tutorial');
   if (!box) return;
   const step = S && !offThisSession && !tutorialOff() ? stepFor(S) : null;
-  if (!S || !step || dismissedDay === S.day) { box.innerHTML = ''; return; }
+  if (!S || !step || isDismissed(S)) { box.innerHTML = ''; return; }
   const done = step.done(S);
   box.innerHTML = `<div class="card tut"><span class="badge inf">Samband · dag ${step.day} av 3</span><p>${step.text}</p>
     ${done ? '<p class="hint">✓ Ordren er lagt.</p>' : ''}
     <div class="row"><button class="btn small" id="tut-ok">Skjønner</button><button class="btn small ghost" id="tut-skip">Hopp over tutorial</button></div></div>`;
-  document.getElementById('tut-ok')!.onclick = () => { dismissedDay = S.day; onChange(); };
+  document.getElementById('tut-ok')!.onclick = () => { dismiss(S); onChange(); };
   document.getElementById('tut-skip')!.onclick = () => { offThisSession = true; setTutorialOff(); onChange(); };
 }

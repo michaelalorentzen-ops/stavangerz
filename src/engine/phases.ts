@@ -58,7 +58,7 @@ export interface PhaseDef {
 
 export const PHASES: Record<PhaseId, PhaseDef> = {
   1: {
-    id: 1, name: 'Utbruddet', focus: 'Klarer hjemsonen, let etter utstyr, sett opp perimeter.',
+    id: 1, name: 'Utbruddet', focus: 'Rydd hjemsonen, sank det dere trenger, sett opp perimeter.',
     mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 1, injuryMult: 1, nightBase: 0, nightGrowth: 0.004, nightLevelReduction: 0.15, breachDays: 6, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.18, turnCap: 50, foodRot: 0.85, cardFind: 0.25, noiseAttract: 0.3 },
     mutationPoints: [0, 0],
   },

@@ -83,5 +83,6 @@ describe('mat fra hendelser', () => {
     const n = s.stash.length;
     runChoice(s, ev.choices[0]);
     expect(s.stash.length).toBe(n + 1);
+    expect(s.stash[s.stash.length - 1].def).toBe('jernia_kasse');
   });
 });

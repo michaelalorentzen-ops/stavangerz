@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from '../src/engine';
-import { stepFor, TUTORIAL } from '../src/ui/tutorial';
+import { dismissKey, stepFor, TUTORIAL } from '../src/ui/tutorial';
 import { BOT_SELF } from '../tools/bot';
 
 const game = () => newGame(7, BOT_SELF, ['kjell', 'mona', 'arild']);
 
 describe('tutorial', () => {
+  it('«Skjønner»-nøkkelen skiller runder og dager', () => {
+    expect(dismissKey({ seed: 1, day: 1 })).not.toBe(dismissKey({ seed: 2, day: 1 }));
+    expect(dismissKey({ seed: 1, day: 1 })).not.toBe(dismissKey({ seed: 1, day: 2 }));
+    expect(dismissKey({ seed: 1, day: 1 })).toBe(dismissKey({ seed: 1, day: 1 }));
+  });
+
   it('har ett trinn for hver av dag 1–3 og ingen etter', () => {
     expect(TUTORIAL.map((t) => t.day)).toEqual([1, 2, 3]);
     const s = game();
