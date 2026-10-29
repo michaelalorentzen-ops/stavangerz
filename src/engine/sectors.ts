@@ -17,7 +17,7 @@ export const THREAT_INJURY = [0, 1, 1.15, 1.35, 1.6, 1.9];
 export const WATCH_CONTROL_BASE = 15, WATCH_CONTROL_PER_NERVER = 3;
 export const SPEIDE_INJURY = 0.03;
 /** Kontroll en sektor får av én dags vakt, etter beste Nerver i teamet. */
-export const watchControl = (s: GameState, team: CrewMember[]) =>
+export const watchControl = (team: CrewMember[]) =>
   WATCH_CONTROL_BASE + (Math.max(...team.map((c) => stat(c, 'nerver'))) / 10) * WATCH_CONTROL_PER_NERVER;
 
 export const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));

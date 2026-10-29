@@ -138,7 +138,7 @@ export function resolveDay(s: GameState): LogLine[] {
   for (const id of PLAYABLE) {
     const vk = team('vakt', id);
     if (!vk.length) continue;
-    watch[id] = watchControl(s, vk);
+    watch[id] = watchControl(vk);
     log(`${names(vk)} holdt vakt i ${SECTORS[id].short}.`);
     xp(vk, 'nerver', 1);
   }
