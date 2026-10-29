@@ -1,7 +1,8 @@
 // Crewet: skader, død og plass. Mer kommer i senere oppgaver (ny leder, rekruttering).
-import { dropGear, wear } from './cards';
-import { GATES, HEALTH_LABEL, SECTORS, PLAYABLE } from './data';
-import { pick } from './rng';
+import { dropGear, give, rollStarter, wear } from './cards';
+import { GATES, HEALTH_LABEL, NEIGHBORS, SECTORS, PLAYABLE } from './data';
+import { clamp, pick, rand } from './rng';
+import { stat } from './skills';
 import type { CrewMember, GameState, LogKind, SectorId } from './types';
 
 export type LogFn = (t: string, kind?: LogKind) => void;
@@ -15,8 +16,11 @@ const EULOGY: ((c: CrewMember) => string)[] = [
 /** Sektoren personen jobber i, eller 'stash' når personen er hjemme eller hviler. */
 function taskSector(c: CrewMember): SectorId | 'stash' {
   const t = c.task;
-  if (t.type === 'rydde' || t.type === 'sanke') return t.target === 'hjem' ? 'stash' : t.target;
-  if (t.type === 'befeste') return GATES[t.target].sector === 'hjem' ? 'stash' : GATES[t.target].sector;
+  if (t.type === 'rydde' || t.type === 'sanke' || t.type === 'speide' || t.type === 'overlevende') return t.target === 'hjem' ? 'stash' : t.target;
+  if (t.type === 'befeste' || t.type === 'vakt') {
+    const sector: SectorId = t.target in GATES ? GATES[t.target as keyof typeof GATES].sector : (t.target as SectorId);
+    return sector === 'hjem' ? 'stash' : sector;
+  }
   return 'stash';
 }
 
@@ -28,6 +32,10 @@ export function injure(s: GameState, c: CrewMember, why: string, log: LogFn) {
     s.moral -= 15; s.stats.lost++;
     dropGear(s, c, taskSector(c));
     s.crew = s.crew.filter((x) => x !== c);
+    if (c.me && s.crew.length) {
+      s.needLeader = true;
+      log('Lederen er borte. Noen må ta over, og ingen rekker opp hånda frivillig.', 'warn');
+    }
   } else {
     log(`${c.name} ble skadet ${why} (${HEALTH_LABEL[c.hp].toLowerCase()}).`, 'warn');
     wear(s, c, 'beskyttelse', log);
@@ -40,3 +48,46 @@ export function housing(s: GameState): number {
 }
 
 export const canRecruit = (s: GameState): boolean => s.crew.length < housing(s);
+
+/** Gjør en gjenlevende til ny leder. Bare mulig mens lederen mangler. */
+export function setLeader(s: GameState, crewId: string): boolean {
+  const c = s.crew.find((x) => x.id === crewId);
+  if (!s.needLeader || !c) return false;
+  for (const x of s.crew) delete x.me;
+  c.me = true;
+  s.needLeader = false;
+  return true;
+}
+
+export function addNeighbor(s: GameState, id: string) {
+  const n = NEIGHBORS.find((x) => x.id === id);
+  if (!n) throw new Error(`Ukjent nabo: ${id}`);
+  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {} });
+  give(s.crew[s.crew.length - 1], rollStarter(s));
+}
+
+/** Naboer som kan komme til porten: ikke i crewet og ikke borte for godt. */
+export const recruitablesNow = (s: GameState) => NEIGHBORS.filter((n) => !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
+
+/** Lete etter overlevende i en tom bolig. Kan gi et nytt crewmedlem, og kan lage bråk. */
+export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
+  const sec = s.sectors[id], def = SECTORS[id];
+  const prat = Math.max(...team.map((c) => stat(c, 'prat')));
+  const chance = clamp(0.15 + (prat / 10) * 0.05, 0, 0.95);
+  const who = team.map((c) => c.name).join(' og ');
+  if (rand(s) < chance) {
+    const cands = recruitablesNow(s);
+    if (!cands.length) log(`${who} ropte i ${def.short}. Ingen svarte, bortsett fra en måke.`);
+    else if (!canRecruit(s)) log('Vi har ikke senger til flere. Noen i trappegangen i ' + def.short + ' ser veldig sultne ut.', 'warn');
+    else {
+      const n = pick(s, cands);
+      addNeighbor(s, n.id);
+      log(`${who} fant ${n.name} (${n.role.toLowerCase()}) i ${def.short}. ${n.quip}`, 'good');
+    }
+  } else log(`${who} banket på dører i ${def.short}. Det eneste som svarte var ekko og en radio på lavt volum.`);
+  if (rand(s) < 0.2) {
+    const n = 1 + Math.floor(rand(s) * 2);
+    sec.z += n;
+    log(`Roping i ${def.short} vekket ${n} ${n === 1 ? 'zombie' : 'zombier'}. Det er sånt som skjer.`, 'bad');
+  }
+}

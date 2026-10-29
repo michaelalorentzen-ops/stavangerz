@@ -122,7 +122,8 @@ export function renderMap(onSelect: (s: Selection) => void) {
   dyn.innerHTML = '';
   const tokensBy: Record<string, CrewMember[]> = {};
   for (const c of S.crew) {
-    const key = c.task.type === 'hvile' || c.task.type === 'lage' ? 'hjem' : c.task.type === 'befeste' ? `g_${c.task.target}` : c.task.target;
+    const t = c.task;
+    const key = !('target' in t) ? 'hjem' : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
     (tokensBy[key] ??= []).push(c);
   }
   for (const m of MAP.sectors) {

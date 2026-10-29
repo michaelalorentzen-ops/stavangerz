@@ -1,14 +1,15 @@
 // Spillmotoren. Ren logikk: all tilfeldighet går gjennom state.rng, så samme
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
-import { give, lage, newCard, placeUniques, rollStarter } from './cards';
-import { GATES, GATE_STEPS, NEIGHBORS, PLAYABLE, SECTORS, STATS } from './data';
+import { give, lage, newCard, placeUniques } from './cards';
+import { addNeighbor, leteOverlevende } from './crew';
+import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
-import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, updateControl, wearTools } from './sectors';
-import { fightPower, buildPower, stat, toSkill } from './skills';
+import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, wearTools } from './sectors';
+import { fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
-  CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, Stats, Task, TaskType, TraitId,
+  CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
 } from './types';
 
 export const GATE_IDS = Object.keys(GATES) as GateId[];
@@ -16,7 +17,7 @@ export const GATE_IDS = Object.keys(GATES) as GateId[];
 // ---------- Oppsett ----------
 export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): GameState {
   const s: GameState = {
-    v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, stash: [], uniques: {}, nextUid: 1,
+    v: 3, seed, rng: seed | 0, day: 1, phase: 1, zombieTraits: [], moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
     flags: {}, crew: [], seenEvents: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
@@ -41,19 +42,14 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   return s;
 }
 
-export function addNeighbor(s: GameState, id: string) {
-  const n = NEIGHBORS.find((x) => x.id === id);
-  if (!n) throw new Error(`Ukjent nabo: ${id}`);
-  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {} });
-  give(s.crew[s.crew.length - 1], rollStarter(s));
-}
-
 /** Godtar bare v3. Lagring fra prototypen (v1/v2) forkastes. */
 export function migrate(raw: unknown): GameState | null {
   if (!raw || typeof raw !== 'object') return null;
   const s = raw as { v?: number };
   // v3 fra før utstyrskortene mangler lager og kan ikke brukes
-  return s.v === 3 && Array.isArray((raw as GameState).stash) ? (raw as GameState) : null;
+  if (s.v !== 3 || !Array.isArray((raw as GameState).stash)) return null;
+  (raw as GameState).needLeader ??= false;
+  return raw as GameState;
 }
 
 // ---------- Avledede verdier ----------
@@ -74,20 +70,35 @@ export function addGateWork(s: GameState, id: GateId, work: number): number {
 export type TaskOption = Task & { label: string };
 
 export function taskOptions(s: GameState): TaskOption[] {
-  const opts: TaskOption[] = [{ type: 'hvile', label: 'Hvile hjemme' }, { type: 'lage', label: 'Lage utstyr (3 skrap, 1 tre)' }];
+  const opts: TaskOption[] = [
+    { type: 'hvile', label: 'Hvile hjemme' },
+    { type: 'pleie', label: 'Pleie de som hviler' },
+    { type: 'lage', label: 'Lage utstyr (3 skrap, 1 tre)' },
+    ...STATS.map((k): TaskOption => ({ type: 'trene', stat: k, label: `Trene ${STAT_LABEL[k]}` })),
+  ];
   for (const id of PLAYABLE) {
-    const sec = s.sectors[id], n = SECTORS[id].short;
+    const sec = s.sectors[id], n = SECTORS[id].short, kind = SECTORS[id].kind;
     if (sec.z > 0 || sec.searched < 100) opts.push({ type: 'rydde', target: id, label: `Rydde ${n}` });
     if (sec.z === 0) opts.push({ type: 'sanke', target: id, label: `Sanke ${n}` });
+    if (!sec.scouted) opts.push({ type: 'speide', target: id, label: `Speide ${n}` });
+    if (sec.z === 0) opts.push({ type: 'vakt', target: id, label: `Holde vakt ${n}` });
+    if (sec.z === 0 && (kind === 'bolig' || kind === 'offentlig')) opts.push({ type: 'overlevende', target: id, label: `Lete etter overlevende ${n}` });
   }
   for (const id of GATE_IDS) {
-    if (s.gates[id].level < 3 && s.sectors[GATES[id].sector].z === 0) opts.push({ type: 'befeste', target: id, label: `Befeste ${GATES[id].name}` });
+    if (s.sectors[GATES[id].sector].z !== 0) continue;
+    if (s.gates[id].level < 3) opts.push({ type: 'befeste', target: id, label: `Befeste ${GATES[id].name}` });
+    opts.push({ type: 'vakt', target: id, label: `Holde vakt ${GATES[id].name}` });
   }
   return opts;
 }
 
-export const sameTask = (a: Task, b: Task) => a.type === b.type && ('target' in a ? a.target : null) === ('target' in b ? b.target : null);
-const targetOf = (t: Task) => ('target' in t ? t.target : null);
+const targetOf = (t: Task): string | null => ('target' in t ? t.target : 'stat' in t ? t.stat : null);
+/** Entydig nøkkel for en ordre, med mål eller ferdighet. */
+export const taskKey = (t: Task) => `${t.type}:${targetOf(t) ?? ''}`;
+export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
+
+/** Kan dagen avsluttes? Ikke før en ny leder er valgt. */
+export const canEndDay = (s: GameState): boolean => !s.needLeader;
 
 /** Nullstiller ordre som ikke lenger er gyldige. */
 export function validateTasks(s: GameState) {
@@ -104,14 +115,32 @@ export function resolveDay(s: GameState): LogLine[] {
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
   const team = (type: TaskType, target: string | null) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
+  /** Erfaring til de som fortsatt er med i crewet */
+  const xp = (cs: CrewMember[], k: StatKey, n: number) => { for (const c of cs) if (s.crew.includes(c)) gainXp(c, k, n); };
 
   // 1) Rydde og 2) Sanke
   const groups = {} as Record<SectorId, number>;
   for (const id of PLAYABLE) {
     const ry = team('rydde', id), sa = team('sanke', id);
     groups[id] = (ry.length ? 1 : 0) + (sa.length ? 1 : 0);
-    if (ry.length) rydde(s, id, ry, M, log);
-    if (sa.length && s.sectors[id].z === 0) { s.sectors[id].seen = true; s.sectors[id].scouted = true; sanke(s, id, sa, log); }
+    if (ry.length) { rydde(s, id, ry, M, log); xp(ry, 'muskler', 1.5); xp(ry, 'nerver', 0.5); }
+    if (sa.length && s.sectors[id].z === 0) { s.sectors[id].seen = true; s.sectors[id].scouted = true; sanke(s, id, sa, log); xp(sa, 'snoking', 1); }
+  }
+
+  // 2b) Speide
+  for (const id of PLAYABLE) {
+    const sp = team('speide', id);
+    if (sp.length) { speide(s, id, sp, log); xp(sp, 'snoking', 1.5); }
+  }
+
+  // 2c) Vakt på sektor gir kontroll
+  const watch: Partial<Record<SectorId, number>> = {};
+  for (const id of PLAYABLE) {
+    const vk = team('vakt', id);
+    if (!vk.length) continue;
+    watch[id] = 15 + (Math.max(...vk.map((c) => stat(c, 'nerver'))) / 10) * 3;
+    log(`${names(vk)} holdt vakt i ${SECTORS[id].short}.`);
+    xp(vk, 'nerver', 1);
   }
 
   // 3) Befesting
@@ -125,15 +154,34 @@ export function resolveDay(s: GameState): LogLine[] {
     for (let i = 0; i < used; i++) s.res[s.res.skrap > s.res.tre ? 'skrap' : 'tre']--;
     const up = addGateWork(s, id, work);
     wearTools(s, tm, log);
+    xp(tm, 'mekk', 1.5);
     log(`${names(tm)} befestet ${GATES[id].name} (${used} byggemateriale).${up ? ` Nå nivå ${s.gates[id].level}.` : ''}${used < need ? ' Mangler materialer.' : ''}`, up ? 'good' : '');
   }
 
   // 3b) Lage utstyr
-  for (const c of team('lage', null)) lage(s, c, stat(c, 'mekk'), log);
+  for (const c of team('lage', null)) { lage(s, c, stat(c, 'mekk'), log); xp([c], 'mekk', 1.5); }
+
+  // 3c) Trene
+  for (const c of s.crew.filter((c) => c.task.type === 'trene')) if (c.task.type === 'trene') gainXp(c, c.task.stat, 5);
+
+  // 3d) Lete etter overlevende
+  for (const id of PLAYABLE) {
+    const ov = team('overlevende', id);
+    if (ov.length) { leteOverlevende(s, id, ov, log); xp(ov, 'prat', 1.5); }
+  }
+
+  // 3e) Pleie: de som hviler blir friskere uten medisin
+  const nursed = new Set<CrewMember>();
+  const nurses = s.crew.filter((c) => c.task.type === 'pleie');
+  if (nurses.length) {
+    for (const c of s.crew.filter((c) => c.task.type === 'hvile' && c.hp < 3)) { c.hp++; nursed.add(c); log(`${c.name} ble pleid av ${names(nurses)}, uten at medisinskapet ble åpnet.`); }
+    for (const n of nurses) if (n.trait === 'nattevakt' && n.hp < 3) { n.hp++; log(`${n.name} pleide seg selv også. Gammel vane fra nattevakt på SUS.`); }
+    xp(nurses, 'prat', 1);
+  }
 
   // 4) Hvile
   for (const c of s.crew.filter((c) => c.task.type === 'hvile')) {
-    if (c.hp >= 3) continue;
+    if (c.hp >= 3 || nursed.has(c)) continue;
     const nurse = hasTrait(s, 'nattevakt');
     if (s.res.medisin > 0 && !(nurse && rand(s) < 0.5)) { s.res.medisin--; c.hp++; log(`${c.name} ble plastret med medisin.`); }
     else if (nurse || rand(s) < 0.35) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse ? ' (og Monas strenge regime)' : ''}.`); }
@@ -146,16 +194,18 @@ export function resolveDay(s: GameState): LogLine[] {
   if (rand(s) < 0.4) { const n = 3 + Math.floor(rand(s) * 4); s.res.vann += n; log(`Det regnet. Selvfølgelig. +${n} vann.`, 'fun'); }
 
   // Kontroll og forfall
-  updateControl(s, M, groups);
+  updateControl(s, M, groups, watch);
   decay(s, M, log);
 
   // 6) Natt: press mot sperringene. Crew som jobber ved porten tar vakta.
   for (const id of GATE_IDS) {
     const g = GATES[id], st = s.gates[id];
+    xp(team('vakt', id), 'nerver', 1);
     const chance = clamp(g.base + M.nightBase - st.level * M.nightLevelReduction + s.day * M.nightGrowth, 0.02, 0.9);
     if (rand(s) >= chance) continue;
     let n = Math.max(1, 1 + Math.floor(rand(s) * (1 + s.day / M.breachDays)) - st.level);
-    const guards = s.crew.filter((c) => (c.task.type === 'befeste' && c.task.target === id) || ((c.task.type === 'rydde' || c.task.type === 'sanke') && c.task.target === g.sector));
+    const guards = s.crew.filter((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === id);
+    if (st.level >= 3 && guards.length) continue;
     if (guards.length) {
       const k = Math.min(n, sround(s, sum(guards.map((c) => fightPower(s, c))) * 0.35));
       n -= k; s.stats.kills += k;

@@ -1,9 +1,9 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  dailyFood, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
-  housing, skillLevel, STAT_LABEL, STATS, TRAITS, taskOptions, ZONE_INFO, sameTask,
+  canEndDay, dailyFood, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  housing, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, sameTask,
 } from '../engine';
-import type { CrewMember, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
+import type { CrewMember, GateId, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
 import { bindCards, slotsHtml } from './cards';
 import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, ui } from './store';
 
@@ -33,10 +33,17 @@ export function renderGoals() {
 function taskShort(t: Task): string {
   if (t.type === 'hvile') return 'hviler';
   if (t.type === 'lage') return 'lager utstyr';
+  if (t.type === 'pleie') return 'pleier';
+  if (t.type === 'trene') return `trener ${STAT_LABEL[t.stat].toLowerCase()}`;
   if (t.type === 'befeste') return 'bygger';
-  const verb = { rydde: 'rydder', sanke: 'sanker' }[t.type];
+  if (t.type === 'vakt') return `vakt ${t.target in GATES ? GATES[t.target as GateId].name : SECTORS[t.target as SectorId].short}`;
+  const verb = { rydde: 'rydder', sanke: 'sanker', speide: 'speider', overlevende: 'leter etter overlevende' }[t.type];
   return `${verb} ${SECTORS[t.target].short}`;
 }
+
+/** Ordren uten visningsteksten. */
+const bare = (o: Task & { label?: string }): Task => { const { label: _label, ...t } = o; return t as Task; };
+const ACT_LABEL: Partial<Record<TaskType, string>> = { rydde: 'Rydde', sanke: 'Sanke', speide: 'Speide', vakt: 'Vakt', overlevende: 'Overlevende', befeste: 'Befeste' };
 
 function crewChips(isMine: (c: CrewMember) => boolean) {
   return `<div class="chips">${game().crew.map((c) => {
@@ -83,23 +90,32 @@ export function renderSel() {
     const ready = S.sectors[gd.sector].z === 0;
     const next = GATE_STEPS[Math.min(3, st.level + 1)], prev = GATE_STEPS[st.level];
     const pct = st.level >= 3 ? 100 : Math.round(((st.work - prev) / (next - prev)) * 100);
-    const mine = (c: CrewMember) => c.task.type === 'befeste' && c.task.target === id;
+    const gopts = taskOptions(S).filter((o) => 'target' in o && o.target === id);
+    const gacts = gopts.map((o) => o.type);
+    if (!gacts.includes(ui.selAction as never)) ui.selAction = gacts[0] ?? null;
+    const gact = gopts.find((o) => o.type === ui.selAction);
+    const gtask = gact ? bare(gact) : null;
+    const mine = (c: CrewMember) => !!gtask && sameTask(c.task, gtask);
     box.innerHTML = `<div class="card"><span class="badge ${st.level ? 'clr' : 'inf'}">Sperring · nivå ${st.level}/3</span><h2>${gd.name}</h2><p>${gd.desc}</p>
       <div><div class="hint">${st.level >= 3 ? 'Fullt utbygd.' : `Fram til nivå ${st.level + 1}: ${pct}%`}</div><div class="prog"><i style="width:${pct}%"></i></div></div>
       <p class="hint">${ready ? 'Mekk teller mest. Hver arbeidsdag bruker tre og skrap.' : `Klarer ${SECTORS[gd.sector].short} før dere kan bygge her.`}</p>
-      ${ready && st.level < 3 ? `<p class="eyebrow" style="margin:0">Send til befesting</p>${crewChips(mine)}` : ''}</div>`;
-    bindChips(box, mine, () => ({ type: 'befeste', target: id }));
+      ${gacts.length > 1 ? `<div class="seg" role="group">${gacts.map((a) => `<button data-act="${a}" aria-pressed="${a === ui.selAction}">${ACT_LABEL[a]}</button>`).join('')}</div>` : ''}
+      ${gtask ? `<p class="eyebrow" style="margin:0">Send til ${ACT_LABEL[gtask.type]!.toLowerCase()}</p>${crewChips(mine)}` : ''}</div>`;
+    box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
+    if (gtask) bindChips(box, mine, () => gtask);
     return;
   }
 
   const id = sel.id as SectorId; // Rosenberg er håndtert over
   const sec = S.sectors[id], intel = sectorIntel(S, id), def = SECTORS[id];
   const inf = sec.z > 0;
-  const actions: ('rydde' | 'sanke')[] = [...(inf || sec.searched < 100 ? ['rydde' as const] : []), ...(inf ? [] : ['sanke' as const])];
+  const sopts = taskOptions(S).filter((o) => 'target' in o && o.target === id);
+  const actions = sopts.map((o) => o.type);
   if (!actions.includes(ui.selAction as never)) ui.selAction = actions[0] ?? null;
-  const act = ui.selAction as (typeof actions)[number] | null;
-  const actLabel = { rydde: 'Rydde', sanke: 'Sanke' };
-  const task: Task | null = act ? { type: act, target: id } : null;
+  const act = ui.selAction;
+  const actLabel = ACT_LABEL as Record<string, string>;
+  const picked = sopts.find((o) => o.type === act);
+  const task: Task | null = picked ? bare(picked) : null;
   const mine = (c: CrewMember) => !!task && sameTask(c.task, task);
   const bar = (cls: string, label: string, pct: number, val: string) =>
     `<div class="bar-row ${cls}"><span>${label}</span><span class="tr"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></span><b>${val}</b></div>`;
@@ -118,9 +134,10 @@ export function renderSel() {
       ${bar('', 'Gjennomsøkt', intel.searched, `${intel.searched}%`)}
       ${bar('ctl', 'Kontroll', intel.control, `${intel.control}%`)}
     </div>
+    ${intel.hidden !== null ? `<p class="hint">Regnearket: ${intel.hidden} gjemt i kjellere og boder.</p>` : ''}
     <p class="hint">${inf ? 'Muskler og Nerver dreper zombier. Rydd flere sammen for å unngå skader.' : `${lootHint(sec)} ${intel.safe ? '' : 'Rydd til sektoren er gjennomsøkt, og hold kontrollen oppe, ellers siver de inn igjen.'}`} ${housingNote}</p>
     ${actions.length > 1 ? `<div class="seg" role="group">${actions.map((a) => `<button data-act="${a}" aria-pressed="${a === act}">${actLabel[a]}</button>`).join('')}</div>` : ''}
-    ${act ? `<p class="eyebrow" style="margin:0">Send til ${actLabel[act].toLowerCase()}</p>${crewChips(mine)}` : '<p class="hint">Ingenting mer å gjøre her.</p>'}
+    ${act && task ? `<p class="eyebrow" style="margin:0">Send til ${actLabel[act].toLowerCase()}</p>${crewChips(mine)}` : '<p class="hint">Ingenting mer å gjøre her.</p>'}
   </div>`;
   box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
   if (task) bindChips(box, mine, () => task);
@@ -130,8 +147,6 @@ export function renderSel() {
 export function statPips(st: Stats) {
   return STATS.map((k) => `<div class="st" title="${STAT_LABEL[k]}: ${skillLevel(st[k])}">${STAT_LABEL[k].slice(0, 3)}<div class="sbar"><i style="width:${Math.round(st[k])}%"></i></div><small>${skillLevel(st[k])}</small></div>`).join('');
 }
-
-const taskKey = (t: Task) => `${t.type}:${'target' in t ? t.target : ''}`;
 
 export function renderCrew() {
   const S = game(), opts = taskOptions(S);
@@ -147,7 +162,7 @@ export function renderCrew() {
   $('crew').querySelectorAll<HTMLSelectElement>('select').forEach((s) => s.addEventListener('change', () => {
     const c = S.crew.find((x) => x.id === s.dataset.crew)!;
     const o = opts.find((o) => taskKey(o) === s.value);
-    if (o) { const { label: _label, ...task } = o; c.task = task as Task; }
+    if (o) c.task = bare(o);
     ui.refresh();
   }));
 }
@@ -160,4 +175,5 @@ export function renderPlan() {
   }
   $('plan').textContent = Object.entries(groups).map(([k, v]) => `${v.join(', ')} ${k}`).join(' · ');
   $('end').textContent = `Avslutt dag ${S.day}`;
+  $<HTMLButtonElement>('end').disabled = !canEndDay(S);
 }

@@ -28,6 +28,8 @@ export interface SectorIntel {
   safe: boolean;
   /** null til sektoren er speidet */
   threat: number | null;
+  /** eksakt antall gjemte zombier. Bare Regnearket vet det, ellers null */
+  hidden: number | null;
 }
 
 /** Hva crewet vet om en sektor. Zombietallet er et anslag til sektoren er sett. */
@@ -39,6 +41,7 @@ export function sectorIntel(s: GameState, id: SectorId): SectorIntel {
     control: Math.round(sec.control),
     safe: isSafe(sec),
     threat: sec.scouted ? SECTORS[id].threat : null,
+    hidden: s.crew.some((c) => c.trait === 'regneark') ? sec.hidden : null,
   };
 }
 
@@ -141,6 +144,15 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   pickUp(s, id, team, log);
 }
 
+/** Speide: finn ut trusselnivået uten å ta kamp. Liten risiko for å bli oppdaget. */
+export function speide(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
+  const sec = s.sectors[id], def = SECTORS[id];
+  sec.seen = true; sec.scouted = true;
+  log(`${names(team)} speidet i ${def.short}: trusselnivå ${def.threat} av 5, og ${sec.z} ${plural(sec.z)} i sikte.`);
+  if (s.uniques[id]) log(`Rykter om noe spesielt i ${def.short}. Ingen vet hva, men alle har en mening.`, 'find');
+  for (const c of team) if (rand(s) < 0.03 * THREAT_INJURY[def.threat]) injure(s, c, `på speiding i ${def.short}`, log);
+}
+
 /** Utstyr som ligger igjen hentes av de som er i sektoren. */
 function pickUp(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
   if (team.some((c) => s.crew.includes(c))) collectDropped(s, id, log);
@@ -162,12 +174,12 @@ export function sanke(s: GameState, id: SectorId, team: CrewMember[], log: LogFn
   pickUp(s, id, team, log);
 }
 
-/** Kontroll: +10 per gruppe med Rydde eller Sanke, forfall der ingen er. */
-export function updateControl(s: GameState, M: PhaseModifiers, groups: Record<SectorId, number>) {
+/** Kontroll: +10 per gruppe med Rydde eller Sanke, vakt gir eget tillegg, forfall der ingen er. */
+export function updateControl(s: GameState, M: PhaseModifiers, groups: Record<SectorId, number>, watch: Partial<Record<SectorId, number>> = {}) {
   const frozen = Object.values(s.gates).every((g) => g.level >= 3);
   for (const id of PLAYABLE) {
     const sec = s.sectors[id];
-    if (groups[id] > 0) sec.control += 10 * groups[id];
+    if ((groups[id] ?? 0) > 0 || watch[id] !== undefined) sec.control += 10 * (groups[id] ?? 0) + (watch[id] ?? 0);
     else if (!frozen) sec.control -= M.controlDecay;
     sec.control = clamp(sec.control, sec.settled ? 50 : 0, 100);
   }

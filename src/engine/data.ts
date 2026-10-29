@@ -159,7 +159,7 @@ export const TRAITS: Record<TraitId, { name: string; desc: string }> = {
   nattevakt: { name: 'Nattevakt på SUS', desc: 'Lapper sammen crewet. Hviledager helbreder alltid, og sparer ofte medisin.' },
   sveiser: { name: 'Sveiser på Rosenberg', desc: '+3 når du befester. Kjenner verftet ut og inn (fase 2).' },
   russ: { name: 'Russ 2026', desc: 'Løper fort og redd. Har ingen respekt for noe, inkludert zombier.' },
-  regneark: { name: 'Regnearket', desc: 'Oljeingeniør. Viser den ekte sikkerhetsprosenten etter klarering.' },
+  regneark: { name: 'Regnearket', desc: 'Oljeingeniør. Har regneark over alle kjellere på Buøy, og viser det eksakte antallet gjemte zombier.' },
   hv: { name: 'Heimevernet', desc: '+2 i kamp. Forteller om øvelse Cold Response hver kveld.' },
   buss: { name: 'Kolumbus-sjåfør', desc: 'Kan kjøre hva som helst gjennom hva som helst (fase 2). +10 Kondis på oppdrag.' },
   los: { name: 'Pensjonert los', desc: 'Kjenner hvert skjær. Ser ting andre overser: +0,1 til å finne skjulte zombier.' },

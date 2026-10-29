@@ -2,8 +2,8 @@
 // endrer tilstanden og returnerer teksten som vises etterpå. check er en
 // stat-sjekk mot crewets beste på den staten.
 import { NEIGHBORS, PLAYABLE } from './data';
-import { canRecruit } from './crew';
-import { addGateWork, addNeighbor, checkEnd, validateTasks } from './engine';
+import { addNeighbor, canRecruit } from './crew';
+import { addGateWork, checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';

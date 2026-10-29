@@ -48,7 +48,10 @@ export interface CardInst {
 export type Task =
   | { type: 'hvile' }
   | { type: 'lage' }
-  | { type: 'rydde' | 'sanke'; target: SectorId }
+  | { type: 'pleie' }
+  | { type: 'trene'; stat: StatKey }
+  | { type: 'rydde' | 'sanke' | 'speide' | 'overlevende'; target: SectorId }
+  | { type: 'vakt'; target: GateId | SectorId }
   | { type: 'befeste'; target: GateId };
 export type TaskType = Task['type'];
 
@@ -110,6 +113,8 @@ export interface GameState {
   /** unike kort som ligger i sektorer og ikke er funnet */
   uniques: Partial<Record<SectorId, string>>;
   nextUid: number;
+  /** lederen er død, og spilleren må velge en ny før dagen kan avsluttes */
+  needLeader: boolean;
   res: Resources;
   flags: Partial<Record<Flag, boolean>>;
   crew: CrewMember[];

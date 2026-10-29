@@ -1,6 +1,6 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, checkOdds, drawEvent, INTRO, NEIGHBORS, newGame, resolveDay, runChoice, SELF_TRAITS, START_NEIGHBORS,
+  best, canEndDay, checkOdds, drawEvent, INTRO, NEIGHBORS, newGame, resolveDay, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, Stats, TraitId } from '../engine';
@@ -30,7 +30,7 @@ export function titleScreen() {
       ${saved && !saved.over ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
   on('new', createSelf);
-  on('cont', () => { ui.S = saved; closeModal(); ui.refresh(); });
+  on('cont', () => { ui.S = saved; closeModal(); ui.refresh(); if (saved?.needLeader) chooseLeader(() => { closeModal(); ui.refresh(); }); });
 }
 
 const POOL = 15;
@@ -106,16 +106,32 @@ function showEvent(ev: EventDef, done: () => void) {
   }));
 }
 
+/** Lederen er død: spilleren velger blant de gjenlevende. */
+function chooseLeader(done: () => void) {
+  const S = game();
+  modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Hvem tar over?</h2>
+    <p>Lederen er borte, og crewet har fortsatt ikke blitt enige om hvem som skal skrive vaktlista. Noen må ta ansvar. Helst noen som ikke har meldt seg frivillig.</p>
+    <div class="picks">${S.crew.map((c) => `<button class="pick" data-l="${c.id}"><span class="nm">${esc(c.name)}</span><span class="role">${esc(c.role)}</span>
+      <span class="tr">${TRAITS[c.trait].name}: ${TRAITS[c.trait].desc}</span><span class="statrow">${statPips(c.stats)}</span></button>`).join('')}</div>`, true);
+  $('sheet').querySelectorAll<HTMLButtonElement>('[data-l]').forEach((b) => b.addEventListener('click', () => {
+    setLeader(S, b.dataset.l!);
+    save();
+    done();
+  }));
+}
+
 export function endDay() {
   const S = game(), day = S.day;
+  if (!canEndDay(S)) { chooseLeader(() => { closeModal(); ui.refresh(); }); return; }
   const lines = resolveDay(S);
   const ev = S.over ? null : drawEvent(S);
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : `Start dag ${S.day}`}</button></div>`);
+    <div class="row"><button class="btn" id="ok">${S.needLeader ? 'Hvem tar over?' : ev ? 'Samband: ny melding' : `Start dag ${S.day}`}</button></div>`);
   const after = () => { closeModal(); ui.refresh(); if (S.over) endScreen(); };
-  on('ok', () => (ev ? showEvent(ev, after) : after()));
+  const next = () => (ev ? showEvent(ev, after) : after());
+  on('ok', () => (S.needLeader ? chooseLeader(next) : next()));
 }
 
 export function endScreen() {
