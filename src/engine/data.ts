@@ -88,7 +88,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     desc: 'Ukens tilbud: alt. Gangene er fulle av spikerpistoler, presenning og zombier i arbeidsklær.',
     z: 11, hidden: 3,
     loot: { mat: 4, vann: 4, medisin: 0, tre: 8, skrap: 12, metall: 0, strom: 0, drivstoff: 2 },
-    special: { text: 'Verktøyavdelingen er urørt. Crewet bytter golfkøllene mot brekkjern og spikerpistoler.', card: 'spikerpistol_obs' },
+    special: { text: 'Verktøyavdelingen er urørt. En spikerpistol havner på lageret. Ukens tilbud, tilsynelatende.', card: 'spikerpistol_obs' },
   },
   nordkrysset: {
     name: 'Nordkrysset', short: 'Nordkrysset',

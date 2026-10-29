@@ -1,6 +1,7 @@
 // Utstyrskort: instanser, utstyring, slitasje, funn og Lage utstyr. Ren logikk.
 import { CARDS } from './content/cards';
 import type { LogFn } from './crew';
+import { skillLevel } from './levels';
 import { pick, rand } from './rng';
 import type { CardDef, CardInst, CrewMember, GameState, SectorId, Slot } from './types';
 
@@ -116,6 +117,14 @@ export function placeUniques(s: GameState) {
   }
 }
 
+/** Slår favoritt av/på for et kort på lageret eller i et spor. */
+export function toggleFavorite(s: GameState, uid: string): boolean {
+  const card = [...s.stash, ...s.crew.flatMap((c) => Object.values(c.gear))].find((k) => k?.uid === uid);
+  if (!card) return false;
+  card.fav = !card.fav;
+  return true;
+}
+
 /** Lage utstyr: koster skrap og tre, lykkes etter Mekk. `mekk` er stat(c, 'mekk'). */
 export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
   if (s.res.skrap < LAGE_COST.skrap || s.res.tre < LAGE_COST.tre) {
@@ -126,7 +135,7 @@ export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
   wear(s, c, 'verktoy', log);
   const chance = Math.max(0.3, Math.min(0.9, 0.3 + (mekk / 10) * 0.1));
   if (rand(s) >= chance) { log(`${c.name} bygde noe. Det ble ikke til noe, bortsett fra en stor haug skrap.`, 'warn'); return; }
-  const level = mekk >= 45 ? 2 : 1; // God eller bedre
+  const level = ['God', 'Rå'].includes(skillLevel(mekk)) ? 2 : 1;
   const cands = Object.values(CARDS).filter((d) => d.family === 'makeshift' && d.level === level && d.rarity !== 'unik');
   const k = newCard(s, pick(s, cands).id);
   s.stash.push(k);

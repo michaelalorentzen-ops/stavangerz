@@ -4,17 +4,8 @@ import { CARDS } from './content/cards';
 import { clamp, sum } from './rng';
 import type { CrewMember, GameState, StatKey } from './types';
 
-export type SkillLevel = 'Elendig' | 'Grei' | 'God' | 'Rå';
-
-/** Omregning fra 1–5 prikker (oppretting av spiller) til 1–100. */
-export const toSkill = (pips: number): number => 8 + pips * 10;
-
-export function skillLevel(v: number): SkillLevel {
-  if (v >= 70) return 'Rå';
-  if (v >= 45) return 'God';
-  if (v >= 25) return 'Grei';
-  return 'Elendig';
-}
+export { skillLevel, toSkill } from './levels';
+export type { SkillLevel } from './levels';
 
 /** Effektiv ferdighet (1–100) med egenskapsbonuser. */
 export function stat(c: CrewMember, k: StatKey): number {

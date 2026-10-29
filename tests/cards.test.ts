@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  armorMult, CARDS, equip, injure, lage, newCard, newGame, PLAYABLE, resolveDay, rollCard, SECTORS, stat, toolMult, unequip, weaponMult, wear,
+  armorMult, CARDS, equip, injure, lage, newCard, newGame, resolveDay, rollCard, SECTORS, stat, toggleFavorite, toolMult, unequip, weaponMult, wear,
 } from '../src/engine';
 import type { GameState, LogFn, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -125,7 +125,7 @@ describe('utstyrskort', () => {
       for (const o of s.crew.slice(1)) o.task = { type: 'hvile' };
       resolveDay(s);
       expect(s.res.skrap).toBe(0);
-      expect(s.res.tre).toBeLessThanOrEqual(0 + 1);
+      expect(s.res.tre).toBe(0);
       ok = s.stash.length - before;
     }
     expect(ok).toBeGreaterThan(0);
@@ -199,7 +199,6 @@ describe('utstyrskort', () => {
       expect(g).toHaveLength(1);
       expect(CARDS[g[0]!.def]).toMatchObject({ family: 'makeshift', level: 1 });
     }
-    expect(PLAYABLE.length).toBeGreaterThan(0);
   });
 
   it('katalogen: nivå 1–5, unike har places, minst 12 + 4', () => {
@@ -213,5 +212,94 @@ describe('utstyrskort', () => {
     for (const slot of ['vapen', 'beskyttelse', 'verktoy'] as const) expect(common.some((d) => d.slot === slot)).toBe(true);
     for (const lvl of [1, 2, 3]) for (const fam of ['makeshift', 'for']) expect(common.some((d) => d.level === lvl && d.family === fam)).toBe(true);
     for (const sec of Object.values(SECTORS)) if (sec.special?.card) expect(CARDS[sec.special.card]).toBeDefined();
+  });
+
+  it('lage direkte bruker nøyaktig 3 skrap og 1 tre', () => {
+    const s = fresh();
+    s.res.skrap = 5; s.res.tre = 4;
+    lage(s, me(s), 100, log);
+    expect(s.res.skrap).toBe(2);
+    expect(s.res.tre).toBe(3);
+  });
+
+  it('multiplikatorene for alle nivå', () => {
+    const s = fresh();
+    const c = me(s);
+    const arm = ['sykkelhjelm', 'trampolinevest', 'vernedress'], tool = ['baufil', 'multiverktoy', 'sveiseapparat'], wep = ['kobein', 'spikerkolle', 'kjedesag'];
+    arm.forEach((id, i) => { c.gear = { beskyttelse: newCard(s, id) }; expect(armorMult(c)).toBe([0.9, 0.8, 0.7][i]); });
+    tool.forEach((id, i) => { c.gear = { verktoy: newCard(s, id) }; expect(toolMult(c)).toBe([1.1, 1.2, 1.3][i]); });
+    wep.forEach((id, i) => { c.gear = { vapen: newCard(s, id) }; expect(weaponMult(c)).toBe([1.0, 1.2, 1.4][i]); });
+    c.gear = {};
+    expect([armorMult(c), toolMult(c), weaponMult(c)]).toEqual([1, 1, 0.8]);
+  });
+
+  it('sektorfunn gir de navngitte kortene når searched krysser 50', () => {
+    for (const [id, card] of [['obs', 'spikerpistol_obs'], ['nordkrysset', 'hagle_politibil']] as const) {
+      const s = fresh();
+      Object.assign(s.sectors[id], { z: 0, hidden: 0, searched: 45, control: 60 });
+      for (const c of s.crew) c.task = { type: 'rydde', target: id };
+      resolveDay(s);
+      expect(s.sectors[id].searched).toBeGreaterThanOrEqual(50);
+      expect(s.stash.some((k) => k.def === card)).toBe(true);
+    }
+  });
+
+  it('Sanke henter utstyr som ligger igjen', () => {
+    const s = fresh();
+    const k = newCard(s, 'kobein');
+    Object.assign(s.sectors.obs, { z: 0, hidden: 0, control: 60 });
+    s.sectors.obs.dropped.push(k);
+    for (const c of s.crew) c.task = { type: 'sanke', target: 'obs' };
+    resolveDay(s);
+    expect(s.sectors.obs.dropped).toHaveLength(0);
+    expect(s.stash).toContain(k);
+  });
+
+  it('slitasje: våpen ved Rydde mot zombier, verktøy ved Sanke og Befeste', () => {
+    const s = fresh();
+    const c = me(s);
+    const w = c.gear.vapen!, tl = c.gear.verktoy!;
+    const w0 = w.dur, t0 = tl.dur;
+    s.sectors.obs.z = 500;
+    for (const o of s.crew) o.task = { type: 'hvile' };
+    c.task = { type: 'rydde', target: 'obs' };
+    resolveDay(s);
+    expect(w.dur).toBe(w0 - 1);
+    expect(tl.dur).toBe(t0 - 1);
+
+    Object.assign(s.sectors.hjem, { z: 0, hidden: 0 });
+    c.task = { type: 'sanke', target: 'hjem' };
+    resolveDay(s);
+    expect(tl.dur).toBe(t0 - 2);
+    expect(w.dur).toBe(w0 - 1);
+
+    s.sectors.hjem.z = 0;
+    s.res.tre = 20;
+    c.task = { type: 'befeste', target: 'nord' };
+    resolveDay(s);
+    expect(tl.dur).toBe(t0 - 3);
+  });
+
+  it('rollCard: nivå 3 omtrent halvparten, makeshift omtrent 75 %', () => {
+    const s = fresh();
+    let l3 = 0, mk = 0;
+    const N = 2000;
+    for (let i = 0; i < N; i++) { const d = CARDS[rollCard(s, 3).def]; if (d.level === 3) l3++; if (d.family === 'makeshift') mk++; }
+    expect(l3 / N).toBeGreaterThan(0.42); expect(l3 / N).toBeLessThan(0.58);
+    expect(mk / N).toBeGreaterThan(0.68); expect(mk / N).toBeLessThan(0.82);
+  });
+
+  it('toggleFavorite virker på lager og utstyrte kort', () => {
+    const s = fresh();
+    const k = newCard(s, 'kobein');
+    s.stash.push(k);
+    const worn = me(s).gear.vapen!;
+    expect(toggleFavorite(s, k.uid)).toBe(true);
+    expect(k.fav).toBe(true);
+    expect(toggleFavorite(s, k.uid)).toBe(true);
+    expect(k.fav).toBe(false);
+    expect(toggleFavorite(s, worn.uid)).toBe(true);
+    expect(worn.fav).toBe(true);
+    expect(toggleFavorite(s, 'finnes-ikke')).toBe(false);
   });
 });

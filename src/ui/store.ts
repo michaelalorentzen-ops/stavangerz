@@ -36,6 +36,8 @@ export const ui = {
   sel: { kind: 'sector', id: 'hjem' } as Selection,
   /** valgt handling i sektorkortet */
   selAction: null as TaskType | null,
+  /** sortering av utstyrslageret */
+  stashSort: 'spor' as 'spor' | 'nivå' | 'sjeldenhet' | 'holdbarhet',
   /** åpen kortvelger på et crewkort */
   picker: null as { crewId: string; slot: Slot } | null,
   /** true mens forhåndsvisningen bak tittelskjermen tegnes, så den ikke lagres */

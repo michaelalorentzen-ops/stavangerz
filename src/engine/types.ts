@@ -41,6 +41,8 @@ export interface CardInst {
   uid: string;
   def: string;
   dur: number;
+  /** merket som favoritt i lageret */
+  fav?: boolean;
 }
 
 export type Task =
