@@ -9,7 +9,7 @@ import { advancePhase, BRANCHES, mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
-import { fightPower, buildPower, gainXp, stat, toSkill } from './skills';
+import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
   CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
 } from './types';
@@ -28,7 +28,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   const s: GameState = {
     v: 3, seed, rng: seed | 0, day: 1, phase: 1, mutations: [], knownMutations: [], branchWeights: { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 }, goalDay: null, phaseStartDay: 1, moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
-    flags: {}, crew: [], seenEvents: [], pending: [], tokts: [], quests: [], log: [], over: null,
+    flags: {}, crew: [], seenEvents: [], pending: [], recentEnc: [], tokts: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
@@ -60,6 +60,7 @@ export function migrate(raw: unknown): GameState | null {
   if (s.v !== 3 || !Array.isArray((raw as GameState).stash)) return null;
   (raw as GameState).needLeader ??= false;
   (raw as GameState).pending ??= [];
+  (raw as GameState).recentEnc ??= [];
   (raw as GameState).tokts ??= [];
   (raw as GameState).quests ??= [];
   const g = raw as GameState & { zombieTraits?: unknown };
@@ -180,6 +181,10 @@ export function resolveDay(s: GameState): LogLine[] {
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
   const team = (type: TaskType, target: string | null) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
   expireQuests(s, log);
+  /** Nivået hver person startet dagen på, så nivåopprykk kan meldes */
+  const levels = new Map(s.crew.map((c) => [c.id, crewLevel(c.xp ?? 0)]));
+  /** Sektorer noen fra crewet jobbet i i dag. Der blir ingen kjeller glemt. */
+  const present = new Set(s.crew.map((c) => targetOf(c.task)));
   /** Erfaring til de som fortsatt er med i crewet */
   const xp = (cs: CrewMember[], k: StatKey, n: number) => { for (const c of cs) if (s.crew.includes(c)) gainXp(c, k, n); };
 
@@ -263,6 +268,12 @@ export function resolveDay(s: GameState): LogLine[] {
     else if (nurse || rand(s) < 0.35) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse ? ' (og Monas strenge regime)' : ''}.`); }
   }
 
+  // 4b) Nivåopprykk
+  for (const c of s.crew) {
+    const n = crewLevel(c.xp ?? 0), was = levels.get(c.id);
+    if (was !== undefined && n > was) log(`${c.name} er nå nivå ${n}. Det merkes på alt ${c.name} gjør.`, 'good');
+  }
+
   // 5) Forbruk
   s.res.mat -= dailyFood(s); s.res.vann -= dailyWater(s);
   // en sultedag er en dag der det ikke var nok mat eller vann til alle
@@ -305,9 +316,10 @@ export function resolveDay(s: GameState): LogLine[] {
     log(`Natt: Bråket fra ryddingen i ${SECTORS[id].short} trakk til seg en zombie.`, 'warn');
   }
 
-  // 7) Natt: glemte kjellere
+  // 7) Natt: glemte kjellere, bare i sektorer ingen var i i dag
   for (const id of PLAYABLE) {
     const sec = s.sectors[id];
+    if (present.has(id)) continue;
     if (sec.z === 0 && sec.hidden > 0 && sec.searched < 100 && rand(s) < M.hiddenOutbreak * sec.hidden) {
       const n = sec.hidden + Math.floor(rand(s) * 3);
       sec.z = n; sec.hidden = 0; sec.control -= 20;

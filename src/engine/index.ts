@@ -10,3 +10,4 @@ export * from './tokt';
 export * from './phases';
 export * from './engine';
 export * from './events';
+export * from './outcome';

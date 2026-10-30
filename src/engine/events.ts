@@ -10,6 +10,7 @@ import { raiseSearched } from './sectors';
 import { acceptQuest } from './tokt';
 import { clamp, pick, rand } from './rng';
 import { bestOf, checkOddsFor } from './skills';
+import { delta, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
 import type { CrewMember, GameState, StatKey } from './types';
 
 export interface ChoiceDef {
@@ -221,11 +222,19 @@ export function drawEvent(s: GameState): EventDef | null {
   return e;
 }
 
-export function runChoice(s: GameState, ch: ChoiceDef): { ok: boolean; text: string } {
+/** Hva et hendelsesvalg kan gi når det lykkes og når det går galt, prøvd ut på kopier av tilstanden. */
+export function previewChoice(s: GameState, ch: ChoiceDef): ChoicePreview {
+  const run = (ok: boolean) => sampleOutcomes(s, (copy) => { ch.run(copy, ok); });
+  return { ok: run(true), fail: ch.check ? run(false) : null };
+}
+
+/** Løser et hendelsesvalg. `changes` er det som faktisk endret seg. */
+export function runChoice(s: GameState, ch: ChoiceDef): { ok: boolean; text: string; changes: string[] } {
+  const before = structuredClone(s);
   const ok = ch.check ? roll(s, ch.check) : true;
   const text = ch.run(s, ok);
   s.moral = clamp(s.moral, 0, 100);
   validateTasks(s);
   checkEnd(s);
-  return { ok, text };
+  return { ok, text, changes: summarize([delta(before, s)]) };
 }

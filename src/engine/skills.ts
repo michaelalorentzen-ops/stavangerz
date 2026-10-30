@@ -1,23 +1,29 @@
 // Ferdigheter på skala 1–100. Lagres som desimaltall; UI viser bare stolpe og nivå.
-import { toolMult, weaponMult } from './cards';
+import { cardBonus, toolMult, weaponMult } from './cards';
 import { CARDS } from './content/cards';
 import { clamp, sum } from './rng';
 import type { CrewMember, GameState, StatKey } from './types';
 
-export { skillLevel, toSkill } from './levels';
+import { crewLevel } from './levels';
+
+export { crewLevel, levelProgress, MAX_LEVEL, skillLevel, toSkill, XP_STEP } from './levels';
 export type { SkillLevel } from './levels';
 
-/** Effektiv ferdighet (1–100) med egenskapsbonuser. */
+/** Hvert nivå over 1 gir så mange poeng i alle ferdigheter. */
+export const LEVEL_BONUS = 1;
+
+/** Effektiv ferdighet (1–100) med nivå, utstyr og egenskaper. */
 export function stat(c: CrewMember, k: StatKey): number {
-  let v = c.stats[k];
-  for (const card of Object.values(c.gear)) v += CARDS[card!.def].bonus?.[k] ?? 0;
+  let v = c.stats[k] + (crewLevel(c.xp ?? 0) - 1) * LEVEL_BONUS;
+  for (const card of Object.values(c.gear)) v += cardBonus(CARDS[card!.def])[k] ?? 0;
   if (k === 'nerver' && c.trait === 'filmnerd') v += 10;
   if (k === 'kondis' && c.trait === 'buss' && c.task.type !== 'hvile') v += 10;
   return clamp(v, 1, 100);
 }
 
-/** Erfaring gir mindre jo høyere ferdigheten er. */
+/** Erfaring gir mindre jo høyere ferdigheten er, men teller fullt mot personens nivå. */
 export function gainXp(c: CrewMember, k: StatKey, amount: number): void {
+  c.xp = (c.xp ?? 0) + amount;
   const v = c.stats[k];
   c.stats[k] = Math.min(100, v + amount * (1 - v / 110));
 }

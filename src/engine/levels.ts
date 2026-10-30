@@ -10,3 +10,22 @@ export function skillLevel(v: number): SkillLevel {
   if (v >= 25) return 'Grei';
   return 'Elendig';
 }
+
+/** Erfaring per nivåtrinn: nivå n krever XP_STEP · n(n−1)/2, så hvert nivå tar litt lenger tid enn det forrige. */
+export const XP_STEP = 6;
+export const MAX_LEVEL = 20;
+
+/** Personens nivå (1–20) ut fra samlet erfaring. */
+export function crewLevel(xp: number): number {
+  let n = 1;
+  while (n < MAX_LEVEL && xp >= (XP_STEP * n * (n + 1)) / 2) n++;
+  return n;
+}
+
+/** Hvor langt personen er kommet mot neste nivå, 0–1. */
+export function levelProgress(xp: number): number {
+  const n = crewLevel(xp);
+  if (n >= MAX_LEVEL) return 1;
+  const lo = (XP_STEP * n * (n - 1)) / 2, hi = (XP_STEP * n * (n + 1)) / 2;
+  return (xp - lo) / (hi - lo);
+}
