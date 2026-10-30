@@ -1,0 +1,24 @@
+{
+  "_doc": "Oppsett for atlaset (denne mappa). Leses av tools/fetch_atlas.sh (bbox, out) og tools/build_atlas.py (alt). bbox = [sør, vest, nord, øst] for hele byen; out = POI-dumpen (én Overpass-spørring, bare navngitte steder, veier og grenser, ingen bygninger). Hent én gang; aldri fra nettleseren.",
+  "bbox": [58.84, 5.55, 59.02, 5.82],
+  "out": "data/osm-atlas.json",
+  "areas": {
+    "_doc": "Områdene i atlaset (docs/kartlegging-stavanger.md). ring = avstand i områder fra Buøy. Avgrensning: polys (ringer av [bredde, lengde]), bbox [sør, vest, nord, øst], admin (navn på grense i dumpen) og minus (andre områder som trekkes fra); flere snittes. Bare vestoyene er kurert; de andre er grove og skal strammes inn (polys) av den som kurerer området.",
+    "buoy": {"name": "Buøy", "ring": 0, "phase": 1, "bbox": [58.982, 5.712, 58.992, 5.742]},
+    "vestoyene": {"name": "Vestøyene", "ring": 1, "phase": 2, "polys": [
+      [[58.97874, 5.73565], [58.97961, 5.73621], [58.97958, 5.73419], [58.98053, 5.73357], [58.98208, 5.7375], [58.984, 5.74062], [58.9837, 5.74141], [58.98437, 5.74363], [58.9843, 5.74624], [58.98391, 5.74728], [58.98327, 5.74787], [58.98282, 5.74995], [58.982, 5.74948], [58.98188, 5.7466], [58.98088, 5.74683], [58.98041, 5.7458], [58.98039, 5.74397], [58.98136, 5.74388], [58.98204, 5.74297], [58.98082, 5.74149], [58.98052, 5.74061], [58.98056, 5.73846], [58.97925, 5.73927], [58.97877, 5.73877], [58.97844, 5.73621], [58.97874, 5.73565]],
+      [[58.97596, 5.73841], [58.97591, 5.73738], [58.97637, 5.73707], [58.97748, 5.73883], [58.97803, 5.73888], [58.97882, 5.7401], [58.97892, 5.74252], [58.97949, 5.74285], [58.9802, 5.74424], [58.97998, 5.74666], [58.97934, 5.7478], [58.97899, 5.74769], [58.9785, 5.74649], [58.97831, 5.74719], [58.97747, 5.74705], [58.97662, 5.74535], [58.97557, 5.74137], [58.9758, 5.74099], [58.9754, 5.7391], [58.97596, 5.73841]],
+      [[58.97531, 5.74339], [58.97645, 5.7438], [58.97727, 5.74558], [58.97718, 5.74705], [58.9776, 5.74739], [58.97716, 5.74956], [58.97639, 5.74933], [58.97586, 5.74952], [58.97454, 5.74755], [58.97442, 5.74691], [58.97504, 5.74364], [58.97531, 5.74339]]
+    ] },
+    "hundvag": {"name": "Hundvåg", "ring": 1, "phase": 3, "bbox": [58.989, 5.7, 59.016, 5.7535], "minus": ["buoy"]},
+    "ostoyene": {"name": "Østøyene", "ring": 1, "phase": 3, "bbox": [58.9843, 5.75, 59.004, 5.776]},
+    "sentrum": {"name": "Sentrum", "ring": 2, "phase": 4, "bbox": [58.962, 5.722, 58.976, 5.742]},
+    "storhaug": {"name": "Storhaug", "ring": 2, "phase": 4, "admin": "Storhaug", "minus": ["sentrum"]},
+    "valand": {"name": "Våland", "ring": 2, "phase": 4, "admin": "Eiganes og Våland", "bbox": [58.94, 5.722, 58.966, 5.76], "minus": ["sentrum"]},
+    "eiganes_bjergsted": {"name": "Eiganes og Bjergsted", "ring": 2, "phase": 4, "admin": "Eiganes og Våland", "bbox": [58.94, 5.69, 58.99, 5.722]},
+    "madla": {"name": "Madla", "ring": 3, "phase": 5, "admin": "Madla"},
+    "hillevag": {"name": "Hillevåg", "ring": 3, "phase": 5, "admin": "Hillevåg"},
+    "ullandhaug_hinna": {"name": "Ullandhaug og Hinna", "ring": 3, "phase": 5, "admin": "Hinna"},
+    "forus_lura": {"name": "Forus og Lura", "ring": 3, "phase": 5, "bbox": [58.862, 5.7, 58.905, 5.775]}
+  }
+}
