@@ -4,7 +4,7 @@
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, injure, leteOverlevende, setLeader } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
-import { GATES, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
+import { AREA, GATES, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { advancePhase, BRANCHES, mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
@@ -286,7 +286,7 @@ export function resolveDay(s: GameState): LogLine[] {
   const starved = s.res.mat < 0 || s.res.vann < 0;
   if (starved) s.stats.starvedDays++;
   if (s.res.mat < 0) { s.res.mat = 0; s.moral -= 10; log('Det er tomt for mat. Noen foreslo å spise måkene. Ingen lo.', 'bad'); }
-  if (s.res.vann < 0) { s.res.vann = 0; s.moral -= 12; log('Tomt for vann. I Stavanger. Det er nesten imponerende.', 'bad'); }
+  if (s.res.vann < 0) { s.res.vann = 0; s.moral -= 12; log(`Tomt for vann. I ${AREA.city}. Det er nesten imponerende.`, 'bad'); }
   // sult tærer på kroppen: de svakeste kan dø av det
   if (starved) for (const c of [...s.crew]) {
     if (rand(s) >= M.starveInjury) continue;

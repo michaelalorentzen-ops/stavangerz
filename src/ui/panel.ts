@@ -1,12 +1,12 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  canEndPhase, dailyFood, endDayBlocker, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
-  housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, sameTask,
+  canEndPhase, dailyFood, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
 } from '../engine';
 import type { CrewMember, GameState, GateId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
 import { bindCards, slotsHtml, statAbbr } from './cards';
-import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, PANEL_TABS, setTab, ui } from './store';
+import { $, esc, game, HOME_GATE, KIND_ICON, KIND_LABEL, MAP, PANEL_TABS, setTab, ui } from './store';
 import type { PanelTab } from './store';
 
 /** Kort forklaring på hver oppgavetype. Vises under nedtrekket og som tooltip. */
@@ -83,7 +83,7 @@ export function renderGoals() {
   $('goals').innerHTML = `<details class="goalbox"${goalsOpen() ? ' open' : ''}>
     <summary><span class="eyebrow">Mål for fase ${S.phase}</span><span class="goalsum">${p.safe}/${p.total} trygge · ${gatesDone}/${p.gates.length} porter</span></summary>
     <div class="goals">
-      ${row('Gjør alle sektorer på Buøy trygge', `${p.safe}/${p.total}`, p.safe === p.total)}
+      ${row(`Gjør alle sektorer ${AREA.at} trygge`, `${p.safe}/${p.total}`, p.safe === p.total)}
       ${p.gates.map((g) => row(`${g.name} på nivå 2`, `${g.level}/2`, g.level >= 2)).join('')}
       <div class="hint">Crew ${S.crew.length}/${housing(S)} senger</div>
     </div>
@@ -217,17 +217,18 @@ function lootHint(sec: SectorState) {
 export function renderSel() {
   const S = game(), sel = ui.sel, box = $('sel');
 
-  if (sel.kind === 'sector' && sel.id === 'rosenberg') {
-    box.innerHTML = `<div class="card"><span class="badge lock">Horde · Fase 2</span><h2>Rosenberg Verft</h2><p>${SECTORS.rosenberg.desc}</p>
+  if (sel.kind === 'sector' && SECTORS[sel.id].locked) {
+    const ld = SECTORS[sel.id];
+    box.innerHTML = `<div class="card"><span class="badge lock">Horde · Fase 2</span><h2>${ld.name}</h2><p>${ld.desc}</p>
       <div class="metrics"><div class="metric"><div class="k">Horde</div><div class="v">60–120</div></div>
       <div class="metric"><div class="k">Kapasitet</div><div class="v">???</div></div><div class="metric"><div class="k">Forsvar</div><div class="v">???</div></div></div>
-      <p class="hint">Dette er HQ-et ditt i fase 2. De ekte HQ-verdiene er skjulte. Hold Rosenberg-gjerdet oppe så horden blir der den er.</p></div>`;
+      <p class="hint">Dette er HQ-et ditt i fase 2. De ekte HQ-verdiene er skjulte. Hold ${GATES[HOME_GATE].name} oppe så horden blir der den er.</p></div>`;
     return;
   }
 
   if (sel.kind === 'zone') {
     const z = MAP.zones.find((z) => z.id === sel.id)!;
-    box.innerHTML = `<div class="card"><span class="badge fog">Ukjent sone</span><h2>${esc(z.name)}</h2><p>${ZONE_INFO[z.id] ?? ''}</p><p class="hint">Utenfor rekkevidde i fase 1. Sikre Buøy først.</p></div>`;
+    box.innerHTML = `<div class="card"><span class="badge fog">Ukjent sone</span><h2>${esc(ZONES[z.id].name)}</h2><p>${ZONE_INFO[z.id] ?? ''}</p><p class="hint">Utenfor rekkevidde i fase 1. Sikre ${AREA.name} først.</p></div>`;
     return;
   }
 
@@ -254,7 +255,7 @@ export function renderSel() {
     return;
   }
 
-  const id = sel.id as SectorId; // Rosenberg er håndtert over
+  const id = sel.id as SectorId; // låste sektorer er håndtert over
   const sec = S.sectors[id], intel = sectorIntel(S, id), def = SECTORS[id];
   const inf = sec.z > 0;
   const sopts = taskOptions(S).filter((o) => 'target' in o && o.target === id);

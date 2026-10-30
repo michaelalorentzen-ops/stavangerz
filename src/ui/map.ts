@@ -1,7 +1,7 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
 import { GATE_IDS, GATES, SECTORS, sectorIntel, toktAvailable, TOKTS } from '../engine';
-import type { CrewMember } from '../engine';
+import type { CrewMember, SectorId } from '../engine';
 import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
 
@@ -64,7 +64,7 @@ export function buildStaticMap(onSelect: (s: Selection) => void) {
   el('path', { ...road, d: MAP.roads.minor, stroke: 'var(--road)', 'stroke-width': 3 }, root);
   el('path', { ...road, d: MAP.roads.major, stroke: 'var(--road-major)', 'stroke-width': 6 }, root);
 
-  // tåke over alt som ikke er Buøy
+  // tåke over alt som ikke er startområdet
   const fogBox = { x: x - 300, y: y - 300, width: w + 600, height: h + 600, mask: 'url(#fogmask)' };
   el('rect', { ...fogBox, filter: 'url(#fog)' }, root);
   el('rect', { ...fogBox, fill: '#070d12', 'fill-opacity': 0.2 }, root);
@@ -128,7 +128,7 @@ export function renderMap(onSelect: (s: Selection) => void) {
   }
   for (const m of MAP.sectors) {
     const id = m.id;
-    const cls = id === 'rosenberg' ? 's-lock' : S.sectors[id].z > 0 ? 's-inf' : sectorIntel(S, id).safe ? 's-safe' : 's-clr';
+    const cls = SECTORS[id].locked ? 's-lock' : S.sectors[id as SectorId].z > 0 ? 's-inf' : sectorIntel(S, id as SectorId).safe ? 's-safe' : 's-clr';
     const g = el('g', { class: `sector ${cls}${sel.kind === 'sector' && sel.id === id ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': SECTORS[id].name }, dyn);
     el('path', { d: m.d, class: 'fillbase' }, g);
     el('path', { d: m.d, class: 'edge', 'stroke-linejoin': 'round' }, g);
@@ -136,14 +136,14 @@ export function renderMap(onSelect: (s: Selection) => void) {
   }
   for (const m of MAP.sectors) {
     const mid = { 'text-anchor': 'middle' };
-    if (m.id === 'rosenberg') {
+    if (SECTORS[m.id].locked) {
       text(dyn, { ...mid, x: m.cx, y: m.cy - 10, class: 'lab big' }, 'HORDE');
-      text(dyn, { ...mid, x: m.cx, y: m.cy + 28, class: 'lab' }, 'Rosenberg Verft');
+      text(dyn, { ...mid, x: m.cx, y: m.cy + 28, class: 'lab' }, SECTORS[m.id].name);
       text(dyn, { ...mid, x: m.cx, y: m.cy + 58, class: 'lab sub inf' }, 'Fase 2');
       continue;
     }
-    const intel = sectorIntel(S, m.id);
-    const inf = S.sectors[m.id].z > 0;
+    const intel = sectorIntel(S, m.id as SectorId);
+    const inf = S.sectors[m.id as SectorId].z > 0;
     text(dyn, { ...mid, x: m.cx, y: m.cy - 40, class: 'lab sub kind' }, KIND_ICON[SECTORS[m.id].kind]);
     text(dyn, { ...mid, x: m.cx, y: m.cy - 6, class: 'lab' }, SECTORS[m.id].short);
     text(dyn, { ...mid, x: m.cx, y: m.cy + 22, class: `lab sub ${inf ? 'inf' : intel.safe ? 'safe' : 'clr'}` }, inf ? `${intel.estimate} Z` : intel.safe ? '✓ Trygg' : `${intel.searched} %`);

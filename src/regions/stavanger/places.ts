@@ -105,7 +105,9 @@ export const ZONES: Record<ZoneId, { name: string; at: string }> = {
 /** Området fase 1 foregår i, og byen rundt */
 export const AREA = {
   name: 'Buøy', at: 'på Buøy',
-  city: 'Stavanger', district: 'Hundvåg bydel',
+  city: 'Stavanger',
+  /** bydelen området hører til, uten ordet «bydel» */
+  district: 'Hundvåg',
   coords: '58°59′N 5°43′Ø',
 };
 

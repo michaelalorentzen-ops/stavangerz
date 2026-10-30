@@ -1,7 +1,7 @@
 // Crewet: skader, død, ny leder, plass og rekruttering.
 import { dropGear, give, rollStarter, wear } from './cards';
 import { toktDef, toktSector } from '../regions/content';
-import { GATES, HEALTH_LABEL, NEIGHBORS, SECTORS, PLAYABLE } from './data';
+import { GATES, HEALTH_LABEL, LANDMARKS, NEIGHBORS, SECTORS, PLAYABLE } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';
 import type { CrewMember, DeathCause, GameState, LogKind, SectorId } from './types';
@@ -14,7 +14,7 @@ export type LogFn = (t: string, kind?: LogKind) => void;
 const EULOGY: ((c: CrewMember) => string)[] = [
   (c) => `Hvil i fred, ${c.name}. Vi tar vare på kaffekoppen din.`,
   (c) => `${c.name} er ikke lenger med oss. Teknisk sett er ${c.name} fortsatt med oss, bare ikke på vår side.`,
-  () => 'Crewet holder ett minutts stillhet. Det blir avbrutt av stønning fra Bybrua.',
+  () => `Crewet holder ett minutts stillhet. Det blir avbrutt av stønning fra ${LANDMARKS.bybrua}.`,
 ];
 
 /** Sektoren personen jobber i, eller 'stash' når personen er hjemme eller hviler. */

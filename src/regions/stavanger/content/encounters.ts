@@ -4,6 +4,7 @@ import { CARDS } from './cards';
 import { newCard, rollCard } from '../../../engine/cards';
 import { injure } from '../../../engine/crew';
 import { SECTORS } from '../../../engine/data';
+import { AREA, LANDMARKS, ZONES } from '../places';
 import type { EncChoice, EncounterCtx, EncounterDef } from '../../../engine/encounters';
 import { pick, rand } from '../../../engine/rng';
 import { toktDef, toktSector } from './tokts';
@@ -70,7 +71,7 @@ export const ENCOUNTERS: EncounterDef[] = [
     ],
   },
   {
-    id: 'sprint', title: 'Hundvåg-sprinten', places: ['hjem', 'bolig', 'kai', 'industri', 'natur', 'tokt'],
+    id: 'sprint', title: `${ZONES.hundvag.name}-sprinten`, places: ['hjem', 'bolig', 'kai', 'industri', 'natur', 'tokt'],
     text: (_s, ctx) => `Et dusin zombier i treningstøy får øye på ${who(ctx)} ${at(ctx)}. Ingen av dem har varmet opp, og alle løper uansett.`,
     choices: [
       { label: 'Spurt til nærmeste kai', check: 'kondis', run: (s, ctx, ok) => {
@@ -134,7 +135,7 @@ export const ENCOUNTERS: EncounterDef[] = [
       { label: 'Snakk dem ned', check: 'prat', run: (s, ctx, ok) => {
         if (!ok) { s.moral -= ctx.threat; return 'De skyter ikke, men de lukker døra. «Dette er et borettslag.» Samtalen er over.'; }
         s.res.mat += ctx.threat; s.res.vann += ctx.threat; s.moral += 2;
-        return `De åpner døra og deler det de har (+${ctx.threat} mat, +${ctx.threat} vann). Dere bytter ryktene fra Sandnes.`;
+        return `De åpner døra og deler det de har (+${ctx.threat} mat, +${ctx.threat} vann). Dere bytter ryktene fra ${LANDMARKS.sandnes}.`;
       } },
       { label: 'Ta det de har med makt', check: 'muskler', run: (s, ctx, ok) => {
         s.moral -= 4;
@@ -237,7 +238,7 @@ export const ENCOUNTERS: EncounterDef[] = [
   },
   {
     id: 'parkeringsvakt', title: 'Parkeringsvakten', places: ['kai', 'butikk', 'industri', 'tokt'],
-    text: (_s, ctx) => `En zombie i uniform fra Stavanger Parkering går fra bil til bil ${at(ctx)} og legger lapper under vindusviskerne. Håndterminalen piper fortsatt. Ingen av bilene har betalt siden mars.`,
+    text: (_s, ctx) => `En zombie i uniform fra ${AREA.city} Parkering går fra bil til bil ${at(ctx)} og legger lapper under vindusviskerne. Håndterminalen piper fortsatt. Ingen av bilene har betalt siden mars.`,
     choices: [
       { label: 'Ta ham fra avstand', check: 'nerver', tag: 'rekkevidde', run: (s, ctx, ok) => {
         if (!ok) { if (ctx.sector) s.sectors[ctx.sector].z += 1; return `Dere bommer. Han snur seg sakte og skriver ut en lapp til dere også. Lyden lokker til seg en til.${setback(s, ctx, 'ved parkeringsvakten')}`; }
@@ -291,7 +292,7 @@ export const ENCOUNTERS: EncounterDef[] = [
     text: (_s, ctx) => `En kar i oransje kjeledress og med bag fra Equinor stopper ${who(ctx)} ${at(ctx)}. Han kom i land i går etter fjorten dager på Sverdrup og lurer på hvorfor ingen svarer på Teams. Lenger nede i gata er det noen som har begynt å gå mot dere.`,
     choices: [
       { label: 'Forklar situasjonen skånsomt', check: 'prat', run: (s, ctx, ok) => {
-        if (!ok) { s.moral -= ctx.threat; return '«Dette er sikkert noe Sandnes har funnet på.» Han går hjem for å sove ut, og tar bagen med seg.'; }
+        if (!ok) { s.moral -= ctx.threat; return `«Dette er sikkert noe ${LANDMARKS.sandnes} har funnet på.» Han går hjem for å sove ut, og tar bagen med seg.`; }
         s.res.mat += ctx.threat; s.res.medisin += 1; s.moral += 2;
         return `Han tar det med fatning. Han skal til hytta i Sirdal og gir dere taxfree-posen og førstehjelpsskrinet fra riggen (+${ctx.threat} mat, +1 medisin).`;
       } },
@@ -312,7 +313,7 @@ export const ENCOUNTERS: EncounterDef[] = [
         return `Dere følger halen av toget helt fram til en forlatt pølsebod med is i fryseren (+${ctx.threat + 1} mat, +1 vann).`;
       } },
       { label: 'Ta tubaen', check: 'muskler', tag: 'gjennomslag', run: (s, ctx, ok) => {
-        if (!ok) { if (ctx.sector) s.sectors[ctx.sector].z += 1; return `Tubaen gir fra seg en lyd som høres helt til Hundvåg.${setback(s, ctx, 'i toget')}`; }
+        if (!ok) { if (ctx.sector) s.sectors[ctx.sector].z += 1; return `Tubaen gir fra seg en lyd som høres helt til ${ZONES.hundvag.name}.${setback(s, ctx, 'i toget')}`; }
         s.stats.kills += 1; s.res.metall += ctx.threat + 1;
         return `Tubaisten slipper til slutt. Det er mye messing i en tuba (+${ctx.threat + 1} metall).`;
       } },
@@ -435,25 +436,25 @@ export const ENCOUNTERS: EncounterDef[] = [
       { label: 'Kople tønnene og fyll dunker', check: 'mekk', run: (s, ctx, ok) => {
         if (!ok) return `Overgangen passer ikke. Det gjør den aldri på Obs.${setback(s, ctx, 'i hagesenteret')}`;
         s.res.vann += ctx.threat + 1;
-        return `Med riktig overgang renner regnvannet rett i dunkene. Takk, Stavanger (+${ctx.threat + 1} vann).`;
+        return `Med riktig overgang renner regnvannet rett i dunkene. Takk, ${AREA.city} (+${ctx.threat + 1} vann).`;
       } },
       retreat('Gå ut via plenklipperne'),
     ],
   },
   {
-    id: 'sandnesgauk', title: 'Pickupen fra Sandnes', places: ['bolig', 'industri', 'tokt'],
-    text: (_s, ctx) => `En pickup med Sandnes-skilt stopper ${at(ctx)}. Tre overlevende i Ulf-jakker vil bytte. «Hos oss gikk det mye ryddigere», sier de, før noen har spurt. Motoren står og går.`,
+    id: 'sandnesgauk', title: `Pickupen fra ${LANDMARKS.sandnes}`, places: ['bolig', 'industri', 'tokt'],
+    text: (_s, ctx) => `En pickup med ${LANDMARKS.sandnes}-skilt stopper ${at(ctx)}. Tre overlevende i Ulf-jakker vil bytte. «Hos oss gikk det mye ryddigere», sier de, før noen har spurt. Motoren står og går.`,
     choices: [
       { label: 'Bytt rykter og drivstoff', check: 'prat', run: (s, ctx, ok) => {
         if (!ok) { s.moral -= ctx.threat; s.res.mat = Math.max(0, s.res.mat - 1); return 'Samtalen sporer av til hvilken by som har best kjøpesenter. Ingen vinner, og de tar med seg en boks på vei ut (-1 mat).'; }
         s.res.drivstoff += ctx.threat; s.moral += 2;
-        return `De gir dere en kanne for å slippe å høre mer om Stavanger. Dere er enige om å være uenige (+${ctx.threat} drivstoff).`;
+        return `De gir dere en kanne for å slippe å høre mer om ${AREA.city}. Dere er enige om å være uenige (+${ctx.threat} drivstoff).`;
       } },
       { label: 'Ta pickupen mens de prater', check: 'mekk', run: (s, ctx, ok) => {
         s.moral -= 4;
-        if (!ok) return `De hadde ikke tenkt til å gå fra den. De er tross alt fra Sandnes.${setback(s, ctx, 'ved pickupen')}`;
+        if (!ok) return `De hadde ikke tenkt til å gå fra den. De er tross alt fra ${LANDMARKS.sandnes}.${setback(s, ctx, 'ved pickupen')}`;
         s.res.drivstoff += ctx.threat + 2; s.res.skrap += 2;
-        return `Dere er borte før de har fullført setningen. Det hjelper litt på samvittigheten at de var fra Sandnes (+${ctx.threat + 2} drivstoff, +2 skrap).`;
+        return `Dere er borte før de har fullført setningen. Det hjelper litt på samvittigheten at de var fra ${LANDMARKS.sandnes} (+${ctx.threat + 2} drivstoff, +2 skrap).`;
       } },
       retreat('La dem kjøre videre'),
     ],
@@ -503,7 +504,7 @@ export const ENCOUNTERS: EncounterDef[] = [
       } },
       { label: 'Vent det over', run: (s, ctx) => {
         s.moral -= 2; s.res.vann += ctx.threat;
-        return `Det går ikke over. Dette er Stavanger. Dere får i det minste fylt dunkene (+${ctx.threat} vann).`;
+        return `Det går ikke over. Dette er ${AREA.city}. Dere får i det minste fylt dunkene (+${ctx.threat} vann).`;
       } },
       retreat('Søk ly'),
     ],

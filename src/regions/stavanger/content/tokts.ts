@@ -1,5 +1,6 @@
 // Tokt og quests. Plassholderinnhold: mekanikken er det som gjelder.
 import { GATES } from '../../../engine/data';
+import { LANDMARKS, SECTORS } from '../places';
 import type { Flag, GateId, Resources, SectorId } from '../../../engine/types';
 
 export interface ToktDef {
@@ -27,13 +28,13 @@ export interface QuestDef {
 
 export const TOKTS: ToktDef[] = [
   {
-    id: 'kran', name: 'Kranføreren på Rosenberg-gjerdet',
+    id: 'kran', name: `Kranføreren på ${GATES.ros.name}`,
     desc: 'Kranføreren sitter fast i førerhuset, rett over horden. Han har radio, kaffe og sterke meninger om sikkerhetsrutiner.',
     at: 'ros', days: 2, threat: 3, quest: 'sos_kran',
     reward: { cards: ['u_kiste'], res: { skrap: 6, tre: 4 } },
   },
   {
-    id: 'bybrua', name: 'Køen på Bybrua',
+    id: 'bybrua', name: `Køen på ${LANDMARKS.bybrua}`,
     desc: 'Rushtrafikken sto stille i går, og står fortsatt stille. Bilene er fulle av ting folk ikke fikk tatt med på hytta.',
     at: 'sor', days: 2, threat: 3,
     reward: { res: { drivstoff: 6, skrap: 6, mat: 4 } },
@@ -43,7 +44,7 @@ export const TOKTS: ToktDef[] = [
 export const QUESTS: QuestDef[] = [
   {
     id: 'sos_kran', title: 'SOS fra kranføreren',
-    text: 'Kranføreren på Rosenberg sitter fast i førerhuset og trenger hjelp. Han lover en ordentlig takk.',
+    text: `Kranføreren ${SECTORS.rosenberg.at} sitter fast i førerhuset og trenger hjelp. Han lover en ordentlig takk.`,
     tokt: 'kran', deadline: 6,
   },
 ];

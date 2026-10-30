@@ -1,6 +1,7 @@
 // Tutorial for de tre første dagene: et sambandskort øverst i panelet.
 // done() er ren og leser bare tilstanden, så den kan testes uten DOM.
 import { GATES, SECTORS } from '../engine';
+import { HOME_GATE } from './store';
 import type { GameState } from '../engine';
 
 export interface TutorialStep { day: 1 | 2 | 3; text: string; done(s: GameState): boolean }
@@ -13,10 +14,10 @@ export const TUTORIAL: TutorialStep[] = [
   },
   {
     day: 2,
-    text: `Samband: Natta er lang og ${GATES.ros.name} er tynt. Er ${SECTORS[GATES.ros.sector].short} fortsatt rødt på kartet, rydd det ferdig først: ingen bygger gjerde med zombier i ryggen. Ellers velger du gjerdet på kartet og setter noen på Befeste eller Vakt. Befeste koster tre og skrap, Vakt holder kontrollen oppe.`,
+    text: `Samband: Natta er lang og ${GATES[HOME_GATE].name} er tynt. Er ${SECTORS[GATES[HOME_GATE].sector].short} fortsatt rødt på kartet, rydd det ferdig først: ingen bygger gjerde med zombier i ryggen. Ellers velger du gjerdet på kartet og setter noen på Befeste eller Vakt. Befeste koster tre og skrap, Vakt holder kontrollen oppe.`,
     // gjerdet kan bare bygges og voktes når sektoren bak er tom, så rydding der teller så lenge den ikke er det
-    done: (s) => s.crew.some((c) => ((c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === 'ros')
-      || (s.sectors[GATES.ros.sector].z > 0 && c.task.type === 'rydde' && c.task.target === GATES.ros.sector)),
+    done: (s) => s.crew.some((c) => ((c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === HOME_GATE)
+      || (s.sectors[GATES[HOME_GATE].sector].z > 0 && c.task.type === 'rydde' && c.task.target === GATES[HOME_GATE].sector)),
   },
   {
     day: 3,

@@ -1,4 +1,5 @@
 // Kortkatalogen. Plassholderinnhold: mekanikken er det som gjelder.
+import { AREA } from '../places';
 import type { CardDef } from '../../../engine/types';
 
 const defs: CardDef[] = [
@@ -8,18 +9,18 @@ const defs: CardDef[] = [
   { id: 'baufil', name: 'Baufil', family: 'makeshift', slot: 'verktoy', level: 1, rarity: 'vanlig', durability: 12, text: 'Går gjennom rør, planker og naboens påskeharer.' },
   { id: 'tommestokk', name: 'Tommestokk og blyant', family: 'makeshift', slot: 'verktoy', level: 1, rarity: 'vanlig', durability: 10, text: 'Mål to ganger, kutt én gang. Zombiene venter ikke på nummer to.' },
   { id: 'sykkelhjelm', name: 'Sykkelhjelm', family: 'makeshift', slot: 'beskyttelse', level: 1, rarity: 'vanlig', durability: 8, text: 'Med refleks bak. Du blir i alle fall sett.' },
-  { id: 'regnjakke', name: 'To regnjakker over hverandre', family: 'makeshift', slot: 'beskyttelse', level: 1, rarity: 'vanlig', durability: 8, text: 'Stavanger-uniformen. Stopper vind, vann og noen ganger tenner.' },
+  { id: 'regnjakke', name: 'To regnjakker over hverandre', family: 'makeshift', slot: 'beskyttelse', level: 1, rarity: 'vanlig', durability: 8, text: `${AREA.city}-uniformen. Stopper vind, vann og noen ganger tenner.` },
   // ---- Makeshift, nivå 2
   { id: 'spikerkolle', name: 'Spikerkølle', family: 'makeshift', slot: 'vapen', level: 2, rarity: 'sjelden', durability: 10, range: 'naerkamp', noise: 'normal', bonus: { muskler: 5 }, text: 'Planke, åtte spiker og dårlig samvittighet.' },
   { id: 'spikerpistol_obs', name: 'Spikerpistol fra Obs', family: 'makeshift', slot: 'vapen', level: 2, rarity: 'sjelden', durability: 12, range: 'avstand', noise: 'normal', text: 'Ukens tilbud, i hvert fall for en av dere.' },
-  { id: 'trampolinevest', name: 'Trampolinenett som vest', family: 'makeshift', slot: 'beskyttelse', level: 2, rarity: 'vanlig', durability: 10, text: 'Barnehagen på Buøy trenger den ikke lenger.' },
+  { id: 'trampolinevest', name: 'Trampolinenett som vest', family: 'makeshift', slot: 'beskyttelse', level: 2, rarity: 'vanlig', durability: 10, text: `Barnehagen ${AREA.at} trenger den ikke lenger.` },
   { id: 'multiverktoy', name: 'Multiverktøy fra Biltema', family: 'makeshift', slot: 'verktoy', level: 2, rarity: 'vanlig', durability: 14, text: 'Elleve verktøy i ett. Ti av dem er en saks.' },
   // ---- Makeshift, nivå 3
   { id: 'kjedesag', name: 'Kjedesag uten bensin', family: 'makeshift', slot: 'vapen', level: 3, rarity: 'episk', durability: 8, range: 'naerkamp', noise: 'normal', tags: ['gjennomslag'], bonus: { muskler: 8 }, text: 'Lyden er borte, men holdningen er der.' },
   { id: 'vernedress', name: 'Vernebukser og visir fra Obs', family: 'makeshift', slot: 'beskyttelse', level: 3, rarity: 'sjelden', durability: 12, text: 'Laget for skogsarbeid. Skogen er forøvrig full av dem.' },
   { id: 'sveiseapparat', name: 'Sveiseapparat', family: 'makeshift', slot: 'verktoy', level: 3, rarity: 'sjelden', durability: 14, bonus: { mekk: 6 }, text: 'Krever strøm, tålmodighet og bedre briller enn dem du har.' },
   // ---- Fra før, nivå 1
-  { id: 'hockeykolle', name: 'Hockeykølle', family: 'for', slot: 'vapen', level: 1, rarity: 'vanlig', durability: 12, range: 'naerkamp', noise: 'normal', text: 'Stavanger Oilers-merke. Fortsatt mer treffsikker enn laget.' },
+  { id: 'hockeykolle', name: 'Hockeykølle', family: 'for', slot: 'vapen', level: 1, rarity: 'vanlig', durability: 12, range: 'naerkamp', noise: 'normal', text: `${AREA.city} Oilers-merke. Fortsatt mer treffsikker enn laget.` },
   { id: 'refleksvest', name: 'Refleksvest fra Statens vegvesen', family: 'for', slot: 'beskyttelse', level: 1, rarity: 'vanlig', durability: 10, text: 'Hjelper ikke mot bitt. Gir tillit hos gamle damer.' },
   { id: 'lommekniv', name: 'Lommekniv', family: 'for', slot: 'verktoy', level: 1, rarity: 'vanlig', durability: 14, text: 'Alle har en. Ingen finner den.' },
   // ---- Fra før, nivå 2

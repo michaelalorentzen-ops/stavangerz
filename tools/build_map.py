@@ -1,25 +1,31 @@
-"""Bygger kartdata for Stavanger Z fra en OpenStreetMap Overpass-dump.
+"""Bygger kartdata for en region fra en OpenStreetMap Overpass-dump.
 
-Bruk: python build_map.py <overpass.json> <ut.json>
-Koordinater: x = meter-ish øst, y = meter-ish sør, origo i (5.695E, 59.008N).
+Bruk: python tools/build_map.py <overpass.json> <ut.json> [kartoppsett.json]
+Kartoppsettet (standard src/regions/stavanger/map.config.json) har alle regionspesifikke
+verdier: origo, utsnitt, fase 1-området, låste sektorer, Voronoi-frø og soner.
+Koordinater: x = meter-ish øst, y = meter-ish sør, origo gitt av 'origin' i oppsettet.
 """
-import json, math, sys
+import json, math, os, sys
 from shapely.geometry import LineString, Polygon, Point, box, MultiPoint, shape
 from shapely.ops import polygonize, unary_union, voronoi_diagram
 
 SRC, OUT = sys.argv[1], sys.argv[2]
+CFG_PATH = sys.argv[3] if len(sys.argv) > 3 else os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'regions', 'stavanger', 'map.config.json')
+CFG = json.load(open(CFG_PATH))
 d = json.load(open(SRC))['elements']
-W, N = 5.695, 59.008
-KX = math.cos(math.radians(58.988))
+W, N = CFG['origin']['W'], CFG['origin']['N']
+KX = math.cos(math.radians(CFG['origin']['kxLat']))
 def P(lon, lat): return ((lon - W) * KX * 1e5, (N - lat) * 1e5)
 def geom_pts(e): return [P(g['lon'], g['lat']) for g in e['geometry']]
 
-VIEW = box(950, 750, 3450, 3300)
-CLIP = VIEW.buffer(150)
+VIEW_XYWH = CFG['view']['box']
+VIEW = box(VIEW_XYWH[0], VIEW_XYWH[1], VIEW_XYWH[0] + VIEW_XYWH[2], VIEW_XYWH[1] + VIEW_XYWH[3])
+CLIP = VIEW.buffer(CFG['view']['clipMargin'])
 
 # --- land fra kystlinje -------------------------------------------------
 coast = [LineString(geom_pts(e)) for e in d if e.get('tags', {}).get('natural') == 'coastline']
-frame = box(-200, -600, 6000, 5200)
+frame = box(*CFG['view']['frame'])
 land = []
 for poly in polygonize(unary_union(coast + [frame.exterior])):
     c = poly.representative_point()
@@ -52,62 +58,55 @@ def line_path(pts):
         out.append('M' + 'L'.join('%d %d' % (round(x), round(y)) for x, y in l.coords))
     return ''.join(out)
 
-# --- Buøy / Hundvåg ------------------------------------------------------
-mass = [p for p in parts(LAND) if p.contains(Point(1850, 2060))][0]
-buoy_cut = Polygon([(900, 1720), (1560, 1665), (1880, 1565), (2060, 1890), (2320, 1910), (2700, 1960), (2700, 2800), (900, 2800)])
-BUOY = biggest(mass.intersection(buoy_cut))
-HUNDVAG = mass.difference(BUOY)
+# --- fase 1-området: landmassen skåret av polygon, resten er en egen sone ---
+AC = CFG['area']
+mass = [p for p in parts(LAND) if p.contains(Point(*AC['landmassPoint']))][0]
+AREA = biggest(mass.intersection(Polygon(AC['cut'])))
+REMAINDER = mass.difference(AREA)
 
-ind = [Polygon(geom_pts(e)) for e in d if e.get('tags', {}).get('landuse') == 'industrial' and 'geometry' in e and len(e['geometry']) > 3]
-ros_ind = [p.buffer(0) for p in ind if p.buffer(0).contains(Point(1500, 2300))]
-ROS = biggest(BUOY.intersection(ros_ind[0].buffer(18)))
-REST = BUOY.difference(ROS)
+# --- låste sektorer: OSM-landuse-polygon utskåret av området ----------------
+REST = AREA
+locked = []
+for L in CFG['lockedSectors']:
+    polys = [Polygon(geom_pts(e)) for e in d if e.get('tags', {}).get('landuse') == L['landuse'] and 'geometry' in e and len(e['geometry']) > 3]
+    hit = [p.buffer(0) for p in polys if p.buffer(0).contains(Point(*L['point']))]
+    g = biggest(AREA.intersection(hit[0].buffer(L['buffer'])))
+    locked.append((L, g))
+    REST = REST.difference(g)
 
-seeds = {
-    'hjem':        (1900, 2080),
-    'tommerodden': (1330, 1860),
-    'obs':         (1640, 1880),
-    'nordkrysset': (1800, 1690),
-    'buoy_nord':   (2120, 1940),
-    'skolen':      (2170, 2230),
-    'sorspissen':  (2180, 2440),
-}
-vor = voronoi_diagram(MultiPoint([Point(*v) for v in seeds.values()]), envelope=box(800, 1400, 2800, 2800))
+# --- Voronoi-sektorer i resten ----------------------------------------------
+SC = CFG['sectors']
+seeds = {k: tuple(v) for k, v in SC['seeds'].items()}
+vor = voronoi_diagram(MultiPoint([Point(*v) for v in seeds.values()]), envelope=box(*SC['envelope']))
 cells = {}
 for k, v in seeds.items():
     cell = [c for c in vor.geoms if c.contains(Point(*v))][0]
     cells[k] = biggest(REST.intersection(cell).buffer(0))
-cells['rosenberg'] = ROS
+labels = {}
+for L, g in locked:
+    cells[L['id']] = g
+    if L.get('label'): labels[L['id']] = Point(*L['label'])
 
 sectors = []
 for k, g in cells.items():
-    c = g.representative_point() if k != 'rosenberg' else Point(1430, 2300)
+    c = labels.get(k) or g.representative_point()
     sectors.append({'id': k, 'd': d_path(g, 1.0), 'cx': round(c.x), 'cy': round(c.y), 'area': round(g.area)})
 
 # --- fremtidige soner ----------------------------------------------------
-MAIN = None
 def zone_at(x, y):
     for p in parts(LAND):
         if p.contains(Point(x, y)): return p
-MAIN = zone_at(1500, 3300)
-zones_def = [
-    ('hundvag', 'Hundvåg', HUNDVAG, (1950, 1250)),
-    ('engoy', 'Engøy', zone_at(2592, 2510), None),
-    ('solyst', 'Sølyst', zone_at(2406, 3060), None),
-    ('grasholmen', 'Grasholmen', zone_at(2652, 3199), None),
-    ('bjornoy', 'Bjørnøy', zone_at(3184, 1100), None),
-    ('roaldsoy', 'Roaldsøy', zone_at(3561, 1432), None),
-    ('ormoy', 'Ormøy', zone_at(3426, 1960), None),
-    ('steinsoy', 'Steinsøy', zone_at(3050, 2234), None),
-    ('sentrum', 'Sentrum', MAIN.intersection(box(1700, 2900, 3600, 4200)), (2350, 3290)),
-    ('bjergsted', 'Bjergsted', MAIN.intersection(box(0, 1500, 1700, 4200)), (1290, 2900)),
-]
+ZC = CFG['zones']
+MAIN = zone_at(*ZC['mainlandPoint'])
 zones = []
-for k, name, g, lab in zones_def:
+for z in ZC['list']:
+    if z.get('remainder'): g = REMAINDER
+    elif 'landAt' in z: g = zone_at(*z['landAt'])
+    else: g = MAIN.intersection(box(*z['mainlandBox']))
     if g is None or g.is_empty: continue
     g = g.intersection(CLIP)
-    c = Point(*lab) if lab else g.representative_point()
-    zones.append({'id': k, 'name': name, 'd': d_path(g, 2), 'cx': round(c.x), 'cy': round(c.y)})
+    c = Point(*z['label']) if z.get('label') else g.representative_point()
+    zones.append({'id': z['id'], 'name': z['name'], 'd': d_path(g, 2), 'cx': round(c.x), 'cy': round(c.y)})
 
 # --- lag: land, dybdekurver, bygg, veier ----------------------------------
 water_lines = [d_path(LAND.buffer(dist).intersection(CLIP), 4) for dist in (14, 40, 90)]
@@ -130,8 +129,8 @@ for e in d:
     roads[cls].append(line_path(geom_pts(e)))
 
 out = {
-    'view': [950, 750, 2500, 2550],
-    'focus': [1080, 1480, 1560, 1160],
+    'view': VIEW_XYWH,
+    'focus': CFG['view']['focus'],
     'land': d_path(LAND, 1.2),
     'depth': water_lines,
     'buildings': bld_path,

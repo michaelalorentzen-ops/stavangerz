@@ -1,12 +1,14 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, INTRO, LANDMARKS, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
 import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
 import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
+
+const LOCKED = SECTORS[(Object.keys(SECTORS) as (keyof typeof SECTORS)[]).find((k) => SECTORS[k].locked)!];
 
 function modal(html: string, wide = false) {
   const sheet = $('sheet');
@@ -24,8 +26,8 @@ export function titleScreen() {
   modal(`<div class="title" style="display:grid;gap:18px">
     <div class="kick">Et turbasert overlevelsesspill fra byøyene</div>
     <h1>STAVANGER <b>Z</b></h1>
-    <p>Utbruddet starter en tirsdag morgen. Du bor på Buøy. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, rydd øya sektor for sektor og bygg sperringer før natta tar dere.</p>
-    <div class="coords">58°59′N 5°43′Ø · Buøy, Hundvåg bydel</div>
+    <p>Utbruddet starter en tirsdag morgen. Du bor ${AREA.at}. ${LANDMARKS.bybrua} er stengt, ${LOCKED.short} er overkjørt, og det regner. Samle et crew blant naboene, rydd øya sektor for sektor og bygg sperringer før natta tar dere.</p>
+    <div class="coords">${AREA.coords} · ${AREA.name}, ${AREA.district} bydel</div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
       ${saved && !isFinished(saved) ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
@@ -164,7 +166,7 @@ function settle(done: () => void) {
 /** Lederen er død: spilleren velger blant de gjenlevende. */
 function chooseLeader(done: () => void) {
   const S = game();
-  modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Hvem tar over?</h2>
+  modal(`<div class="radio">Vaktlogg · ${AREA.name}</div><h2>Hvem tar over?</h2>
     <p>Lederen er borte, og crewet har fortsatt ikke blitt enige om hvem som skal skrive vaktlista. Noen må ta ansvar. Helst noen som ikke har meldt seg frivillig.</p>
     <div class="picks">${S.crew.map((c) => `<button class="pick" data-l="${c.id}"><span class="nm">${esc(c.name)}</span><span class="role">${esc(c.role)}</span>
       <span class="tr">${TRAITS[c.trait].name}: ${TRAITS[c.trait].desc}</span><span class="statrow">${statPips(c.stats)}</span></button>`).join('')}</div>`, true);
@@ -193,7 +195,7 @@ export function endDay() {
   const lines = resolveDay(S);
   const ev = S.over ? null : drawEvent(S);
   save();
-  modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
+  modal(`<div class="radio">Vaktlogg · ${AREA.name}</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
     <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : blockerLabel(S) ?? (isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`)}</button></div>`);
   const after = () => settle(finish);
@@ -204,20 +206,20 @@ export function endScreen() {
   const S = game(), st = S.stats;
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
-    modal(`<div class="radio">Samband · alle stasjoner</div><h2>Buøy er sikret</h2>
-      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner på Obs Bygg: «BUØY: 1 – APOKALYPSEN: 0».</p>
+    modal(`<div class="radio">Samband · alle stasjoner</div><h2>${AREA.name} er sikret</h2>
+      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner ${SECTORS.obs.at}: «${AREA.name.toUpperCase()}: 1 – APOKALYPSEN: 0».</p>
       <div class="metrics">${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}${metric('Crew mistet', st.lost)}</div>
-      <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>Rosenberg Verft</h2>
-      <p>Horden på verftet venter. ${S.flags.gann ? 'Skoleskipet Gann ligger klart ved Tømmerodden.' : 'Dere har ingen båt ennå.'} ${S.flags.buss ? 'Kolumbus-bussen på Sørspissen har full tank.' : 'Dere har ikke funnet transport ennå.'}</p></div>
-      <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Fortsett på Buøy</button></div>`);
+      <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>${LOCKED.name}</h2>
+      <p>Horden på verftet venter. ${S.flags.gann ? `Skoleskipet Gann ligger klart ved ${SECTORS.tommerodden.short}.` : 'Dere har ingen båt ennå.'} ${S.flags.buss ? `Kolumbus-bussen ${SECTORS.sorspissen.at} har full tank.` : 'Dere har ikke funnet transport ennå.'}</p></div>
+      <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Fortsett ${AREA.at}</button></div>`);
     on('cont', () => { continueAfterWin(S); closeModal(); ui.refresh(); });
   } else if (S.over === 'timeout') {
     modal(`<div class="radio">Samband · tiden er ute</div><h2>Fristen gikk ut</h2>
-      <p>Etter ${S.day - S.phaseStartDay} dager er Buøy fortsatt ikke sikret. Kommunen har sluttet å ringe, og Sandnes har begynt å skrive om «den skjebnesvangre Hundvåg-avgjørelsen» i festskriftet sitt.</p>
+      <p>Etter ${S.day - S.phaseStartDay} dager er ${AREA.name} fortsatt ikke sikret. Kommunen har sluttet å ringe, og ${LANDMARKS.sandnes} har begynt å skrive om «den skjebnesvangre ${AREA.district}-avgjørelsen» i festskriftet sitt.</p>
       <div class="metrics">${metric('Dager brukt', S.day - S.phaseStartDay)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
       <div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);
   } else {
-    modal(`<div class="radio">Samband · ingen svar</div><h2>Buøy har falt</h2>
+    modal(`<div class="radio">Samband · ingen svar</div><h2>${AREA.name} har falt</h2>
       <p>Crewet er borte. Kaffetrakteren står fortsatt på. Kjell ville ha skrevet et avviksskjema.</p>
       <div class="metrics">${metric('Dager', S.day - 1)}${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}</div>
       <div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);

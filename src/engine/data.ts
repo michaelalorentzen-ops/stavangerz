@@ -1,4 +1,5 @@
 // Statiske spilldata: sektorer, sperringer, egenskaper og naboer i fase 1.
+import { AREA, SECTORS } from '../regions/active';
 import type { Flag, PhaseId, ResKey, Resources, SectorId, SectorKind, StatKey, Stats, TraitId } from './types';
 
 export interface SectorDef {
@@ -72,14 +73,14 @@ export const HEALTH_LABEL = ['Bitt', 'Ille ute', 'Skrapt opp', 'Frisk'];
 export const GATE_STEPS = [0, 6, 14, 24];
 
 export const TRAITS: Record<TraitId, { name: string; desc: string }> = {
-  lokalkjent: { name: 'Lokalkjent', desc: 'Vet hvor alt er på Buøy. +2 når du leter.' },
+  lokalkjent: { name: 'Lokalkjent', desc: `Vet hvor alt er ${AREA.at}. +2 når du leter.` },
   filmnerd: { name: 'Har sett alle zombiefilmene', desc: '+10 Nerver. Sier «sikt mot hodet» ved enhver anledning.' },
   dugnad: { name: 'Fast inventar på dugnad', desc: '+2 når du befester. Har alltid med egen drill.' },
   hms: { name: 'HMS-ansvarlig', desc: 'Befestninger blir solide (+2), men fyller ut avviksskjema etter hver kamp.' },
   nattevakt: { name: 'Nattevakt på SUS', desc: 'Lapper sammen crewet. Hviledager helbreder alltid, og sparer ofte medisin.' },
-  sveiser: { name: 'Sveiser på Rosenberg', desc: '+3 når du befester. Kjenner verftet ut og inn (fase 2).' },
+  sveiser: { name: `Sveiser ${SECTORS.rosenberg.at}`, desc: '+3 når du befester. Kjenner verftet ut og inn (fase 2).' },
   russ: { name: 'Russ 2026', desc: 'Løper fort og redd. Har ingen respekt for noe, inkludert zombier.' },
-  regneark: { name: 'Regnearket', desc: 'Oljeingeniør. Har regneark over alle kjellere på Buøy, og viser det eksakte antallet gjemte zombier.' },
+  regneark: { name: 'Regnearket', desc: `Oljeingeniør. Har regneark over alle kjellere ${AREA.at}, og viser det eksakte antallet gjemte zombier.` },
   hv: { name: 'Heimevernet', desc: '+2 i kamp. Forteller om øvelse Cold Response hver kveld.' },
   buss: { name: 'Kolumbus-sjåfør', desc: 'Kan kjøre hva som helst gjennom hva som helst (fase 2). +10 Kondis på oppdrag.' },
   los: { name: 'Pensjonert los', desc: 'Kjenner hvert skjær. Ser ting andre overser: +0,1 til å finne skjulte zombier.' },

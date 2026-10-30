@@ -1,5 +1,5 @@
 // Kortvisning: små brettspillkort, spor på crewkortet, velger og lager.
-import { bestCopy, cardBonus, cardEffect, CARDS, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, STATS, toggleFavorite, unequip } from '../engine';
+import { AREA, bestCopy, cardBonus, cardEffect, CARDS, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, STATS, toggleFavorite, unequip } from '../engine';
 import type { CardDef, CardInst, CrewMember, Slot, StatKey } from '../engine';
 import { $, esc, game, ui } from './store';
 
@@ -121,7 +121,7 @@ export function bindCards(root: HTMLElement) {
     const d = CARDS[k.def];
     if (d.rarity === 'unik') {
       // unike kort finnes bare ett av, så demontering må bekreftes
-      if (!confirm(`${d.name} er unik. Det finnes ikke flere av den i Stavanger. Demontere likevel for ${salvageValue(d).skrap} skrap?`)) return;
+      if (!confirm(`${d.name} er unik. Det finnes ikke flere av den i ${AREA.city}. Demontere likevel for ${salvageValue(d).skrap} skrap?`)) return;
       salvage(game(), k.uid, { allowUnique: true });
     } else salvage(game(), k.uid);
     ui.refresh();

@@ -1,5 +1,5 @@
 import './styles.css';
-import { isFinished, migrate, newGame } from './engine';
+import { AREA, isFinished, migrate, newGame } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
 import { draft, endDay, endPhaseNow, endScreen, titleScreen } from './ui/modals';
@@ -8,6 +8,10 @@ import { renderTutorial } from './ui/tutorial';
 import { renderCrew, renderGoals, renderLog, renderPlan, renderSel, renderTabs, renderTop, showTab } from './ui/panel';
 import { $, MAP, PANEL_TABS, save, ui } from './ui/store';
 import type { PanelTab, Selection } from './ui/store';
+
+$('area-phase').textContent = `Fase 1 · ${AREA.name}`;
+$('area-name').textContent = AREA.name;
+$('map').parentElement!.setAttribute('aria-label', `Kart over ${AREA.name} og byøyene`);
 
 function select(s: Selection) {
   ui.sel = s;

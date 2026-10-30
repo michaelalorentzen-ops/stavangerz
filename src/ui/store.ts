@@ -1,7 +1,10 @@
 // Felles UI-tilstand: spillet, hva som er valgt, og lagring i nettleseren.
-import { migrate } from '../engine';
+import { GATES, migrate } from '../engine';
 import type { GameState, GateId, MapSectorId, SectorKind, Slot, TaskType, ZoneId } from '../engine';
 import rawMap from '../data/map.json';
+
+/** Porten som skjermer hjemsonen (regionens eneste sperring bak hjemsektoren). */
+export const HOME_GATE = (Object.keys(GATES) as GateId[]).find((g) => GATES[g].sector === 'hjem')!;
 
 export interface MapShape { id: string; d: string; cx: number; cy: number }
 export interface MapData {
