@@ -6,7 +6,7 @@ import { checkEnd, logChoice, validateTasks } from './engine';
 import { SECTORS } from './data';
 import { delta, plainText, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
 import type { PhaseModifiers } from './phases';
-import { clamp, pick, rand } from './rng';
+import { clamp, rand } from './rng';
 import { bestOf, checkOddsFor, ODDS_MAX } from './skills';
 import type { CrewMember, GameState, PendingEncounter, SectorId, SectorKind, StatKey, WeaponTag } from './types';
 
@@ -17,8 +17,13 @@ export interface EncounterCtx {
   /** de i gruppa som lever */
   crew: CrewMember[];
   threat: number;
+  /** zombier igjen i sektoren når kortet trekkes, eller null på tokt (da kjenner vi ikke tallet) */
+  zombies: number | null;
   toktId?: string;
 }
+
+/** Kort som snakker om en flokk: sektoren må ha så mange zombier, eller være et tokt. */
+export const manyZombies = (ctx: EncounterCtx, n = ENC_MANY): boolean => ctx.zombies === null || ctx.zombies >= n;
 
 export interface EncChoice {
   label: string;
@@ -48,14 +53,20 @@ export interface EncounterDef {
 export const ENC_MAX_PER_DAY = 2;
 /** Encounter-sjansen følger trusselnivået: 0.7 på nivå 0, +0.3 per nivå. */
 const ENC_THREAT_BASE = 0.7, ENC_THREAT_STEP = 0.3;
+/** Sjansen skalerer med zombiene i sektoren: en tom sektor gir ENC_Z_MIN ganger sjansen, en full (ENC_Z_FULL eller flere) ENC_Z_MAX ganger. */
+export const ENC_Z_MIN = 0.8, ENC_Z_MAX = 1.5, ENC_Z_FULL = 8;
+/** Så mange zombier skal sektoren ha for at et kort om «en flokk» kan trekkes. */
+export const ENC_MANY = 8;
 /** Bråk-våpen gir flere encounters, en stille gruppe færre. */
 const ENC_LOUD = 1.2, ENC_QUIET = 0.7;
 /** Odds-bonus når noen i gruppa har et våpen med valgets tagg. */
 export const TAG_ODDS = 0.2;
 /** Sjansen synker så mye per trusselnivå over 1. Farlige steder er farlige også for de flinke. */
 export const THREAT_ODDS = 0.08;
-/** Så mange av de sist trukne kortene holdes ute av trekningen. */
-export const ENC_COOLDOWN = 4;
+/** Så mange av de sist trukne kortene holdes helt ute av trekningen. */
+export const ENC_COOLDOWN = 5;
+/** Så mange trekk tilbake husker spillet. Kort i minnet utenfor cooldown har lavere vekt, jo nyere jo lavere (ENC_WEIGHT_MIN opp til 1). */
+export const ENC_MEMORY = 16, ENC_WEIGHT_MIN = 0.2;
 
 const defOf = (id: string): EncounterDef => {
   const d = ENCOUNTERS.find((e) => e.id === id);
@@ -66,48 +77,66 @@ const defOf = (id: string): EncounterDef => {
 /** Kortene som passer stedet. De sist trukne holdes ute, med mindre ingen andre passer. */
 function poolFor(s: GameState, place: EncPlace, ctx: EncounterCtx): EncounterDef[] {
   const fits = ENCOUNTERS.filter((d) => d.places.includes(place) && (!d.when || d.when(s, ctx)));
-  const fresh = fits.filter((d) => !s.recentEnc.includes(d.id));
+  const fresh = fits.filter((d) => !s.recentEnc.slice(-ENC_COOLDOWN).includes(d.id));
   return fresh.length ? fresh : fits;
+}
+
+/** Vekt for et kort: 1 om det ikke er sett nylig, lavere jo nærmere cooldown-en det ble trukket. */
+function weightOf(s: GameState, id: string): number {
+  const age = s.recentEnc.length - s.recentEnc.lastIndexOf(id); // 1 = sist trukket
+  if (age > s.recentEnc.length || age > ENC_MEMORY) return 1;
+  return ENC_WEIGHT_MIN + (1 - ENC_WEIGHT_MIN) * clamp((age - 1) / ENC_MEMORY, 0, 1);
+}
+
+/** Trekker et kort, vektet mot dem som nylig er sett. Ett kall til rand(). */
+function pickCard(s: GameState, pool: EncounterDef[]): EncounterDef {
+  const w = pool.map((d) => weightOf(s, d.id));
+  let r = rand(s) * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r < 0) return pool[i]; }
+  return pool[pool.length - 1];
 }
 
 function push(s: GameState, def: EncounterDef, p: Omit<PendingEncounter, 'pid' | 'def'>) {
   s.pending.push({ pid: `e${s.nextUid++}`, def: def.id, ...p });
-  s.recentEnc = [...s.recentEnc.filter((id) => id !== def.id), def.id].slice(-ENC_COOLDOWN);
+  s.recentEnc = [...s.recentEnc.filter((id) => id !== def.id), def.id].slice(-ENC_MEMORY);
 }
 
 /** De i gruppa som fortsatt lever. */
 const alive = (s: GameState, p: PendingEncounter): CrewMember[] =>
   p.crew.map((id) => s.crew.find((c) => c.id === id)).filter((c): c is CrewMember => !!c);
-const ctxOf = (s: GameState, p: PendingEncounter): EncounterCtx => ({ sector: p.sector, crew: alive(s, p), threat: p.threat, toktId: p.toktId });
+const ctxOf = (s: GameState, p: PendingEncounter): EncounterCtx => ({ sector: p.sector, crew: alive(s, p), threat: p.threat, zombies: p.sector ? s.sectors[p.sector].z : null, toktId: p.toktId });
 
 /** Hvor mye støy gruppa lager: minst ett bråk-våpen, eller bare stille våpen og ingen våpen. */
 export function noiseProfile(team: CrewMember[]): { loud: boolean; quiet: boolean } {
   return { loud: team.some((c) => noiseOf(c) === 'brak'), quiet: team.every((c) => { const n = noiseOf(c); return n === null || n === 'stille'; }) };
 }
 
-export const encounterChance = (M: PhaseModifiers, threat: number, profile: { loud: boolean; quiet: boolean }): number =>
-  clamp(M.encounterChance * (ENC_THREAT_BASE + ENC_THREAT_STEP * threat) * (profile.loud ? ENC_LOUD : 1) * (profile.quiet ? ENC_QUIET : 1), 0, 1);
+/** Sjansen for knipe: trusselnivå, støy og hvor mange zombier som er i sektoren. `zombies` utelatt gir full sjanse. */
+export const encounterChance = (M: PhaseModifiers, threat: number, profile: { loud: boolean; quiet: boolean }, zombies: number = ENC_Z_FULL): number =>
+  clamp(M.encounterChance * (ENC_THREAT_BASE + ENC_THREAT_STEP * threat) * (profile.loud ? ENC_LOUD : 1) * (profile.quiet ? ENC_QUIET : 1)
+    * (ENC_Z_MIN + (ENC_Z_MAX - ENC_Z_MIN) * clamp(zombies / ENC_Z_FULL, 0, 1)), 0, 1);
 
 /** Kanskje havner gruppa i en knipe. Returnerer true når et encounter er lagt til. Kalles bare under dagstaket. */
 export function rollEncounter(s: GameState, M: PhaseModifiers, sector: SectorId, team: CrewMember[], profile: { loud: boolean; quiet: boolean }, log: LogFn): boolean {
   const group = team.filter((c) => s.crew.includes(c));
   if (!group.length) return false;
   const threat = SECTORS[sector].threat;
-  if (rand(s) >= encounterChance(M, threat, profile)) return false;
-  const ctx: EncounterCtx = { sector, crew: group, threat };
+  const zombies = s.sectors[sector].z;
+  if (rand(s) >= encounterChance(M, threat, profile, zombies)) return false;
+  const ctx: EncounterCtx = { sector, crew: group, threat, zombies };
   const pool = poolFor(s, SECTORS[sector].kind, ctx);
   if (!pool.length) return false;
-  push(s, pick(s, pool), { sector, crew: group.map((c) => c.id), threat });
+  push(s, pickCard(s, pool), { sector, crew: group.map((c) => c.id), threat });
   log(`${names(group)} havnet i en knipe ${SECTORS[sector].at}.`, 'warn');
   return true;
 }
 
 /** Et tokt møter noe hver dag, så lenge dagstaket tillater det. Sektoren er null, siden gruppa er langt hjemmefra. Returnerer true når et encounter er lagt til. */
 export function addToktEncounter(s: GameState, group: CrewMember[], threat: number, toktId: string, log: LogFn): boolean {
-  const ctx: EncounterCtx = { sector: null, crew: group, threat, toktId };
+  const ctx: EncounterCtx = { sector: null, crew: group, threat, zombies: null, toktId };
   const pool = poolFor(s, 'tokt', ctx);
   if (!pool.length) return false;
-  push(s, pick(s, pool), { sector: null, crew: group.map((c) => c.id), threat, toktId });
+  push(s, pickCard(s, pool), { sector: null, crew: group.map((c) => c.id), threat, toktId });
   log(`${names(group)} havnet i en knipe på toktet.`, 'warn');
   return true;
 }

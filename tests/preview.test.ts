@@ -27,7 +27,7 @@ describe('previewTask', () => {
     const { power, mult } = ryddeKillParams(s, id, team, M);
     expect(p.kills).toBeCloseTo(Math.min(6, power * 0.475 * mult), 10);
     expect(p.risk.map((r) => r.risk)).toEqual(team.map((c) => ryddeInjuryRisk(c, 6, power, id, M)));
-    expect(p.encounter).toBe(encounterChance(M, SECTORS[id].threat, noiseProfile(team)));
+    expect(p.encounter).toBe(encounterChance(M, SECTORS[id].threat, noiseProfile(team), 6));
   });
 
   it('Rydde: forventet antall drap stemmer med gjennomsnittet av mange kjøringer', () => {
