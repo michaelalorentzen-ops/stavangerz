@@ -60,6 +60,8 @@ button { cursor: pointer; }
 .s-inf .edge { stroke: var(--red); stroke-width: 3; fill: url(#hatchRed); animation: pulse 2.6s ease-in-out infinite; }
 .s-clr .fillbase { fill: var(--amber); fill-opacity: .12; }
 .s-clr .edge { stroke: var(--amber); stroke-width: 3.5; fill: none; }
+.s-safe .fillbase { fill: var(--green); fill-opacity: .12; }
+.s-safe .edge { stroke: var(--green); stroke-width: 3.5; fill: none; }
 .s-lock .fillbase { fill: #3a0f12; fill-opacity: .55; }
 .s-lock .edge { stroke: var(--red); stroke-width: 2; stroke-dasharray: 10 8; fill: url(#hatchDark); }
 .sector.sel .edge { stroke: var(--ink); stroke-width: 6; }
@@ -69,6 +71,8 @@ button { cursor: pointer; }
 .lab.sub { font: 500 22px/1 var(--f-mono); letter-spacing: 0; stroke-width: 6px; }
 .lab.sub.inf { fill: #ff8b8e; }
 .lab.sub.clr { fill: var(--amber); }
+.lab.sub.safe { fill: var(--green); }
+.lab.sub.kind { font-size: 26px; fill: var(--muted); }
 .lab.zone { font-size: 38px; fill: var(--muted); letter-spacing: .2em; }
 .lab.zsub { font: 600 18px/1 var(--f-cond); letter-spacing: .2em; fill: var(--faint); stroke-width: 5px; }
 .lab.big { font: 400 54px/1 var(--f-display); fill: #ff6b6f; letter-spacing: .06em; }
@@ -85,7 +89,7 @@ button { cursor: pointer; }
 .token circle { fill: var(--ink); stroke: var(--sea); stroke-width: 4; }
 .token.hurt circle { fill: #ffb3a8; }
 .token text { font: 700 19px/1 var(--f-cond); fill: var(--sea); text-anchor: middle; dominant-baseline: central; }
-.token.t-lete circle { fill: var(--teal); }
+.token.t-sanke circle { fill: var(--teal); }
 .token.t-befeste circle { fill: var(--amber); }
 @media (prefers-reduced-motion: reduce) { .s-inf .edge { animation: none; } }
 
@@ -107,8 +111,18 @@ button { cursor: pointer; }
 .badge { justify-self: start; font: 700 12px/1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; padding: 4px 7px; border-radius: 3px; }
 .badge.inf { background: var(--red-soft); color: #ff8b8e; }
 .badge.clr { background: var(--amber-soft); color: var(--amber); }
+.badge.safe { background: rgba(123,196,127,.16); color: var(--green); }
 .badge.lock { background: #3a0f12; color: #ff8b8e; }
 .badge.fog { background: var(--line); color: var(--muted); }
+.bars { display: grid; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: 92px 1fr 44px; align-items: center; gap: 8px; font: 600 11px/1.2 var(--f-cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.bar-row .tr { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar-row .tr i { display: block; height: 100%; background: var(--amber); }
+.bar-row.inf .tr i { background: var(--red); }
+/* ukjent mengde: en ubestemt stolpe som ikke røper det sanne tallet */
+.bar-row.unknown .tr i { background: repeating-linear-gradient(135deg, var(--red) 0 4px, transparent 4px 8px); opacity: .55; }
+.bar-row.ctl .tr i { background: var(--teal); }
+.bar-row b { font: 500 12px var(--f-mono); letter-spacing: 0; text-align: right; color: var(--ink); }
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .metric { border-top: 1px solid var(--line); padding-top: 6px; }
 .metric .k { font: 600 11px/1.2 var(--f-cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
@@ -139,6 +153,9 @@ button { cursor: pointer; }
 .st .pips { display: flex; gap: 2px; margin-top: 3px; }
 .st .pips i { flex: 1; height: 4px; background: var(--line); border-radius: 1px; }
 .st .pips i.on { background: var(--ink); }
+.st .sbar { height: 4px; margin-top: 3px; background: var(--line); border-radius: 1px; overflow: hidden; }
+.st .sbar i { display: block; height: 100%; background: var(--ink); }
+.st small { display: block; margin-top: 2px; font: 500 9.5px/1 var(--f-cond); letter-spacing: .04em; text-transform: none; }
 .cm select { grid-column: 1 / -1; width: 100%; padding: 7px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; }
 .cm.busy select { border-color: var(--amber); }
 
@@ -218,3 +235,56 @@ button { cursor: pointer; }
   .legend { display: none; }
   .se { grid-template-columns: 92px 1fr auto; }
 }
+
+/* Utstyrskort */
+.slots { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.slot { display: grid; gap: 2px; text-align: left; padding: 5px 7px; border: 1px dashed var(--line); border-radius: 4px; background: var(--panel); min-width: 0; }
+.slot.filled { border-style: solid; }
+.slot.open { border-color: var(--amber); }
+.slot small { font: 600 9.5px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.slot span:not(.gc-dur) { font: 600 12px/1.15 var(--f-cond); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker { grid-column: 1 / -1; display: grid; gap: 6px; }
+.pk { display: grid; gap: 4px; }
+.gc-label { font: 600 10px var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.stash { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.gc { --edge: var(--line); display: grid; gap: 4px; padding: 7px 8px; border: 2px solid var(--edge); border-radius: 6px; background: var(--panel-2); }
+.gc.r-sjelden { --edge: var(--teal); }
+.gc.r-episk { --edge: #b07cd8; }
+.gc.r-unik { --edge: var(--amber); }
+.gc-top { display: flex; justify-content: space-between; align-items: start; gap: 6px; }
+.gc-top b { font: 700 14px/1.1 var(--f-cond); letter-spacing: .02em; }
+.gc .dots { display: flex; gap: 2px; padding-top: 3px; }
+.gc .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--line); }
+.gc .dots i.on { background: var(--ink); }
+.gc-slot { font: 600 10px var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.gc-dur { display: block; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.gc-dur i { display: block; height: 100%; background: var(--green); }
+.gc-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+.tagchip { font: 700 9px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; background: var(--line); color: var(--muted); }
+.tagchip.n-brak { background: var(--red-soft); color: #ff8b8e; }
+.tagchip.n-stille { background: rgba(123,196,127,.16); color: var(--green); }
+.tagchip.t { background: var(--amber-soft); color: var(--amber); }
+.choice.retreat { border-style: dashed; }
+.choice small b { color: var(--amber); font-weight: 600; }
+.gc p { margin: 0; font-size: 12px; color: var(--muted); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+
+.fav { border: 0; background: none; padding: 0 4px 0 0; color: var(--muted); font-size: 15px; line-height: 1; }
+.fav.on { color: var(--amber); }
+.gc-top b { flex: 1; }
+#stash { display: grid; gap: 6px; }
+
+.gc-act { display: flex; gap: 6px; }
+.copies summary { font: 600 11px var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+.copy { display: flex; align-items: center; gap: 4px; font: 500 12px var(--f-mono); }
+
+/* Tokt-merker på kartet */
+.toktmark { cursor: pointer; }
+.toktmark .flag { fill: var(--amber); stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+.toktmark.out .flag { fill: var(--red); }
+.toktmark text { font: 700 20px/1 var(--f-cond); letter-spacing: .12em; fill: var(--ink); text-transform: uppercase; }
+.token.t-tokt circle { stroke: var(--amber); }
+
+/* tutorial */
+.card.tut { border-color: var(--amber); }
+.card.tut .row { display: flex; gap: 8px; justify-content: flex-start; }

@@ -1,10 +1,11 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, checkOdds, drawEvent, INTRO, NEIGHBORS, newGame, resolveDay, runChoice, SELF_TRAITS, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
-import type { EventDef, Stats, TraitId } from '../engine';
-import { statPips } from './panel';
+import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
+import { blockerLabel, statPips } from './panel';
+import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
 
 function modal(html: string, wide = false) {
@@ -23,14 +24,17 @@ export function titleScreen() {
   modal(`<div class="title" style="display:grid;gap:18px">
     <div class="kick">Et turbasert overlevelsesspill fra byøyene</div>
     <h1>STAVANGER <b>Z</b></h1>
-    <p>Utbruddet starter en tirsdag morgen. Du bor på Buøy. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, klarer øya sektor for sektor og bygg sperringer før natta tar dere.</p>
+    <p>Utbruddet starter en tirsdag morgen. Du bor på Buøy. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, rydd øya sektor for sektor og bygg sperringer før natta tar dere.</p>
     <div class="coords">58°59′N 5°43′Ø · Buøy, Hundvåg bydel</div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
-      ${saved && !saved.over ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
+      ${saved && !isFinished(saved) ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
   on('new', createSelf);
-  on('cont', () => { ui.S = saved; closeModal(); ui.refresh(); });
+  on('cont', () => {
+    ui.S = saved; closeModal(); ui.refresh();
+    settle(() => { closeModal(); ui.refresh(); if (saved && isFinished(saved)) endScreen(); });
+  });
 }
 
 const POOL = 15;
@@ -106,15 +110,93 @@ function showEvent(ev: EventDef, done: () => void) {
   }));
 }
 
+/** Et ventende encounter: samme stil som hendelseskort, med odds og våpentagg. */
+function showEncounter(p: PendingEncounter, done: () => void) {
+  const S = game(), v = describeEncounter(S, p);
+  const odds = (c: (typeof v.choices)[number]) => c.check
+    ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag].toLowerCase()}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
+  modal(`<div class="radio">Samband · ${esc(v.crew.join(' og '))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
+    <div class="transcript">${esc(v.text)}</div>
+    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span>${esc(c.label)}</span>${odds(c)}</button>`).join('')}</div>`);
+  $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
+    const i = Number(b.dataset.i), c = v.choices[i];
+    const r = resolveEncounter(S, p.pid, i);
+    save();
+    const tag = c.check ? `<div class="tag">${r.ok ? 'Lyktes' : 'Mislyktes'}</div>` : '';
+    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result ${c.check ? (r.ok ? 'ok' : 'fail') : ''}">${tag}${esc(r.text)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
+    $('ok').focus();
+    on('ok', done);
+  }));
+}
+
+/** Etter et tokt-encounter: Fortsett eller Snu. Viser hva gruppa bærer. */
+function showToktDecision(toktId: string, done: () => void) {
+  const S = game(), t = S.tokts.find((x) => x.id === toktId)!, def = toktDef(toktId);
+  const carried = [
+    ...RES.filter((k) => (t.haul[k] ?? 0) > 0).map((k) => `${t.haul[k]} ${RES_LABEL[k].toLowerCase()}`),
+    ...t.cards.map((k) => CARDS[k.def].name),
+  ];
+  const last = t.stage >= def.days;
+  modal(`<div class="radio">Samband · tokt · Dag ${S.day}</div><h2>${esc(def.name)}</h2>
+    <div class="transcript">${esc(`Dag ${t.stage} av ${def.days}. ${last ? 'Dere er framme. Gjør oppdraget ferdig, eller snu med det dere har.' : 'Dere kan gå videre, eller snu og komme hjem i natt.'}`)}</div>
+    <p class="hint">Gruppa bærer: ${carried.length ? esc(carried.join(', ')) : 'ingenting ennå'}.</p>
+    <div class="choices">
+      <button class="choice" data-d="fortsett"><span>Fortsett</span><small>${last ? 'Fullfør og få belønningen' : 'Mer bytte, mer risiko'}</small></button>
+      <button class="choice retreat" data-d="snu"><span>Snu</span><small>Hjem i natt med det dere bærer</small></button></div>`);
+  $('sheet').querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.addEventListener('click', () => {
+    const text = toktDecision(S, toktId, b.dataset.d as 'fortsett' | 'snu');
+    save();
+    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result">${esc(text)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
+    $('ok').focus();
+    on('ok', done);
+  }));
+}
+
+/** Løser alt som hindrer at dagen avsluttes: encounters, så tokt-valg, så ny leder. Gjentas fordi et encounter kan drepe lederen. */
+function settle(done: () => void) {
+  const S = game(), b = endDayBlocker(S);
+  if (b === 'pending') showEncounter(S.pending[0], () => settle(done));
+  else if (b === 'tokt') showToktDecision(S.tokts.find((t) => t.awaiting)!.id, () => settle(done));
+  else if (b === 'leader') chooseLeader(() => settle(done));
+  else done();
+}
+
+/** Lederen er død: spilleren velger blant de gjenlevende. */
+function chooseLeader(done: () => void) {
+  const S = game();
+  modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Hvem tar over?</h2>
+    <p>Lederen er borte, og crewet har fortsatt ikke blitt enige om hvem som skal skrive vaktlista. Noen må ta ansvar. Helst noen som ikke har meldt seg frivillig.</p>
+    <div class="picks">${S.crew.map((c) => `<button class="pick" data-l="${c.id}"><span class="nm">${esc(c.name)}</span><span class="role">${esc(c.role)}</span>
+      <span class="tr">${TRAITS[c.trait].name}: ${TRAITS[c.trait].desc}</span><span class="statrow">${statPips(c.stats)}</span></button>`).join('')}</div>`, true);
+  $('sheet').querySelectorAll<HTMLButtonElement>('[data-l]').forEach((b) => b.addEventListener('click', () => {
+    setLeader(S, b.dataset.l!);
+    save();
+    done();
+  }));
+}
+
+/** Spilleren avslutter fasen fra målpanelet. */
+export function endPhaseNow() {
+  const S = game();
+  if (!canEndPhase(S)) return;
+  endPhase(S);
+  save();
+  ui.refresh();
+  if (isFinished(S)) endScreen();
+}
+
 export function endDay() {
   const S = game(), day = S.day;
+  if (isFinished(S)) { endScreen(); return; }
+  const finish = () => { closeModal(); ui.refresh(); if (isFinished(S)) endScreen(); };
+  if (endDayBlocker(S)) { settle(finish); return; }
   const lines = resolveDay(S);
   const ev = S.over ? null : drawEvent(S);
   save();
   modal(`<div class="radio">Vaktlogg · Buøy</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : `Start dag ${S.day}`}</button></div>`);
-  const after = () => { closeModal(); ui.refresh(); if (S.over) endScreen(); };
+    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : blockerLabel(S) ?? (isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`)}</button></div>`);
+  const after = () => settle(finish);
   on('ok', () => (ev ? showEvent(ev, after) : after()));
 }
 
@@ -123,12 +205,17 @@ export function endScreen() {
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
     modal(`<div class="radio">Samband · alle stasjoner</div><h2>Buøy er sikret</h2>
-      <p>Fase 1 er fullført på ${S.day - 1} dager. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner på Obs Bygg: «BUØY: 1 – APOKALYPSEN: 0».</p>
+      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner på Obs Bygg: «BUØY: 1 – APOKALYPSEN: 0».</p>
       <div class="metrics">${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}${metric('Crew mistet', st.lost)}</div>
       <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>Rosenberg Verft</h2>
       <p>Horden på verftet venter. ${S.flags.gann ? 'Skoleskipet Gann ligger klart ved Tømmerodden.' : 'Dere har ingen båt ennå.'} ${S.flags.buss ? 'Kolumbus-bussen på Sørspissen har full tank.' : 'Dere har ikke funnet transport ennå.'}</p></div>
       <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Fortsett på Buøy</button></div>`);
-    on('cont', () => { S.over = 'won-seen'; closeModal(); ui.refresh(); });
+    on('cont', () => { continueAfterWin(S); closeModal(); ui.refresh(); });
+  } else if (S.over === 'timeout') {
+    modal(`<div class="radio">Samband · tiden er ute</div><h2>Fristen gikk ut</h2>
+      <p>Etter ${S.day - S.phaseStartDay} dager er Buøy fortsatt ikke sikret. Kommunen har sluttet å ringe, og Sandnes har begynt å skrive om «den skjebnesvangre Hundvåg-avgjørelsen» i festskriftet sitt.</p>
+      <div class="metrics">${metric('Dager brukt', S.day - S.phaseStartDay)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
+      <div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);
   } else {
     modal(`<div class="radio">Samband · ingen svar</div><h2>Buøy har falt</h2>
       <p>Crewet er borte. Kaffetrakteren står fortsatt på. Kjell ville ha skrevet et avviksskjema.</p>

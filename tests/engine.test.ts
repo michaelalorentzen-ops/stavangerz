@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addGateWork, GATE_STEPS, migrate, newGame, PLAYABLE, rand, resolveDay, sectorIntel, taskOptions, validateTasks,
+  addGateWork, continueAfterWin, GATE_STEPS, migrate, newGame, PLAYABLE, rand, resolveDay, sectorIntel, taskOptions, toSkill, validateTasks,
 } from '../src/engine';
 import type { GameState } from '../src/engine';
 import { BOT_SELF, playGame } from '../tools/bot';
@@ -22,21 +22,21 @@ describe('determinisme', () => {
   });
 });
 
-describe('klarering', () => {
-  it('reduserer zombier og markerer sektoren som klarert', () => {
+describe('rydding', () => {
+  it('reduserer zombier', () => {
     const s = fresh();
-    for (const c of s.crew) c.task = { type: 'klarere', target: 'hjem' };
     for (let i = 0; i < 5 && s.sectors.hjem.z > 0; i++) {
-      for (const c of s.crew) if (s.sectors.hjem.z > 0) c.task = { type: 'klarere', target: 'hjem' };
+      for (const c of s.crew) c.task = { type: 'rydde', target: 'hjem' };
       resolveDay(s);
     }
-    // natta kan sende nye zombier inn, men hjem skal ha vært klarert minst én gang
+    // natta kan sende nye zombier inn, men crewet skal ha drept noen
     expect(s.stats.kills).toBeGreaterThanOrEqual(4);
   });
 
-  it('viser ikke sikkerhet for en infisert sektor', () => {
+  it('viser ikke trusselnivå for en sektor som ikke er speidet', () => {
     const s = fresh();
-    expect(sectorIntel(s, 'obs').conf).toBeUndefined();
+    expect(sectorIntel(s, 'obs').threat).toBeNull();
+    expect(sectorIntel(s, 'obs').safe).toBe(false);
   });
 
   it('gir et intervall som anslag for usette sektorer', () => {
@@ -49,7 +49,7 @@ describe('klarering', () => {
 describe('skjulte zombier i kjellere', () => {
   const clearedWithHidden = (seed: number, hidden: number) => {
     const s = fresh(seed);
-    s.sectors.obs = { ...s.sectors.obs, z: 0, hidden, cleared: true, miss: 0.5 };
+    s.sectors.obs = { ...s.sectors.obs, z: 0, hidden, searched: 50, control: 40 };
     return s;
   };
 
@@ -96,31 +96,72 @@ describe('sperringer', () => {
 describe('ordre', () => {
   it('nullstiller ordre som ikke lenger er gyldige', () => {
     const s = fresh();
-    s.crew[0].task = { type: 'lete', target: 'skolen' }; // skolen er infisert
+    s.crew[0].task = { type: 'sanke', target: 'skolen' }; // skolen er infisert
     validateTasks(s);
     expect(s.crew[0].task).toEqual({ type: 'hvile' });
   });
 
-  it('tilbyr klarering for alle infiserte sektorer', () => {
+  it('tilbyr Rydde for alle sektorer som ikke er gjennomsøkt', () => {
     const s = fresh();
-    const clearable = taskOptions(s).filter((o) => o.type === 'klarere').length;
-    expect(clearable).toBe(PLAYABLE.filter((id) => s.sectors[id].z > 0).length);
+    expect(taskOptions(s).filter((o) => o.type === 'rydde').length).toBe(PLAYABLE.length);
+    s.sectors.obs.searched = 100; s.sectors.obs.z = 0;
+    expect(taskOptions(s).some((o) => o.type === 'rydde' && o.target === 'obs')).toBe(false);
+  });
+
+  it('tilbyr Sanke bare i sektorer uten zombier', () => {
+    const s = fresh();
+    expect(taskOptions(s).some((o) => o.type === 'sanke')).toBe(false);
+    s.sectors.obs.z = 0;
+    expect(taskOptions(s).some((o) => o.type === 'sanke' && o.target === 'obs')).toBe(true);
   });
 });
 
 describe('lagring', () => {
-  it('oppgraderer en tilstand fra prototypen', () => {
-    const old = { ...fresh(), v: 1 } as Record<string, unknown>;
-    delete old.phase;
-    delete old.zombieTraits;
-    const s = migrate(old)!;
-    expect(s.v).toBe(2);
-    expect(s.phase).toBe(1);
-    expect(s.zombieTraits).toEqual([]);
+  it('forkaster lagring fra prototypen (v1 og v2)', () => {
+    expect(migrate({ v: 2 })).toBeNull();
+    expect(migrate({ v: 1 })).toBeNull();
+  });
+
+  it('godtar en v3-tilstand uendret', () => {
+    const s = fresh();
+    expect(migrate(s)).toEqual(s);
+    expect(s.v).toBe(3);
+  });
+
+  it('gir en eldre v3-lagring sultedager og dødsårsaker', () => {
+    const s = JSON.parse(JSON.stringify(fresh()));
+    s.stats = { kills: 3, found: 2, lost: 1 };
+    const m = migrate(s)!;
+    expect(m.stats).toEqual({ kills: 3, found: 2, lost: 1, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } });
   });
 
   it('avviser ukjente data', () => {
     expect(migrate(null)).toBeNull();
     expect(migrate({ v: 99 })).toBeNull();
+  });
+});
+
+describe('oppsett', () => {
+  it('starter med de nye ressursene', () => {
+    expect(fresh().res).toEqual({ mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 });
+  });
+
+  it('regner spillerens prikker om til ferdigheter 1–100', () => {
+    expect(fresh().crew[0].stats.muskler).toBe(toSkill(BOT_SELF.stats.muskler));
+  });
+});
+
+describe('fortsett etter seier', () => {
+  it('continueAfterWin gjør won til won-seen og ingenting ellers', () => {
+    const s = fresh();
+    expect(continueAfterWin(s)).toBe(false);
+    expect(s.over).toBeNull();
+    s.over = 'won';
+    expect(continueAfterWin(s)).toBe(true);
+    expect(s.over).toBe('won-seen');
+    expect(resolveDay(s).length).toBeGreaterThan(0);
+    s.over = 'timeout';
+    expect(continueAfterWin(s)).toBe(false);
+    expect(s.over).toBe('timeout');
   });
 });

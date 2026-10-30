@@ -1,8 +1,8 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
-import { GATE_IDS, GATES, SECTORS, sectorIntel } from '../engine';
+import { GATE_IDS, GATES, SECTORS, sectorIntel, toktAvailable, TOKTS } from '../engine';
 import type { CrewMember } from '../engine';
-import { $, game, MAP, ui } from './store';
+import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -122,12 +122,13 @@ export function renderMap(onSelect: (s: Selection) => void) {
   dyn.innerHTML = '';
   const tokensBy: Record<string, CrewMember[]> = {};
   for (const c of S.crew) {
-    const key = c.task.type === 'hvile' ? 'hjem' : c.task.type === 'befeste' ? `g_${c.task.target}` : c.task.target;
+    const t = c.task;
+    const key = !('target' in t) ? 'hjem' : t.type === 'tokt' ? `t_${t.target}` : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
     (tokensBy[key] ??= []).push(c);
   }
   for (const m of MAP.sectors) {
     const id = m.id;
-    const cls = id === 'rosenberg' ? 's-lock' : sectorIntel(S, id).status === 'infisert' ? 's-inf' : 's-clr';
+    const cls = id === 'rosenberg' ? 's-lock' : S.sectors[id].z > 0 ? 's-inf' : sectorIntel(S, id).safe ? 's-safe' : 's-clr';
     const g = el('g', { class: `sector ${cls}${sel.kind === 'sector' && sel.id === id ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': SECTORS[id].name }, dyn);
     el('path', { d: m.d, class: 'fillbase' }, g);
     el('path', { d: m.d, class: 'edge', 'stroke-linejoin': 'round' }, g);
@@ -142,9 +143,10 @@ export function renderMap(onSelect: (s: Selection) => void) {
       continue;
     }
     const intel = sectorIntel(S, m.id);
-    const inf = intel.status === 'infisert';
+    const inf = S.sectors[m.id].z > 0;
+    text(dyn, { ...mid, x: m.cx, y: m.cy - 40, class: 'lab sub kind' }, KIND_ICON[SECTORS[m.id].kind]);
     text(dyn, { ...mid, x: m.cx, y: m.cy - 6, class: 'lab' }, SECTORS[m.id].short);
-    text(dyn, { ...mid, x: m.cx, y: m.cy + 22, class: `lab sub ${inf ? 'inf' : 'clr'}` }, inf ? `${intel.estimate} Z` : `✓ ${intel.conf}%`);
+    text(dyn, { ...mid, x: m.cx, y: m.cy + 22, class: `lab sub ${inf ? 'inf' : intel.safe ? 'safe' : 'clr'}` }, inf ? `${intel.estimate} Z` : intel.safe ? '✓ Trygg' : `${intel.searched} %`);
     drawTokens(tokensBy[m.id], m.cx, m.cy + 58);
   }
   for (const id of GATE_IDS) {
@@ -156,7 +158,26 @@ export function renderMap(onSelect: (s: Selection) => void) {
     onActivate(g, () => onSelect({ kind: 'gate', id }));
     drawTokens(tokensBy[`g_${id}`], gd.x, gd.y + 50);
   }
+  drawTokts(onSelect, tokensBy);
   for (const z of MAP.zones) svg().querySelector(`[data-zone="${z.id}"]`)?.classList.toggle('sel', sel.kind === 'zone' && sel.id === z.id);
+}
+
+/** Merke ved målet for hvert tokt som er ledig eller ute. Gruppa som er ute vises under merket. */
+function drawTokts(onSelect: (s: Selection) => void, tokensBy: Record<string, CrewMember[]>) {
+  const S = game();
+  for (const d of TOKTS) {
+    const active = S.tokts.find((t) => t.id === d.id);
+    if (!active && !toktAvailable(S, d)) continue;
+    const isGate = d.at in GATES;
+    const p = isGate ? GATES[d.at as keyof typeof GATES] : MAP.sectors.find((m) => m.id === d.at)!;
+    const x = isGate ? (p as { x: number }).x + 78 : (p as { cx: number }).cx + 90;
+    const y = isGate ? (p as { y: number }).y - 34 : (p as { cy: number }).cy - 70;
+    const g = el('g', { class: `toktmark${active ? ' out' : ''}`, transform: `translate(${x} ${y})`, tabindex: 0, role: 'button', 'aria-label': `Tokt: ${d.name}` }, dyn);
+    el('path', { class: 'flag', d: 'M0 22 V-22 L30 -12 L0 -2' }, g);
+    text(g, { x: 14, y: 42, 'text-anchor': 'middle' }, active ? `Dag ${active.stage}/${d.days}` : 'Tokt');
+    onActivate(g, () => onSelect(isGate ? { kind: 'gate', id: d.at as keyof typeof GATES } : { kind: 'sector', id: d.at as never }));
+    drawTokens(tokensBy[`t_${d.id}`], x + 14, y + 90);
+  }
 }
 
 function drawTokens(list: CrewMember[] | undefined, cx: number, cy: number) {

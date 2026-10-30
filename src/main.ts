@@ -1,8 +1,10 @@
 import './styles.css';
-import { newGame } from './engine';
+import { isFinished, migrate, newGame } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
-import { draft, endDay, endScreen, titleScreen } from './ui/modals';
+import { draft, endDay, endPhaseNow, endScreen, titleScreen } from './ui/modals';
+import { renderStash } from './ui/cards';
+import { renderTutorial } from './ui/tutorial';
 import { renderCrew, renderGoals, renderPlan, renderSel, renderTop } from './ui/panel';
 import { $, MAP, save, ui } from './ui/store';
 import type { Selection } from './ui/store';
@@ -16,7 +18,7 @@ function select(s: Selection) {
 }
 
 ui.refresh = () => {
-  renderTop(); renderGoals(); renderSel(); renderCrew(); renderPlan(); renderMap(select);
+  renderTop(); renderTutorial(ui.S, ui.refresh); renderGoals(); renderSel(); renderCrew(); renderStash(); renderPlan(); renderMap(select);
   save();
 };
 
@@ -28,6 +30,7 @@ function setView(view: 'focus' | 'all') {
 $('v-focus').onclick = () => setView('focus');
 $('v-all').onclick = () => setView('all');
 $('end').onclick = endDay;
+$('goals').addEventListener('click', (e) => { if ((e.target as HTMLElement).id === 'endphase') endPhaseNow(); });
 addEventListener('resize', updateScale);
 
 // Artifact-visningen kan bytte ut siden mens noen spiller; hot lar oss ta med tilstanden over.
@@ -40,10 +43,12 @@ const hot = (window as unknown as { claude?: { hot?: Hot } }).claude?.hot;
 
 function start(data: { S?: GameState } = {}) {
   buildStaticMap(select);
-  if (data.S) {
-    ui.S = data.S;
+  // tilstanden fra forrige versjon av siden går gjennom samme migrering som en lagring
+  const carried = data.S ? migrate(data.S) : null;
+  if (carried) {
+    ui.S = carried;
     ui.refresh();
-    if (ui.S.over === 'won' || ui.S.over === 'dead') endScreen();
+    if (isFinished(ui.S)) endScreen();
     return;
   }
   // forhåndsvisning bak tittelskjermen, lagres ikke
