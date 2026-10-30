@@ -4,8 +4,8 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { AREA, GATES, LANDMARKS, SECTORS, ZONES } from '../src/engine';
 
-/** Filene der stedsnavn hører hjemme. Alt annet skal slå opp navnet via id. */
-const OWNERS = [/src\/regions\/[^/]+\/places\.ts$/];
+/** Filene der stedsnavn hører hjemme: places.ts og atlaset (src/regions/<region>/atlas/). Alt annet skal slå opp navnet via id. */
+const OWNERS = [/src\/regions\/[^/]+\/places\.ts$/, /src\/regions\/[^/]+\/atlas\//];
 /** Navn som også er vanlige ord, og som derfor ikke kan søkes etter */
 const COMMON = new Set(['Hjemme', 'Skolen', 'Sentrum']);
 
@@ -23,7 +23,7 @@ describe('regionpakken er eneste kilde for stedsnavn', () => {
     ...Object.values(LANDMARKS),
   ].filter((n) => !COMMON.has(n));
 
-  it('ingen fil utenfor places.ts skriver et stedsnavn direkte', () => {
+  it('ingen fil utenfor places.ts og atlaset skriver et stedsnavn direkte', () => {
     const hits: string[] = [];
     for (const f of [...files('src'), 'index.html'].filter((f) => !OWNERS.some((r) => r.test(f)))) {
       const t = code(readFileSync(f, 'utf8'));
