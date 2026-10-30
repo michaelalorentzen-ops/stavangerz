@@ -22,6 +22,8 @@ export interface BotOptions {
   tokt?: boolean; maxDays?: number; difficulty?: Difficulty;
   /** spill videre inn i fase 2 i stedet for å stoppe når fase 1 er over */
   fase2?: boolean;
+  /** kalles når fase 2 starter og etter hver dag i fase 2, til målinger i balansetesten */
+  onDay2?: (s: GameState) => void;
 }
 
 /** Toktet boten tar, og hvor mange den sender. */
@@ -34,7 +36,9 @@ const RYDDE_MAX = 3, RYDDE_MAX_HQ = 4, HQ_MIN_TEAM = 3;
 /** Fase 2: boten leter etter overlevende til crewet er så stort. */
 const RECRUIT_UNTIL = 6;
 /** Fase 2: boten sanker mat før kamp når lageret er under så mange dagers forbruk. */
-const FOOD_DAYS_2 = 4;
+const FOOD_DAYS_2 = 5;
+/** Fase 2: så mange zombier i den beste matsektoren ryddes før sankingen, i stedet for å sanke et dårligere sted. */
+const FOOD_STRAGGLERS = 2;
 /** Fase 2: crewet må være så stort før boten setter folk på hver post. */
 const POST_MIN_CREW: Record<keyof typeof POSTS, number> = { bygg: 4, kokk: 5, sikkerhet: 6 };
 /** Fase 2: så mange setter i stand samtidig. */
@@ -69,8 +73,9 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
   const planned = (pred: (t: Task) => boolean) => [...plan.values()].some(pred);
   const set = (c: CrewMember | undefined, t: Task) => { if (c && can(t)) { plan.set(c, t); return true; } return false; };
 
-  // 1) Hvile med 1 i liv
-  for (const c of free) if (c.hp <= 1) plan.set(c, { type: 'hvile' });
+  // 1) Hvile med 1 i liv. Fase 2: ikke på tom mage, for da virker ikke hvilen. Da sanker de heller mat (steg 1d).
+  const starving = s.phase >= 2 && (s.res.mat < dailyFood(s) || s.res.vann < dailyWater(s));
+  for (const c of free) if (c.hp <= 1 && !starving) plan.set(c, { type: 'hvile' });
   // Fase 2, mens horden står i HQ-sektoren: de skrapte hviler når det er medisin, så neste angrep blir med flere friske
   if (s.phase >= 2 && s.sectors[HQ_SECTOR].z > 0) {
     let med = s.res.medisin;
@@ -81,7 +86,7 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
   //     Byggelederen trengs bare mens noe skal settes i stand.
   if (s.hq.taken) {
     const fighters = new Set([...free].sort((a, b) => fightPower(s, b) - fightPower(s, a)).slice(0, 2));
-    const building = FACILITY_IDS.some((f) => !s.hq.facilities[f].ready);
+    const building = FACILITY_IDS.some((f) => !s.hq.facilities[f].ready) && s.res.metall + s.res.skrap > 0;
     for (const p of ['bygg', 'kokk', 'sikkerhet'] as const) {
       if (s.crew.length < POST_MIN_CREW[p] || (p === 'bygg' && !building)) continue;
       const k = POSTS[p].stat;
@@ -106,13 +111,23 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
     if (fit.length >= 2) for (const c of fit.slice(0, 2)) set(c, { type: 'tokt', target: 'apotek' });
   }
 
-  // 1d) Fase 2: crewet er større og Buøy er tømt, så maten sankes før noen går i kamp, med to når det haster
+  // 1d) Fase 2: crewet er større og Buøy er tømt, så maten sankes før noen går i kamp, med to når det haster.
+  //     Står det et par streifere i matsektoren, ryddes de først, i stedet for å sanke der det nesten ikke er mat.
   if (s.phase >= 2 && s.res.mat < FOOD_DAYS_2 * dailyFood(s)) {
-    const id = activeSectors(s).filter((id) => (SECTORS[id].yield.mat ?? 0) > 0 && can({ type: 'sanke', target: id }))
-      .sort((a, b) => (SECTORS[b].yield.mat ?? 0) - (SECTORS[a].yield.mat ?? 0))[0];
+    const food = activeSectors(s).filter((id) => (SECTORS[id].yield.mat ?? 0) > 0 && s.sectors[id].z <= FOOD_STRAGGLERS)
+      .sort((a, b) => (SECTORS[b].yield.mat ?? 0) - (SECTORS[a].yield.mat ?? 0));
+    const best = food[0];
+    if (best && s.sectors[best].z > 0) set(by((c) => fightPower(s, c) - (c.hp < 3 ? 10 : 0))[0], { type: 'rydde', target: best });
+    const id = food.find((id) => can({ type: 'sanke', target: id }));
     const n = s.res.mat < 2 * dailyFood(s) ? 2 : 1;
     if (id) for (let i = 0; i < n; i++) set(by((c) => searchPower(s, c) - (c.hp < 3 ? 0 : 3))[0], { type: 'sanke', target: id });
+    // de som ikke kan hvile seg friske, sanker også
+    if (id && starving) for (const c of avail().filter((c) => c.hp <= 1)) set(c, { type: 'sanke', target: id });
   }
+
+  // 1e) Fase 2: er horden i verftet borte, gjennomsøkes det med en gang. Ellers bryter kjellerne ut om natta.
+  const hqSec = s.sectors[HQ_SECTOR];
+  if (s.phase >= 2 && hqSec.z === 0 && (hqSec.hidden > 0 || hqSec.searched < 100)) set(by((c) => searchPower(s, c))[0], { type: 'rydde', target: HQ_SECTOR });
 
   // 2) Rydde den minst infiserte sektoren med inntil 3, så mange som trengs.
   //    Fase 2: HQ-sektoren først når det er nok friske til et angrep, så den minst infiserte av resten.
@@ -136,13 +151,18 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
     return power > 0;
   };
   const infected = activeSectors(s).filter((id) => s.sectors[id].z > 0).sort((a, b) => s.sectors[a].z - s.sectors[b].z);
+  // Fase 2: en portsektor med zombier ryddes før resten av Buøy. Så lenge den har mer enn et par,
+  // kan porten verken voktes eller befestes, og hvert gjennombrudd gjør den verre.
+  const gateSectors = new Set(GATE_IDS.map((g) => GATES[g].sector));
+  const rest = infected.filter((id) => id !== HQ_SECTOR)
+    .sort((a, b) => s.phase >= 2 ? Number(gateSectors.has(b)) - Number(gateSectors.has(a)) : 0);
   if (s.phase >= 2 && infected.includes(HQ_SECTOR) && rydd(HQ_SECTOR)) {
-    const rest = infected.find((id) => id !== HQ_SECTOR);
-    if (rest) rydd(rest);
-  } else if (infected.length) rydd(infected[0]);
+    if (rest.length) rydd(rest[0]);
+  } else if (s.phase >= 2 && rest.length) rydd(rest[0]);
+  else if (infected.length) rydd(infected[0]);
 
-  // 2b) Fase 2: let etter overlevende når det er senger, så crewet vokser før horden
-  if (s.phase >= 2 && canRecruit(s) && s.crew.length < RECRUIT_UNTIL) {
+  // 2b) Fase 2: let etter overlevende når det er senger og mat nok, så crewet vokser før horden
+  if (s.phase >= 2 && canRecruit(s) && s.crew.length < RECRUIT_UNTIL && s.res.mat >= FOOD_DAYS_2 * dailyFood(s)) {
     const id = activeSectors(s).find((id) => can({ type: 'overlevende', target: id }));
     if (id) set(by((c) => stat(c, 'prat'))[0], { type: 'overlevende', target: id });
   }
@@ -301,7 +321,8 @@ export function playGame(seed: number, neighbors: string[] = BOT_NEIGHBORS, opts
     return s;
   }
   const maxDays2 = s.day + (opts.maxDays ?? 80);
-  while (!s.over && s.day < maxDays2) playDay(s, opts);
+  opts.onDay2?.(s);
+  while (!s.over && s.day < maxDays2) { playDay(s, opts); opts.onDay2?.(s); }
   return s;
 }
 
