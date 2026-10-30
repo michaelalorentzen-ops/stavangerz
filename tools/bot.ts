@@ -1,8 +1,8 @@
 // En bot som spiller fase 1. Brukes av balansetesten og tools/sim.ts.
 // Den følger en fast prioritetsliste og tenker ikke langt frem. En god spiller skal slå den.
 import {
-  canEndDay, canEndPhase, CARDS, dailyFood, dailyWater, delta, describeEncounter, endPhase, eventChoices, eventDef, equip, fightPower, GATE_IDS, GATES,
-  isOnTokt, isSafe, LAGE_COST, newGame, toktDecision, toktDef, activeSectors, resolveDay, resolveEncounter, resolveEvent, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
+  canEndDay, canEndPhase, CARDS, dailyFood, dailyHeat, dailyWater, delta, describeEncounter, endPhase, eventChoices, eventDef, equip, fightPower, GATE_IDS, GATES,
+  isOnTokt, isSafe, LAGE_COST, newGame, toktDays, toktDecision, toktDef, activeSectors, resolveDay, resolveEncounter, resolveEvent, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
   SLOTS, taskOptions, THREAT_KILL, canRecruit, sum, FACILITY_IDS, HQ_SECTOR, istandLeft, istandMaterials, POSTS, stat,
 } from '../src/engine';
 import type { ChoiceDef, CrewMember, Difficulty, GameState, ResKey, SectorId, SelfSetup, Task } from '../src/engine';
@@ -43,6 +43,8 @@ const FOOD_STRAGGLERS = 2;
 const POST_MIN_CREW: Record<keyof typeof POSTS, number> = { bygg: 4, kokk: 5, sikkerhet: 6 };
 /** Fase 2: så mange setter i stand samtidig. */
 const ISTAND_TEAM = 3;
+/** Fase 2: boten sanker tre når veden holder færre dager enn dette. */
+const WOOD_DAYS = 4;
 /** Forventet drap per kampkraft i Rydde, midt i spennet 0,35–0,60. */
 const KILL_RATE = 0.47;
 
@@ -123,6 +125,14 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
     if (id) for (let i = 0; i < n; i++) set(by((c) => searchPower(s, c) - (c.hp < 3 ? 0 : 3))[0], { type: 'sanke', target: id });
     // de som ikke kan hvile seg friske, sanker også
     if (id && starving) for (const c of avail().filter((c) => c.hp <= 1)) set(c, { type: 'sanke', target: id });
+  }
+
+  // 1d2) Fase 2: ved til ovnen. Under WOOD_DAYS dagers fyring sankes tre der det gir mest.
+  const heat = dailyHeat(s);
+  if (heat > 0 && s.res.tre < WOOD_DAYS * heat) {
+    const id = activeSectors(s).filter((id) => (SECTORS[id].yield.tre ?? 0) > 0 && can({ type: 'sanke', target: id }))
+      .sort((a, b) => (SECTORS[b].yield.tre ?? 0) - (SECTORS[a].yield.tre ?? 0))[0];
+    if (id) set(by((c) => searchPower(s, c))[0], { type: 'sanke', target: id });
   }
 
   // 1e) Fase 2: er horden i verftet borte, gjennomsøkes det med en gang. Ellers bryter kjellerne ut om natta.
@@ -292,7 +302,7 @@ export function botEncounters(s: GameState) {
 export function botTokts(s: GameState) {
   for (const t of [...s.tokts]) {
     if (!t.awaiting || s.over || s.pending.some((p) => p.toktId === t.id)) continue;
-    const done = t.stage >= toktDef(t.id).days;
+    const done = t.stage >= toktDays(s, toktDef(t.id));
     const weak = s.crew.some((c) => t.crew.includes(c.id) && c.hp <= 1);
     const d = done ? 'fortsett' : weak || t.stage >= TOKT_MAX_STAGES ? 'snu' : 'fortsett';
     toktDecision(s, t.id, d);

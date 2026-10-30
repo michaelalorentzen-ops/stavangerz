@@ -29,7 +29,11 @@ export function gainXp(c: CrewMember, k: StatKey, amount: number): void {
 }
 
 // Styrkeformlene regner i gamle prikkenheter: stat(c, k) / 10.
-const moralMult = (s: GameState) => (s.moral < 25 ? 0.75 : s.moral < 50 ? 0.9 : 1);
+/** Moral: under MORAL_LOW og MORAL_MID jobber alle dårligere, over MORAL_HIGH litt bedre. Regelkonstanter. */
+export const MORAL_LOW = 25, MORAL_MID = 50, MORAL_HIGH = 80;
+export const MORAL_LOW_MULT = 0.75, MORAL_MID_MULT = 0.9, MORAL_HIGH_MULT = 1.05;
+export const moralMult = (s: Pick<GameState, 'moral'>) =>
+  s.moral < MORAL_LOW ? MORAL_LOW_MULT : s.moral < MORAL_MID ? MORAL_MID_MULT : s.moral >= MORAL_HIGH ? MORAL_HIGH_MULT : 1;
 const hpMult = (c: CrewMember) => (c.hp >= 3 ? 1 : c.hp === 2 ? 0.85 : 0.55);
 
 export function fightPower(s: GameState, c: CrewMember): number {

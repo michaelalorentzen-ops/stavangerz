@@ -1,9 +1,9 @@
 // Hendelseskort for Stavanger. Reglene for hvordan de trekkes og løses står i engine/events.ts.
 import { AREA, GATES, LANDMARKS, PLAYABLE, SECTORS, ZONES } from '../places';
 import { NEIGHBORS } from '../people';
-import { addNeighbor, canRecruit, injure } from '../../../engine/crew';
+import { addNeighbor, canRecruit, injure, leaveForGood } from '../../../engine/crew';
 import { addGateWork } from '../../../engine/engine';
-import { dropGear, newCard } from '../../../engine/cards';
+import { newCard } from '../../../engine/cards';
 import { pick, rand } from '../../../engine/rng';
 import { raiseSearched } from '../../../engine/sectors';
 import { acceptQuest, unlockTokt } from '../../../engine/tokt';
@@ -28,12 +28,6 @@ function hurtOne(s: GameState, c: CrewMember, why: string): string {
 const others = (s: GameState) => s.crew.filter((c) => !c.me);
 /** Dagens kandidat blant de andre. Avhenger bare av dagen, så teksten og valget peker på samme person. */
 const kin = (s: GameState, shift = 0): CrewMember => { const o = others(s); return o[(s.day + shift) % o.length]; };
-/** En person forlater crewet for godt. Utstyret havner på lageret. */
-function leaveForGood(s: GameState, c: CrewMember) {
-  dropGear(s, c, 'stash');
-  s.crew = s.crew.filter((x) => x !== c);
-  s.flags[`gone_${c.id}`] = true;
-}
 
 export const INTRO: EventDef = {
   id: 'intro', title: 'Tirsdag 07:42',

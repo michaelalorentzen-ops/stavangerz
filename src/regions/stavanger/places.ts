@@ -79,7 +79,7 @@ export const PLAYABLE: SectorId[] = ['hjem', 'tommerodden', 'obs', 'nordkrysset'
 export const GATES: Record<GateId, GateDef> = {
   nord: { name: 'Nordporten', desc: 'Sperring mot Hundvåg. Alt som går, kjører eller sjangler fra nord kommer hit.', sector: 'nordkrysset', x: 1790, y: 1605, base: 0.35 },
   sor: { name: 'Bybrusperringen', desc: 'Sperring over Bybrua-avkjøringen. Byen er full av folk som ikke lenger er folk.', sector: 'sorspissen', x: 2245, y: 2492, base: 0.4 },
-  ros: { spills: ['hjem', 'obs', 'tommerodden', 'sorspissen'], name: 'Rosenberg-gjerdet', desc: 'Verftsgjerdet holder hordene på Rosenberg inne. Det er bygd for å stoppe tyver, ikke dette.', sector: 'hjem', x: 1985, y: 2265, base: 0.35 },
+  ros: { spills: ['hjem', 'obs', 'tommerodden', 'sorspissen'], holds: 'rosenberg', name: 'Rosenberg-gjerdet', desc: 'Verftsgjerdet holder hordene på Rosenberg inne. Det er bygd for å stoppe tyver, ikke dette.', sector: 'hjem', x: 1985, y: 2265, base: 0.35 },
 };
 export const ZONE_INFO: Partial<Record<ZoneId, string>> = {
   hundvag: 'Meny, Apotek 1, Jernia og Dolly Dimples. Rykter om mye mat, mange zombier og et borettslag som fortsatt holder årsmøte.',
@@ -170,7 +170,7 @@ export const FACILITIES: Record<FacilityId, FacilityDef> = {
   },
   kontor: {
     name: 'Kontorbygget', short: 'kontorbygget',
-    effect: 'Plass til en lab senere.',
+    effect: 'Trene gir 50 % mer erfaring. Whiteboard, ro og en kaffemaskin som virker. Plass til en lab senere.',
     rumor: {
       god: 'Kontorbygget er helt. Noen har til og med vannet plantene.',
       middels: 'Første etasje i kontorbygget er barrikadert med pulter. Det sier noe om andre etasje.',
@@ -184,7 +184,7 @@ export const FACILITIES: Record<FacilityId, FacilityDef> = {
   },
   kai: {
     name: 'Kaia', short: 'kaia',
-    effect: 'Tokt over vann senere.',
+    effect: 'Fisk fra kaia: 1 mat hver dag, 2 med garn fra Skoleskipet Gann. Tokt over vann senere.',
     rumor: {
       god: 'Det ligger en arbeidsbåt fortøyd ved verftskaia. Den ser ut til å flyte.',
       middels: 'Kranen ved kaia står, men fortøyningene er kuttet.',

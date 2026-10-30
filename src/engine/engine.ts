@@ -2,18 +2,18 @@
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
-import { addNeighbor, canRecruit, injure, leteOverlevende, recruitablesNow, setLeader } from './crew';
+import { addNeighbor, canRecruit, injure, leaveForGood, leteOverlevende, recruitablesNow, setLeader } from './crew';
 import { names, type LogFn } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { AREA, FACILITIES, GATES, HQ_SECTOR, LANDMARKS, GATE_STEPS, HEALTH_LABEL, RES, SECTOR_IDS, SECTORS, STAT_LABEL, STATS } from './data';
-import { buildLeadMult, checkHq, cookMult, FACILITY_IDS, facilityReady, hearRumor, istand, KANTINE_FOOD, MAX_CRAFT_LEVEL, newHq, POST_IDS, postHolder, POSTS, readyCount, reparere, RUMOR_ON_SEARCH, securityPower, VERKSTED_LEVEL } from './hq';
+import { buildLeadMult, checkHq, cookMult, FACILITY_IDS, facilityFood, facilityReady, hearRumor, istand, ISTAND_STRAGGLERS, MAX_CRAFT_LEVEL, newHq, POST_IDS, postHolder, POSTS, readyCount, reparere, RUMOR_ON_SEARCH, securityPower, trainMult, VERKSTED_LEVEL } from './hq';
 import { advancePhase, BRANCHES, BUILT_PHASES, DIFFICULTY, mods, phaseDay, PHASES } from './phases';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { activeSectors, decay, floorControl, freshSector, isSafe, opensIn, rotFood, rydde, sanke, sectorsOfPhase, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { drawEvent } from './events';
 import { nextTask, rememberTasks } from './plans';
-import { MUTATIONS } from '../regions/content';
+import { desertText, kaiFoodText, MUTATIONS } from '../regions/content';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
@@ -26,6 +26,12 @@ export const RANGE_GUARD = 1.25;
 export const GATE_STRAGGLERS = 2;
 /** Sjansen for at en dag på sofaen helbreder uten medisin */
 export const REST_HEAL = 0.45;
+/** Moral som går tapt hver dag uten ved i ovnen. */
+export const COLD_MORAL = 3;
+/** Under denne moralen kan noen i crewet dra for godt (sjansen per dag er fasetabellens desertChance). */
+export const MORAL_DESERT = 20;
+/** Med så få i crewet drar ingen: de som er igjen, trenger hverandre. */
+export const DESERT_MIN_CREW = 3;
 /** Med så få igjen kan overlevende banke på om natta, så runden kan reddes. */
 export const COMEBACK_CREW = 2, COMEBACK_KNOCK = 0.3;
 
@@ -34,6 +40,30 @@ export const guardPower = (s: GameState, guards: CrewMember[]): number =>
   sum(guards.map((c) => fightPower(s, c) * (hasTag(c, 'rekkevidde') ? RANGE_GUARD : 1)));
 
 export const GATE_IDS = Object.keys(GATES) as GateId[];
+
+/**
+ * Porten slipper ikke lenger inn noe om natta: den holder igjen HQ-sektoren, og HQ-et er tatt.
+ * Verftet er deres, så det som står bak Rosenberg-gjerdet er deres eget.
+ */
+export const gateQuiet = (s: GameState, id: GateId): boolean => GATES[id].holds === HQ_SECTOR && !!s.hq?.taken;
+
+/** Teksten når kantina og kaia gir mat. */
+function hqFoodText(s: GameState, n: number): string {
+  const from = [facilityReady(s, 'kantine') ? FACILITIES.kantine.short : '', facilityReady(s, 'kai') ? kaiFoodText(s) : ''].filter(Boolean);
+  const t = from.join(' og ');
+  return `${t[0].toUpperCase()}${t.slice(1)} ga ${n} mat.`;
+}
+
+/** Lav moral: med sjansen desertChance drar én person (ikke lederen, ikke på tokt) for godt. Utstyret blir igjen. */
+function desert(s: GameState, M: PhaseModifiers, log: LogFn) {
+  if (s.moral >= MORAL_DESERT || s.crew.length <= DESERT_MIN_CREW) return;
+  if (rand(s) >= M.desertChance) return;
+  const cands = s.crew.filter((c) => !c.me && !isOnTokt(s, c));
+  if (!cands.length) return;
+  const c = pick(s, cands);
+  leaveForGood(s, c);
+  log(desertText(c), 'bad');
+}
 
 // ---------- Oppsett ----------
 export function newGame(seed: number, self: SelfSetup, neighborIds: string[], difficulty: Difficulty = 'normal'): GameState {
@@ -102,8 +132,10 @@ export function migrate(raw: unknown): GameState | null {
 export const hasTrait = (s: GameState, t: TraitId) => s.crew.some((c) => c.trait === t);
 /** Mat per dag: 0,6 per person, mindre med kokk på posten i HQ-et, og 1 mindre med Kokk-egenskapen. */
 export const dailyFood = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.6 * cookMult(s)) - (hasTrait(s, 'kokk') ? 1 : 0));
-/** Mat som kommer inn hver dag uten at noen sanker: kantina i HQ-et. */
-export const dailyFoodIn = (s: GameState) => (facilityReady(s, 'kantine') ? KANTINE_FOOD : 0);
+/** Mat som kommer inn hver dag uten at noen sanker: kantina og fisk fra kaia i HQ-et. */
+export const dailyFoodIn = (s: GameState) => facilityFood(s);
+/** Tre til fyring per dag (fasetabellens heatPerCrew per person). 0 i fase 1. */
+export const dailyHeat = (s: GameState) => Math.ceil(s.crew.length * mods(s).heatPerCrew);
 export const dailyWater = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.5));
 /** Hvor mange hele dager lageret av mat eller vann holder med dagens forbruk. */
 export const daysLeft = (s: GameState, k: 'mat' | 'vann'): number => Math.floor(s.res[k] / (k === 'mat' ? dailyFood(s) : dailyWater(s)));
@@ -148,7 +180,7 @@ export function taskOptions(s: GameState): TaskOption[] {
   // HQ-et: poster når det er tatt, istandsetting når sektoren er tom for zombier
   if (s.hq.taken) {
     for (const p of POST_IDS) opts.push({ type: 'post', target: p, label: `Post: ${POSTS[p].name}` });
-    if (s.sectors[HQ_SECTOR].z === 0) {
+    if (s.sectors[HQ_SECTOR].z <= ISTAND_STRAGGLERS) {
       for (const f of FACILITY_IDS) if (!s.hq.facilities[f].ready) opts.push({ type: 'istand', target: f, label: `Sette i stand ${FACILITIES[f].short}` });
     }
   }
@@ -412,6 +444,15 @@ export function resolveDay(s: GameState): LogLine[] {
 
   // 3b2) HQ-et: reparere utstyr, sette i stand anlegg, og postene
   for (const c of team('reparere', null)) { reparere(s, c, log); xp([c], 'mekk', 1); }
+  // noen få streifere på verftet tas av de som setter i stand, før arbeidet begynner (som laget ved porten)
+  const fixers = s.crew.filter((c) => c.task.type === 'istand');
+  const yard = s.sectors[HQ_SECTOR];
+  if (fixers.length && yard.z > 0) {
+    const k = Math.min(yard.z, Math.max(1, sround(s, guardPower(s, fixers) * 0.35)));
+    yard.z -= k; s.stats.kills += k;
+    log(`${names(fixers)} tok ${k} ${plural(k)} ${SECTORS[HQ_SECTOR].at} før de begynte å jobbe.`);
+    for (const c of fixers) if (rand(s) < 0.08 * M.injuryMult) injure(s, c, SECTORS[HQ_SECTOR].at, log);
+  }
   for (const f of FACILITY_IDS) {
     const tm = team('istand', f);
     if (tm.length) { istand(s, f, tm, log); xp(tm, 'mekk', 1.5); }
@@ -419,7 +460,9 @@ export function resolveDay(s: GameState): LogLine[] {
   for (const p of POST_IDS) { const c = postHolder(s, p); if (c) xp([c], POSTS[p].stat, 1); }
 
   // 3c) Trene
-  for (const c of s.crew.filter((c) => c.task.type === 'trene')) if (c.task.type === 'trene') gainXp(c, c.task.stat, 5);
+  // kontorbygget i stand gir mer ut av treningen
+  const train = 5 * trainMult(s);
+  for (const c of s.crew.filter((c) => c.task.type === 'trene')) if (c.task.type === 'trene') gainXp(c, c.task.stat, train);
 
   // 3d) Lete etter overlevende
   for (const id of active) {
@@ -456,9 +499,9 @@ export function resolveDay(s: GameState): LogLine[] {
     if (was !== undefined && n > was) log(`${c.name} er nå nivå ${n}. Det merkes på alt ${c.name} gjør.`, 'good');
   }
 
-  // 5) Forbruk. Kantina i HQ-et gir mat først.
-  const kantine = dailyFoodIn(s);
-  if (kantine) { s.res.mat += kantine; log(`${FACILITIES.kantine.name} ga ${kantine} mat.`); }
+  // 5) Forbruk. Kantina og kaia i HQ-et gir mat først.
+  const fromHq = dailyFoodIn(s);
+  if (fromHq) { s.res.mat += fromHq; log(hqFoodText(s, fromHq)); }
   s.res.mat -= dailyFood(s); s.res.vann -= dailyWater(s);
   // en sultedag er en dag der det ikke var nok mat eller vann til alle
   const starved = s.res.mat < 0 || s.res.vann < 0;
@@ -475,10 +518,14 @@ export function resolveDay(s: GameState): LogLine[] {
   // Maten på lageret blir dårlig litt etter litt
   const rot = Math.floor(s.res.mat * M.stashRot);
   if (rot > 0) s.res.mat -= rot;
-  // Fyring: tre til ovnen hver dag. Uten ved fryser folk, og moralen synker.
+  // Fyring: tre til ovnen hver dag. Uten ved fryser folk, og moralen synker. Én linje per dag, bare når veden mangler.
   const heat = Math.ceil(s.crew.length * M.heatPerCrew);
   if (s.res.tre >= heat) s.res.tre -= heat;
-  else { s.res.tre = 0; s.moral -= 3; log('Ingen ved i ovnen. Alle sitter i dobbel ullgenser og ser på hverandre.', 'warn'); }
+  else {
+    const had = s.res.tre;
+    s.res.tre = 0; s.moral -= COLD_MORAL;
+    log(`${had ? `Veden rakk ikke (${had} av ${heat} tre).` : `Ingen ved i ovnen (trengte ${heat} tre).`} Alle sitter i dobbel ullgenser og ser på hverandre. −${COLD_MORAL} moral.`, 'warn');
+  }
 
   // Kontroll og forfall
   updateControl(s, M, groups, watch);
@@ -490,6 +537,7 @@ export function resolveDay(s: GameState): LogLine[] {
   for (const id of GATE_IDS) {
     const g = GATES[id], st = s.gates[id];
     xp(team('vakt', id), 'nerver', 1);
+    if (gateQuiet(s, id)) continue;
     const chance = clamp(g.base + M.nightBase - st.level * M.nightLevelReduction + pd * M.nightGrowth, 0.02, 0.9);
     if (rand(s) >= chance) continue;
     let n = Math.max(1, 1 + Math.floor(rand(s) * (1 + pd / M.breachDays)) - st.level);
@@ -553,6 +601,9 @@ export function resolveDay(s: GameState): LogLine[] {
     const d = daysLeft(s, k);
     if (s.crew.length && d < LOW_DAYS && daysBefore[k] >= LOW_DAYS) log(d === 0 ? `${k === 'mat' ? 'Maten' : 'Vannet'} er tomt.` : `${k === 'mat' ? 'Maten' : 'Vannet'} holder bare ${d} ${d === 1 ? 'dag' : 'dager'} til.`, 'warn');
   }
+
+  // 7c) Lav moral: noen gir opp og drar for godt. Aldri lederen, aldri de som er ute på tokt.
+  desert(s, M, log);
 
   s.moral = clamp(s.moral + 2, 0, 100);
   s.day++;

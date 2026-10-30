@@ -3,9 +3,9 @@ import {
   DIFFICULTY,
   canEndPhase, craftShortfall, LAGE_COST, nameList, dailyFood, daysLeft, LOW_DAYS, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
-  CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
+  CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDays, toktDef, TOKTS,
   applyPlan, deletePlan, MAX_PLANS, repeatYesterday, savePlan,
-  BUILT_PHASES, COND_LABEL, dailyFoodIn, FACILITIES, FACILITY_IDS, facilityIntel, HQ_SECTOR, ISTAND_WORK, istandMaterials, isLocked, POST_IDS, postEffect, postHolder, POSTS,
+  BUILT_PHASES, bussToktText, gateQuiet, COND_LABEL, dailyFoodIn, dailyHeat, moralHighText, moralLowText, MORAL_DESERT, MORAL_HIGH, MORAL_MID, FACILITIES, FACILITY_IDS, facilityIntel, HQ_SECTOR, ISTAND_STRAGGLERS, ISTAND_WORK, istandMaterials, isLocked, POST_IDS, postEffect, postHolder, POSTS,
 } from '../engine';
 import type { TaskOption, TaskPreview, CrewMember, FacilityId, GameState, GateId, PostId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
 import { bindCards, slotsHtml, statAbbr } from './cards';
@@ -79,11 +79,15 @@ export function renderTop() {
   $('day').textContent = `Dag ${S.day}${S.difficulty === 'normal' ? '' : ` · ${DIFFICULTY[S.difficulty].name}`}`;
   const shown = RES.filter((k) => PHASE_RES[S.phase].includes(k) || S.res[k] > 0);
   // forbruk per dag og hvor mange dager lageret holder; rødt under LOW_DAYS
+  // ved til fyring (fra fase 2): forbruk per dag og hvor mange dager veden holder
+  const heat = dailyHeat(S), heatDays = heat ? Math.floor(S.res.tre / heat) : 0;
   const detail = (k: string) => (k === 'mat' || k === 'vann'
-    ? [`−${k === 'mat' ? food : water}/d · ${daysLeft(S, k)} d`, daysLeft(S, k) < LOW_DAYS] : ['', false]) as [string, boolean];
+    ? [`−${k === 'mat' ? food : water}/d · ${daysLeft(S, k)} d`, daysLeft(S, k) < LOW_DAYS]
+    : k === 'tre' && heat ? [`−${heat}/d ved · ${heatDays} d`, heatDays < LOW_DAYS] : ['', false]) as [string, boolean];
+  const moralNote = S.moral < MORAL_DESERT ? moralLowText : S.moral >= MORAL_HIGH ? moralHighText : S.moral < MORAL_MID ? 'Lav moral: alle jobber dårligere.' : '';
   $('res').innerHTML =
     shown.map((k) => cell(RES_LABEL[k], S.res[k], ...detail(k))).join('') +
-    `<div class="r moral"><span class="k">Moral ${S.moral}</span><span class="bar"><i style="width:${S.moral}%;${S.moral < 30 ? 'background:var(--red)' : ''}"></i></span></div>`;
+    `<div class="r moral"${moralNote ? ` title="${esc(moralNote)}"` : ''}><span class="k">Moral ${S.moral}${S.moral >= MORAL_HIGH ? ' ▲' : S.moral < MORAL_DESERT ? ' ▼' : ''}</span><span class="bar"><i style="width:${S.moral}%;${S.moral < 30 ? 'background:var(--red)' : ''}"></i></span></div>`;
 }
 
 export function renderGoals() {
@@ -229,13 +233,13 @@ function toktCards(S: GameState, at: string): string {
     const active = S.tokts.find((t) => t.id === d.id);
     if (!active && !toktAvailable(S, d)) return '';
     const mine = (c: CrewMember) => c.task.type === 'tokt' && c.task.target === d.id;
-    const metrics = `<div class="metrics"><div class="metric"><div class="k">Varighet</div><div class="v">${d.days}<small> dager</small></div></div>
+    const metrics = `<div class="metrics"><div class="metric"><div class="k">Varighet</div><div class="v">${toktDays(S, d)}<small> dager</small></div></div>
       <div class="metric"><div class="k">Trussel</div><div class="v">${d.threat}<small>/5</small></div></div></div>`;
     const body = active
-      ? `<p class="hint">Gruppa er ute: dag ${active.stage} av ${d.days}${active.awaiting ? ', venter på beslutning' : ''}.</p>`
+      ? `<p class="hint">Gruppa er ute: dag ${active.stage} av ${toktDays(S, d)}${active.awaiting ? ', venter på beslutning' : ''}.</p>`
       : `<p class="eyebrow" style="margin:0">Send på tokt</p>${crewChips(mine)}`;
     return `<div class="card tokt" data-tokt="${d.id}"><span class="badge ${d.quest ? 'inf' : 'clr'}">${d.quest ? 'Quest' : 'Tokt'}</span><h2>${esc(d.name)}</h2><p>${esc(d.desc)}</p>
-      ${metrics}<p class="hint">Belønning: ${rewardText(d.id)}. Alt som finnes underveis kommer med hjem om dere snur.</p>${body}</div>`;
+      ${metrics}${toktDays(S, d) < d.days ? `<p class="hint">${esc(bussToktText)}</p>` : ''}<p class="hint">Belønning: ${rewardText(d.id)}. Alt som finnes underveis kommer med hjem om dere snur.</p>${body}</div>`;
   }).join('');
 }
 
@@ -306,6 +310,7 @@ export function renderSel() {
     box.innerHTML = `<div class="card"><span class="badge ${st.level ? 'clr' : 'inf'}">Sperring · nivå ${st.level}/3</span><h2>${gd.name}</h2><p>${gd.desc}</p>
       <div><div class="hint">${st.level >= 3 ? 'Fullt utbygd.' : `Fram til nivå ${st.level + 1}: ${pct}%`}</div><div class="prog"><i style="width:${pct}%"></i></div></div>
       <p class="hint">${ready ? 'Mekk teller mest. Hver arbeidsdag bruker tre og skrap.' : `Rydd ${SECTORS[gd.sector].short} før dere kan bygge her.`}</p>
+      ${gateQuiet(S, id) ? `<p class="hint">${esc(SECTORS[gd.holds!].short)} er deres. Det kommer ikke noe over gjerdet om natta lenger.</p>` : ''}
       ${gacts.length > 1 ? `<div class="seg" role="group">${gacts.map((a) => `<button data-act="${a}" aria-pressed="${a === ui.selAction}">${ACT_LABEL[a]}</button>`).join('')}</div>` : ''}
       ${gtask ? `<p class="eyebrow" style="margin:0">Send til ${ACT_LABEL[gtask.type]!.toLowerCase()}</p>${crewChips(mine)}` : ''}</div>`;
     box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
@@ -375,7 +380,7 @@ function hqCard(S: GameState): string {
     const pct = Math.round((st.work / ISTAND_WORK[st.cond]) * 100);
     const work = S.hq.taken && !st.ready
       ? `<div class="hint">Sette i stand: ${pct} % ferdig, trenger ca. ${istandMaterials(st)} metall eller skrap til.</div><div class="prog"><i style="width:${pct}%"></i></div>
-         ${canDo ? `<p class="eyebrow" style="margin:0">Send til istandsetting</p>${crewChips((c) => sameTask(c.task, t))}` : `<p class="hint">Rydd ${SECTORS[HQ_SECTOR].short} først.</p>`}`
+         ${canDo ? `<p class="eyebrow" style="margin:0">Send til istandsetting</p>${S.sectors[HQ_SECTOR].z > 0 ? `<p class="hint">${S.sectors[HQ_SECTOR].z} ${S.sectors[HQ_SECTOR].z === 1 ? 'streifer' : 'streifere'} på verftet. Gruppa tar dem først.</p>` : ''}${crewChips((c) => sameTask(c.task, t))}` : `<p class="hint">Rydd ${SECTORS[HQ_SECTOR].short} først. Høyst ${ISTAND_STRAGGLERS} streifere kan stå igjen.</p>`}`
       : '';
     return `<div class="fac" data-fac="${f}"><div class="fac-top"><b>${def.name}</b>${badge}</div>
       <p class="hint">${esc(intel.text)}</p><p class="hint"><i>${st.ready ? '' : 'I stand: '}${def.effect}</i></p>${work}</div>`;
@@ -402,7 +407,7 @@ function postsHtml(S: GameState): string {
     const h = postHolder(S, p);
     return `<div class="post"><div><b>${POSTS[p].name}</b> <small>${STAT_LABEL[POSTS[p].stat]}</small><div class="hint">${h ? esc(postEffect(S, p)) : POSTS[p].desc}</div></div>
       <select data-post="${p}" aria-label="${POSTS[p].name}"><option value="">Ingen</option>${free.map((c) => `<option value="${c.id}"${h === c ? ' selected' : ''}>${esc(c.name)} · ${skillLevel(stat(c, POSTS[p].stat))}</option>`).join('')}</select></div>`;
-  }).join('')}<p class="hint">En person på post gjør ikke dagsoppdrag. Mat fra kantina: ${dailyFoodIn(S)} per dag.</p></div>`;
+  }).join('')}<p class="hint">En person på post gjør ikke dagsoppdrag. Mat fra kantina og kaia: ${dailyFoodIn(S)} per dag.</p></div>`;
 }
 
 /** Faste planer og «Som i går». Planene ligger i spilltilstanden (S.plans), så de følger lagringen. De setter bare crew.task. */

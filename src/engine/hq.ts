@@ -29,6 +29,12 @@ export const VERKSTED_LEVEL = 1, MAX_CRAFT_LEVEL = 3;
 export const REPAIR_SKRAP = 2, REPAIR_MEKK_STEP = 30;
 /** Kantina: mat per dag. */
 export const KANTINE_FOOD = 3;
+/** Kaia: fisk per dag fra kaia, og så mye mer når Gann (flagget `gann`) går ut med garn. */
+export const KAI_FOOD = 1, GANN_FOOD = 1;
+/** Kontorbygget: Trene gir så mye mer erfaring (whiteboard og ro). */
+export const KONTOR_TRAIN = 1.5;
+/** Så mange zombier kan stå på verftet uten at istandsetting stenges. Gruppa tar dem først (som GATE_STRAGGLERS). */
+export const ISTAND_STRAGGLERS = 2;
 
 /**
  * Postene. Bonusene er regelkonstanter, ikke vanskelighetsknotter, så de står her og ikke i fasetabellen:
@@ -131,6 +137,16 @@ export function checkHq(s: GameState, log: LogFn): boolean {
   }
   return true;
 }
+
+/** Mat per dag fra anleggene: kantina, og fisk fra kaia (mer med Gann). */
+export function facilityFood(s: GameState): number {
+  let n = facilityReady(s, 'kantine') ? KANTINE_FOOD : 0;
+  if (facilityReady(s, 'kai')) n += KAI_FOOD + (s.flags.gann ? GANN_FOOD : 0);
+  return n;
+}
+
+/** Ganges med erfaringen fra Trene. 1 uten kontorbygget i stand. */
+export const trainMult = (s: GameState): number => (facilityReady(s, 'kontor') ? KONTOR_TRAIN : 1);
 
 /** Arbeid som gjenstår før anlegget er i stand. */
 export const istandLeft = (f: FacilityState): number => Math.max(0, ISTAND_WORK[f.cond] - f.work);

@@ -62,6 +62,8 @@ export interface PhaseModifiers {
   heatPerCrew: number;
   /** andel av maten på lageret som blir dårlig hver dag. Hamstring lønner seg ikke. */
   stashRot: number;
+  /** sjansen per natt for at én i crewet drar for godt når moralen er under MORAL_DESERT (engine.ts) */
+  desertChance: number;
 }
 
 export interface PhaseDef {
@@ -79,27 +81,27 @@ export const BUILT_PHASES: PhaseId = 2;
 export const PHASES: Record<PhaseId, PhaseDef> = {
   1: {
     id: 1, name: 'Utbruddet', focus: 'Rydd hjemsonen, sank det dere trenger, sett opp perimeter.',
-    mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 0.73, injuryMult: 2, starveInjury: 0.2, nightBase: 0, nightGrowth: 0.0072, nightLevelReduction: 0.15, breachDays: 5, hiddenOutbreak: 0.18, eventChance: 0.6, factionPressure: 0, heldDecay: 5, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.33, turnCap: 50, foodRot: 0.85, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.75, yieldMult: 0.75, rainChance: 0.35, heatPerCrew: 0, stashRot: 0.03 },
+    mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 0.73, injuryMult: 2, starveInjury: 0.2, nightBase: 0, nightGrowth: 0.0072, nightLevelReduction: 0.15, breachDays: 5, hiddenOutbreak: 0.18, eventChance: 0.6, factionPressure: 0, heldDecay: 5, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.33, turnCap: 50, foodRot: 0.85, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.75, yieldMult: 0.75, rainChance: 0.35, heatPerCrew: 0, stashRot: 0.03, desertChance: 0.08 },
     mutationPoints: [0, 0],
   },
   2: {
     id: 2, name: 'Hovedkvarter', focus: 'Finn transport, ta et HQ, fordel roller.',
-    mods: { zombieMult: 1.3, hiddenRatio: 0.28, killMult: 0.65, injuryMult: 2.2, starveInjury: 0.22, nightBase: 0.05, nightGrowth: 0.0085, nightLevelReduction: 0.15, breachDays: 6, hiddenOutbreak: 0.19, eventChance: 0.6, factionPressure: 0, heldDecay: 1, controlDecay: 6, searchedDecay: 2, creepChance: 0.15, encounterChance: 0.37, turnCap: 60, foodRot: 0.8, cardFind: 0.25, noiseAttract: 0.35, lootMult: 0.6, yieldMult: 0.95, rainChance: 0.4, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.45, hiddenRatio: 0.28, killMult: 0.65, injuryMult: 2.2, starveInjury: 0.22, nightBase: 0.05, nightGrowth: 0.0085, nightLevelReduction: 0.15, breachDays: 6, hiddenOutbreak: 0.19, eventChance: 0.6, factionPressure: 0, heldDecay: 1, controlDecay: 6, searchedDecay: 2, creepChance: 0.15, encounterChance: 0.37, turnCap: 60, foodRot: 0.8, cardFind: 0.25, noiseAttract: 0.35, lootMult: 0.6, yieldMult: 0.95, rainChance: 0.4, heatPerCrew: 0.12, stashRot: 0.03, desertChance: 0.18 },
     mutationPoints: [1, 2],
   },
   3: {
     id: 3, name: 'Ekspansjon', focus: 'Ta naboområder, få crew-ledere, rekrutter ved porten.',
-    mods: { zombieMult: 1.6, hiddenRatio: 0.3, killMult: 0.62, injuryMult: 2.4, starveInjury: 0.24, nightBase: 0.1, nightGrowth: 0.009, nightLevelReduction: 0.14, breachDays: 5.5, hiddenOutbreak: 0.2, eventChance: 0.55, factionPressure: 0, heldDecay: 1.5, controlDecay: 7, searchedDecay: 3, creepChance: 0.18, encounterChance: 0.4, turnCap: 70, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.55, yieldMult: 0.65, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.6, hiddenRatio: 0.3, killMult: 0.62, injuryMult: 2.4, starveInjury: 0.24, nightBase: 0.1, nightGrowth: 0.009, nightLevelReduction: 0.14, breachDays: 5.5, hiddenOutbreak: 0.2, eventChance: 0.55, factionPressure: 0, heldDecay: 1.5, controlDecay: 7, searchedDecay: 3, creepChance: 0.18, encounterChance: 0.4, turnCap: 70, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.55, yieldMult: 0.65, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03, desertChance: 0.2 },
     mutationPoints: [1, 3],
   },
   4: {
     id: 4, name: 'Bydel', focus: 'Hold hele bydeler, ikke voks fortere enn forsvaret tåler.',
-    mods: { zombieMult: 1.9, hiddenRatio: 0.3, killMult: 0.6, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.14, nightGrowth: 0.009, nightLevelReduction: 0.13, breachDays: 5, hiddenOutbreak: 0.21, eventChance: 0.5, factionPressure: 0.1, heldDecay: 2, controlDecay: 8, searchedDecay: 3, creepChance: 0.2, encounterChance: 0.44, turnCap: 80, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.9, hiddenRatio: 0.3, killMult: 0.6, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.14, nightGrowth: 0.009, nightLevelReduction: 0.13, breachDays: 5, hiddenOutbreak: 0.21, eventChance: 0.5, factionPressure: 0.1, heldDecay: 2, controlDecay: 8, searchedDecay: 3, creepChance: 0.2, encounterChance: 0.44, turnCap: 80, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03, desertChance: 0.22 },
     mutationPoints: [2, 3],
   },
   5: {
     id: 5, name: 'Fraksjoner', focus: 'Andre overlevende vil ha det du har. Handel eller krig.',
-    mods: { zombieMult: 1.4, hiddenRatio: 0.25, killMult: 0.72, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.04, nightGrowth: 0.0045, nightLevelReduction: 0.13, breachDays: 6, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0.4, heldDecay: 2, controlDecay: 8, searchedDecay: 3, creepChance: 0.15, encounterChance: 0.37, turnCap: 90, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.4, hiddenRatio: 0.25, killMult: 0.72, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.04, nightGrowth: 0.0045, nightLevelReduction: 0.13, breachDays: 6, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0.4, heldDecay: 2, controlDecay: 8, searchedDecay: 3, creepChance: 0.15, encounterChance: 0.37, turnCap: 90, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03, desertChance: 0.25 },
     mutationPoints: [1, 2],
   },
 };
@@ -130,13 +132,13 @@ export const DIFFICULTY: Record<Difficulty, DifficultyDef> = {
     deadline: { moral: 15, fall: 0.5, mutations: 1 },
   },
   hard: {
-    name: 'Hard', desc: 'Sterkere zombier. Går fristen ut, må dere videre til en høy pris.',
-    mult: { zombieMult: 1.15, killMult: 0.93, injuryMult: 1.15, nightGrowth: 1.1, hiddenOutbreak: 1.15, creepChance: 1.15 },
+    name: 'Hard', desc: 'Sterkere zombier og mindre å leve av. Går fristen ut, må dere videre til en høy pris.',
+    mult: { zombieMult: 1.05, killMult: 0.9, injuryMult: 1.2, nightGrowth: 1.4, hiddenOutbreak: 2.2, creepChance: 2.2, lootMult: 0.85, yieldMult: 0.85, rainChance: 0.85, stashRot: 1.5 },
     deadline: { moral: 30, fall: 1, mutations: 2 },
   },
   brutal: {
-    name: 'Brutal', desc: 'Sterkeste zombier. Går fristen ut, er runden tapt.',
-    mult: { zombieMult: 1.3, killMult: 0.88, injuryMult: 1.3, nightGrowth: 1.2, hiddenOutbreak: 1.3, creepChance: 1.3 },
+    name: 'Brutal', desc: 'Sterkeste zombier og knapt noe å leve av. Går fristen ut, er runden tapt.',
+    mult: { zombieMult: 1.1, killMult: 0.87, injuryMult: 1.3, nightGrowth: 1.6, hiddenOutbreak: 2.8, creepChance: 2.8, lootMult: 0.75, yieldMult: 0.8, rainChance: 0.75, stashRot: 2 },
     deadline: null,
   },
 };

@@ -21,6 +21,12 @@ export const HAUL_PER_THREAT = 3;
 export const TOKT_CARD_MULT = 2;
 /** Sjansen per person per dag ute for å bli skadet, ganger trusselnivået. Byttet de bærer kan gå tapt i flukten. */
 export const TOKT_DAY_INJURY = 0.03, TOKT_DROP = 1 / 3;
+/** Fra fase 2 kjører Kolumbus-bussen (flagget `buss`): tokt tar så mange dager mindre, men aldri under én. */
+export const BUSS_TOKT_DAYS = 1, BUSS_PHASE = 2;
+
+/** Dagene ute før toktet kan fullføres, med bussen trukket fra. */
+export const toktDays = (s: Pick<GameState, 'flags' | 'phase'>, d: ToktDef): number =>
+  Math.max(1, d.days - (s.flags.buss && s.phase >= BUSS_PHASE ? BUSS_TOKT_DAYS : 0));
 
 
 /** Tokt-staten for en person som er ute, ellers undefined. */
@@ -34,7 +40,7 @@ const questOpen = (s: GameState, id: string, days: number): boolean => s.quests.
 export function toktAvailable(s: GameState, d: ToktDef): boolean {
   if (s.tokts.some((t) => t.id === d.id)) return false;
   if (d.locked && !s.toktsOpen.includes(d.id)) return false;
-  return !d.quest || questOpen(s, d.quest, d.days);
+  return !d.quest || questOpen(s, d.quest, toktDays(s, d));
 }
 
 /** Låser opp et tokt, for eksempel fra en hendelse eller et rykte. */
@@ -97,7 +103,7 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
       t.cards.push(k);
       found.push(cardWord(CARDS[k.def].name));
     }
-    log(`${names(group)} er på tokt (${def.name}), dag ${t.stage} av ${def.days}.${found.length ? ` Fant ${found.join(', ')}.` : ''}`, found.length ? 'find' : '');
+    log(`${names(group)} er på tokt (${def.name}), dag ${t.stage} av ${toktDays(s, def)}.${found.length ? ` Fant ${found.join(', ')}.` : ''}`, found.length ? 'find' : '');
     // Dagene ute tærer: skader hoper seg opp, og den som blir skadet, slipper noe av byttet
     let hurt = false;
     if (!guaranteed(s, def)) for (const c of group) if (rand(s) < TOKT_DAY_INJURY * def.threat * M.injuryMult * armorMult(c)) { injure(s, c, 'på toktet', log, 'tokt'); hurt = true; }
@@ -167,9 +173,9 @@ export function toktDecision(s: GameState, toktId: string, d: 'fortsett' | 'snu'
   if (!t || !t.awaiting) throw new Error(`Tokt venter ikke på valg: ${toktId}`);
   if (s.pending.some((p) => p.toktId === toktId)) throw new Error(`Tokt har et ubesvart encounter: ${toktId}`);
   const def = toktDef(t.id), group = s.crew.filter((c) => t.crew.includes(c.id));
-  if (d === 'fortsett' && t.stage < def.days) {
+  if (d === 'fortsett' && t.stage < toktDays(s, def)) {
     t.awaiting = false;
-    return `${names(group)} går videre. Dag ${t.stage + 1} av ${def.days} venter.`;
+    return `${names(group)} går videre. Dag ${t.stage + 1} av ${toktDays(s, def)} venter.`;
   }
   const done = d === 'fortsett';
   let text = `${names(group)} er på vei hjem med ${unload(s, t)}.`;

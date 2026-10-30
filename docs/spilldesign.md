@@ -285,11 +285,21 @@ Trusselnivået styrer:
 
 **Vanskelighetsgrader [Forslag]:** Spilleren velger ved ny runde (`GameState.difficulty`, standard normal). Gradene er ganger på fasetabellen (`DIFFICULTY` i `phases.ts`, lest av `mods(s)`), så tallene fortsatt bare ligger i `phases.ts`. Normal er 1 overalt, så balansen i kapittel 11 gjelder normal. Lagringer uten grad blir normal: tallene er de samme som før, mens brutal ville gjort zombiene sterkere midt i en runde.
 
-| Grad | Zombiene | Når fristen går ut uten at fasemålet er nådd |
+| Grad | Zombiene og økonomien | Når fristen går ut uten at fasemålet er nådd |
 |---|---|---|
 | Normal (standard) | som fasetabellen | Du må videre likevel, med en pris: sektorer som ikke er trygge faller (halvparten av startzombiene kommer tilbake, kontrollen er borte), moralen synker 15, og zombiene får 1 ekstra mutasjonspoeng ved faseskiftet. |
-| Hard | +15 % antall, −7 % drap, +15 % skaderisiko, raskere gjennombrudd og kjellerutbrudd | Som normal, men prisen er høyere: hele startantallet kommer tilbake, moralen synker 30, og 2 ekstra mutasjonspoeng. |
-| Brutal | +30 % antall, −12 % drap, +30 % skaderisiko, enda raskere gjennombrudd | Runden er tapt (`over = 'timeout'`). |
+| Hard | +5 % antall, −10 % drap, +20 % skaderisiko, raskere nattepress (×1,4), kjellerutbrudd og zombier som siver inn ×2,2. Økonomi: −15 % loot, sanking og regn, 1,5 × råte på lageret | Som normal, men prisen er høyere: hele startantallet kommer tilbake, moralen synker 30, og 2 ekstra mutasjonspoeng. |
+| Brutal | +10 % antall, −13 % drap, +30 % skaderisiko, nattepress ×1,6, kjellerutbrudd og zombier som siver inn ×2,8. Økonomi: −25 % loot og regn, −20 % sanking, dobbel råte | Runden er tapt (`over = 'timeout'`). |
+
+**Hvorfor økonomien og kjellerne (runde 6):** Før var hard bare zombieknotter, og boten vant 92 % på hard mot 96 % på normal. Antall zombier og drap slår hardest ut i fase 2 (verftet er stort), så hard og brutal holder dem moderate og legger presset der fase 1 kjennes: glemte kjellere, zombier som siver inn, raskere nattepress og mindre å leve av (`lootMult`, `yieldMult`, `rainChance`, `stashRot`). Mål for fase 1 med standardcrewet: hard 75–85 % seier, brutal 55–70 %. `tests/balance.test.ts` har et eget, raskt tilfelle for hard (100 runder, standardcrewet, 70–88 %).
+
+| Simulering, 300 runder, standardcrew | Fase 1 før → nå | Fase 2 før → nå (av de som kom dit) |
+|---|---|---|
+| Normal | 96 % → 94 % (median 27 dager) | 91 % → 89 % (median 27 → 30 dager) |
+| Hard | 92 % → 78 % | 61 % → 41 % |
+| Brutal | 87 % → 59 % | 25 % → 15 % |
+
+Runder som fristen tvang over i fase 2, taper der nesten alltid, så fase 2-tallet på hard er lavt også fordi flere kommer dit tvunget.
 
 Prisen ved fristen er også data i `DIFFICULTY` (`deadline`). Ventende encounters forsvinner og tokt kommer hjem, som når fristen treffer etter nådd mål. Er målet nådd ved fristen, vinner du på alle grader. Spillet viser graden ved siden av dagen (ikke på normal), og fristlinjen forklarer hva som skjer. Simuleringen (`npm run sim -- 300 --hard` / `--brutal`) teller «mål nådd før fristen» som seier.
 
@@ -330,6 +340,14 @@ Beslutninger må tas. Seeden og startstedet kan gi griseflaks eller motgang. Det
 **[Låst]** Ressursene skal komme oftere enn i dag. Fra playtesten: det gikk tomt for mat på Buøy.
 
 **Sult [Forslag]:** En dag uten nok mat eller vann koster moral, og hver person kan miste 1 helse (`starveInjury` i fasetabellen). Den som allerede er på siste helse, kan dø av det. Sult skal merkes, men god planlegging gjør at den sjelden skjer.
+
+**Ved [Bygget, runde 6]:** Fra fase 2 går det tre til ovnen hver dag (`heatPerCrew` i fasetabellen, rundet opp: 1 tre for opptil 8 personer). Toppfeltet viser veden ved siden av mat og vann: forbruk per dag og hvor mange dager den holder, rødt under 3. Mangler veden, står det én linje i loggen den dagen, og moralen synker 3 (`COLD_MORAL`). Tre sankes i boligfeltet; boten sanker tre når veden holder under fire dager.
+
+**Moral [Bygget, runde 6]:** Moralen (0–100) går opp 2 hver natt og ned av død (−15), sult (−10/−12), kulde (−3), gjennombrudd og kjellerutbrudd. Den har nå konsekvenser begge veier (regelkonstanter i `skills.ts` og `engine.ts`, sjansen i fasetabellen):
+- **80 eller mer:** alle jobber 5 % bedre (kamp, søk og bygging). Toppfeltet viser ▲.
+- **Under 50:** −10 %. **Under 25:** −25 % (som før).
+- **Under 20:** hver natt kan én i crewet pakke sekken og dra for godt (`desertChance` i fasetabellen: 0,08 i fase 1, 0,18 i fase 2, stigende til 0,25 i fase 5). Aldri lederen, aldri noen som er ute på tokt, og ingen drar når crewet er 3 eller færre. Personen får `gone_`-flagget (kommer aldri tilbake), og utstyret blir liggende på lageret. Toppfeltet viser ▼ og et varsel.
+Fase 3–5 (crew-ledere med egen moral, bydeler, fraksjoner) kan bruke samme knott: lav moral i et crew betyr folk som forsvinner, ikke bare et tall.
 
 **[Låst]** Mat blir vanskeligere å finne over tid, fordi alt er plyndret eller råttent. HQ må etter hvert produsere nok mat selv og oppgraderes for å holde tritt.
 
@@ -479,8 +497,8 @@ Betaen har med starten av fase 2. Avgjort med eieren: bare Rosenberg som HQ, Bu�
 **Skjulte verdier:** Verftet har fire anlegg, og tilstanden til hvert (god, middels eller ødelagt) er trukket av seeden og skjult:
 - **Verkstedhallen:** Lage utstyr gir ett nivå høyere, og utstyr kan repareres.
 - **Kantina:** gir mat hver dag.
-- **Kontorbygget:** plass til laben senere (fase 2–3).
-- **Kaia:** tokt over vann senere.
+- **Kontorbygget:** Trene gir 50 % mer erfaring. Plass til laben senere (fase 2–3).
+- **Kaia:** fisk, 1 mat per dag (2 med Skoleskipet Gann). Tokt over vann senere.
 Speiding og gjennomsøking gir rykter («Kantina ser ut til å ha tak»). Den sanne tilstanden vises når verftet er tatt.
 
 **HQ tatt:** Når Rosenberg er trygg, er HQ-et tatt. Det gir senger, og postene åpnes. Et anlegg settes i stand med oppdraget «Sette i stand», som koster materialer. Et anlegg i god stand er billigere.
@@ -495,15 +513,18 @@ Det er et valg: en god arbeider i en post er en arbeider mindre ute.
 
 **Fasemålet i fase 2 (betaen):** Rosenberg er trygg, og minst ett anlegg er satt i stand. Etter det: «Fortsettelse følger» (fase 3 er ikke bygd).
 
-**[Åpent]** Hvor sterk horden og bonusene skal være, settes med simulering. Transport (bussen, Gann) gir foreløpig ingenting i fase 2.
+**Transport [Bygget, runde 6]:** Kolumbus-bussen (flagget `buss`, funnet på industriområdet) gjør at tokt tar én dag mindre fra fase 2 (`toktDays`, aldri under én dag). Skoleskipet Gann (flagget `gann`, funnet på kaia) går ut med garn fra verftskaia når kaia er satt i stand, og gir 1 mat ekstra per dag. Fase 3–5: bussen er naturlig transport til naboområdene, og Gann et utgangspunkt for tokt over vann.
+
+**[Åpent]** Hvor sterk horden og bonusene skal være, settes med simulering.
 
 ### Slik er det bygd
 
 - **Sektorer per fase:** `SectorDef.opensInPhase`. Verftet (`rosenberg`) er en vanlig sektor i tilstanden fra start, men låst til fase 2. Alle regler løkker over `activeSectors(s)`. Fase 1-målet gjelder bare fase 1-sektorene. Når en fase starter (`nextPhase`), åpnes fasens sektorer med zombier ganget med fasens `zombieMult` (med vanskelighet og mutasjoner), og overgangen logges. Gamle lagringer får verftet og HQ-et lagt til, og en vunnet fase 1 fra før fase 2 fantes blir et nådd mål, så fase 2 kan startes.
-- **Verftet:** trussel 5, 100 zombier og 28 gjemte (×1,3 i fase 2 = 130 og 36), 8 senger, mye metall, skrap og drivstoff, litt mat (20 før `lootMult`). Sanke gir metall, skrap og drivstoff. Funnet ved 50 %: stål og diesel i lagerhallen, og bedriftshelsetjenestens skap (6 medisin).
+- **Verftet:** trussel 5, 100 zombier og 28 gjemte (×1,45 i fase 2 = rundt 145 og 41), 8 senger, mye metall, skrap og drivstoff, litt mat (20 før `lootMult`). Sanke gir metall, skrap og drivstoff. Funnet ved 50 %: stål og diesel i lagerhallen, og bedriftshelsetjenestens skap (6 medisin).
 - **Anleggene** (`src/engine/hq.ts`, tekster i `places.ts`): tilstanden trekkes fra seeden med en egen tallrekke (god 30 %, middels 40 %, ødelagt 30 %), så fase 1 er helt lik som før. Speiding av verftet gir alltid ett rykte, og gjennomsøking gir et rykte med 50 % sjanse. Et rykte stemmer i 75 % av tilfellene; med en sveiser i crewet stemmer det alltid. Når verftet er trygt i fase 2, er HQ-et tatt, og den sanne tilstanden vises.
-- **Sette i stand** (`istand`): arbeid etter buildPower til 50 (god), 80 (middels) eller 120 (ødelagt), 1 metall eller skrap per 3 arbeid. Krever at verftet er tomt for zombier.
-- **Effekter:** verkstedhallen gir Lage utstyr ett nivå høyere (høyst 3) og oppdraget Reparere (full holdbarhet for 2 skrap per kort, 1 kort pluss 1 per 30 Mekk per dag). Kantina gir 3 mat per dag. Kontorbygget og kaia har bare tilstand og tekst.
+- **Sette i stand** (`istand`): arbeid etter buildPower til 50 (god), 80 (middels) eller 120 (ødelagt), 1 metall eller skrap per 3 arbeid. Tåler høyst 2 streifere på verftet (`ISTAND_STRAGGLERS`, som `GATE_STRAGGLERS` for porter): gruppa tar dem først, med samme regel og skaderisiko som laget ved porten. Før stengte ett mislykket encounter (+1 zombie) istandsettingen.
+- **Rosenberg-gjerdet etter HQ-et:** porten har `holds: 'rosenberg'`. Når HQ-et er tatt, er verftet deres, og gjerdet slipper ikke inn noe om natta lenger (`gateQuiet`). Porten kan fortsatt befestes og voktes, men det trengs ikke. Panelet sier det.
+- **Effekter:** verkstedhallen gir Lage utstyr ett nivå høyere (høyst 3) og oppdraget Reparere (full holdbarhet for 2 skrap per kort, 1 kort pluss 1 per 30 Mekk per dag). Kantina gir 3 mat per dag. Kontorbygget gir 1,5 × erfaring av Trene (`KONTOR_TRAIN`). Kaia gir 1 mat per dag, 2 med Gann (`KAI_FOOD`, `GANN_FOOD`). Mat fra anleggene står i én logglinje og i postkortet. Tallene er regelkonstanter i `hq.ts` og `tokt.ts`, tekstene i regionpakken (`places.ts` og `content/texts.ts`).
 - **Poster** (oppgaven `post`, en per post, blir der fra dag til dag): sikkerhetssjef gir 0,8 vaktkraft per 10 Nerver ved hver port om natta, også uten vakter; byggeleder +6 % arbeid per 10 Mekk på befesting og istandsetting; kokk −5 % mat per 10 Prat (høyst −40 %). Bonusene er regelkonstanter i `hq.ts`, ikke i fasetabellen: de sier hva crewet får til, ikke hvor sterke zombiene er.
 - **Nattepresset regnes fra fasestarten:** sjansen for gjennombrudd vokser med `phaseDay(s) × nightGrowth` og størrelsen med `phaseDay(s) / breachDays`, der `phaseDay` er dagen i fasen (1 på første dag). Før vokste det med dagen i runden, så fase 2 startet med presset fra fase 1 oppå sin egen `nightBase` og endte nær taket. Fase 1 starter på dag 1, så der er tallene helt like (simuleringen gir byte-identisk utskrift). `nightBase` og `breachDays` for fase 3–5 er justert for dette, men ikke simulert.
 - **Buøy i fase 2:** knotten `heldDecay` i fasetabellen (fase 2: 1, fase 3: 1,5, fase 4–5: 2) er kontrollen sektorer fra en tidligere fase mister per dag uten folk, mot `controlDecay` for de nye. Portene virker som før.
@@ -534,7 +555,9 @@ Boten spiller videre i fase 2 (`npm run sim -- 300 --fase2`): den rydder verftet
 
 Tapene nå: omtrent to av tre er tidsfristen uten at verftet er tatt, fordi kampen trekker ut og medisinen tar slutt. Runder som ble tvunget over av fristen i fase 1, kommer inn med halve Buøy infisert igjen og taper nesten alltid. Sult kommer i tapte runder, men sent (median rundt dag 40 i fasen), etter at kampen allerede har gått tapt.
 
-**[Åpent]** Om Rosenberg-gjerdet fortsatt skal slippe inn zombier når verftet er tatt. Om en runde som er tvunget over av fristen bør få en bedre sjanse i fase 2. Kontorbygget og kaia gir ingenting ennå.
+**Runde 6:** Gjerdet slipper ikke inn noe etter at HQ-et er tatt, istandsetting tåler et par streifere, og kontorbygget, kaia, Gann og bussen gir hver sin effekt. Det gjorde fase 2 lettere, så verftet i fase 2 har `zombieMult` 1,45 (før 1,3).
+
+**[Åpent]** Om en runde som er tvunget over av fristen bør få en bedre sjanse i fase 2.
 
 ## 10. Basen, ledere og politikk (fase 2–5)
 

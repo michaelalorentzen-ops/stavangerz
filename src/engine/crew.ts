@@ -72,6 +72,13 @@ export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cau
   }
 }
 
+/** En person forlater crewet for godt (ikke død). Utstyret havner på lageret, og personen kommer aldri tilbake som rekrutt. */
+export function leaveForGood(s: GameState, c: CrewMember) {
+  dropGear(s, c, 'stash');
+  s.crew = s.crew.filter((x) => x !== c);
+  s.flags[`gone_${c.id}`] = true;
+}
+
 /** Antall sengeplasser: summen av kapasitet i sektorer som er bosatt. */
 export function housing(s: GameState): number {
   // låste sektorer (senere faser) gir ingen senger. Samme regel som activeSectors i sectors.ts.

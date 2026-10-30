@@ -1,7 +1,7 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
   DIFFICULTIES, DIFFICULTY,
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, HEALTH_LABEL, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDays, toktDecision, toktDef, AREA, HEALTH_LABEL, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
   nameList, STAT_HINT, STAT_LABEL, STATS, sum, TRAITS, finaleText, HQ_SECTOR, mods, MUTATIONS, phase2Intro, PHASES,
 } from '../engine';
 import type { Difficulty, PendingEncounter, Stats, TraitId } from '../engine';
@@ -175,9 +175,9 @@ function showToktDecision(toktId: string, done: () => void) {
     ...RES.filter((k) => (t.haul[k] ?? 0) > 0).map((k) => `${t.haul[k]} ${RES_LABEL[k].toLowerCase()}`),
     ...t.cards.map((k) => CARDS[k.def].name),
   ];
-  const last = t.stage >= def.days;
+  const last = t.stage >= toktDays(S, def);
   modal(`<div class="radio">Samband · tokt · Dag ${S.day}</div><h2>${esc(def.name)}</h2>
-    <div class="transcript">${esc(`Dag ${t.stage} av ${def.days}. ${last ? 'Dere er framme. Gjør oppdraget ferdig, eller snu med det dere har.' : 'Dere kan gå videre, eller snu og komme hjem i natt.'}`)}</div>
+    <div class="transcript">${esc(`Dag ${t.stage} av ${toktDays(S, def)}. ${last ? 'Dere er framme. Gjør oppdraget ferdig, eller snu med det dere har.' : 'Dere kan gå videre, eller snu og komme hjem i natt.'}`)}</div>
     <p class="hint">Gruppa bærer: ${carried.length ? esc(carried.join(', ')) : 'ingenting ennå'}.</p>
     <p class="hint">Helse: ${S.crew.filter((c) => t.crew.includes(c.id)).map((c) => `${esc(c.name)} ${HEALTH_LABEL[c.hp].toLowerCase()}`).join(', ')}.</p>
     <div class="choices">

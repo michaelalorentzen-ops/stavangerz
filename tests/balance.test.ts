@@ -84,3 +84,15 @@ describe('balanse i fase 1', { timeout: 60_000 }, () => {
     }
   });
 });
+
+// Hard skal merkes: rundt 75–85 % seier i fase 1 for standardcrewet (kapittel 6 i spilldesignet).
+// Færre runder enn over, så testen er rask. Spennet har litt slingringsmonn for tilfeldighetene.
+const N_HARD = 100;
+describe('balanse i fase 1 på hard', { timeout: 60_000 }, () => {
+  it('standardcrewet vinner 70–88 % på hard, klart sjeldnere enn på normal', () => {
+    const games = Array.from({ length: N_HARD }, (_, i) => playGame(i + 1, undefined, { difficulty: 'hard' }));
+    const rate = games.filter((s) => s.over === 'won').length / N_HARD;
+    expect(rate).toBeGreaterThanOrEqual(0.7);
+    expect(rate).toBeLessThanOrEqual(0.88);
+  });
+});

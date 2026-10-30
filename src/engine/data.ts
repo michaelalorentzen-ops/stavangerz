@@ -52,6 +52,8 @@ export interface GateDef {
   base: number;
   /** sektorene inntrengerne kan havne i. Uten denne havner de i `sector`. */
   spills?: SectorId[];
+  /** sektoren porten holder igjen. Er det HQ-sektoren og HQ-et er tatt, slipper porten ikke inn noe om natta. */
+  holds?: SectorId;
 }
 
 export interface NeighborDef {
