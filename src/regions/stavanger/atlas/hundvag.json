@@ -1,0 +1,164 @@
+{
+  "id": "hundvag",
+  "name": "Hundvåg",
+  "at": "på Hundvåg",
+  "ring": 1,
+  "phase": 3,
+  "density": 3,
+  "baseThreat": 2,
+  "gates": [
+    {
+      "name": "Sørporten",
+      "real": "Hundvåg ring, sør for senteret",
+      "between": ["hundvag", "buoy"],
+      "lat": 58.9905,
+      "lon": 5.7365,
+      "notes": "Din egen side, sett fra Buøy er det Nordporten ved Nordkrysset. [Sjekk] Koordinaten er et anslag: dumpen har ikke veien over sundet."
+    },
+    {
+      "name": "Tunnelen mot Våland",
+      "real": "Hundvågtunnelen",
+      "between": ["hundvag", "valand"],
+      "lat": 58.99377,
+      "lon": 5.73299,
+      "notes": "Går under Byfjorden til E39 og Eiganestunnelen. Munningen ligger egentlig på Buøy ved Rosenberg; punktet her er veistykket på Hundvåg. Stengt til en quest åpner den, hvis eieren vil ha det slik."
+    },
+    {
+      "name": "Brua mot øyene",
+      "real": "Bjørnøybroen",
+      "between": ["hundvag", "ostoyene"],
+      "lat": 58.99664,
+      "lon": 5.75321,
+      "notes": "Alt som sjangler fra Bjørnøy og Roaldsøy kommer hit. Ryfylketunnelen (munning ved Lunde, 59.0044, 5.7399) kommer inn i området fra nord, men Ryfylke er ikke et område i atlaset ennå."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "austbo_butikk",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Extra Hundvåg", "realAt": "på Extra Hundvåg",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 3,
+      "lat": 58.99333, "lon": 5.74407,
+      "gives": "mat, vann, litt drivstoff fra automaten ved siden av",
+      "notes": "Extra på Austbø med Circle K Automat, treningssenter og legesenter i samme gate. Meny og Rema ligger i senteret og er plukket tomme først; Kiwi på Lunde og Kiwi Øysenteret er også mat, men for langt unna til å bli egne steder."
+    },
+    {
+      "id": "hundvag_skole",
+      "name": "Skolen", "short": "Skolen", "at": "på skolen",
+      "real": "Hundvåg skole", "realAt": "på Hundvåg skole",
+      "kind": "offentlig", "threat": 3,
+      "lat": 58.99654, "lon": 5.7339,
+      "gives": "mat fra kantina, plass til mange, idrettsutstyr fra hallen",
+      "notes": "Hundvåg skole med idrettsparken og Hundvåghallen rett ved. Austbø skole ligger like sør og er regnet med."
+    },
+    {
+      "id": "oyane_sykehjem",
+      "name": "Sykehjemmet", "short": "Sykehjemmet", "at": "på sykehjemmet",
+      "real": "Øyane sykehjem", "realAt": "på Øyane sykehjem",
+      "kind": "offentlig", "threat": 4,
+      "lat": 58.99701, "lon": 5.74002,
+      "gives": "medisin, rullestoler, senger; langsomme zombier, men mange",
+      "notes": "Sykehjem med medisinskap. Roligere enn apoteket, men ingen har rukket å lufte. Øyane legesenter ligger ved Extra og er ikke eget sted."
+    },
+    {
+      "id": "skeie_bolig",
+      "name": "Boligfeltet nord", "short": "Boligfeltet nord", "at": "i boligfeltet nord",
+      "real": "Skeie", "realAt": "på Skeie",
+      "kind": "bolig", "threat": 2,
+      "lat": 59.0045, "lon": 5.7265,
+      "gives": "mat og vann i husene, mange kjellere og garasjer, naboer å rekruttere",
+      "notes": "Rundt 350 hus og nesten like mange garasjer på nordvestsiden, med Skeie skole. Tett nok til å finne mye, spredt nok til at ikke alt kommer på en gang."
+    },
+    {
+      "id": "austbo_bolig",
+      "name": "Boligfeltet sør", "short": "Boligfeltet sør", "at": "i boligfeltet sør",
+      "real": "Austbø", "realAt": "på Austbø",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.9958, "lon": 5.7445,
+      "gives": "mat i husene, mange kjellere, uthus og naust ved sjøen",
+      "notes": "Hundvågs tetteste eneboligområde, rett ved senteret og skolen. Alt som våkner ved senteret finner veien hit."
+    },
+    {
+      "id": "husabo_rekke",
+      "name": "Rekkehusene", "short": "Rekkehusene", "at": "i rekkehusene",
+      "real": "Husabø og Saltnesfeltet", "realAt": "på Husabø",
+      "kind": "bolig", "threat": 3,
+      "lat": 59.0, "lon": 5.7205,
+      "gives": "mange naboer å rekruttere, korte avstander, få kjellere",
+      "notes": "Rekkehus og noen få blokker på vestsiden. Her bor de som ikke orket å holde hage."
+    },
+    {
+      "id": "lunde_jorder",
+      "name": "Jordene", "short": "Jordene", "at": "på jordene",
+      "real": "Lunde", "realAt": "på Lunde",
+      "kind": "natur", "threat": 1,
+      "lat": 59.0072, "lon": 5.7445,
+      "gives": "lite å hente nå, men dyrkbar mark (matproduksjon senere), gårdstun med lagerhus",
+      "notes": "Mest jorder av alle byøyene, med gårder og Lundsneset amfiteater lengst nord. Kuene har ikke hørt at noe har skjedd. Ryfylketunnelen kommer opp like ved."
+    },
+    {
+      "id": "trollskogen",
+      "name": "Skogen", "short": "Skogen", "at": "i skogen",
+      "real": "Trollskogen", "realAt": "i Trollskogen",
+      "kind": "natur", "threat": 2,
+      "lat": 59.0005, "lon": 5.7125,
+      "gives": "tre, vilt, skjul; få zombier, men vanskelige å se",
+      "notes": "Parken og skogen vest på øya. Stiene går mot Hundvåg fort, som har fått bedre gjerde enn hagene rundt."
+    }
+  ],
+  "keyPlace": {
+    "id": "hundvag_apotek", "type": "apotek",
+    "name": "Apoteket", "short": "Apoteket", "at": "på apoteket",
+    "real": "Apotek 1 Hundvåg", "realAt": "på Apotek 1 Hundvåg",
+    "kind": "butikk", "threat": 4,
+    "lat": 58.99369, "lon": 5.72966,
+    "gives": "mye medisin, sjeldne medisinkort",
+    "notes": "I Hundvåg Senteret, med Boots (tømt først: folk stoler på Apotek 1), Meny, Rema 1000, Sport 1 og Nille i samme korridor. Alt i senteret er ett sted; apoteket er det som teller."
+  },
+  "hqCandidate": {
+    "id": "hundvag_fort", "type": "fort",
+    "name": "Hundvåg fort", "short": "Fortet", "at": "på fortet",
+    "real": "Hundvåg fort", "realAt": "på Hundvåg fort",
+    "kind": "offentlig", "threat": 5,
+    "lat": 58.99765, "lon": 5.7168,
+    "gives": "tykke vegger og gode skuddfelt, skjulte verdier (HQ), lite plass",
+    "notes": "[Sjekk] OSM har punktet historic=fort og et militært område (relation/553250) vest på øya, og to-tre bunkere lenger nord i Trollskogen. Er det bare rester, er det et dårlig HQ men et godt vitsested: lukten fra 1940 henger igjen."
+  },
+  "pois": [
+    { "name": "Hundvåg Senteret", "type": "kjopesenter", "lat": 58.99351, "lon": 5.73105, "osm": "way/167004245" },
+    { "name": "Apotek 1 Hundvåg", "type": "apotek", "lat": 58.99369, "lon": 5.72966, "osm": "node/6336088347" },
+    { "name": "Boots", "type": "apotek", "lat": 58.99362, "lon": 5.73082, "osm": "node/1795799204" },
+    { "name": "Meny", "type": "matbutikk", "lat": 58.9937, "lon": 5.73111, "osm": "node/1795799207" },
+    { "name": "Rema 1000 Hundvåg", "type": "matbutikk", "lat": 58.99328, "lon": 5.72945, "osm": "node/1896814062" },
+    { "name": "Extra Hundvåg", "type": "matbutikk", "lat": 58.99333, "lon": 5.74407, "osm": "node/568089220" },
+    { "name": "Kiwi Hundvåg", "type": "matbutikk", "lat": 59.00124, "lon": 5.74144, "osm": "node/568089372" },
+    { "name": "Kiwi Øysenteret", "type": "matbutikk", "lat": 59.00144, "lon": 5.72442, "osm": "node/6030391917" },
+    { "name": "Sport 1", "type": "sportsbutikk", "lat": 58.99356, "lon": 5.7295, "osm": "node/1795799222" },
+    { "name": "Esso Hundvåg", "type": "bensinstasjon", "lat": 58.99384, "lon": 5.72799, "osm": "node/6093918076" },
+    { "name": "Circle K Automat Hundvåg", "type": "bensinstasjon", "lat": 58.99351, "lon": 5.74311, "osm": "node/568089223" },
+    { "name": "Hundvåg skole", "type": "skole", "lat": 58.99654, "lon": 5.7339, "osm": "way/33105939" },
+    { "name": "Hundvåghallen", "type": "idrett", "lat": 58.99529, "lon": 5.73766, "osm": "way/709617061" },
+    { "name": "Øyane sykehjem", "type": "helse", "lat": 58.99701, "lon": 5.74002, "osm": "node/11740486986" },
+    { "name": "Øyane legesenter", "type": "helse", "lat": 58.99314, "lon": 5.7444, "osm": "node/5921082837" },
+    { "name": "Hundvåg fort", "type": "hq_kandidat", "lat": 58.99765, "lon": 5.7168, "osm": "node/4947498637" },
+    { "name": "Hundvåg (militært område)", "type": "hq_kandidat", "lat": 58.99481, "lon": 5.71487, "osm": "relation/553250" },
+    { "name": "Trollskogen", "type": "natur", "lat": 59.00073, "lon": 5.71249, "osm": "way/32481678" },
+    { "name": "Lundsneset amfiteater", "type": "offentlig", "lat": 59.01108, "lon": 5.75299, "osm": "way/168196990" },
+    { "name": "Hundvågtunnelen", "type": "tunnel", "lat": 58.99377, "lon": 5.73299, "osm": "way/759462448" },
+    { "name": "Ryfylketunnelen", "type": "tunnel", "lat": 59.00442, "lon": 5.7399, "osm": "way/1176299318" },
+    { "name": "Bjørnøybroen", "type": "bru", "lat": 58.99664, "lon": 5.75321, "osm": "way/168457701" },
+    { "name": "Skolebrygga bru", "type": "bru", "lat": 58.99446, "lon": 5.74846, "osm": "way/44803952" },
+    { "name": "Lunde bru", "type": "bru", "lat": 59.00353, "lon": 5.73855, "osm": "way/268751902" },
+    { "name": "Skeie", "type": "stedsnavn", "lat": 59.00468, "lon": 5.72993, "osm": "node/10004638617" },
+    { "name": "Lunde", "type": "stedsnavn", "lat": 59.00533, "lon": 5.74457, "osm": "node/10004638666" },
+    { "name": "Austbø", "type": "stedsnavn", "lat": 58.99288, "lon": 5.7467, "osm": "node/10004638648" },
+    { "name": "Husabø", "type": "stedsnavn", "lat": 58.99781, "lon": 5.72147, "osm": "node/10004638681" },
+    { "name": "Saltnesfeltet", "type": "stedsnavn", "lat": 59.00141, "lon": 5.72356, "osm": "node/10004638664" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "OpenStreetMap, data/osm.json (bygninger og arealbruk på byøyene, tools/fetch_osm.sh)",
+    "docs/kartlegging-stavanger.md, 1.2 Hundvåg"
+  ],
+  "notes": "Middels tett (modell B): rundt 1 600 hus, et senter, to tunneler og mye jord i nord. Åtte sektorer, tre av dem bolig, delt etter hva som finnes og ikke etter hvert nabolag. Senteret (Apotek 1, Meny, Rema, Boots, Sport 1, Nille) er ett sted, nøkkelstedet «Apoteket», mens Matbutikken er Extra på Austbø slik at mat og medisin ikke ligger på samme felt. Esso ved senteret og Circle K ved Extra er ikke egne steder, men nevnt i beskrivelsene (Esso kan bli et funn i apoteket). Kiwi på Lunde og Kiwi Øysenteret er ikke tatt med; Hundvåg er allerede matfatet på byøyene. [Sjekk] «Sørporten» og tunnelmunningen mangler nøyaktige koordinater. [Sjekk] Hundvåg fort som HQ: lav sikkerhet på at det er mer enn rester. Grensene i atlas.config.json er strammet: Østøyene trekkes fra i øst, Buøy i sør. [Sjekk] Den sørlige delen av Austbø ligger kloss i grensen mot Buøy (bbox)."
+}

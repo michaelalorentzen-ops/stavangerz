@@ -1,0 +1,123 @@
+{
+  "id": "ostoyene",
+  "name": "Østøyene",
+  "at": "på Østøyene",
+  "ring": 1,
+  "phase": 3,
+  "density": 1,
+  "baseThreat": 1,
+  "gates": [
+    {
+      "name": "Brua mot Hundvåg",
+      "real": "Bjørnøybroen",
+      "between": ["ostoyene", "hundvag"],
+      "lat": 58.99664,
+      "lon": 5.75321,
+      "notes": "Eneste landvei inn. Alt som kommer fra Hundvåg, senteret og Ryfylketunnelen må over her."
+    },
+    {
+      "name": "Sundet mot Buøy",
+      "real": "Sundet mellom Steinsøy, Ormøy og Buøy",
+      "between": ["ostoyene", "buoy"],
+      "lat": 58.9855,
+      "lon": 5.7455,
+      "notes": "Noen hundre meter åpent vann. En port først med Svømmere og Dykkere. [Sjekk] Koordinaten er et anslag midt i sundet."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "bjornoy_bolig",
+      "name": "Boligfeltet nord", "short": "Boligfeltet nord", "at": "i boligfeltet nord",
+      "real": "Bjørnøy", "realAt": "på Bjørnøy",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.9965, "lon": 5.7565,
+      "gives": "mat og vann i husene, rolige hager, naboer å rekruttere",
+      "notes": "Rundt 130 hus rett bak Bjørnøybroen. Varmest på Østøyene, bare fordi det er først i køen."
+    },
+    {
+      "id": "skadesund_bru",
+      "name": "Brufestet", "short": "Brufestet", "at": "ved brufestet",
+      "real": "Skadesund bru", "realAt": "ved Skadesund bru",
+      "kind": "industri", "threat": 2,
+      "lat": 58.99504, "lon": 5.75982,
+      "gives": "sperring, ellers lite; litt drivstoff i bilene som sto i veien",
+      "notes": "Brua mellom Bjørnøy og Roaldsøy. Her kan en liten gruppe holde en stor flokk."
+    },
+    {
+      "id": "roaldsoy_bolig",
+      "name": "Boligfeltet sør", "short": "Boligfeltet sør", "at": "i boligfeltet sør",
+      "real": "Roaldsøy", "realAt": "på Roaldsøy",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.9925, "lon": 5.7605,
+      "gives": "mat og vann i husene, garasjer og uthus, flest folk å rekruttere på Østøyene",
+      "notes": "Størst av øyene, rundt 280 hus og garasjer spredt langs veiene. Det er langt mellom naboene, og det er poenget."
+    },
+    {
+      "id": "roaldsoy_skole",
+      "name": "Skolen", "short": "Skolen", "at": "på skolen",
+      "real": "Roaldsøy skole", "realAt": "på Roaldsøy skole",
+      "kind": "offentlig", "threat": 2,
+      "lat": 58.99333, "lon": 5.76415,
+      "gives": "mat i kantina, plass til mange, gymsal",
+      "notes": "Eneste skole på Østøyene. Dørene var låst da det hele begynte; de er det fortsatt."
+    },
+    {
+      "id": "roaldsoy_naust",
+      "name": "Båthavna", "short": "Båthavna", "at": "i båthavna",
+      "real": "naustene på Roaldsøy", "realAt": "i naustene på Roaldsøy",
+      "kind": "kai", "threat": 1,
+      "lat": 58.9915, "lon": 5.7625,
+      "gives": "fisk, båter (transport), tau og drivstoff til påhengsmotorer",
+      "notes": "Rundt 60 naust på Roaldsøy og Ormøy til sammen. Hver av dem har en motor som starter hvis man snakker pent til den."
+    },
+    {
+      "id": "ormoy_villa",
+      "name": "Villaene", "short": "Villaene", "at": "i villaene",
+      "real": "Ormøy", "realAt": "på Ormøy",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.9885, "lon": 5.7625,
+      "gives": "få folk, mye å finne per hus, hager med frukt og bærbusker",
+      "notes": "Ormøy ligger få hundre meter fra Buøy over vannet. Blindvei på land, men ikke over sjøen."
+    },
+    {
+      "id": "steinsoy_ferjekai",
+      "name": "Ferjekaia", "short": "Ferjekaia", "at": "på ferjekaia",
+      "real": "Steinsøy ferjekai", "realAt": "på Steinsøy ferjekai",
+      "kind": "kai", "threat": 4,
+      "lat": 58.98689, "lon": 5.75251,
+      "gives": "ferje og transport, porten mot Vassøy, Langøy og Ryfylke; lager og kaihaller",
+      "notes": "Det eneste stedet på Østøyene der noe kommer sjøveien. Ferja gikk til Vassøy, Langøy og Lindøy, og det er ikke sikkert alle som gikk om bord kom tilbake."
+    },
+    {
+      "id": "lundsvagen_svaberg",
+      "name": "Svaberget", "short": "Svaberget", "at": "på svaberget",
+      "real": "Lundsvågen", "realAt": "i Lundsvågen",
+      "kind": "natur", "threat": 1,
+      "lat": 59.0025, "lon": 5.7575,
+      "gives": "fisk, vann (med filter), lite skjul; naturskolens utstyr og et par jorder",
+      "notes": "Nordspissen med Lundsvågen naturskole, et par hus og et jorde. [Sjekk] OSM har også Langøy (hus og en ferjekai) lenger øst; atlaset regner den med her."
+    }
+  ],
+  "pois": [
+    { "name": "Bjørnøybroen", "type": "bru", "lat": 58.99664, "lon": 5.75321, "osm": "way/168457701" },
+    { "name": "Skadesund bru", "type": "bru", "lat": 58.99504, "lon": 5.75982, "osm": "way/37873634" },
+    { "name": "Ormøyveien", "type": "bru", "lat": 58.98992, "lon": 5.7671, "osm": "way/32482012" },
+    { "name": "Steinsøy ferjekai", "type": "kai", "lat": 58.98689, "lon": 5.75251, "osm": "node/571499467" },
+    { "name": "Langøy ferjekai", "type": "kai", "lat": 59.00286, "lon": 5.77251, "osm": "node/976518657" },
+    { "name": "Skolebryggå", "type": "kai", "lat": 58.99375, "lon": 5.75373, "osm": "way/168078618" },
+    { "name": "Roaldsøy skole", "type": "skole", "lat": 58.99333, "lon": 5.76415, "osm": "way/179989275" },
+    { "name": "Lundsvågen naturskole", "type": "skole", "lat": 59.00415, "lon": 5.75492, "osm": "way/187553311" },
+    { "name": "Volleyballbane", "type": "idrett", "lat": 58.99886, "lon": 5.75664, "osm": "way/664924861" },
+    { "name": "Jorde på Langøy (uten navn i OSM)", "type": "jorder", "lat": 59.00264, "lon": 5.77045, "osm": "relation/16606042" },
+    { "name": "Bjørnøy", "type": "stedsnavn", "lat": 58.99695, "lon": 5.7568, "osm": "node/354884150" },
+    { "name": "Ormøy", "type": "stedsnavn", "lat": 58.98839, "lon": 5.76151, "osm": "node/354884232" },
+    { "name": "Steinsøy", "type": "stedsnavn", "lat": 58.9863, "lon": 5.7526, "osm": "node/10004622015" },
+    { "name": "Langøy", "type": "stedsnavn", "lat": 59.00367, "lon": 5.76953, "osm": "node/2962350924" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "OpenStreetMap, data/osm.json (bygninger og arealbruk på byøyene, tools/fetch_osm.sh)",
+    "docs/kartlegging-stavanger.md, 1.3 Østøyene"
+  ],
+  "notes": "Spredt bebyggelse (modell B): rundt 600 hus, 140 naust, én skole og ingen butikker. Trygt og lite å finne, men fisk, båter og folk å rekruttere. Åtte sektorer, to boligfelt skilt med retning (Bjørnøy nord, Roaldsøy sør), Villaene på Ormøy og Ferjekaia på Steinsøy som den varme porten. Ingen nøkkelsted og ingen HQ-kandidat: Vassøy branndepot ligger utenfor området. Avgrensningen i atlas.config.json er strammet til to rektangler, Steinsøy og Ormøy sør og Bjørnøy, Roaldsøy og Langøy nord, slik at Dynamittneset og Bjørnøybroen hører til Hundvåg. [Sjekk] Øyene er ikke trukket langs strandlinjen, så et par hus nær kanten kan være på feil side."
+}
