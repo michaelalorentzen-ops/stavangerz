@@ -1,0 +1,125 @@
+{
+  "id": "madla",
+  "name": "Madla",
+  "at": "på Madla",
+  "ring": 3,
+  "phase": 5,
+  "density": 2,
+  "baseThreat": 2,
+  "gates": [
+    {
+      "name": "Veien mot byen",
+      "real": "Fv. 441 ved Madlaforen bru",
+      "between": ["madla", "hillevag"],
+      "lat": 58.9529,
+      "lon": 5.6734,
+      "notes": "Alt fra Tjensvoll og Hillevåg kommer inn her. [Sjekk] at det er denne brua og ikke en av sidevegene som er den naturlige innkjøringen fra byen."
+    },
+    {
+      "name": "Veien til Ullandhaug",
+      "real": "Madlaveien",
+      "between": ["madla", "ullandhaug_hinna"],
+      "lat": 58.9285,
+      "lon": 5.6959,
+      "notes": "Sørover forbi sykehuset og universitetet. Hit kommer det som slipper forbi Ullandhaug."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "madla_matbutikk",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Coop Mega Madla (Madlakrossen)", "realAt": "på Coop Mega Madla",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 4,
+      "lat": 58.952, "lon": 5.6775,
+      "gives": "mat, vann, hermetikk, og et apotek, en Vinmonopol og en Clas Ohlson innen gangavstand",
+      "notes": "Madlakrossen er Madlas sentrum: Thon Senter, Coop Mega, apotekene og biblioteket på samme tomt. Hit går alle som skal handle, også nå. Dokumentet kalte stedet «Amfi Madla»; OSM sier Thon Senter Madla."
+    },
+    {
+      "id": "madla_jorder",
+      "name": "Jordene", "short": "Jordene", "at": "på jordene",
+      "real": "Revheim og Sunde", "realAt": "på Revheim og Sunde",
+      "kind": "natur", "threat": 1,
+      "lat": 58.958, "lon": 5.637,
+      "gives": "dyrkbar mark, matproduksjon, lagerbygg på gårdene",
+      "notes": "Gårdene rundt Sunde, Revheim og Madlastø. Her bor det flere kyr enn folk, og kyrne er ikke bekymret. Tryggeste sted på Madla."
+    },
+    {
+      "id": "madla_stranda",
+      "name": "Stranda", "short": "Stranda", "at": "på stranda",
+      "real": "Møllebukta", "realAt": "i Møllebukta",
+      "kind": "natur", "threat": 2,
+      "lat": 58.9421, "lon": 5.6698,
+      "gives": "fisk, tang, vann (med filter), lite skjul",
+      "notes": "Parken og stranda ved Hafrsfjord, rett under Sverd i fjell. Ingen har noensinne vunnet noe her, og det er ikke blitt bedre."
+    },
+    {
+      "id": "madla_boligfelt",
+      "name": "Boligfeltet", "short": "Boligfeltet", "at": "i boligfeltet",
+      "real": "Madlamark", "realAt": "på Madlamark",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.9462, "lon": 5.6803,
+      "gives": "naboer å rekruttere, mat og vann i husene, mange kjellere og boder",
+      "notes": "Eneboliger og rekkehus rundt Madlamark kirke og skole. Mange kjellere: dårlig Snoking straffer seg her."
+    },
+    {
+      "id": "madla_blokker",
+      "name": "Blokkene", "short": "Blokkene", "at": "i blokkene",
+      "real": "Kvernevik", "realAt": "på Kvernevik",
+      "kind": "bolig", "threat": 4,
+      "lat": 58.9677, "lon": 5.6056,
+      "gives": "mange folk og mange zombier, mat i leilighetene, havutsikt (speiding)",
+      "notes": "Blokkbebyggelsen nord på Madla, ved Kvernevik skole og Smiodden. [Sjekk] hvor mange blokker som faktisk står her; OSM har ingen bygninger i dumpen. Kvernevik brannstasjon ligger like ved og er ikke tatt med som HQ-kandidat."
+    },
+    {
+      "id": "madla_bathavn",
+      "name": "Båthavna", "short": "Båthavna", "at": "i båthavna",
+      "real": "Hafrsfjord og Sunde", "realAt": "i Hafrsfjord",
+      "kind": "kai", "threat": 2,
+      "lat": 58.957, "lon": 5.6202,
+      "gives": "båter, tau, drivstoff til påhengsmotorer, fisk",
+      "notes": "Slippen til Hafrsfjord Båtforening, rett ved Hafrsfjord bru. Kvernevik har en egen småbåthavn lenger nord (58.973, 5.602) som ikke er tatt med."
+    },
+    {
+      "id": "madla_skole",
+      "name": "Skolen", "short": "Skolen", "at": "på skolen",
+      "real": "Madlamark skole", "realAt": "på Madlamark skole",
+      "kind": "offentlig", "threat": 3,
+      "lat": 58.9499, "lon": 5.6787,
+      "gives": "plass, mat i skolekjøkkenet, idrettshall, lett å forsvare",
+      "notes": "Madlamark skole ligger like ved bibliotek og kulturhus. International School of Stavanger (58.9495, 5.6542) har et eget bygg, men skolen er den samme funksjonen."
+    }
+  ],
+  "hqCandidate": {
+    "id": "madla_fortet",
+    "type": "fort",
+    "name": "Fortet", "short": "Fortet", "at": "på fortet",
+    "real": "Madlaleiren (KNM Harald Haarfagre)", "realAt": "i Madlaleiren",
+    "kind": "offentlig", "threat": 5,
+    "lat": 58.9483, "lon": 5.6677,
+    "gives": "våpen, utstyr, kjøreklare kjøretøy og en stor kaserne å sove i, bak en port som er låst fra innsiden",
+    "notes": "Forsvarets største rekruttskole, med akuttmottak, kapell og garnison på området. Skjulte verdier: lås, våpenlager og hva som skjedde da de siste rekruttene ble hentet. Madlatuen fort (58.9362, 5.6454) er en historisk festning i OSM og gir ingen separat sektor."
+  },
+  "pois": [
+    { "name": "Madlaleiren", "type": "hq_kandidat", "lat": 58.9483, "lon": 5.6677, "osm": "way/32207534" },
+    { "name": "Madlatuen fort", "type": "hq_kandidat", "lat": 58.9362, "lon": 5.6454, "osm": "node/7395589040" },
+    { "name": "Madlakrossen", "type": "handelsomrade", "lat": 58.9521, "lon": 5.6789, "osm": "way/38263994" },
+    { "name": "Thon Senter Madla", "type": "kjopesenter", "lat": 58.9523, "lon": 5.6791, "osm": "way/40932964" },
+    { "name": "Coop Mega Madla", "type": "matbutikk", "lat": 58.952, "lon": 5.6775, "osm": "node/446596980" },
+    { "name": "Platou Madla", "type": "sportsbutikk", "lat": 58.9520, "lon": 5.6805, "osm": "way/106580914" },
+    { "name": "Møllebukta", "type": "natur", "lat": 58.9421, "lon": 5.6698, "osm": "relation/11108953" },
+    { "name": "Madlamark skole", "type": "skole", "lat": 58.9499, "lon": 5.6787, "osm": "way/35668645" },
+    { "name": "Kvernevik skole", "type": "skole", "lat": 58.9667, "lon": 5.6055, "osm": "node/418507873" },
+    { "name": "Hafrsfjord Båtforening Slipp", "type": "kai", "lat": 58.957, "lon": 5.6202, "osm": "node/1808340519" },
+    { "name": "Kvernevik brannstasjon", "type": "hq_kandidat", "lat": 58.9748, "lon": 5.6144, "osm": "node/485788677" },
+    { "name": "Madlaforen bru", "type": "bru", "lat": 58.9529, "lon": 5.6734, "osm": "way/75408622" },
+    { "name": "Hafrsfjord bru", "type": "bru", "lat": 58.9607, "lon": 5.6104, "osm": "way/35796046" },
+    { "name": "Madlamark", "type": "stedsnavn", "lat": 58.9462, "lon": 5.6803, "osm": "node/7650795210" },
+    { "name": "Kvernevik", "type": "stedsnavn", "lat": 58.968, "lon": 5.6027, "osm": "node/351123641" },
+    { "name": "Sunde", "type": "stedsnavn", "lat": 58.9612, "lon": 5.6214, "osm": "node/10004638711" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.8 Madla"
+  ],
+  "notes": "Ytre ring, mest spredt: jorder og strand i vest, boligfelt og skole rundt Madlamark, blokker på Kvernevik, og Madlaleiren som eneste HQ-kandidat. Ingen nøkkelsted: Platou Madla (shop=outdoor) er en friluftsbutikk, ikke jakt eller våpen, og Forus har den beste kandidaten (se forus_lura). Avgrensningen er bydelen Madla minus ullandhaug_hinna, som i OSM-grensene kaster UiS og sykehuset til Hillevåg. Hafrsfjord bru (mot Sola) og Kvernevikveien (mot Randaberg) er innganger til området utenfra, men Sola og Randaberg finnes ikke som områder, så de er ikke porter ennå: [Sjekk] om de skal inn som fraksjonsporter i fase 5. Kvernevik brannstasjon er utelatt som HQ-kandidat fordi Madla allerede har Fortet."
+}

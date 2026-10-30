@@ -19,9 +19,9 @@
     "storhaug": {"name": "Storhaug", "ring": 2, "phase": 4, "admin": "Storhaug", "bbox": [58.952, 5.742, 58.9745, 5.772], "minus": ["sentrum"]},
     "valand": {"name": "Våland", "ring": 2, "phase": 4, "admin": "Eiganes og Våland", "bbox": [58.94, 5.722, 58.966, 5.76], "minus": ["sentrum"]},
     "eiganes_bjergsted": {"name": "Eiganes og Bjergsted", "ring": 2, "phase": 4, "admin": "Eiganes og Våland", "bbox": [58.94, 5.69, 58.99, 5.722]},
-    "madla": {"name": "Madla", "ring": 3, "phase": 5, "admin": "Madla"},
-    "hillevag": {"name": "Hillevåg", "ring": 3, "phase": 5, "admin": "Hillevåg"},
-    "ullandhaug_hinna": {"name": "Ullandhaug og Hinna", "ring": 3, "phase": 5, "admin": "Hinna"},
-    "forus_lura": {"name": "Forus og Lura", "ring": 3, "phase": 5, "bbox": [58.862, 5.7, 58.905, 5.775]}
+    "madla": {"name": "Madla", "ring": 3, "phase": 5, "admin": "Madla", "minus": ["ullandhaug_hinna"]},
+    "hillevag": {"name": "Hillevåg", "ring": 3, "phase": 5, "admin": "Hillevåg", "minus": ["ullandhaug_hinna"]},
+    "ullandhaug_hinna": {"name": "Ullandhaug og Hinna", "ring": 3, "phase": 5, "polys": [[[58.905, 5.682], [58.905, 5.7455], [58.931, 5.7455], [58.931, 5.72], [58.946, 5.72], [58.946, 5.682]]]},
+    "forus_lura": {"name": "Forus og Lura", "ring": 3, "phase": 5, "bbox": [58.862, 5.69, 58.905, 5.775]}
   }
 }

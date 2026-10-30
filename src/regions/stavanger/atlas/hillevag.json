@@ -1,0 +1,141 @@
+{
+  "id": "hillevag",
+  "name": "Hillevåg",
+  "at": "i Hillevåg",
+  "ring": 3,
+  "phase": 5,
+  "density": 4,
+  "baseThreat": 3,
+  "gates": [
+    {
+      "name": "Tunnelen mot Storhaug",
+      "real": "Hillevågstunnelen (fv. 440)",
+      "between": ["hillevag", "storhaug"],
+      "lat": 58.9517,
+      "lon": 5.7364,
+      "notes": "Hit kommer det som slipper forbi Storhaug og Våland. Dokumentet nevner Strømsbrua og Storhaugtunnelen; [Sjekk] hvilken av tunnelene og brua som faktisk binder Hillevåg til Storhaug."
+    },
+    {
+      "name": "Sørporten",
+      "real": "Rv. 44 ved Mariero",
+      "between": ["hillevag", "ullandhaug_hinna"],
+      "lat": 58.9345,
+      "lon": 5.7425,
+      "notes": "Mariero-skjæringen og Obs Mariero. Alt fra Hinna, Jåttå og Forus må innom."
+    },
+    {
+      "name": "Veien mot Madla",
+      "real": "Fv. 441 ved Tjensvoll",
+      "between": ["hillevag", "madla"],
+      "lat": 58.9519,
+      "lon": 5.6941,
+      "notes": "Vestover mot Madlaforen bru. Tjensvoll er byens siste ordentlige blokker før jordene."
+    },
+    {
+      "name": "Jærbanen",
+      "real": "Sørlandsbanen ved Torsnes bru",
+      "between": ["hillevag", "ullandhaug_hinna"],
+      "lat": 58.9445,
+      "lon": 5.7518,
+      "notes": "Toget kommer fra Jæren. Det går ikke lenger, men sporet gjør det fortsatt."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "hillevag_industri",
+      "name": "Industriområdet", "short": "Industriområdet", "at": "på industriområdet",
+      "real": "Hillevåg mot Gandsfjorden", "realAt": "i Hillevåg",
+      "kind": "industri", "threat": 3,
+      "lat": 58.9449, "lon": 5.7527,
+      "gives": "skrap, metall, verktøy, noen få stålbjelker og mye Lervig Bryggeri i kjelleren",
+      "notes": "Lagerhaller og verksteder mot Gandsfjorden, med Lervig Aktiebryggeri (58.9457, 5.746) og Hetlandskaien rett ved."
+    },
+    {
+      "id": "hillevag_bil",
+      "name": "Bilforhandleren", "short": "Bilforhandleren", "at": "på bilforhandleren",
+      "real": "Bilkilden, Hillevågsveien", "realAt": "ved Bilkilden",
+      "kind": "industri", "shopType": "bilforhandler", "threat": 3,
+      "lat": 58.9491, "lon": 5.7401,
+      "gives": "drivstoff, metall, kjøretøydeler, biler med nøklene i",
+      "notes": "Bilkilden, Bilsenteret og Unibil fordelt langs Hillevågsveien og ned mot Mariero. [Sjekk] hvilke forhandlere som fortsatt selger biler: dumpen har dem, men ikke åpningstidene."
+    },
+    {
+      "id": "hillevag_bygg",
+      "name": "Byggvarehuset", "short": "Byggvarehuset", "at": "på byggvarehuset",
+      "real": "Obs Bygg Mariero", "realAt": "på Obs Bygg Mariero",
+      "kind": "butikk", "shopType": "byggvarehus", "threat": 3,
+      "lat": 58.9362, "lon": 5.7431,
+      "gives": "tre, skrap, verktøy, spiker i bøtter",
+      "notes": "Ligger ved siden av Obs Mariero. Dokumentet gjettet Maxbo eller Byggmakker; dumpen har Obs Bygg her, og Byggmax, Jula og Montér lenger nord."
+    },
+    {
+      "id": "hillevag_kai",
+      "name": "Kaia", "short": "Kaia", "at": "på kaia",
+      "real": "Hetlandskaien", "realAt": "på Hetlandskaien",
+      "kind": "kai", "threat": 2,
+      "lat": 58.9479, "lon": 5.7508,
+      "gives": "båter, tau, kjetting, litt drivstoff",
+      "notes": "Kaia på Hillevågsiden av Gandsfjorden. Her kom containerne inn før containerne ble et problem."
+    },
+    {
+      "id": "hillevag_krysset",
+      "name": "Krysset", "short": "Krysset", "at": "i krysset",
+      "real": "Mariero (E39 og rv. 44)", "realAt": "ved Mariero",
+      "kind": "industri", "threat": 4,
+      "lat": 58.9357, "lon": 5.7479,
+      "gives": "biler med drivstoff i køen, porten sørover, fri sikt langs motorveien",
+      "notes": "Der Hillevåg møter E39, tunnelen og Jærbanen. Det varmeste stedet i området, fordi alt som kommer nordover må forbi."
+    },
+    {
+      "id": "hillevag_boligfelt",
+      "name": "Boligfeltet", "short": "Boligfeltet", "at": "i boligfeltet",
+      "real": "Kvaleberg", "realAt": "på Kvaleberg",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.9451, "lon": 5.7461,
+      "gives": "naboer å rekruttere, mat og vann i husene, tett bebyggelse",
+      "notes": "Bolighus og blokker rundt Kvaleberg skole og Torsnes bru. [Sjekk] fordelingen mellom blokk og enebolig; dumpen har ingen bygninger."
+    },
+    {
+      "id": "hillevag_kilden",
+      "name": "Kjøpesenteret", "short": "Kjøpesenteret", "at": "på kjøpesenteret",
+      "real": "Kilden", "realAt": "på Kilden",
+      "kind": "butikk", "shopType": "kjopesenter", "threat": 4,
+      "lat": 58.948, "lon": 5.7397,
+      "gives": "mat og vann fra Coop Mega, klær, verktøy, tekstiler og én eneste åpen kiosk",
+      "notes": "Hillevågs torg og senter i ett. Coop Mega, Clas Ohlson, Jernia, Kid, H&M og ti klesbutikker under samme tak. Ikke HQ-kandidat: det er et vanlig sted med mye i."
+    },
+    {
+      "id": "hillevag_park",
+      "name": "Parken", "short": "Parken", "at": "i parken",
+      "real": "Mosvatnet", "realAt": "ved Mosvatnet",
+      "kind": "natur", "threat": 1,
+      "lat": 58.9558, "lon": 5.7079,
+      "gives": "vann, ender, åpent og oversiktlig, lite å finne",
+      "notes": "Naturreservat og park i nordvest. Det eneste stedet i Hillevåg uten asfalt. [Sjekk] at Mosvatnet ikke egentlig hører til Eiganes: OSM-bydelsgrensen plasserer det i Hillevåg."
+    }
+  ],
+  "pois": [
+    { "name": "Kilden", "type": "kjopesenter", "lat": 58.948, "lon": 5.7397, "osm": "way/43328063" },
+    { "name": "Coop Mega Kilden", "type": "matbutikk", "lat": 58.9477, "lon": 5.7396, "osm": "node/1094285683" },
+    { "name": "Obs Bygg Mariero", "type": "byggvarehus", "lat": 58.9362, "lon": 5.7431, "osm": "node/506025432" },
+    { "name": "Obs Mariero", "type": "matbutikk", "lat": 58.9338, "lon": 5.7439, "osm": "node/6030392090" },
+    { "name": "Bilkilden", "type": "bilforhandler", "lat": 58.9491, "lon": 5.7401, "osm": "way/87400495" },
+    { "name": "Bilsenteret Stavanger", "type": "bilforhandler", "lat": 58.9417, "lon": 5.7452, "osm": "node/1599972828" },
+    { "name": "Hetlandskaien", "type": "kai", "lat": 58.9479, "lon": 5.7508, "osm": "way/35926767" },
+    { "name": "Lervig Aktiebryggeri", "type": "verksted", "lat": 58.9457, "lon": 5.746, "osm": "way/41107655" },
+    { "name": "Industriområde i Hillevåg (uten navn i OSM)", "type": "industri", "lat": 58.9449, "lon": 5.7527, "osm": "relation/8444580" },
+    { "name": "Mosvatnet naturreservat", "type": "natur", "lat": 58.9567, "lon": 5.7118, "osm": "way/1477381663" },
+    { "name": "Kvaleberg", "type": "stedsnavn", "lat": 58.9451, "lon": 5.7461, "osm": "node/10004638660" },
+    { "name": "Mariero", "type": "stedsnavn", "lat": 58.9357, "lon": 5.7479, "osm": "node/351122807" },
+    { "name": "Hillevågstunnelen", "type": "tunnel", "lat": 58.9517, "lon": 5.7364, "osm": "way/119945166" },
+    { "name": "Mariero-skjæringen", "type": "tunnel", "lat": 58.9403, "lon": 5.7457, "osm": "way/88142617" },
+    { "name": "Torsnes bru", "type": "bru", "lat": 58.9445, "lon": 5.7518, "osm": "way/33488549" },
+    { "name": "Stavanger Universitetssjukehus (gamle, Våland)", "type": "hq_kandidat", "lat": 58.9524, "lon": 5.7346, "osm": "way/152636077" },
+    { "name": "Stavanger brannstasjon, Schancheholen", "type": "hq_kandidat", "lat": 58.9535, "lon": 5.7203, "osm": "way/823004522" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.9 Hillevåg"
+  ],
+  "notes": "Verkstedet i byen: metall, kjøretøy, byggevarer og nesten ingen mat unntatt det Kilden har. Ingen nøkkelsted (ingen jakt- eller våpenbutikk i bydelen) og ingen HQ-kandidat, som i dokumentet. OSM har tre kandidater i bydelsgrensen som er bevisst utelatt: det gamle sykehuset i Våland (SUS flyttet til Ullandhaug; bygget står, men er byens problem), brannstasjonen på Schancheholen (grenseland mot Våland) og Stavanger fengsel på Auglend (58.9385, 5.7249). Avgrensningen er OSM-bydelen Hillevåg minus ullandhaug_hinna; det gjør at Tjensvoll vest og Mosvatnet nord ligger her og ikke i Madla eller på Eiganes. Dokumentets «Strømsbrua» og «Storhaugtunnelen» er ikke funnet med de navnene i dumpen; Hillevågstunnelen er brukt som port i stedet ([Sjekk])."
+}
