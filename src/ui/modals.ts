@@ -8,6 +8,29 @@ import type { Difficulty, PendingEncounter, Stats, TraitId } from '../engine';
 import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
 import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
+import { bestDays, isUnlocked, loadRecords, logRun, parseSeed, recallCombo, rememberRun, seedCode, UNLOCKED_BY } from './records';
+import type { RecordResult } from './records';
+
+/** Rekordlisten: beste dager per fase og grad. */
+function recordsHtml(): string {
+  const r = loadRecords();
+  const cell = (p: 1 | 2, d: Difficulty) => { const v = bestDays(r, p, d); return `<td>${v === null ? '–' : `${v} dager`}</td>`; };
+  return `<div><p class="eyebrow">Rekorder · færrest dager</p><table class="records"><thead><tr><th></th><th>Fase 1</th><th>Fase 2</th></tr></thead><tbody>${
+    DIFFICULTIES.map((d) => `<tr><th scope="row">${DIFFICULTY[d].name}</th>${cell(1, d)}${cell(2, d)}</tr>`).join('')}</tbody></table></div>`;
+}
+
+/** «Ny rekord!» og opplåsing etter en vunnet fase. */
+function recordNote(res: RecordResult): string {
+  const lines = [
+    res.newBest ? `<span class="badge safe">Ny rekord!</span> ${res.previous === null ? 'Første seier på denne graden.' : `Forrige var ${res.previous} dager.`}` : '',
+    res.newComboBest && !res.newBest ? '<span class="badge safe">Ny rekord for dette crewet</span>' : '',
+    res.unlocked ? `<span class="badge clr">Låst opp</span> ${DIFFICULTY[res.unlocked].name} er nå åpen.` : '',
+  ].filter(Boolean);
+  return lines.length ? `<div class="card recnote">${lines.map((l) => `<p>${l}</p>`).join('')}</div>` : '';
+}
+
+/** Seed-koden så en runde kan deles og spilles om igjen. */
+const seedHtml = (seed: number) => `<p class="hint">Seed: <code class="seedcode">${seedCode(seed)}</code> · del koden, og vennen din får samme by og samme uhell.</p>`;
 
 /** HQ-sektoren, låst i fase 1 */
 const LOCKED = SECTORS[HQ_SECTOR];
@@ -24,18 +47,25 @@ const closeModal = () => { $('modal').hidden = true; };
 const on = (id: string, fn: () => void) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
 
 export function titleScreen() {
-  const saved = load();
+  const saved = load(), recs = loadRecords();
+  if (!isUnlocked(recs, draft.difficulty)) draft.difficulty = 'normal';
   modal(`<div class="title" style="display:grid;gap:18px">
     <div class="kick">Et turbasert overlevelsesspill fra ${AREA.surroundings}</div>
     <h1>STAVANGER <b>Z</b></h1>
     <p>Utbruddet starter en tirsdag morgen. Du bor ${AREA.at}. ${LANDMARKS.bybrua} er stengt, ${LOCKED.short} er overkjørt, og det regner. Samle et crew blant naboene, rydd ${AREA.kind} sektor for sektor og bygg sperringer før natta tar dere.</p>
     <div class="coords">${AREA.coords} · ${AREA.name}, ${AREA.district} bydel</div>
-    <div><p class="eyebrow">Vanskelighetsgrad</p><div class="picks">${DIFFICULTIES.map((d) => `<button class="pick" data-d="${d}" aria-pressed="${draft.difficulty === d}"><span class="nm" style="font-size:17px">${DIFFICULTY[d].name}</span><span class="role">${DIFFICULTY[d].desc}</span></button>`).join('')}</div></div>
+    <div><p class="eyebrow">Vanskelighetsgrad</p><div class="picks">${DIFFICULTIES.map((d) => {
+      const open = isUnlocked(recs, d), by = UNLOCKED_BY[d];
+      return `<button class="pick${open ? '' : ' locked'}" data-d="${d}" aria-pressed="${draft.difficulty === d}"${open ? '' : ' disabled'}><span class="nm" style="font-size:17px">${DIFFICULTY[d].name}${open ? '' : ' <small>låst</small>'}</span><span class="role">${open ? DIFFICULTY[d].desc : `Låses opp ved å vinne fase 1 på ${DIFFICULTY[by!].name}.`}</span></button>`;
+    }).join('')}</div></div>
+    ${recordsHtml()}
+    <details class="seedin"><summary>Spill en delt seed</summary><div class="field"><label for="seed">Seed-kode</label><input id="seed" maxlength="7" autocomplete="off" placeholder="Tom gir tilfeldig by" value="${esc(draft.seedText)}"></div></details>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
       ${saved && !isFinished(saved) ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.addEventListener('click', () => { draft.difficulty = b.dataset.d as Difficulty; titleScreen(); }));
+  $<HTMLInputElement>('seed').addEventListener('input', (e) => { draft.seedText = (e.target as HTMLInputElement).value; });
   on('new', createSelf);
   on('cont', () => {
     ui.S = saved; closeModal(); ui.refresh();
@@ -44,8 +74,8 @@ export function titleScreen() {
 }
 
 const POOL = 15;
-export const draft: { name: string; stats: Stats; trait: TraitId; picks: string[]; difficulty: Difficulty } = {
-  difficulty: 'normal', name: '', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent', picks: [],
+export const draft: { name: string; stats: Stats; trait: TraitId; picks: string[]; difficulty: Difficulty; seedText: string } = {
+  difficulty: 'normal', name: '', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent', picks: [], seedText: '',
 };
 
 function createSelf() {
@@ -91,7 +121,8 @@ function pickNeighbors() {
   on('back', createSelf);
   on('go', () => {
     // seeden er det eneste stedet tilfeldighet kommer utenfra
-    const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) | 0;
+    const seed = parseSeed(draft.seedText) ?? (Date.now() ^ Math.floor(Math.random() * 1e9)) | 0;
+    rememberRun(seed, [...draft.picks]);
     ui.S = newGame(seed, { name: draft.name.trim() || 'Du', stats: { ...draft.stats }, trait: draft.trait }, draft.picks, draft.difficulty);
     ui.sel = { kind: 'sector', id: 'hjem' };
     queueIntro(ui.S);
@@ -204,10 +235,12 @@ export function phaseScreen(from: number, fromStart: number, done: () => void) {
   const S = game(), forced = S.log.at(-1)?.lines.some((l) => l.t.startsWith('Fristen gikk ut'));
   const muts = S.mutations.map((id) => MUTATIONS[id]).filter(Boolean);
   const hq = SECTORS[HQ_SECTOR];
+  const rec = forced ? null : logRun({ phase: from as 1 | 2, difficulty: S.difficulty, days: S.day - fromStart, combo: recallCombo(S.seed) });
   modal(`<div class="radio">Samband · alle stasjoner · Dag ${S.day}</div>
     <span class="badge ${forced ? 'inf' : 'safe'}">Fase ${from} ${forced ? 'tvunget avsluttet' : 'fullført'}</span>
     <h2>Fase ${S.phase}: ${PHASES[S.phase].name}</h2>
     <p>${forced ? `Fristen gikk ut før ${AREA.name} var sikret, og det kostet.` : `Fase ${from} tok ${S.day - fromStart} dager, og ${winBanner()}.`} ${phase2Teaser(S)}</p>
+    ${rec ? recordNote(rec) : ''}
     <div class="card"><span class="badge lock">Zombiene har mutert</span>
       ${muts.length ? `<ul class="mutlist">${muts.map((m) => `<li><b>${m.name}</b> <small>${m.code}</small><br>${esc(m.desc)}</li>`).join('')}</ul>` : '<p>Ingen nye mutasjoner. Denne gangen.</p>'}</div>
     <div class="card"><span class="badge clr">${hq.short} er åpent</span><h2>${hq.name}</h2><p>${esc(phase2Intro())}</p>
@@ -250,11 +283,13 @@ export function resumePending() {
 
 export function endScreen() {
   const S = game(), st = S.stats;
+  const rec = S.over === 'won' && S.phase <= 2 ? logRun({ phase: S.phase as 1 | 2, difficulty: S.difficulty, days: S.day - S.phaseStartDay, combo: recallCombo(S.seed) }) : null;
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
     modal(`<div class="radio">Samband · alle stasjoner</div><h2>${LOCKED.short} er HQ-et</h2>
       <p>${finaleText(S)}</p>
-      <div class="metrics">${metric('Dager totalt', S.day - 1)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
+      <div class="metrics">${metric('Dager totalt', S.day - 1)}${metric(`Dager i fase ${S.phase}`, S.day - S.phaseStartDay)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
+      ${rec ? recordNote(rec) : ''}${seedHtml(S.seed)}
       <div class="card"><span class="badge lock">Fase 3: ${PHASES[3].name}</span><h2>Fortsettelse følger</h2>
       <p>${PHASES[3].focus} Det er ikke bygd ennå. Dere kan spille videre i sandkassa så lenge dere vil.</p></div>
       <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Spill videre</button></div>`);
@@ -263,12 +298,12 @@ export function endScreen() {
     modal(`<div class="radio">Samband · tiden er ute</div><h2>Fristen gikk ut</h2>
       <p>Etter ${S.day - S.phaseStartDay} dager er ${S.phase === 1 ? AREA.name : LOCKED.short} fortsatt ikke sikret. Kommunen har sluttet å ringe, og ${LANDMARKS.sandnes} har begynt å skrive om «den skjebnesvangre ${AREA.district}-avgjørelsen» i festskriftet sitt.</p>
       <div class="metrics">${metric('Dager brukt', S.day - S.phaseStartDay)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
-      <div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);
+      ${seedHtml(S.seed)}<div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);
   } else {
     modal(`<div class="radio">Samband · ingen svar</div><h2>${AREA.name} har falt</h2>
       <p>Crewet er borte. Kaffetrakteren står fortsatt på. Kjell ville ha skrevet et avviksskjema.</p>
       <div class="metrics">${metric('Dager', S.day - 1)}${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}</div>
-      <div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);
+      ${seedHtml(S.seed)}<div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);
   }
   on('newr', () => { wipe(); draft.picks = []; titleScreen(); });
 }

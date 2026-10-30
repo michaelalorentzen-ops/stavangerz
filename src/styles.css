@@ -369,3 +369,33 @@ button { cursor: pointer; }
 .post select { min-height: 44px; flex: 0 1 180px; max-width: 100%; }
 .mutlist { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: #c9c3b6; }
 .mutlist small { font: 500 11px var(--f-mono); color: var(--muted); }
+
+/* Rekorder, låste grader og seed */
+.pick.locked { opacity: .55; cursor: not-allowed; }
+.pick.locked .nm small { font: 600 11px var(--f-cond); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+.records { border-collapse: collapse; font: 14px var(--f-body); width: min(420px, 100%); }
+.records th, .records td { text-align: left; padding: 4px 12px 4px 0; font-variant-numeric: tabular-nums; }
+.records thead th { font: 600 11px var(--f-cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.records tbody th { font-weight: 600; }
+.seedin summary { cursor: pointer; font-size: 13px; color: var(--muted); min-height: 24px; }
+.seedin .field { margin-top: 8px; }
+.seedcode { font: 600 13px var(--f-mono); letter-spacing: .12em; color: var(--ink); user-select: all; }
+.recnote { display: grid; gap: 6px; }
+
+/* Crew på bred skjerm: navnet får fast plass, chipsene byttes ikke om når teksten endres */
+.cm { grid-template-columns: minmax(150px, 1fr) minmax(0, 1.25fr); }
+.cm .nm { min-width: 7ch; }
+.chip { display: inline-flex; align-items: baseline; justify-content: center; gap: 4px; width: 148px; overflow: hidden; white-space: nowrap; min-height: 32px; box-sizing: border-box; }
+.chip small { margin-left: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+@media (max-width: 860px) { .chip, .btn, .seedin summary, .pick, .pk-take { min-height: 44px; align-items: center; } .seedin summary { display: flex; }
+  .panel summary, .seg button, .cmp select { min-height: 44px; }
+  .panel summary { display: flex; align-items: center; }
+  .fav { min-width: 44px; min-height: 44px; margin: -12px -10px -12px -12px; }
+}
+@media (max-width: 380px) { .cm { grid-template-columns: 1fr; } .chip { width: auto; flex: 1 1 124px; } }
+/* hele kortet i velgeren er et mål */
+.pk { position: relative; }
+.pk .pk-hit { cursor: pointer; border-radius: 6px; }
+.pk .pk-hit:hover .gc { border-color: var(--amber); }
+.pk .pk-hit:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.pk .pk-take { justify-self: start; }

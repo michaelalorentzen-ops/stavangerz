@@ -291,6 +291,8 @@ Trusselnivået styrer:
 
 Prisen ved fristen er også data i `DIFFICULTY` (`deadline`). Ventende encounters forsvinner og tokt kommer hjem, som når fristen treffer etter nådd mål. Er målet nådd ved fristen, vinner du på alle grader. Spillet viser graden ved siden av dagen (ikke på normal), og fristlinjen forklarer hva som skjer. Simuleringen (`npm run sim -- 300 --hard` / `--brutal`) teller «mål nådd før fristen» som seier.
 
+**Rekorder og opplåsing [Bygget].** Poengsummen er dager brukt på fasen (`dag − phaseStartDay`), færre er bedre. Bare en fase som er vunnet teller, ikke en som fristen tvang videre. Nettleseren lagrer beste dager for fase 1 og fase 2 per vanskelighetsgrad og per startcrew (tre naboer, uavhengig av rekkefølge) i `localStorage`, innpakket i try/catch, så spillet virker uten. Rekordlisten vises på tittelskjermen, og «Ny rekord!» vises ved fase-overgangen og på seierskjermen. Hard låses opp når fase 1 er vunnet på Normal, Brutal når den er vunnet på Hard. Låste valg vises med hva som låser dem opp. Reglene er den rene funksjonen `recordRun` i `src/ui/records.ts` (ingen spillregler, bare UI). Seed-koden (base 36) står på sluttskjermene, og kan skrives inn på tittelskjermen for å spille samme by.
+
 **[Låst]** All vanskelighet hentes fra fasetabellen i `src/engine/phases.ts` via `mods(s)`.
 
 ---

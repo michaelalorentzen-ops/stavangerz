@@ -95,7 +95,7 @@ function pickerHtml(c: CrewMember, slot: Slot): string {
   const cur = c.gear[slot];
   return `<div class="picker">
     ${cur ? `<div class="pk"><div class="gc-label">Utstyrt</div>${cardHtml(cur)}<button class="btn ghost small" data-unequip="${slot}" data-crew="${c.id}">Ta av</button></div>` : ''}
-    ${groupStash(fits).map((g) => `<div class="pk">${cardHtml(g.cards[0], g.cards, false, c)}<button class="btn small" data-equip="${bestCopy(g.cards).uid}" data-crew="${c.id}">Ta på</button></div>`).join('')}
+    ${groupStash(fits).map((g) => `<div class="pk"><div class="pk-hit" role="button" tabindex="0" data-hit="${bestCopy(g.cards).uid}" data-crew="${c.id}" aria-label="Ta på ${esc(CARDS[g.def].name)}">${cardHtml(g.cards[0], g.cards, false, c)}</div><button class="btn small pk-take" data-equip="${bestCopy(g.cards).uid}" data-crew="${c.id}">Ta på</button></div>`).join('')}
     ${!cur && !fits.length ? `<p class="hint">Ingen ${SLOT_LABEL[slot].toLowerCase()}-kort på lageret.</p>` : ''}
   </div>`;
 }
@@ -134,6 +134,12 @@ export function bindCards(root: HTMLElement) {
     equip(game(), b.dataset.crew!, b.dataset.equip!);
     ui.refresh();
   }));
+  // hele kortet i velgeren er klikkbart (knapper og kopilisten i kortet har egne handlinger)
+  root.querySelectorAll<HTMLElement>('[data-hit]').forEach((el) => {
+    const take = () => { equip(game(), el.dataset.crew!, el.dataset.hit!); ui.refresh(); };
+    el.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('button, summary, details')) take(); });
+    el.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === el) { e.preventDefault(); take(); } });
+  });
   root.querySelectorAll<HTMLButtonElement>('[data-unequip]').forEach((b) => b.addEventListener('click', () => {
     unequip(game(), b.dataset.crew!, b.dataset.unequip as Slot);
     ui.refresh();
