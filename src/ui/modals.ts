@@ -1,12 +1,27 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
   DIFFICULTIES, DIFFICULTY,
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDays, toktDecision, toktDef, AREA, HEALTH_LABEL, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDays, toktDecision, toktDef, AREA, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
   nameList, STAT_HINT, STAT_LABEL, STATS, sum, TRAITS, finaleText, HQ_SECTOR, mods, MUTATIONS, phase2Intro, PHASES,
 } from '../engine';
 import type { Difficulty, PendingEncounter, Stats, TraitId } from '../engine';
-import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
+import { blockerLabel, changesHtml, hpWord, statPips, vaguePreviewHtml } from './panel';
 import { TAG_LABEL } from './cards';
+import { avatar } from './avatar';
+import { heartsHtml } from './icons';
+import { rememberDay, summarizeDay, summaryHtml } from './report';
+import { oddsClass, oddsWord } from './vague';
+import type { CrewMember } from '../engine';
+
+/** Ferdigheten, hvem som prøver og sjansen i ord. Prosenten vises ikke før valget («midt imellom»). */
+function oddsHtml(skill: string, p: { id: string; name: string; trait?: CrewMember['trait']; hp?: number }, odds: number, extra = ''): string {
+  return `<small class="odds">${esc(skill)} · ${avatar(p, 18)}${esc(p.name)} · <b class="ow ${oddsClass(odds)}">${oddsWord(odds)}</b>${extra}</small>`;
+}
+
+/** En person med portrett, navn og helse. Brukes der modaler nevner folk. */
+function personHtml(c: CrewMember): string {
+  return `<span class="person${c.hp <= 1 ? ' h1' : c.hp === 2 ? ' h2' : ''}">${avatar(c, 30)}<span><b>${esc(c.name)}</b><span class="hp h${c.hp}">${heartsHtml(c.hp)}</span><small>${hpWord(c.hp)}</small></span></span>`;
+}
 import { $, esc, game, load, save, ui, wipe } from './store';
 import { bestDays, isUnlocked, loadRecords, logRun, parseSeed, recallCombo, rememberRun, seedCode, UNLOCKED_BY } from './records';
 import type { RecordResult } from './records';
@@ -108,7 +123,7 @@ function pickNeighbors() {
     <div class="picks">${START_NEIGHBORS.map((id) => {
       const n = NEIGHBORS.find((x) => x.id === id)!;
       return `<button class="pick" data-n="${id}" aria-pressed="${draft.picks.includes(id)}">
-        <span class="nm">${n.name} <small style="font:400 14px var(--f-body);color:var(--muted)">${n.age}</small></span><span class="role">${n.role}</span>
+        <span class="pick-hd">${avatar(n, 44)}<span class="nm">${n.name} <small style="font:400 14px var(--f-body);color:var(--muted)">${n.age}</small></span></span><span class="role">${n.role}</span>
         <span class="tr">${TRAITS[n.trait].name}: ${TRAITS[n.trait].desc}</span><span class="q">«${n.quip}»</span>
         <span class="statrow">${statPips(n.stats)}</span></button>`;
     }).join('')}</div>
@@ -137,7 +152,7 @@ function showEvent(done: () => void) {
   const choices = eventChoices(S, ev);
   modal(`<div class="radio">${ev.channel ?? 'Samband · kanal 16'} · Dag ${S.day}</div><h2>${ev.title}</h2>
     <div class="transcript">${esc(ev.text(S))}</div>
-    <div class="choices">${choices.map(({ ch: c, i }) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? `<small>${STAT_LABEL[c.check]} · ${esc(best(S, c.check).name)} · ${Math.round(checkOdds(S, c.check) * 100)}%</small>` : ''}</span>${previewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
+    <div class="choices">${choices.map(({ ch: c, i }) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? oddsHtml(STAT_LABEL[c.check], best(S, c.check), checkOdds(S, c.check)) : ''}</span>${vaguePreviewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.i), ch = ev.choices[i];
     const r = resolveEvent(S, i);
@@ -152,11 +167,13 @@ function showEvent(done: () => void) {
 /** Et ventende encounter: samme stil som hendelseskort, med odds og våpentagg. */
 function showEncounter(p: PendingEncounter, done: () => void) {
   const S = game(), v = describeEncounter(S, p);
+  const who = (name: string | undefined) => S.crew.find((x) => p.crew.includes(x.id) && x.name === name) ?? S.crew.find((x) => x.name === name) ?? { id: name ?? '', name: name ?? '' };
   const odds = (c: (typeof v.choices)[number]) => c.check
-    ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag].toLowerCase()}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
-  modal(`<div class="radio">Samband · ${esc(nameList(v.crew))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
+    ? oddsHtml(STAT_LABEL[c.check], who(c.best), c.odds, c.tag ? ` · <b>${TAG_LABEL[c.tag].toLowerCase()}${c.tagBonus ? ' gir et løft' : ''}</b>` : '') : '';
+  const team = S.crew.filter((c) => p.crew.includes(c.id));
+  modal(`<div class="radio">Samband · ${esc(nameList(v.crew))} · Dag ${S.day}</div>${team.length ? `<div class="team">${team.map(personHtml).join('')}</div>` : ''}<h2>${esc(v.title)}</h2>
     <div class="transcript">${esc(v.text)}</div>
-    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span class="ch-top"><span>${esc(c.label)}</span>${odds(c)}</span>${(c.preview ? previewHtml(c.preview) : "")}</button>`).join('')}</div>`);
+    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span class="ch-top"><span>${esc(c.label)}</span>${odds(c)}</span>${(c.preview ? vaguePreviewHtml(c.preview) : "")}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.i), c = v.choices[i];
     const r = resolveEncounter(S, p.pid, i);
@@ -179,7 +196,7 @@ function showToktDecision(toktId: string, done: () => void) {
   modal(`<div class="radio">Samband · tokt · Dag ${S.day}</div><h2>${esc(def.name)}</h2>
     <div class="transcript">${esc(`Dag ${t.stage} av ${toktDays(S, def)}. ${last ? 'Dere er framme. Gjør oppdraget ferdig, eller snu med det dere har.' : 'Dere kan gå videre, eller snu og komme hjem i natt.'}`)}</div>
     <p class="hint">Gruppa bærer: ${carried.length ? esc(carried.join(', ')) : 'ingenting ennå'}.</p>
-    <p class="hint">Helse: ${S.crew.filter((c) => t.crew.includes(c.id)).map((c) => `${esc(c.name)} ${HEALTH_LABEL[c.hp].toLowerCase()}`).join(', ')}.</p>
+    <div class="team">${S.crew.filter((c) => t.crew.includes(c.id)).map(personHtml).join('')}</div>
     <div class="choices">
       <button class="choice" data-d="fortsett"><span class="ch-top"><span>Fortsett</span><small>${last ? 'Fullfør og få belønningen' : 'Mer bytte, mer risiko'}</small></span></button>
       <button class="choice retreat" data-d="snu"><span class="ch-top"><span>Snu</span><small>Hjem i natt med det dere bærer</small></span></button></div>`);
@@ -207,7 +224,7 @@ function chooseLeader(done: () => void) {
   const S = game();
   modal(`<div class="radio">Vaktlogg · ${AREA.name}</div><h2>Hvem tar over?</h2>
     <p>Lederen er borte, og crewet har fortsatt ikke blitt enige om hvem som skal skrive vaktlista. Noen må ta ansvar. Helst noen som ikke har meldt seg frivillig.</p>
-    <div class="picks">${S.crew.map((c) => `<button class="pick" data-l="${c.id}"><span class="nm">${esc(c.name)}</span><span class="role">${esc(c.role)}</span>
+    <div class="picks">${S.crew.map((c) => `<button class="pick" data-l="${c.id}"><span class="pick-hd">${avatar(c, 44)}<span class="nm">${esc(c.name)}</span></span><span class="role">${esc(c.role)}</span>
       <span class="tr">${TRAITS[c.trait].name}: ${TRAITS[c.trait].desc}</span><span class="statrow">${statPips(c.stats)}</span></button>`).join('')}</div>`, true);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-l]').forEach((b) => b.addEventListener('click', () => {
     setLeader(S, b.dataset.l!);
@@ -265,9 +282,13 @@ export function endDay() {
     else if (S.phase !== phase) phaseScreen(phase, start, () => { closeModal(); ui.refresh(); });
   };
   if (endDayBlocker(S)) { settle(finish); return; }
+  const before = structuredClone(S);
   const lines = resolveDay(S);
   save();
+  const sum = summarizeDay(before, S, lines);
+  rememberDay(S.seed, day, sum);
   modal(`<div class="radio">Vaktlogg · ${AREA.name}</div><h2>Dag ${day} er over</h2>
+    ${summaryHtml(sum) || '<p class="hint">Ingenting kom inn, ingenting gikk tapt.</p>'}
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
     <div class="row"><button class="btn" id="ok">${blockerLabel(S) ?? (isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`)}</button></div>`);
   const after = () => settle(finish);
