@@ -54,9 +54,9 @@ export function runChoice(s: GameState, ch: ChoiceDef): { ok: boolean; text: str
   const ok = ch.check ? roll(s, ch.check) : true;
   const text = ch.run(s, ok);
   s.moral = clamp(s.moral, 0, 100);
-  validateTasks(s);
+  const resets = validateTasks(s);
   checkEnd(s);
-  return { ok, text, changes: summarize([delta(before, s)]) };
+  return { ok, text, changes: [...summarize([delta(before, s)]), ...resets] };
 }
 
 /** Hendelseskortet med denne id-en, også introen. */

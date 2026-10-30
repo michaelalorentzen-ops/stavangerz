@@ -167,9 +167,9 @@ export function resolveEncounter(s: GameState, pid: string, choiceIdx: number): 
   s.pending.splice(i, 1);
   const text = ctx.crew.length ? ch.run(s, ctx, ok) : 'Det var ingen igjen til å svare. Situasjonen løste seg selv, på den dårlige måten.';
   s.moral = clamp(s.moral, 0, 100);
-  validateTasks(s);
+  const resets = validateTasks(s);
   checkEnd(s);
-  const changes = summarize([delta(before, s)]);
+  const changes = [...summarize([delta(before, s)]), ...resets];
   logChoice(s, def.title, ch.label, { ok, changes }, !!ch.check);
   return { text, ok, changes };
 }
