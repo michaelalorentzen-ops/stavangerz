@@ -1,0 +1,176 @@
+{
+  "id": "sentrum",
+  "name": "Sentrum",
+  "at": "i sentrum",
+  "ring": 2,
+  "phase": 4,
+  "density": 5,
+  "baseThreat": 4,
+  "gates": [
+    {
+      "name": "Brua mot byøyene",
+      "real": "Stavanger bybru",
+      "between": ["sentrum", "vestoyene"],
+      "lat": 58.9732,
+      "lon": 5.7418,
+      "notes": "Bysiden av Bybrua, ved Blåsenborg og Verven. Alt fra Vestøyene og Buøy kommer inn her."
+    },
+    {
+      "name": "Tunnelen mot Storhaug",
+      "real": "Bergelandstunnelen og Bybrutunnelen",
+      "between": ["sentrum", "storhaug"],
+      "lat": 58.9684,
+      "lon": 5.7392,
+      "notes": "Bergelandstunnelen under Hetlandsgata. Bybrutunnelen på Storhaug munner ut i Haugesundsgata like ved."
+    },
+    {
+      "name": "Sørporten",
+      "real": "Lagård og Kannik",
+      "between": ["sentrum", "valand"],
+      "lat": 58.9632,
+      "lon": 5.7348,
+      "notes": "Lagårdsveien sørover forbi politistasjonen. Veien mot Våland, Paradis og gamle SUS."
+    },
+    {
+      "name": "Vestporten",
+      "real": "Bjergsted og Uelands gate",
+      "between": ["sentrum", "eiganes_bjergsted"],
+      "lat": 58.9742,
+      "lon": 5.7218,
+      "notes": "Fra Konserthuset og Eiganes inn mot Holmen og Strandkaien."
+    },
+    {
+      "name": "Vågen",
+      "real": "Skagenkaien og Fiskepirterminalen",
+      "between": ["sentrum", "hundvag"],
+      "lat": 58.9722,
+      "lon": 5.7396,
+      "notes": "Sjøsiden. Hurtigbåtene over til Hundvåg og videre. Åpen for Svømmere og cruiseskip."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "vagen_kai",
+      "name": "Kaia", "short": "Kaia", "at": "på kaia",
+      "real": "Skagenkaien og Strandkaien", "realAt": "på Skagenkaien og Strandkaien",
+      "kind": "kai", "threat": 4,
+      "lat": 58.9716, "lon": 5.7295,
+      "gives": "båter, fisk, tau, cruiseskipet (encounter)",
+      "notes": "Vågen med restaurantrekkene og gjestehavna. Fisketorget ligger ved siden av og er en vits i seg selv etter tre dager uten strøm."
+    },
+    {
+      "id": "fiskepiren",
+      "name": "Ferjekaia", "short": "Ferjekaia", "at": "på ferjekaia",
+      "real": "Fiskepirterminalen", "realAt": "på Fiskepirterminalen",
+      "kind": "kai", "threat": 3,
+      "lat": 58.9725, "lon": 5.7397,
+      "gives": "hurtigbåter (transport mot Ryfylke), drivstoff",
+      "notes": "Hurtigbåtterminalen. Fire-fem kaier og en parkering med biler som aldri kom hjem."
+    },
+    {
+      "id": "torget_mat",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Bunnpris og Spar ved Torget", "realAt": "på Bunnpris og Spar ved Torget",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 4,
+      "lat": 58.9703, "lon": 5.7338,
+      "gives": "mat på boks, vann; tømt på to dager hvis du kommer for sent",
+      "notes": "Klubbgata og Torget har dagligvare i hver bakgård (Bunnpris, Spar, flere 7-Eleven). Mye å hente, men alt er plukket over før. Tett: varene tar slutt."
+    },
+    {
+      "id": "kirkegata_klaer",
+      "name": "Klesbutikken", "short": "Klesbutikken", "at": "på klesbutikken",
+      "real": "Arkaden og Kirkegata", "realAt": "i Arkaden og Kirkegata",
+      "kind": "butikk", "shopType": "klesbutikk", "threat": 4,
+      "lat": 58.9708, "lon": 5.7360,
+      "gives": "beskyttelse (jakker, støvler), litt sportsutstyr fra Intersport",
+      "notes": "Arkaden, Torgterrassen og handlegata mellom dem er slått sammen. Flere titalls klesbutikker, én regnjakke igjen i riktig størrelse."
+    },
+    {
+      "id": "breitorget_elektro",
+      "name": "Elektronikkbutikken", "short": "Elektronikkbutikken", "at": "på elektronikkbutikken",
+      "real": "Elkjøp og Breitorget", "realAt": "på Elkjøp og Breitorget",
+      "kind": "butikk", "shopType": "elektronikk", "threat": 3,
+      "lat": 58.9722, "lon": 5.7331,
+      "gives": "batterier, kabler, radioer, lommelykter, tech fra fase 2",
+      "notes": "Elkjøp, Kjell & Company og Eplehuset. Ingen mat, men alt som ber om å bli koblet til noe som ikke lenger har strøm."
+    },
+    {
+      "id": "klubbgata_interior",
+      "name": "Interiørbutikken", "short": "Interiørbutikken", "at": "på interiørbutikken",
+      "real": "Breigata og Klubbgata", "realAt": "i Breigata og Klubbgata",
+      "kind": "butikk", "shopType": "interiorbutikk", "threat": 2,
+      "lat": 58.9714, "lon": 5.7348,
+      "gives": "tre, tekstiler, madrasser, litt beskyttelse",
+      "notes": "Bolia, Nille, Kid og Fretex. Lite å spise, mye å barrikadere med. Overraskende rolig: ingen ville dø i en sofa-avdeling."
+    },
+    {
+      "id": "domkirken",
+      "name": "Kirka", "short": "Kirka", "at": "på kirka",
+      "real": "Stavanger domkirke", "realAt": "ved Stavanger domkirke",
+      "kind": "offentlig", "threat": 3,
+      "lat": 58.9696, "lon": 5.7334,
+      "gives": "tilfluktsrom, overlevende (rekruttering), kjeller og krypt",
+      "notes": "Byens eldste bygg, midt i byen. Mange søkte tilflukt her første kvelden, og ikke alle kom ut igjen på egne bein."
+    },
+    {
+      "id": "solvberget",
+      "name": "Biblioteket", "short": "Biblioteket", "at": "på biblioteket",
+      "real": "Sølvberget", "realAt": "på Sølvberget",
+      "kind": "offentlig", "threat": 3,
+      "lat": 58.9714, "lon": 5.7334,
+      "gives": "kart, bøker (forskning), tech fra fase 2",
+      "notes": "Bibliotek og kulturhus. Over tid kan alle de stille lesesalene bli enda stillere."
+    }
+  ],
+  "keyPlace": {
+    "id": "mediegarden_apotek",
+    "type": "apotek",
+    "name": "Apoteket", "short": "Apoteket", "at": "på apoteket",
+    "real": "Apotek 1 Mediegården", "realAt": "på Apotek 1 Mediegården",
+    "kind": "butikk", "threat": 5,
+    "lat": 58.97146, "lon": 5.737,
+    "gives": "mye medisin, sjeldne medisinkort",
+    "notes": "Byens mest sentrale apotek, i Mediegården (Clas Ohlson i samme bygg). De åtte andre apotekene i sentrum (Hygiea, Straen, Svanen, Løven, Normal ...) er plyndret og nevnes bare i teksten: «Vitusapotek Svanen er tømt. Noen har skrevet reseptnummeret sitt på døra.»"
+  },
+  "hqCandidate": {
+    "id": "politistasjonen",
+    "type": "politistasjon",
+    "name": "Politistasjonen", "short": "Politistasjonen", "at": "på politistasjonen",
+    "real": "Stavanger politistasjon, Lagård", "realAt": "på Stavanger politistasjon på Lagård",
+    "kind": "offentlig", "threat": 5,
+    "lat": 58.96302, "lon": 5.73641,
+    "gives": "våpen og ammo (låst skap, krever Mekk), arrestbiler, samband og hendelseskort tidlig",
+    "notes": "Sørkanten av sentrum. Låst: cellene er fulle, og ikke alle sitter der frivillig."
+  },
+  "pois": [
+    { "name": "Stavanger politistasjon", "type": "hq_kandidat", "lat": 58.96302, "lon": 5.73641, "osm": "way/88142610" },
+    { "name": "Apotek 1 Mediegården Stavanger", "type": "apotek", "lat": 58.97146, "lon": 5.737, "osm": "node/12025200170" },
+    { "name": "Clas Ohlson Stavanger, Mediegården", "type": "byggvarehus", "lat": 58.97124, "lon": 5.73692, "osm": "node/12025224340" },
+    { "name": "Vitusapotek Svanen Stavanger", "type": "apotek", "lat": 58.96989, "lon": 5.735, "osm": "node/449399630" },
+    { "name": "Apotek 1 Hygiea Stavanger", "type": "apotek", "lat": 58.97035, "lon": 5.73277, "osm": "node/356308750" },
+    { "name": "Arkaden", "type": "kjopesenter", "lat": 58.9707, "lon": 5.73599, "osm": "way/88142603" },
+    { "name": "Torgterrassen", "type": "kjopesenter", "lat": 58.97038, "lon": 5.73268, "osm": "node/356308113" },
+    { "name": "Intersport", "type": "sportsbutikk", "lat": 58.97178, "lon": 5.73607, "osm": "node/515623039" },
+    { "name": "Elkjøp Stavanger Sentrum", "type": "elektronikk", "lat": 58.97316, "lon": 5.73329, "osm": "node/362906400" },
+    { "name": "Kjell & Company", "type": "elektronikk", "lat": 58.96983, "lon": 5.73495, "osm": "node/8842353247" },
+    { "name": "Breitorget", "type": "kjopesenter", "lat": 58.97188, "lon": 5.73314, "osm": "relation/1383294" },
+    { "name": "Bolia", "type": "interiorbutikk", "lat": 58.97136, "lon": 5.73781, "osm": "node/6336088346" },
+    { "name": "Fretex Breigaten", "type": "interiorbutikk", "lat": 58.97265, "lon": 5.73429, "osm": "node/6206106681" },
+    { "name": "Bunnpris Klubbgata", "type": "matbutikk", "lat": 58.97008, "lon": 5.73519, "osm": "node/14024318455" },
+    { "name": "Spar Torget", "type": "matbutikk", "lat": 58.9701, "lon": 5.7323, "osm": "node/6449138732" },
+    { "name": "Fisketorget", "type": "matbutikk", "lat": 58.9704, "lon": 5.7304, "osm": "node/2290143205" },
+    { "name": "Stavanger domkirke", "type": "offentlig", "lat": 58.96958, "lon": 5.73342, "osm": "way/31763779" },
+    { "name": "Sølvberget (Bibliotek og Kulturhus)", "type": "offentlig", "lat": 58.97143, "lon": 5.73335, "osm": "way/31764610" },
+    { "name": "Skagenkaien", "type": "kai", "lat": 58.97174, "lon": 5.72992, "osm": "node/530699261" },
+    { "name": "Strandkaien", "type": "kai", "lat": 58.97144, "lon": 5.72827, "osm": "node/530698844" },
+    { "name": "Stavanger hurtigbåtterminal", "type": "kai", "lat": 58.97245, "lon": 5.73978, "osm": "way/33914561" },
+    { "name": "Fiskepirterminalen", "type": "kai", "lat": 58.97256, "lon": 5.73959, "osm": "node/7211219617" },
+    { "name": "Bergelandstunnelen", "type": "tunnel", "lat": 58.9684, "lon": 5.73917, "osm": "way/24453319" },
+    { "name": "Stavanger rådhus", "type": "offentlig", "lat": 58.96903, "lon": 5.72892, "osm": "way/91010900" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.4 Sentrum"
+  ],
+  "notes": "Tettest i byen (density 5), og modell B i dokumentet: forbruksvarer som tar slutt, mange zombier, mange kjellere. Åtte sektorer er bare et utvalg av Vågen, Torget, Holmen og Straen, så butikkene er slått sammen til handlegater og skilt på type: mat, klær, elektronikk og interiør (jernvare/Clas Ohlson ligger i Apotekets bygg, sport hos Klesbutikken). Boligstrøkene (Gamle Stavanger på Holmen og Straen, trehusene ved Kirkegata) er utelatt som egne sektorer. [Åpent] Kanskje bør sentrum deles i «Vågen» og «Sentrum sør» (se kartleggingsdokumentet, 1.4). Nøkkelsted: Apotek 1 Mediegården, valgt som det mest sentrale av ni apotek i OSM. HQ-kandidat: politistasjonen på Lagård (våpen, samband). Kjøpesentrene (Arkaden, Torgterrassen, Herbarium, Galleri4, Breitorget) er IKKE HQ: regelen om én HQ per område, og Kvadrat hører til Forus. Brannstasjon og sykehus ligger andre steder (Storhaug, Våland). [Sjekk] Politistasjonen står i OSM ved 58,963, 5,736, ved bygget Lagårdsveien 1: kontroller at dette er den aktive stasjonen."
+}
