@@ -43,7 +43,7 @@ describe('porten stenges ikke av noen få zombier', () => {
   it('med flere zombier enn det er porten stengt', () => {
     const s = fresh();
     s.sectors.sorspissen.z = GATE_STRAGGLERS + 1;
-    expect(taskOptions(s).some((o) => o.target === 'sor')).toBe(false);
+    expect(taskOptions(s).some((o) => 'target' in o && o.target === 'sor')).toBe(false);
   });
 });
 
