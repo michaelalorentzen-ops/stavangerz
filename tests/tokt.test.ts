@@ -68,11 +68,13 @@ describe('tokt', () => {
     resolveDay(s);
     expect(s.tokts[0]).toMatchObject({ stage: 2, awaiting: true });
     answer(s);
-    const dr = s.res.drivstoff, sk = s.res.skrap, haul = { ...s.tokts[0].haul };
+    const dr = s.res.drivstoff, sk = s.res.skrap, haul = { ...s.tokts[0].haul }, gateBefore = { ...s.gates.sor };
     toktDecision(s, 'bybrua', 'fortsett');
     expect(s.res.drivstoff).toBe(dr + 6 + (haul.drivstoff ?? 0));
     expect(s.res.skrap).toBe(sk + 6 + (haul.skrap ?? 0));
     expect(s.tokts).toHaveLength(0);
+    // materialer i bulk som bare toktet gir: bilvrak foran sperringen
+    expect(s.gates.sor.work + s.gates.sor.level).toBeGreaterThan(gateBefore.work + gateBefore.level);
     expect(s.crew.find((c) => c.id === 'meg')!.task).toEqual({ type: 'hvile' });
   });
 

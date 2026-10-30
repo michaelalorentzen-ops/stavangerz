@@ -162,7 +162,9 @@ function rewardText(id: string): string {
   const r = toktDef(id).reward, parts: string[] = [];
   for (const [k, n] of Object.entries(r.res ?? {})) parts.push(`${n} ${RES_LABEL[k as keyof typeof RES_LABEL].toLowerCase()}`);
   for (const c of r.cards ?? []) parts.push(CARDS[c].rarity === 'unik' ? 'et unikt kort' : CARDS[c].name);
-  return parts.join(', ') || 'ingenting';
+  if (r.gate) parts.push(`+${r.gate.work} portarbeid ${GATES[r.gate.id].name}`);
+  const rec = toktDef(id).recruit;
+  return (parts.join(', ') || 'ingenting') + (rec ? `. Underveis kan dere finne overlevende (${Math.round(rec * 100)} % per dag)` : '');
 }
 
 /** Tokt-kort for et mål: utgjør både ledige tokt (med crew-knapper) og de som er ute. */

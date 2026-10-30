@@ -64,7 +64,10 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
   //     Det haster når en sektor har zombier, noen har 1 i liv, eller mat eller vann er under tre dagers forbruk.
   //     (Med bare Hjemme som krav dro boten nesten hver dag og vant 19 %: to av fire borte hele tiden.)
   if (bot.tokt && s.crew.length >= TOKT_MIN_CREW && can({ type: 'tokt', target: BOT_TOKT })) {
-    const urgent = PLAYABLE.some((id) => s.sectors[id].z > 0) || s.crew.some((c) => c.hp <= 1)
+    // Toktet er verdt det når porten det gir materialer til, fortsatt trenger arbeid.
+    const gate = toktDef(BOT_TOKT).reward.gate;
+    const worth = !gate || s.gates[gate.id].level < 3;
+    const urgent = !worth || PLAYABLE.filter((id) => s.sectors[id].z > 0).length > 1 || s.crew.some((c) => c.hp <= 1)
       || s.res.mat < 3 * dailyFood(s) || s.res.vann < 3 * dailyWater(s);
     const fit = avail().filter((c) => c.hp === 3).sort((a, b) => fightPower(s, b) - fightPower(s, a));
     if (!urgent && fit.length >= TOKT_TEAM) for (const c of fit.slice(0, TOKT_TEAM)) set(c, { type: 'tokt', target: BOT_TOKT });

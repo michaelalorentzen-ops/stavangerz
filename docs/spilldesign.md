@@ -488,6 +488,7 @@ Fra gjennomgangen 30.10: fase 1 var spillbar, men uten fare. Disse reglene gir s
 - **Knappere økonomi:** sektorene har mindre å finne (`lootMult`), sanking gir mindre (`yieldMult`), det regner sjeldnere (`rainChance`), og maten på lageret blir dårlig litt hver dag (`stashRot`). Fyring (`heatPerCrew`) er av i fase 1 og slår inn fra fase 2.
 - **Tokt har ekte risiko:** hver dag ute kan noen bli skadet (oftere jo farligere), og da mister gruppa en tredel av byttet i flukten. Beslutningen om å fortsette eller snu viser helsen til gruppa.
 - **Dårlige valg:** omtrent en tredel av hendelsene er rent negative, og noen encounters har bare dårlige valg.
+- **Tokt gir det du ikke får hjemme:** materialer i bulk til en bestemt port når toktet fullføres (bilvrak foran Bybrusperringen, containere ved Rosenberg-gjerdet, +18 portarbeid), og sjansen for å finne overlevende ute (10–25 % per dag) som aldri ville kommet til porten. Senere: nøkler til fase 2 (transport, drivstoff), unike kort og ammo fra nøkkelsteder.
 - **Comeback:** når to eller færre er igjen, kan en nabo banke på om natta (30 %).
 - **Lage utstyr** lager aldri kort med et bestemt opphav (`craftable: false`).
 - **Boten** velger hendelsesvalg ut fra forventet verdi, slik en spiller leser forhåndsvisningen.

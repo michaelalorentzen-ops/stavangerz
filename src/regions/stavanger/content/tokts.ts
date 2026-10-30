@@ -14,7 +14,9 @@ export interface ToktDef {
   threat: 1 | 2 | 3 | 4 | 5;
   /** id til questen som låser opp toktet. Uten quest er toktet fritt. */
   quest?: string;
-  reward: { cards?: string[]; res?: Partial<Resources>; flag?: Flag };
+  /** gate: portarbeid som bare et tokt kan skaffe (materialer i bulk). recruit: sjansen per dag for å finne en overlevende ute. */
+  reward: { cards?: string[]; res?: Partial<Resources>; flag?: Flag; gate?: { id: GateId; work: number; text: string } };
+  recruit?: number;
 }
 
 export interface QuestDef {
@@ -31,13 +33,15 @@ export const TOKTS: ToktDef[] = [
     id: 'kran', name: `Kranføreren på ${GATES.ros.name}`,
     desc: 'Kranføreren sitter fast i førerhuset, rett over horden. Han har radio, kaffe og sterke meninger om sikkerhetsrutiner.',
     at: 'ros', days: 2, threat: 3, quest: 'sos_kran',
-    reward: { cards: ['u_kiste'], res: { skrap: 6, tre: 4 } },
+    reward: { cards: ['u_kiste'], res: { skrap: 6, tre: 4 }, gate: { id: 'ros', work: 18, text: 'Roger heiser tre containere inn mot gjerdet før han klatrer ned' } },
+    recruit: 0.1,
   },
   {
     id: 'bybrua', name: `Køen på ${LANDMARKS.bybrua}`,
     desc: 'Rushtrafikken sto stille i går, og står fortsatt stille. Bilene er fulle av ting folk ikke fikk tatt med på hytta.',
     at: 'sor', days: 2, threat: 3,
-    reward: { res: { drivstoff: 6, skrap: 6, mat: 4 } },
+    reward: { res: { drivstoff: 6, skrap: 6, mat: 4 }, gate: { id: 'sor', work: 18, text: 'dere dytter to bilvrak inn foran sperringen på vei hjem' } },
+    recruit: 0.25,
   },
 ];
 

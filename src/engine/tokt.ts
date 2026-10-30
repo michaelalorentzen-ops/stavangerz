@@ -1,9 +1,10 @@
 // Tokt: en gruppe drar bort i flere dager. Hver dag ute gir bytte og et encounter, og så velger spilleren
 // å fortsette eller snu. Ren logikk.
 import { armorMult, CARDS, newCard, rollCard } from './cards';
-import { injure, type LogFn } from './crew';
+import { addNeighbor, canRecruit, injure, recruitablesNow, type LogFn } from './crew';
+import { addGateWork } from './engine';
 import { addToktEncounter } from './encounters';
-import { PHASE_RES, RES, RES_LABEL } from './data';
+import { GATES, PHASE_RES, RES, RES_LABEL } from './data';
 import type { PhaseModifiers } from './phases';
 import { pick, rand, sround } from './rng';
 import { QUESTS, questDef, TOKTS, toktDef } from '../regions/content';
@@ -96,6 +97,11 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
       if (lost.length) log(`I flukten mistet gruppa ${lost.join(', ')}.`, 'bad');
     }
     if (!s.crew.some((c) => t.crew.includes(c.id))) continue;
+    // Ute finnes folk som aldri ville kommet til porten
+    if (def.recruit && rand(s) < def.recruit && canRecruit(s)) {
+      const cands = recruitablesNow(s);
+      if (cands.length) { const n = pick(s, cands); addNeighbor(s, n.id); log(`${names(group)} fant ${n.name} (${n.age}) i en bil på veien. ${n.name} går hjem til basen. «${n.quip}»`, 'good'); }
+    }
     if (added < budget && addToktEncounter(s, group, def.threat, t.id, log)) added++;
     t.awaiting = true;
   }
@@ -130,6 +136,7 @@ function reward(s: GameState, def: ToktDef): string {
   for (const [k, n] of Object.entries(def.reward.res ?? {}) as [ResKey, number][]) { s.res[k] += n; parts.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
   for (const id of def.reward.cards ?? []) { s.stash.push(newCard(s, id)); parts.push(CARDS[id].name); }
   if (def.reward.flag) s.flags[def.reward.flag] = true;
+  if (def.reward.gate) { addGateWork(s, def.reward.gate.id, def.reward.gate.work); parts.push(`${def.reward.gate.text} (+${def.reward.gate.work} portarbeid ${GATES[def.reward.gate.id].name})`); }
   return parts.join(', ');
 }
 
