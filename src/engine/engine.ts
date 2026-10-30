@@ -570,7 +570,7 @@ export function phaseProgress(s: GameState) {
     { label: `Gjør ${SECTORS[HQ_SECTOR].short} trygg`, value: hqSafe ? 'trygg' : s.sectors[HQ_SECTOR].z > 0 ? `${s.sectors[HQ_SECTOR].seen ? s.sectors[HQ_SECTOR].z : '?'} Z` : `${Math.round(s.sectors[HQ_SECTOR].searched)} %`, done: hqSafe },
     { label: 'Sett i stand minst ett anlegg', value: `${ready}/1`, done: ready >= 1 },
   ];
-  return { safe: hqSafe ? 1 : 0, total: 1, gates, rows, summary: `${SECTORS[HQ_SECTOR].short} ${hqSafe ? 'trygg' : 'ikke trygg'} · ${ready} anlegg i stand`, done: hqSafe && ready >= 1 };
+  return { safe: hqSafe ? 1 : 0, total: 1, gates, rows, summary: `${SECTORS[HQ_SECTOR].short} ${hqSafe ? '✓' : '✗'} · ${ready}/1 anlegg`, done: hqSafe && ready >= 1 };
 }
 
 export function checkEnd(s: GameState) {

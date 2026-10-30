@@ -1,6 +1,6 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
-import { GATE_IDS, GATES, SECTORS, sectorIntel, toktAvailable, TOKTS, ZONES } from '../engine';
+import { GATE_IDS, GATES, HQ_SECTOR, isLocked, SECTORS, sectorIntel, toktAvailable, TOKTS, ZONES } from '../engine';
 import type { CrewMember, SectorId } from '../engine';
 import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
@@ -123,12 +123,13 @@ export function renderMap(onSelect: (s: Selection) => void) {
   const tokensBy: Record<string, CrewMember[]> = {};
   for (const c of S.crew) {
     const t = c.task;
-    const key = !('target' in t) ? 'hjem' : t.type === 'tokt' ? `t_${t.target}` : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
+    // poster, istandsetting og reparasjon skjer i HQ-et
+    const key = t.type === 'post' || t.type === 'istand' || t.type === 'reparere' ? HQ_SECTOR : !('target' in t) ? 'hjem' : t.type === 'tokt' ? `t_${t.target}` : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
     (tokensBy[key] ??= []).push(c);
   }
   for (const m of MAP.sectors) {
     const id = m.id;
-    const cls = SECTORS[id].locked ? 's-lock' : S.sectors[id as SectorId].z > 0 ? 's-inf' : sectorIntel(S, id as SectorId).safe ? 's-safe' : 's-clr';
+    const cls = isLocked(S, id) ? 's-lock' : S.sectors[id as SectorId].z > 0 ? 's-inf' : sectorIntel(S, id as SectorId).safe ? 's-safe' : 's-clr';
     const g = el('g', { class: `sector ${cls}${sel.kind === 'sector' && sel.id === id ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': SECTORS[id].name }, dyn);
     el('path', { d: m.d, class: 'fillbase' }, g);
     el('path', { d: m.d, class: 'edge', 'stroke-linejoin': 'round' }, g);
@@ -136,10 +137,10 @@ export function renderMap(onSelect: (s: Selection) => void) {
   }
   for (const m of MAP.sectors) {
     const mid = { 'text-anchor': 'middle' };
-    if (SECTORS[m.id].locked) {
+    if (isLocked(S, m.id)) {
       text(dyn, { ...mid, x: m.cx, y: m.cy - 10, class: 'lab big' }, 'HORDE');
       text(dyn, { ...mid, x: m.cx, y: m.cy + 28, class: 'lab' }, SECTORS[m.id].name);
-      text(dyn, { ...mid, x: m.cx, y: m.cy + 58, class: 'lab sub inf' }, 'Fase 2');
+      text(dyn, { ...mid, x: m.cx, y: m.cy + 58, class: 'lab sub inf' }, `Fase ${SECTORS[m.id].opensInPhase}`);
       continue;
     }
     const intel = sectorIntel(S, m.id as SectorId);

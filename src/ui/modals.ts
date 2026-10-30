@@ -2,14 +2,15 @@
 import {
   DIFFICULTIES, DIFFICULTY,
   best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, HEALTH_LABEL, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
-  STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
+  STAT_HINT, STAT_LABEL, STATS, sum, TRAITS, finaleText, HQ_SECTOR, mods, MUTATIONS, phase2Intro, PHASES,
 } from '../engine';
 import type { Difficulty, PendingEncounter, Stats, TraitId } from '../engine';
 import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
 import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
 
-const LOCKED = SECTORS[(Object.keys(SECTORS) as (keyof typeof SECTORS)[]).find((k) => SECTORS[k].locked)!];
+/** HQ-sektoren, låst i fase 1 */
+const LOCKED = SECTORS[HQ_SECTOR];
 
 function modal(html: string, wide = false) {
   const sheet = $('sheet');
@@ -186,18 +187,50 @@ function chooseLeader(done: () => void) {
 
 /** Spilleren avslutter fasen fra målpanelet. */
 export function endPhaseNow() {
-  const S = game();
+  const S = game(), phase = S.phase, start = S.phaseStartDay;
   if (!canEndPhase(S)) return;
   endPhase(S);
   save();
   ui.refresh();
   if (isFinished(S)) endScreen();
+  else if (S.phase !== phase) phaseScreen(phase, start, () => { closeModal(); ui.refresh(); });
+}
+
+/**
+ * Overgangen til en ny fase: hvordan forrige fase endte, mutasjonene og det som er åpnet.
+ * `from` og `fromStart` er fasen som nettopp ble avsluttet og dagen den startet.
+ */
+export function phaseScreen(from: number, fromStart: number, done: () => void) {
+  const S = game(), forced = S.log.at(-1)?.lines.some((l) => l.t.startsWith('Fristen gikk ut'));
+  const muts = S.mutations.map((id) => MUTATIONS[id]).filter(Boolean);
+  const hq = SECTORS[HQ_SECTOR];
+  modal(`<div class="radio">Samband · alle stasjoner · Dag ${S.day}</div>
+    <span class="badge ${forced ? 'inf' : 'safe'}">Fase ${from} ${forced ? 'tvunget avsluttet' : 'fullført'}</span>
+    <h2>Fase ${S.phase}: ${PHASES[S.phase].name}</h2>
+    <p>${forced ? `Fristen gikk ut før ${AREA.name} var sikret, og det kostet.` : `Fase ${from} tok ${S.day - fromStart} dager, og ${winBanner()}.`} ${phase2Teaser(S)}</p>
+    <div class="card"><span class="badge lock">Zombiene har mutert</span>
+      ${muts.length ? `<ul class="mutlist">${muts.map((m) => `<li><b>${m.name}</b> <small>${m.code}</small><br>${esc(m.desc)}</li>`).join('')}</ul>` : '<p>Ingen nye mutasjoner. Denne gangen.</p>'}</div>
+    <div class="card"><span class="badge clr">${hq.short} er åpent</span><h2>${hq.name}</h2><p>${esc(phase2Intro())}</p>
+      <ul class="mutlist">
+        <li>Rydd og gjennomsøk ${hq.short}. Trusselnivå ${hq.threat}: gå mange sammen, og hvil de skadde.</li>
+        <li>Anleggene er skjulte. Speiding og gjennomsøking gir rykter.</li>
+        <li>Når ${hq.short} er trygg, er HQ-et tatt: senger, poster i crew-fanen og istandsetting.</li>
+        <li>${AREA.name} holder seg trygg en stund, men kontrollen forfaller sakte. Portene må fortsatt holdes om natta.</li>
+      </ul></div>
+    <p class="hint">Mål: gjør ${hq.short} trygg og sett i stand minst ett anlegg. Fristen er ${mods(S).turnCap} dager.</p>
+    <div class="row"><button class="btn" id="go2">Til ${hq.short}</button></div>`, true);
+  on('go2', () => { ui.sel = { kind: 'sector', id: HQ_SECTOR }; ui.selAction = null; done(); });
 }
 
 export function endDay() {
-  const S = game(), day = S.day;
+  const S = game(), day = S.day, phase = S.phase, start = S.phaseStartDay;
   if (isFinished(S)) { endScreen(); return; }
-  const finish = () => { closeModal(); ui.refresh(); if (isFinished(S)) endScreen(); };
+  const finish = () => {
+    closeModal(); ui.refresh();
+    if (isFinished(S)) endScreen();
+    // fristen kan tvinge en ny fase i natt
+    else if (S.phase !== phase) phaseScreen(phase, start, () => { closeModal(); ui.refresh(); });
+  };
   if (endDayBlocker(S)) { settle(finish); return; }
   const lines = resolveDay(S);
   save();
@@ -219,16 +252,16 @@ export function endScreen() {
   const S = game(), st = S.stats;
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
-    modal(`<div class="radio">Samband · alle stasjoner</div><h2>${AREA.name} er sikret</h2>
-      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og ${winBanner()}.</p>
-      <div class="metrics">${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}${metric('Crew mistet', st.lost)}</div>
-      <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>${LOCKED.name}</h2>
-      <p>${phase2Teaser(S)}</p></div>
-      <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Fortsett ${AREA.at}</button></div>`);
+    modal(`<div class="radio">Samband · alle stasjoner</div><h2>${LOCKED.short} er HQ-et</h2>
+      <p>${finaleText(S)}</p>
+      <div class="metrics">${metric('Dager totalt', S.day - 1)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
+      <div class="card"><span class="badge lock">Fase 3: ${PHASES[3].name}</span><h2>Fortsettelse følger</h2>
+      <p>${PHASES[3].focus} Det er ikke bygd ennå. Dere kan spille videre i sandkassa så lenge dere vil.</p></div>
+      <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Spill videre</button></div>`);
     on('cont', () => { continueAfterWin(S); closeModal(); ui.refresh(); });
   } else if (S.over === 'timeout') {
     modal(`<div class="radio">Samband · tiden er ute</div><h2>Fristen gikk ut</h2>
-      <p>Etter ${S.day - S.phaseStartDay} dager er ${AREA.name} fortsatt ikke sikret. Kommunen har sluttet å ringe, og ${LANDMARKS.sandnes} har begynt å skrive om «den skjebnesvangre ${AREA.district}-avgjørelsen» i festskriftet sitt.</p>
+      <p>Etter ${S.day - S.phaseStartDay} dager er ${S.phase === 1 ? AREA.name : LOCKED.short} fortsatt ikke sikret. Kommunen har sluttet å ringe, og ${LANDMARKS.sandnes} har begynt å skrive om «den skjebnesvangre ${AREA.district}-avgjørelsen» i festskriftet sitt.</p>
       <div class="metrics">${metric('Dager brukt', S.day - S.phaseStartDay)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
       <div class="row"><button class="btn" id="newr">Prøv igjen</button></div>`);
   } else {

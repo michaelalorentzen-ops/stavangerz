@@ -15,4 +15,4 @@ export const phase2Intro = () =>
 
 /** Slutten av betaen: fase 2 er vunnet */
 export const finaleText = (s: GameState) =>
-  `${SECTORS.rosenberg.name} er deres. Kranene står stille, kaffemaskinen i kantina går igjen, og noen har allerede satt opp en vaktliste på oppslagstavla. Fase 2 tok ${s.day - s.phaseStartDay} dager. ${LANDMARKS.sandnes} har ikke kommentert saken.`;
+  `${SECTORS.rosenberg.name} er deres. Kranene står stille, kaffemaskinen i kantina går igjen, og noen har allerede satt opp en vaktliste på oppslagstavla. Fase 2 tok ${s.day - s.phaseStartDay} ${s.day - s.phaseStartDay === 1 ? 'dag' : 'dager'}. ${LANDMARKS.sandnes} har ikke kommentert saken.`;

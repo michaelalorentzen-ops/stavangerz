@@ -215,7 +215,7 @@ button { cursor: pointer; }
 
 /* ---- modal ---- */
 .modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); background: rgba(5,10,14,.78); backdrop-filter: blur(3px); overflow-y: auto; }
-.sheet { width: min(640px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; display: grid; gap: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.sheet { box-sizing: border-box; width: min(640px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; display: grid; gap: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
 .sheet.wide { width: min(980px, 100%); }
 .sheet h2 { margin: 0; font: 700 30px/1.05 var(--f-cond); letter-spacing: .04em; text-transform: uppercase; text-wrap: balance; }
 .sheet p { margin: 0; max-width: 62ch; }
@@ -353,3 +353,17 @@ button { cursor: pointer; }
 /* tutorial */
 .card.tut { border-color: var(--amber); }
 .card.tut .row { display: flex; gap: 8px; justify-content: flex-start; }
+
+/* Fase 2: HQ-kortet, postene og mutasjonene i overgangen */
+.card.hq { gap: 12px; }
+.fac { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
+.fac-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fac-top b { font: 700 17px/1.1 var(--f-cond); letter-spacing: .04em; text-transform: uppercase; }
+.fac .chip { min-height: 44px; }
+.posts { margin-bottom: 10px; }
+.post { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; }
+.post > div { min-width: 0; flex: 1 1 160px; }
+.post small { color: var(--muted); }
+.post select { min-height: 44px; flex: 0 1 180px; max-width: 100%; }
+.mutlist { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: #c9c3b6; }
+.mutlist small { font: 500 11px var(--f-mono); color: var(--muted); }
