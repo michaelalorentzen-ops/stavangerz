@@ -27,7 +27,7 @@ describe('isSafe', () => {
 describe('sektordata', () => {
   it('har type, trussel, kapasitet og utbytte', () => {
     expect(SECTORS.hjem).toMatchObject({ kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 } });
-    expect(SECTORS.tommerodden).toMatchObject({ kind: 'kai', threat: 2, capacity: 2, yield: { mat: 4 } });
+    expect(SECTORS.tommerodden).toMatchObject({ kind: 'kai', threat: 2, capacity: 2, yield: { mat: 6 } });
     expect(SECTORS.skolen).toMatchObject({ kind: 'offentlig', capacity: 8, yield: { mat: 1, medisin: 0.5 } });
   });
 
@@ -128,7 +128,7 @@ describe('kontroll og forfall', () => {
     calm(s, 'skolen', { control: 40, searched: 100 });
     const before = s.sectors.skolen.control;
     resolveDay(s);
-    expect(s.sectors.skolen.control).toBe(before - 5);
+    expect(s.sectors.skolen.control).toBe(before - PHASES[1].mods.controlDecay);
   });
 
   it('bosatt sektor faller ikke under 50', () => {

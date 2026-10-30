@@ -586,17 +586,17 @@ export const ENCOUNTERS: EncounterDef[] = [
     ],
   },
   {
-    id: 'lane_sukker', title: 'Naboen som skal låne', places: ['hjem', 'bolig'],
-    text: (_s, ctx) => `Det banker på ${at(ctx)}. Det er naboen, og han lurer på om han kan låne litt sukker, som vanlig. Over skulderen hans ser dere at gata er mindre tom enn den var i går.`,
+    id: 'lane_sukker', title: 'De som skal låne', places: ['hjem', 'bolig'],
+    text: (_s, ctx) => `Det banker på ${at(ctx)}. To fra en annen gjeng, de som har holdt seg i blokkene på andre siden. De lurer på om de kan låne litt sukker. Ingen spør hva de skal med det. Over skuldrene deres ser dere at gata er mindre tom enn den var i går.`,
     choices: [
       { label: 'Snu på det og be om noe tilbake', check: 'prat', run: (s, ctx, ok) => {
-        if (!ok) { s.moral -= 1; s.res.mat = Math.max(0, s.res.mat - ctx.threat); return `Han låner sukker, mel og et par bokser til. Han skal levere tilbake, sier han (-${ctx.threat} mat).`; }
+        if (!ok) { s.moral -= 1; s.res.mat = Math.max(0, s.res.mat - ctx.threat); return `De låner sukker, mel og et par bokser til. De skal levere tilbake, sier de (-${ctx.threat} mat).`; }
         s.res.medisin += 1; s.res.mat += ctx.threat;
-        return `Han ser flau ut, går hjem og kommer tilbake med det han har lånt siden 2021 (+${ctx.threat} mat, +1 medisin).`;
+        return `De ser på hverandre, går og kommer tilbake med et byttelass: hermetikk og en pakke Paracet (+${ctx.threat} mat, +1 medisin).`;
       } },
-      { label: 'Gi ham sukkeret', run: (s) => {
+      { label: 'Gi dem sukkeret', run: (s) => {
         s.res.mat = Math.max(0, s.res.mat - 1); s.moral += 3;
-        return 'Han blir glad. Noen ting skal være som før, også nå (-1 mat).';
+        return 'De nikker og går. Noen ting skal være som før, også nå (-1 mat).';
       } },
       retreat('Late som ingen er der'),
     ],

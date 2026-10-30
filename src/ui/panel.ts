@@ -31,14 +31,15 @@ export const TASK_HELP: Record<TaskType, string> = {
 };
 
 /**
- * Fristen for fasen. Før målet er nådd taper man når den går ut; etter velger spilleren selv
- * når fasen avsluttes, og ved grensen tvinges man over.
+ * Fristen for fasen. Før målet er nådd gjelder fristen turnCap; etter målet får spilleren graceDays
+ * til å farme og velger selv når fasen avsluttes, og når de har gått, tvinges man over.
  */
 export function phaseDeadline(s: GameState): { label: string; days: number; goalReached: boolean; onExpiry: string } | null {
   if (s.over !== null) return null;
   const days = Math.max(0, mods(s).turnCap - (s.day - s.phaseStartDay));
   if (s.goalDay === null) return { label: 'Frist for fasemålet', days, goalReached: false, onExpiry: deadlineText(s) };
-  return { label: s.phase < BUILT_PHASES ? `Fase ${s.phase + 1} tvinges om` : 'Fasen avsluttes om', days, goalReached: true, onExpiry: 'Målet er nådd. Fasen avsluttes selv ved fristen.' };
+  const left = Math.min(days, Math.max(0, mods(s).graceDays - (s.day - s.goalDay)));
+  return { label: s.phase < BUILT_PHASES ? `Fase ${s.phase + 1} om` : 'Fasen avsluttes om', days: left, goalReached: true, onExpiry: `Målet er nådd. Dere har ${mods(s).graceDays} dager på å forberede dere, så går dere videre av dere selv.` };
 }
 
 /** Hva som skjer når fristen går ut uten at målet er nådd, for gradens pris (DIFFICULTY i phases.ts). */

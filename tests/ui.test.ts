@@ -39,12 +39,13 @@ describe('panelet', () => {
     expect(t('brutal')).toContain('er runden tapt');
   });
 
-  it('fristen sier «Frist for fasemålet» før målet er nådd, og hvilken fase som tvinges fram etter', () => {
+  it('fristen sier «Frist for fasemålet» før målet er nådd, og nedtellingen til neste fase etter', () => {
     const s = fresh(), cap = mods(s).turnCap;
     s.day = 11;
     expect(phaseDeadline(s)).toMatchObject({ label: 'Frist for fasemålet', days: cap - 10, goalReached: false });
     s.goalDay = 9;
-    expect(phaseDeadline(s)).toMatchObject({ label: 'Fase 2 tvinges om', days: cap - 10, goalReached: true });
+    // graceDays fra målet ble nådd: 10 − (11 − 9)
+    expect(phaseDeadline(s)).toMatchObject({ label: 'Fase 2 om', days: mods(s).graceDays - 2, goalReached: true });
     s.day = s.phaseStartDay + cap + 3;
     expect(phaseDeadline(s)?.days).toBe(0);
     s.over = 'won';

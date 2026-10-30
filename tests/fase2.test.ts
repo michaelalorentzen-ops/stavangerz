@@ -45,7 +45,7 @@ describe('sektorer per fase', () => {
   it('fase 1-målet gjelder bare fase 1-sektorene', () => {
     const s = newGame(1, BOT_SELF, NB);
     for (const id of PLAYABLE) secure(s, id);
-    for (const g of GATE_IDS) s.gates[g].level = 2;
+    for (const g of GATE_IDS) s.gates[g].level = PHASES[1].goalGateLevel;
     expect(s.sectors[HQ_SECTOR].z).toBeGreaterThan(0);
     expect(phaseProgress(s).done).toBe(true);
   });
@@ -287,6 +287,8 @@ describe('anleggene virker', () => {
     c.stats.mekk = 10; c.gear = {};
     const levels: number[] = [];
     for (let i = 0; i < 20; i++) {
+      // målet er nådd, men testen skal ikke vinne fasen etter graceDays
+      s.goalDay = null;
       // nok mat og vann, så ingen dør av sult underveis
       s.res.skrap = 10; s.res.tre = 10; s.res.mat = 40; s.res.vann = 40; s.stash = []; c.stats.mekk = 10; c.xp = 0; c.hp = 3;
       for (const x of s.crew) x.task = { type: 'hvile' };
