@@ -243,14 +243,40 @@ Trusselnivået styrer:
 
 **[Låst]** Mutasjoner skjer **bare ved faseskifte**. Fase 1 har ingen mutasjoner.
 
-**[Forslag]** Ved hvert faseskifte får zombiene et tilfeldig antall mutasjonspoeng. Poengene kjøpes inn i en matrise med fire grener, vektet av seeden. Evnene i en gren kommer i rekkefølge, for eksempel løpere før hoppere før dykkere. Hver mutasjon har minst ett motspill.
+**[Forslag]** Ved hvert faseskifte trekker zombiene **2–3 mutasjoner** fra fire grener, vektet av seeden. Evnene i en gren kommer i rekkefølge, for eksempel løpere før hoppere. Ved fase 5 har zombiene da 8–12 av 15, så hver runde blir forskjellig.
 
-| Gren | Eksempler |
-|---|---|
-| Bevegelse | Løper raskere, hopper over sperringer, svømmer, går under vann |
-| Sanser | Hører støy, lukter mat |
-| Kropp | Seigere, pansret hud, giftig bitt |
-| Atferd | Smartere, flokk, graver i kjellere, går etter den som gjør mest skade, går etter den med minst liv |
+**Mutasjonene gjelder hele byen [Forslag]**, men hvert område har en vekting. Zombiene på Hundvåg kan for eksempel ha mer av hørselen enn de på Buøy. Det gir områdene personlighet uten at det blir mange separate tilstander å holde styr på.
+
+**Mutasjonene synes [Forslag]:** En mutasjon viser seg som en zombietype i encounters, logg og på kartet: «Joggere», «Kolosser». Spilleren skal merke at noe har endret seg, ikke bare se et tall.
+
+**Vekting og sperrer [Forslag]:**
+- Hver mutasjon har en **tidligste fase** og en **vekt per fase**. De verste er nesten umulige å få i fase 2.
+- **Høyst én mutasjon per gren ved hvert faseskifte.** Hoppere, svømmere og kolosser på én gang skal ikke skje.
+- Grenvektene fra seeden avgjør hvilken retning zombiene utvikler seg i over hele runden.
+
+**Matrisen [Forslag]:** Hver mutasjon har en effekt og minst ett motspill. Motspillet styrer hvilket utstyr, hvilke bygg og hvilken forskning vi lager.
+
+| Gren | Mutasjon | Effekt | Motspill |
+|---|---|---|---|
+| Bevegelse | Løpere | flere skader i kamp | avstandsvåpen, tung beskyttelse |
+| | Hoppere | portene stopper færre | piggtråd, høyere gjerder (portnivå 4), vakt med *rekkevidde* |
+| | Svømmere | kaiene blir innganger | sjøsperringer, vakt på kaia |
+| | Dykkere | dukker opp hvor som helst langs vannet | nett under vann, ekkolodd |
+| Sanser | Hørsel | bråk trekker mange flere | *stille* våpen (prosjektil), lyddemper |
+| | Luktesans | finner matlageret og angriper hjemme | lukttett lager, lokkemat i feller |
+| | Nattsyn | angriper mer om natta | lys og lyskastere (strøm) |
+| Kropp | Seige | tåler mer | egg |
+| | Pansret hud | slag er nesten nytteløst | *gjennomslag*: spyd, skytevåpen, motor |
+| | Giftige | bitt gjør mer skade | *bittsikker* beskyttelse, motgift |
+| | Kolosser | enkeltzombier som knuser vakter | *gjennomslag*, flere i gruppa |
+| Atferd | Smarte | tester portene, finner svake punkter | feller, vakter som rullerer |
+| | Flokk | kommer i store grupper | *spredning*, *brann*, smale porter |
+| | Kjellergravere | flere gjemmer seg og bryter ut | speiding, gjennomsøking, hund |
+| | Jegere | oppsøker crew som er ute | *stille*, kamuflasje, kortere tokt |
+
+Utstyret trenger dermed våpenegenskapene *gjennomslag*, *spredning*, *rekkevidde*, *stille* og *brann*, beskyttelse som er *tung* eller *lett* og *bittsikker*, og verktøy for lys, feller og lyddemping.
+
+**Forskning låser opp motspillet [Forslag]:** Utstyr og bygg som er motspill mot en mutasjon, kan bare **lages og bygges** når mutasjonen er forsket på. Spydet kan for eksempel lages i verkstedet først når pansret hud er kjent, og portnivå 4 kan bygges først når hoppere er kjent. Du kan fortsatt **finne** slikt utstyr ute i byen før det.
 
 ### Forskning
 
