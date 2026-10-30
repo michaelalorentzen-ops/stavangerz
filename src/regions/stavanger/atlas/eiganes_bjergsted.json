@@ -1,0 +1,137 @@
+{
+  "id": "eiganes_bjergsted",
+  "name": "Eiganes og Bjergsted",
+  "at": "på Eiganes",
+  "ring": 2,
+  "phase": 4,
+  "density": 2,
+  "baseThreat": 2,
+  "gates": [
+    {
+      "name": "Vestporten",
+      "real": "Madlaveien ved Uno-X",
+      "between": ["eiganes_bjergsted", "madla"],
+      "lat": 58.9617,
+      "lon": 5.7151,
+      "notes": "Madlaveien ved Uno-X, mot Madla og Forus. Hovedveien for alt som kommer fra sørvest."
+    },
+    {
+      "name": "Mot sentrum",
+      "real": "Løkkeveien og Uelands gate på Bjergsted",
+      "between": ["eiganes_bjergsted", "sentrum"],
+      "lat": 58.9742,
+      "lon": 5.7218,
+      "notes": "Fra Konserthuset og Strandkaien inn mot Holmen. Veien alle tok første kvelden."
+    },
+    {
+      "name": "Mot Våland",
+      "real": "Motorveien og Eiganestunnelen",
+      "between": ["eiganes_bjergsted", "valand"],
+      "lat": 58.9596,
+      "lon": 5.7229,
+      "notes": "E39 over mot Vålandshaugen og Hundvågtunnelen."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "mosvatnet",
+      "name": "Parken", "short": "Parken", "at": "i parken",
+      "real": "Mosvatnet naturreservat", "realAt": "ved Mosvatnet",
+      "kind": "natur", "threat": 1,
+      "lat": 58.9567, "lon": 5.7118,
+      "gives": "vann, fugler (mat), åpent og oversiktlig",
+      "notes": "Naturreservat og tur-vann. Rolig, men ikke fordi det er sikkert, bare fordi alle zombiene fant en mer interessant retning."
+    },
+    {
+      "id": "eiganes_villa",
+      "name": "Villaene", "short": "Villaene", "at": "i villaene",
+      "real": "Eiganes, Ledaal og Breidablikk", "realAt": "på Eiganes",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.9655, "lon": 5.7185,
+      "gives": "få folk, mye å finne per hus, vinkjellere og hager",
+      "notes": "Byens fineste villastrøk, med herregårdene Ledaal og Breidablikk. Mange kjellere, få naboer, enda færre som husker å låse."
+    },
+    {
+      "id": "kampen",
+      "name": "Rekkehusene", "short": "Rekkehusene", "at": "i rekkehusene",
+      "real": "Kampen", "realAt": "på Kampen",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.9712, "lon": 5.7135,
+      "gives": "mange naboer å rekruttere, korte avstander, få kjellere",
+      "notes": "Kampen: tett, eldre bebyggelse med kirke og skole, ned mot Bjergsted. Her bodde de som trodde det var best å bo nær sentrum."
+    },
+    {
+      "id": "stokka_lassa",
+      "name": "Boligfeltet", "short": "Boligfeltet", "at": "i boligfeltet",
+      "real": "Stokka og Lassa", "realAt": "på Stokka og Lassa",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.9605, "lon": 5.6990,
+      "gives": "mat og vann i husene, mange kjellere og garasjer",
+      "notes": "Eneboliger og rekker vest for Eiganes, med skole, idrettspark og sykehjem. Mye å finne, mange kjellere å rydde."
+    },
+    {
+      "id": "eiganes_mat",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Extra Eiganes og Meny Stokka", "realAt": "på Extra Eiganes",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 3,
+      "lat": 58.9650, "lon": 5.7040,
+      "gives": "mat, vann, litt bakevarer",
+      "notes": "Extra Eiganes og Meny Stokka ligger like ved hverandre, og posten er i samme bygg. Mat og vann, ingen støvler."
+    },
+    {
+      "id": "svilandsgata",
+      "name": "Bensinstasjonen", "short": "Bensinstasjonen", "at": "på bensinstasjonen",
+      "real": "Tanken Svilandsgate", "realAt": "på Tanken Svilandsgate",
+      "kind": "industri", "shopType": "bensinstasjon", "threat": 2,
+      "lat": 58.9731, "lon": 5.7183,
+      "gives": "drivstoff, snacks, litt verktøy",
+      "notes": "Bjergsted, rett ved porten mot sentrum. Siste tank før byen."
+    },
+    {
+      "id": "katedralskolen",
+      "name": "Skolen", "short": "Skolen", "at": "på skolen",
+      "real": "Stavanger katedralskole, Bjergsted", "realAt": "på Stavanger katedralskole",
+      "kind": "offentlig", "threat": 3,
+      "lat": 58.9766, "lon": 5.7217,
+      "gives": "mat fra skolekjøkkenet, plass, lab (forskning)",
+      "notes": "Videregående skole på Bjergsted. Laboratoriene har stått ubrukt siden vinterferien."
+    },
+    {
+      "id": "konserthuset",
+      "name": "Konserthuset", "short": "Konserthuset", "at": "på konserthuset",
+      "real": "Stavanger konserthus", "realAt": "på Stavanger konserthus",
+      "kind": "offentlig", "threat": 4,
+      "lat": 58.9770, "lon": 5.7199,
+      "gives": "nødstrøm, plass, scene og lager, store lokaler til mange",
+      "notes": "Stort, nytt og med nødstrøm. Grieg på loop står allerede i ZONE_INFO; zombiene har vist seg å være fornøyde med repertoaret. Konserthuset er en vanlig offentlig sektor, ikke en HQ-type."
+    }
+  ],
+  "pois": [
+    { "name": "Mosvatnet naturreservat", "type": "natur", "lat": 58.95675, "lon": 5.71179, "osm": "way/1477381663" },
+    { "name": "Ledaal", "type": "stedsnavn", "lat": 58.96736, "lon": 5.72102, "osm": "node/8418850007" },
+    { "name": "Breidablikk", "type": "stedsnavn", "lat": 58.96549, "lon": 5.72192, "osm": "node/10004638717" },
+    { "name": "Ledaalsparken", "type": "natur", "lat": 58.96677, "lon": 5.72117, "osm": "relation/13877931" },
+    { "name": "Kampen", "type": "stedsnavn", "lat": 58.97169, "lon": 5.71412, "osm": "node/351096577" },
+    { "name": "Kampen kirke", "type": "offentlig", "lat": 58.97091, "lon": 5.71205, "osm": "way/87885186" },
+    { "name": "Kampen skole", "type": "skole", "lat": 58.972, "lon": 5.71666, "osm": "way/31713082" },
+    { "name": "Stokka", "type": "stedsnavn", "lat": 58.96431, "lon": 5.69769, "osm": "node/351096602" },
+    { "name": "Lassa", "type": "stedsnavn", "lat": 58.95694, "lon": 5.69378, "osm": "node/10004638644" },
+    { "name": "Extra Eiganes", "type": "matbutikk", "lat": 58.96521, "lon": 5.70406, "osm": "node/449399560" },
+    { "name": "Helgø Meny Stokka", "type": "matbutikk", "lat": 58.96454, "lon": 5.70284, "osm": "node/6030392066" },
+    { "name": "Rema 1000 Bjergsted", "type": "matbutikk", "lat": 58.97297, "lon": 5.72164, "osm": "node/6222869307" },
+    { "name": "Apotek 1 Bjergsted", "type": "apotek", "lat": 58.97313, "lon": 5.72018, "osm": "node/8361532015" },
+    { "name": "Tanken Svilandsgate", "type": "bensinstasjon", "lat": 58.97309, "lon": 5.7183, "osm": "node/3545787812" },
+    { "name": "Uno-X Madlaveien", "type": "bensinstasjon", "lat": 58.96165, "lon": 5.71508, "osm": "node/6119738967" },
+    { "name": "Stavanger katedralskole, Bjergsted", "type": "skole", "lat": 58.97657, "lon": 5.72173, "osm": "node/5851476752" },
+    { "name": "Eiganes skole", "type": "skole", "lat": 58.96448, "lon": 5.70694, "osm": "node/384561716" },
+    { "name": "Konserthuset i Stavanger", "type": "offentlig", "lat": 58.97695, "lon": 5.71987, "osm": "way/32655261" },
+    { "name": "Stavanger stadion", "type": "idrett", "lat": 58.96501, "lon": 5.71156, "osm": "relation/17394999" },
+    { "name": "Stokka sykehjem", "type": "helse", "lat": 58.96098, "lon": 5.69311, "osm": "node/11740487042" },
+    { "name": "Eiganestunnelen", "type": "tunnel", "lat": 58.9684, "lon": 5.70912, "osm": "way/192602744" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.7 Eiganes og Bjergsted"
+  ],
+  "notes": "Villastrøk og park: det mest spredte av de fire fase 4-områdene (density 2), og derfor det trygge stedet å trekke seg tilbake til, i tråd med sikkerhetsgarantien i modell C. Ingen nøkkelsted og ingen HQ-kandidat: Apotek 1 Bjergsted ligger 700 m fra Mediegården og er utelatt etter [Problem]-punktet i kartleggingsdokumentet (ett apotek per tredje område). Brannstasjonen i Schancheholen (58,9535, 5,720; way/823004522) ligger i bbox, men Storhaug har allerede brannstasjon som HQ-kandidat, og Eiganes bør heller ikke ha en HQ-kandidat i fase 4. Konserthuset er en vanlig offentlig sektor, ikke en egen HQ-type (jf. [Åpent] i 1.7). Solvang sykehjem står ikke i dumpen; Stokka sykehjem er listet i pois i stedet. [Sjekk] Nordporten mot Tasta og Randaberg (Randabergveien ved 58,978, 5,702) er ikke med som port fordi Tasta ikke er et område i atlaset ennå. [Sjekk] Vestporten kan like gjerne gå mot ullandhaug_hinna enn Madla for biltrafikk fra Forus."
+}
