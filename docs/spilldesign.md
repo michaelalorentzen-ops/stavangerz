@@ -470,6 +470,43 @@ Et tokt skal gi mer per dag enn å sanke hjemme: mer bytte, dobbel sjanse for ko
 
 Toktgruppa har bare med seg det de bærer. Skader og brukt utstyr akkumuleres. Det er her «så vidt kom vi oss hjem» skal skje.
 
+
+**Tokt mot et mål [Forslag]:** Et tokt går til et bestemt sted på kartet utenfor området dere har, for eksempel apoteket på Hundvåg, våpenbutikken i sentrum eller verftet.
+- **Krav:** Noen tokt krever en ferdighet over et nivå, eller noe dere har med, for eksempel brekkjern, båt eller drivstoff.
+- **Sjansen vises** før dere drar. Den regnes ut fra gruppa, utstyret og hvor langt det er.
+- **Avstand:** Avstanden måles fra nærmeste område dere har tatt. Jo mer dere har tatt, jo kortere og tryggere blir toktet. Belønningen blir også mindre, fordi områdene på veien allerede er plyndret av dere selv.
+- **Valget:** Skal tre stykker være borte i ti dager, eller skal de bli hjemme og utvide? Det er risiko mot belønning.
+
+---
+
+## 8b. Kriser og vendepunkter [Forslag]
+
+Inspirert av brettspill der hver runde har en felles trussel og skjulte dilemmaer. Vi lager vår egen variant og kopierer ikke mekanikken.
+
+### Kriser
+
+Med jevne mellomrom, for eksempel hver femte dag, kommer en **krise** som alle må bidra til. Den vises på forhånd med:
+- **et krav:** ressurser eller dagsverk, for eksempel «Influensa: 3 medisin innen 3 dager», «Stormen: 6 tre til å tette taket» eller «Vannpumpa streiker: 2 dagsverk med Mekk»;
+- **en frist:** antall dager;
+- **en konsekvens hvis kravet ikke er møtt:** tapt moral, flere zombier, skader eller tapte ressurser.
+
+Dere bidrar med oppdraget «Bidra til krisen» eller ved å gi ressurser. Halvveis gir halv straff. Mer enn kravet kan gi en liten bonus i moral. Krisen er synlig hele tiden, så den er noe dere planlegger rundt. Den løses i `resolveDay()` når fristen går ut.
+
+### Vendepunkter
+
+Hver dag trekker spillet i det skjulte et **vendepunkt** med en betingelse, for eksempel:
+- at noen rydder en butikk,
+- at en bestemt person er ute,
+- at noen bruker medisin,
+- at ingen hviler,
+- at noen sanker hjemme.
+
+Hvis dagens ordrer oppfyller betingelsen, utløses kortet. Det blir et dilemma som venter på valg, i `state.pending` slik som encounters. Hvis ikke, legges kortet tilbake uten at noe skjer. Valgene er ofte tøffe, og noen er bare dårlige.
+
+Dagens hendelser blir vendepunkter. De trekkes ikke lenger tilfeldig, men utløses av det dere faktisk gjør. Hendelsen om måkene kan for eksempel bare skje når noen sanker mat. Det gjør hendelsene logiske, og det gir spilleren en følelse av at valgene har følger.
+
+**[Åpent]** Skal betingelsen vises som et hint («noe er i gjære rundt maten»), eller være helt skjult?
+
 ---
 
 ## 9. Utstyr
