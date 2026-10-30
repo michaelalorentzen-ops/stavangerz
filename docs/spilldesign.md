@@ -236,7 +236,7 @@ Trusselnivået styrer:
 
 **Stedet [Forslag]:** Hvert kort sier hvor det kan skje: hvilke sektortyper (hjem, bolig, kai, butikk, industri, offentlig) og om det kan skje på tokt. Det blir ingen heis i rekkehuset. De fire sist trukne kortene trekkes ikke igjen før andre har vært innom.
 
-**Innsatsen vises [Forslag]:** Hvert valg viser før du velger hva det kan gi når det lykkes, og hva det kan koste når det går galt, for eksempel «+1 medisin» eller «opptil −2 mat · kan gi skade». Etterpå vises hva som faktisk endret seg. Det samme gjelder hendelser som måkene. Alt som teller for fasemålet skal vises, også portarbeid, nye i crewet, oppdrag, speidede sektorer, kontroll og gjennomsøkt.
+**Innsatsen vises [Bygget]:** Før du velger, viser hvert valg hvilken ferdighet som sjekkes, hvem som prøver, sjansen i ord («god sjanse» fra 70 %, «usikkert» fra 40 %, ellers «dårlig sjanse») og hva det kan gi eller koste, uten tall: «kan gi medisin», «kan koste mat · kan gi skade». Retningen og risikoen ser du, de nøyaktige tallene ikke. Etterpå vises nøyaktig hva som endret seg, for eksempel «+1 medisin» eller «−2 mat». Det samme gjelder hendelser som måkene. Alt som teller for fasemålet skal vises, også portarbeid, nye i crewet, oppdrag, speidede sektorer, kontroll og gjennomsøkt. Motoren regner fortsatt ut de eksakte tallene (boten bruker dem); bare visningen gjør dem om til ord.
 
 ---
 
