@@ -386,7 +386,8 @@ Beslutninger må tas. Seeden og startstedet kan gi griseflaks eller motgang. Det
 
 **Tech [Forslag]:** Tech er en ny ressurs: kretskort, datamaskiner, telefoner og batterier. Den finnes på kontorer og i elektronikkbutikker, og den brukes til tech-utstyr og til forskning (kapittel 6). Den kommer tidligst i fase 2.
 
-**Materialer går aldri helt tom [Forslag]:** Skrap, tre og metall er uendelige i praksis. Byen hadde langt flere folk enn basen noen gang får. Det som er knapt, er folk til å hente dem. Materialer er derfor en jobb du setter folk på, ikke noe som tømmes. Mat, medisin og nøkkelfunn er derimot begrenset per sted.
+**Materialer går aldri helt tom [Åpent]:** Skrap, tre og metall er uendelige i praksis. Byen hadde langt flere folk enn basen noen gang får. Det som er knapt, er folk til å hente dem. Materialer er derfor en jobb du setter folk på, ikke noe som tømmes. Mat, medisin og nøkkelfunn er derimot begrenset per sted.
+*Innvending:* I fase 1 er det tre og skrap som begrenser portene. Uendelige materialer der tar bort det presset. Det bør trolig først gjelde fra fase 2, når HQ har produksjon.
 
 **Jorder [Forslag]:** Mat i stor skala krever dyrkbar mark. Ligger HQ i et område uten jorder, kan dere rive en sone med hus for å lage dem. Det tar lang tid, men gir tre og skrap underveis. Startstedet avgjør hvor lett det er, og det er en del av griseflaksen.
 
@@ -471,15 +472,22 @@ Et tokt skal gi mer per dag enn å sanke hjemme: mer bytte, dobbel sjanse for ko
 Toktgruppa har bare med seg det de bærer. Skader og brukt utstyr akkumuleres. Det er her «så vidt kom vi oss hjem» skal skje.
 
 
-**Tokt mot et mål [Forslag]:** Et tokt går til et bestemt sted på kartet utenfor området dere har, for eksempel apoteket på Hundvåg, våpenbutikken i sentrum eller verftet.
+**Tokt mot et mål [Åpent]:** Et tokt går til et bestemt sted på kartet utenfor området dere har, for eksempel apoteket på Hundvåg, våpenbutikken i sentrum eller verftet.
 - **Krav:** Noen tokt krever en ferdighet over et nivå, eller noe dere har med, for eksempel brekkjern, båt eller drivstoff.
 - **Sjansen vises** før dere drar. Den regnes ut fra gruppa, utstyret og hvor langt det er.
 - **Avstand:** Avstanden måles fra nærmeste område dere har tatt. Jo mer dere har tatt, jo kortere og tryggere blir toktet. Belønningen blir også mindre, fordi områdene på veien allerede er plyndret av dere selv.
 - **Valget:** Skal tre stykker være borte i ti dager, eller skal de bli hjemme og utvide? Det er risiko mot belønning.
 
+*Innvendinger:*
+- **Tiden.** Ti dager er 20 % av en fase på 50 dager, og hver dag koster et valg. Tokt bør trolig vare 2–5 dager.
+- **Belønning som synker nær grensen.** Et kort tokt blir da verken spennende eller verdt det, så alle drar langt. Det er kanskje bedre at målet bestemmer belønningen (apoteket har medisin uansett), og at avstanden bare styrer tid og fare.
+- **Kartet.** Dette trenger mål utenfor Buøy, så det hører sammen med kartleggingen av Stavanger.
+
 ---
 
-## 8b. Kriser og vendepunkter [Forslag]
+## 8b. Kriser og vendepunkter [Åpent]
+
+Dette er ideer, ikke besluttet. Innvendingene står under hver del.
 
 Inspirert av brettspill der hver runde har en felles trussel og skjulte dilemmaer. Vi lager vår egen variant og kopierer ikke mekanikken.
 
@@ -491,6 +499,8 @@ Med jevne mellomrom, for eksempel hver femte dag, kommer en **krise** som alle m
 - **en konsekvens hvis kravet ikke er møtt:** tapt moral, flere zombier, skader eller tapte ressurser.
 
 Dere bidrar med oppdraget «Bidra til krisen» eller ved å gi ressurser. Halvveis gir halv straff. Mer enn kravet kan gi en liten bonus i moral. Krisen er synlig hele tiden, så den er noe dere planlegger rundt. Den løses i `resolveDay()` når fristen går ut.
+
+*Innvending:* Fase 1 har allerede faste sluk: mat hver dag, portene hver natt, fasefristen og negative hendelser. En krise med jevne mellomrom er enda en ting å holde styr på, og UX er allerede et svakt punkt. «Alle må bidra» gir mest mening i flerspiller, der flere spillere deler byrden. Alene er det en hendelse med frist. Kriser bør trolig vente til flerspiller, eller bli noen få hendelser med frist.
 
 ### Vendepunkter
 
@@ -506,6 +516,8 @@ Hvis dagens ordrer oppfyller betingelsen, utløses kortet. Det blir et dilemma s
 Dagens hendelser blir vendepunkter. De trekkes ikke lenger tilfeldig, men utløses av det dere faktisk gjør. Hendelsen om måkene kan for eksempel bare skje når noen sanker mat. Det gjør hendelsene logiske, og det gir spilleren en følelse av at valgene har følger.
 
 **[Åpent]** Skal betingelsen vises som et hint («noe er i gjære rundt maten»), eller være helt skjult?
+
+*Innvending:* I brettspillet virker det fordi en annen spiller holder kortet og roper «Stopp!». Alene føles en skjult betingelse som tilfeldighet. Lærer spilleren at «noe fælt skjer når jeg hviler», straffes handlinger usynlig, og det gjør folk forsiktige, ikke engasjerte. Det verdifulle er at hendelser henger sammen med det dere gjør. Det kan vi få med synlige koblinger («mens dere sanket mat …») uten skjulte kort, slik vi gjorde med encounters, som er knyttet til stedet. Hendelsene bør uansett flyttes inn i spilltilstanden, og det er et eget arkitekturfunn.
 
 ---
 
@@ -620,7 +632,7 @@ Dette er retning, ikke spesifikasjon. Fase 1 skal ikke bygge noe av det, men må
 - **[Åpent]** Styreform, for eksempel demokrati, diktatur eller råd, velges et sted i fase 3–4, med reelle byttehandler.
 - **[Låst]** Kjernecrewet ditt kan alltid sendes ut direkte, uansett fase.
 
-### Skala: crew er enheten [Forslag]
+### Skala: crew er enheten [Åpent]
 
 Basen kan vokse fra noen naboer til tusenvis av folk, men spillet skal ikke regne på 150 000 enkeltmennesker. Fra fase 3 er **crewet** enheten. Hvert crew har en leder, og mat, moral og oppdrag regnes per crew. Har du 100 crew-ledere og 10 000 folk, betaler du mat for 100 crew, med en sats som går opp med størrelsen på crewet.
 
@@ -631,6 +643,8 @@ Basen kan vokse fra noen naboer til tusenvis av folk, men spillet skal ikke regn
 En større gjeng gir ikke mer funn. Den gir flere hender (flere oppdrag samtidig, raskere gjennomsøking) og større behov. Behovet tømmer området, og det presser dere utover, der det er mer å hente og farligere. Det er motoren i fasene.
 
 **[Åpent]** Hvor mange folk er i et crew, og hvor mange crew-ledere kan du ha?
+
+*Innvending:* Er maten per crew og ikke per person, er én gigantisk gjeng et opplagt juksetriks. «Satsen øker med størrelsen» må tenkes ut før dette kan låses, for eksempel med en grense på størrelsen per crew eller mat i trinn.
 
 ### HQ produserer [Forslag]
 
