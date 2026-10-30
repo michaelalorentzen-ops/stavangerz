@@ -5,12 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { AREA, GATES, LANDMARKS, SECTORS, ZONES } from '../src/engine';
 
 /** Filene der stedsnavn hører hjemme. Alt annet skal slå opp navnet via id. */
-const OWNERS = [/src\/regions\/[^/]+\/places\.ts$/, /src\/regions\/[^/]+\/map\.config\.json$/, /src\/data\/map\.json$/];
+const OWNERS = [/src\/regions\/[^/]+\/places\.ts$/];
 /** Navn som også er vanlige ord, og som derfor ikke kan søkes etter */
 const COMMON = new Set(['Hjemme', 'Skolen', 'Sentrum']);
 
 const files = (dir: string): string[] =>
-  readdirSync(dir).flatMap((f) => { const p = join(dir, f); return statSync(p).isDirectory() ? files(p) : /\.(ts|html)$/.test(p) ? [p] : []; });
+  readdirSync(dir).flatMap((f) => { const p = join(dir, f); return statSync(p).isDirectory() ? files(p) : /\.(ts|html|json)$/.test(p) ? [p] : []; });
 /** Fjerner kommentarer, så forklaringer i koden kan nevne steder, og spillnavnet «Stavanger Z», som er et produktnavn */
 const code = (t: string) => t.replace(/Stavanger Z\b/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1').replace(/<!--[\s\S]*?-->/g, '');
 

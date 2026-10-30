@@ -1,6 +1,6 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, INTRO, LANDMARKS, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, INTRO, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
@@ -24,9 +24,9 @@ const on = (id: string, fn: () => void) => { const b = document.getElementById(i
 export function titleScreen() {
   const saved = load();
   modal(`<div class="title" style="display:grid;gap:18px">
-    <div class="kick">Et turbasert overlevelsesspill fra byøyene</div>
+    <div class="kick">Et turbasert overlevelsesspill fra ${AREA.surroundings}</div>
     <h1>STAVANGER <b>Z</b></h1>
-    <p>Utbruddet starter en tirsdag morgen. Du bor ${AREA.at}. ${LANDMARKS.bybrua} er stengt, ${LOCKED.short} er overkjørt, og det regner. Samle et crew blant naboene, rydd øya sektor for sektor og bygg sperringer før natta tar dere.</p>
+    <p>Utbruddet starter en tirsdag morgen. Du bor ${AREA.at}. ${LANDMARKS.bybrua} er stengt, ${LOCKED.short} er overkjørt, og det regner. Samle et crew blant naboene, rydd ${AREA.kind} sektor for sektor og bygg sperringer før natta tar dere.</p>
     <div class="coords">${AREA.coords} · ${AREA.name}, ${AREA.district} bydel</div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
@@ -207,10 +207,10 @@ export function endScreen() {
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
     modal(`<div class="radio">Samband · alle stasjoner</div><h2>${AREA.name} er sikret</h2>
-      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner ${SECTORS.obs.realAt}: «${AREA.name.toUpperCase()}: 1 – APOKALYPSEN: 0».</p>
+      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og ${winBanner()}.</p>
       <div class="metrics">${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}${metric('Crew mistet', st.lost)}</div>
       <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>${LOCKED.name}</h2>
-      <p>Horden på verftet venter. ${S.flags.gann ? `Skoleskipet Gann ligger klart ved ${SECTORS.tommerodden.real}.` : 'Dere har ingen båt ennå.'} ${S.flags.buss ? `Kolumbus-bussen ${SECTORS.sorspissen.realAt} har full tank.` : 'Dere har ikke funnet transport ennå.'}</p></div>
+      <p>${phase2Teaser(S)}</p></div>
       <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Fortsett ${AREA.at}</button></div>`);
     on('cont', () => { continueAfterWin(S); closeModal(); ui.refresh(); });
   } else if (S.over === 'timeout') {

@@ -39,7 +39,7 @@ const daysText = (n: number) => `${n} ${n === 1 ? 'dag' : 'dager'}`;
 
 /** En endringslinje fra motoren er negativ når den starter med minus eller handler om skade, død eller slitasje. */
 export function isBadChange(line: string): boolean {
-  return /^[−-]/.test(line.trim()) || /skadet|døde|slites/i.test(line);
+  return /^[−-]/.test(line.trim()) || /skadet|døde|slites|borte for godt/i.test(line);
 }
 
 /** Endringene etter et valg som chips. */
@@ -49,7 +49,7 @@ export function changesHtml(lines: string[]): string {
 }
 
 /** En forhåndsvisningslinje som varsler om noe vondt, også uten minus: «kan gi skade», «kan slite utstyr». */
-export const isBadPreview = (line: string): boolean => isBadChange(line) || /opptil\s*[−-]|skade|slit|døde|dør\b/i.test(line);
+export const isBadPreview = (line: string): boolean => isBadChange(line) || /opptil\s*[−-]|skade|slit|døde|dør\b|borte for godt/i.test(line);
 
 /** Hva et valg kan gi: ok-linjer grønne (røde om de varsler om skade eller tap), fail-linjer røde bak «Feiler:». */
 export function previewHtml(p: { ok: string[]; fail: string[] | null }): string {

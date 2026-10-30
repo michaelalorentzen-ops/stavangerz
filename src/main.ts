@@ -11,7 +11,8 @@ import type { PanelTab, Selection } from './ui/store';
 
 $('area-phase').textContent = `Fase 1 · ${AREA.name}`;
 $('area-name').textContent = AREA.name;
-$('map').parentElement!.setAttribute('aria-label', `Kart over ${AREA.name} og byøyene`);
+$('area-all').textContent = AREA.surroundings[0].toUpperCase() + AREA.surroundings.slice(1);
+$('map').parentElement!.setAttribute('aria-label', `Kart over ${AREA.name} og ${AREA.surroundings}`);
 
 function select(s: Selection) {
   ui.sel = s;

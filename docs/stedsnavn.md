@@ -8,7 +8,7 @@ Tonen er Dead of Winter: et kart over funksjoner, ikke adresser. Spilleren skal 
 
 1. **Funksjon først.** Navnet sier hva stedet er: «Byggvarehuset», ikke «Obs Bygg Buøy».
 2. **Bestemt form entall, ett eller to ord.** «Kaia», «Boligfeltet», «Bilforhandleren». `short` er som regel det samme som `name`.
-3. **Det ekte navnet står i `real`, `realAt` og beskrivelsen.** `real` vises som undertittel på sektorkortet, og lokale tekster (hendelser, encounters) bruker `real`, mens logg og UI bruker funksjonsnavnet. «Ukens tilbud: alt. Obs Bygg har gangene fulle av spikerpistoler …». Merkenavn, gatenavn og lokale kallenavn hører hjemme i `desc`, i funn og i hendelser, aldri i navnet.
+3. **Det ekte navnet står i `real`, `realAt` og beskrivelsen.** `real` vises som undertittel på sektorkortet. Tekster som forteller hvor crewet er eller hvilken sektor som påvirkes (logg, encounters, UI, utfall av valg), bruker funksjonsnavnet, fordi spilleren skal kjenne igjen sektoren på kartet. Tekster om byen og folkene i den (hendelser, beskrivelser), bruker `real`. «Ukens tilbud: alt. Obs Bygg har gangene fulle av spikerpistoler …». Merkenavn, gatenavn og lokale kallenavn hører hjemme i `desc`, i funn og i hendelser, aldri i navnet.
 4. **Ingen vitser i navnet.** Humoren står i teksten rundt. Navnet er tørt og nyttig.
 5. **Like steder skilles med retning**, sett fra midten av området: «Boligfeltet nord», «Boligfeltet sør». Bruk retningen bare når det finnes to av samme slag.
 6. **Mer enn to av samme slag skilles med et kjennetegn:** «Blokkene ved kaia», «Villaene på høyden». Kjennetegnet skal være noe man ser på kartet.
@@ -49,7 +49,7 @@ Navngi etter bebyggelsen. Den forteller hvor mange som bodde der, og hvor mange 
 
 ### Offentlige steder
 
-Skolen, Barnehagen, Kirka, Biblioteket, Idrettshallen, Legesenteret, Sykehjemmet, Brannstasjonen.
+Skolen, Barnehagen, Kirka, Biblioteket, Idrettshallen, Legesenteret, Sykehjemmet. Brannstasjonen og Politistasjonen er HQ-kandidater (kapittel 3), ikke vanlige sektorer.
 
 ### Arbeid og havn
 

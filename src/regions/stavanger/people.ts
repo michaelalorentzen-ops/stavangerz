@@ -1,5 +1,7 @@
 // Naboene som kan bli med i crewet. De er herfra, og det merkes.
 import type { NeighborDef } from '../../engine/data';
+import type { TraitId } from '../../engine/types';
+import { AREA, LANDMARKS, SECTORS } from './places';
 
 export const NEIGHBORS: NeighborDef[] = [
   { id: 'kjell', name: 'Kjell', age: 64, role: 'Styreleder i borettslaget', trait: 'hms', stats: { muskler: 18, kondis: 18, snoking: 38, nerver: 38, mekk: 38, prat: 58 }, quip: 'Har allerede kalt inn til ekstraordinært årsmøte.' },
@@ -13,3 +15,20 @@ export const NEIGHBORS: NeighborDef[] = [
   { id: 'gunn', name: 'Gunn', age: 58, role: 'Kokk', trait: 'kokk', stats: { muskler: 38, kondis: 28, snoking: 38, nerver: 38, mekk: 28, prat: 48 }, quip: 'Kan lage fiskesuppe av ingenting. Har gjort det før.' },
 ];
 export const START_NEIGHBORS = ['kjell', 'mona', 'arild', 'sondre', 'ingrid', 'toregil', 'leah', 'bjarne'];
+
+/** Hva hver egenskap heter og gjør. Effekten står i motoren; teksten er lokal. */
+export const TRAITS: Record<TraitId, { name: string; desc: string }> = {
+  lokalkjent: { name: 'Lokalkjent', desc: `Vet hvor alt er ${AREA.at}. +2 når du leter.` },
+  filmnerd: { name: 'Har sett alle zombiefilmene', desc: '+10 Nerver. Sier «sikt mot hodet» ved enhver anledning.' },
+  dugnad: { name: 'Fast inventar på dugnad', desc: '+2 når du befester. Har alltid med egen drill.' },
+  hms: { name: 'HMS-ansvarlig', desc: 'Befestninger blir solide (+2), men fyller ut avviksskjema etter hver kamp.' },
+  nattevakt: { name: `Nattevakt på ${LANDMARKS.sus}`, desc: 'Lapper sammen crewet. Hviledager helbreder alltid, og sparer ofte medisin.' },
+  sveiser: { name: `Sveiser ${SECTORS.rosenberg.at}`, desc: '+3 når du befester. Kjenner verftet ut og inn (fase 2).' },
+  russ: { name: 'Russ 2026', desc: 'Løper fort og redd. Har ingen respekt for noe, inkludert zombier.' },
+  regneark: { name: 'Regnearket', desc: `Oljeingeniør. Har regneark over alle kjellere ${AREA.at}, og viser det eksakte antallet gjemte zombier.` },
+  hv: { name: 'Heimevernet', desc: '+2 i kamp. Forteller om øvelse Cold Response hver kveld.' },
+  buss: { name: 'Kolumbus-sjåfør', desc: 'Kan kjøre hva som helst gjennom hva som helst (fase 2). +10 Kondis på oppdrag.' },
+  los: { name: 'Pensjonert los', desc: 'Kjenner hvert skjær. Ser ting andre overser: +0,1 til å finne skjulte zombier.' },
+  kokk: { name: 'Kokk på Fisketorget', desc: 'Får mat til å strekke lenger. Crewet bruker 1 porsjon mindre mat per dag.' },
+};
+export const SELF_TRAITS: TraitId[] = ['lokalkjent', 'filmnerd', 'dugnad'];

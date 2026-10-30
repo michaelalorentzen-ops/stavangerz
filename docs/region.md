@@ -37,7 +37,7 @@ En AI-agent kan gjøre det meste av steg 1, 4 og 5. Gi den en bydel eller øy og
 
 - forslag til 6–8 sektorer med frøpunkter (lengde- og breddegrad), type og trussel, basert på OpenStreetMap-data (butikker, industri, skoler, kaier);
 - 2–4 naturlige innganger (bruer, tunneler, hovedveier) som porter;
-- en sterk HQ-kandidat for fase 2 (verft, kjøpesenter, sykehus, fort) som låst sektor;
+- én HQ-kandidat for fase 2 som låst sektor, og høyst ett nøkkelsted (se [stedsnavn.md](stedsnavn.md), kapittel 3);
 - de nærmeste nabosonene for senere faser.
 
 Sjekk forslaget mot kartet. Tilpass navn og tekster selv, for det er den lokale humoren som gjør spillet.

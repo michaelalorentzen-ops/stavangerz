@@ -15,7 +15,7 @@ export interface MapData {
   buildings: string;
   roads: { major: string; minor: string };
   sectors: (MapShape & { id: MapSectorId })[];
-  zones: (MapShape & { id: ZoneId; name: string })[];
+  zones: (MapShape & { id: ZoneId })[];
   geo: { W: number; N: number; KX: number };
 }
 /** Tekstsymboler (ikke emoji) og navn for sektortypene. \uFE0E tvinger tekstvisning. */

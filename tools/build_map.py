@@ -106,7 +106,7 @@ for z in ZC['list']:
     if g is None or g.is_empty: continue
     g = g.intersection(CLIP)
     c = Point(*z['label']) if z.get('label') else g.representative_point()
-    zones.append({'id': z['id'], 'name': z['name'], 'd': d_path(g, 2), 'cx': round(c.x), 'cy': round(c.y)})
+    zones.append({'id': z['id'], 'd': d_path(g, 2), 'cx': round(c.x), 'cy': round(c.y)})
 
 # --- lag: land, dybdekurver, bygg, veier ----------------------------------
 water_lines = [d_path(LAND.buffer(dist).intersection(CLIP), 4) for dist in (14, 40, 90)]

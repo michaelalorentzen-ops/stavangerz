@@ -2,7 +2,7 @@
 // endrer tilstanden og returnerer teksten som vises etterpå. check er en
 // stat-sjekk mot crewets beste på den staten.
 import { EVENTS } from '../regions/content';
-export { EVENTS, INTRO } from '../regions/content';
+export { EVENTS, INTRO, phase2Teaser, winBanner } from '../regions/content';
 import { checkEnd, validateTasks } from './engine';
 import { mods } from './phases';
 import { clamp, pick, rand } from './rng';

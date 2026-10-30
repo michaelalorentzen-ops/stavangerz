@@ -82,7 +82,7 @@ export function setLeader(s: GameState, crewId: string): boolean {
 export function addNeighbor(s: GameState, id: string) {
   const n = NEIGHBORS.find((x) => x.id === id);
   if (!n) throw new Error(`Ukjent nabo: ${id}`);
-  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {} });
+  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, xp: 0 });
   give(s.crew[s.crew.length - 1], rollStarter(s));
 }
 
@@ -98,7 +98,7 @@ export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], 
   if (rand(s) < chance) {
     const cands = recruitablesNow(s);
     if (!cands.length) log(`${who} ropte ${def.at}. Ingen svarte, bortsett fra en måke.`);
-    else if (!canRecruit(s)) log('Vi har ikke senger til flere. Noen i trappegangen i ' + def.short + ' ser veldig sultne ut.', 'warn');
+    else if (!canRecruit(s)) log(`Vi har ikke senger til flere. Noen i en trappegang ${def.at} ser veldig sultne ut.`, 'warn');
     else {
       const n = pick(s, cands);
       addNeighbor(s, n.id);

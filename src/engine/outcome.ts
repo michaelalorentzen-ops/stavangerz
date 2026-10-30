@@ -2,8 +2,8 @@
 // tilstanden med andre frø, så den aldri røper det neste terningkastet og aldri endrer selve spillet.
 import { CARDS } from '../regions/content';
 import { questDef } from '../regions/content';
-import { GATES, RES, RES_LABEL } from './data';
-import type { GameState, GateId, ResKey } from './types';
+import { GATES, NEIGHBORS, RES, RES_LABEL } from './data';
+import type { Flag, GameState, GateId, ResKey } from './types';
 
 export interface Delta {
   res: Partial<Record<ResKey, number>>;
@@ -19,6 +19,8 @@ export interface Delta {
   wear: number;
   /** navn på de som ble med i crewet */
   joined: string[];
+  /** naboer som er borte for godt */
+  gone: string[];
   /** portarbeid lagt til, og nivåer porten gikk opp, per port */
   gateWork: Partial<Record<GateId, number>>;
   gateUp: Partial<Record<GateId, number>>;
@@ -61,6 +63,7 @@ export function delta(a: GameState, b: GameState): Delta {
     hurt, lost, zombies: zOf(b) - zOf(a),
     wear: Math.max(0, durOf(a) - durOf(b) - lostDur(a, b)),
     joined: b.crew.filter((c) => !a.crew.some((x) => x.id === c.id)).map((c) => c.name),
+    gone: Object.keys(b.flags).filter((f) => f.startsWith('gone_') && b.flags[f as Flag] && !a.flags[f as Flag]).map((f) => NEIGHBORS.find((n) => `gone_${n.id}` === f)?.name ?? f.slice(5)),
     gateWork, gateUp,
     quests: b.quests.filter((q) => !a.quests.some((x) => x.id === q.id)).map((q) => questDef(q.id).title),
     scouted: (Object.keys(b.sectors) as (keyof GameState['sectors'])[]).filter((id) => b.sectors[id].seen && !a.sectors[id].seen).length,
@@ -100,6 +103,7 @@ export function summarize(ds: Delta[]): string[] {
   maybe(ds.filter((d) => d.hurt.length).length, single ? `${ds[0].hurt.join(' og ')} skadet` : 'skade', 'kan gi skade');
   maybe(ds.filter((d) => d.wear > 0).length, 'utstyret slites', 'kan slite utstyr');
   maybe(ds.filter((d) => d.joined.length).length, single ? `${ds[0].joined.join(' og ')} blir med` : 'ny i crewet', 'kan gi ny i crewet');
+  maybe(ds.filter((d) => d.gone.length).length, single ? `${ds[0].gone.join(' og ')} er borte for godt` : 'noen er borte for godt', 'kan miste noen for godt');
   maybe(ds.filter((d) => d.quests.length).length, single ? `nytt oppdrag: ${ds[0].quests.join(', ')}` : 'nytt oppdrag', 'kan gi nytt oppdrag');
   for (const g of Object.keys(GATES) as GateId[]) {
     const up = ds.map((d) => d.gateUp[g] ?? 0);

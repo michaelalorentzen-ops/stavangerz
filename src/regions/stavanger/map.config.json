@@ -55,19 +55,19 @@
   },
 
   "zones": {
-    "_doc": "Fremtidige soner utenfor fase 1-området. mainlandPoint = et punkt på fastlandet (den store landmassen). Hver sone har id og én av: 'remainder' (true = resten av fase 1-landmassen, se area), 'landAt' (landmassen som inneholder punktet), 'mainlandBox' ([minx, miny, maxx, maxy], fastlandet skåret med boksen). 'label' er valgfritt etikettpunkt. 'name' er kun brukt for lesbarhet her; visningsnavn ligger i places.ts.",
+    "_doc": "Fremtidige soner utenfor fase 1-området. mainlandPoint = et punkt på fastlandet (den store landmassen). Hver sone har id og én av: 'remainder' (true = resten av fase 1-landmassen, se area), 'landAt' (landmassen som inneholder punktet), 'mainlandBox' ([minx, miny, maxx, maxy], fastlandet skåret med boksen). 'label' er valgfritt etikettpunkt. Visningsnavnene ligger i places.ts (ZONES).",
     "mainlandPoint": [1500, 3300],
     "list": [
-      { "id": "hundvag", "name": "Hundvåg", "remainder": true, "label": [1950, 1250] },
-      { "id": "engoy", "name": "Engøy", "landAt": [2592, 2510] },
-      { "id": "solyst", "name": "Sølyst", "landAt": [2406, 3060] },
-      { "id": "grasholmen", "name": "Grasholmen", "landAt": [2652, 3199] },
-      { "id": "bjornoy", "name": "Bjørnøy", "landAt": [3184, 1100] },
-      { "id": "roaldsoy", "name": "Roaldsøy", "landAt": [3561, 1432] },
-      { "id": "ormoy", "name": "Ormøy", "landAt": [3426, 1960] },
-      { "id": "steinsoy", "name": "Steinsøy", "landAt": [3050, 2234] },
-      { "id": "sentrum", "name": "Sentrum", "mainlandBox": [1700, 2900, 3600, 4200], "label": [2350, 3290] },
-      { "id": "bjergsted", "name": "Bjergsted", "mainlandBox": [0, 1500, 1700, 4200], "label": [1290, 2900] }
+      { "id": "hundvag", "remainder": true, "label": [1950, 1250] },
+      { "id": "engoy", "landAt": [2592, 2510] },
+      { "id": "solyst", "landAt": [2406, 3060] },
+      { "id": "grasholmen", "landAt": [2652, 3199] },
+      { "id": "bjornoy", "landAt": [3184, 1100] },
+      { "id": "roaldsoy", "landAt": [3561, 1432] },
+      { "id": "ormoy", "landAt": [3426, 1960] },
+      { "id": "steinsoy", "landAt": [3050, 2234] },
+      { "id": "sentrum", "mainlandBox": [1700, 2900, 3600, 4200], "label": [2350, 3290] },
+      { "id": "bjergsted", "mainlandBox": [0, 1500, 1700, 4200], "label": [1290, 2900] }
     ]
   }
 }

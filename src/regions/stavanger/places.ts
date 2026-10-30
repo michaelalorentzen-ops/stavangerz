@@ -89,8 +89,8 @@ export const ZONE_INFO: Partial<Record<ZoneId, string>> = {
 
 
 /** Sonene utenfor fase 1-området. Formen på kartet bygges fra map.config.json. */
-export const ZONES: Record<ZoneId, { name: string; at: string }> = {
-  hundvag: { name: 'Hundvåg', at: 'på Hundvåg' },
+export const ZONES: Record<ZoneId, { name: string; at: string; phase?: number }> = {
+  hundvag: { name: 'Hundvåg', at: 'på Hundvåg', phase: 3 },
   engoy: { name: 'Engøy', at: 'på Engøy' },
   solyst: { name: 'Sølyst', at: 'på Sølyst' },
   grasholmen: { name: 'Grasholmen', at: 'på Grasholmen' },
@@ -106,6 +106,10 @@ export const ZONES: Record<ZoneId, { name: string; at: string }> = {
 export const AREA = {
   name: 'Buøy', at: 'på Buøy',
   city: 'Stavanger',
+  /** hva området er, slik det står i en setning («rydd øya») */
+  kind: 'øya',
+  /** området og naboene samlet, til kartknappen og undertittelen */
+  surroundings: 'byøyene',
   /** bydelen området hører til, uten ordet «bydel» */
   district: 'Hundvåg',
   coords: '58°59′N 5°43′Ø',
@@ -117,4 +121,5 @@ export const LANDMARKS = {
   hundvagtunnelen: 'Hundvågtunnelen',
   sandnes: 'Sandnes',
   nordsjoen: 'Nordsjøen',
+  sus: 'SUS',
 } as const;

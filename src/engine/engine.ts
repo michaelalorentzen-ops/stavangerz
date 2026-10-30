@@ -4,7 +4,7 @@
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, injure, leteOverlevende, setLeader } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
-import { AREA, GATES, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
+import { AREA, GATES, LANDMARKS, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { advancePhase, BRANCHES, mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
@@ -33,7 +33,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
   };
-  s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true });
+  s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true, xp: 0 });
   give(s.crew[0], newCard(s, 'k_ror'));
   give(s.crew[0], newCard(s, 'baufil'));
   for (const id of neighborIds) addNeighbor(s, id);
@@ -72,8 +72,9 @@ export function migrate(raw: unknown): GameState | null {
   g.phaseStartDay ??= 1;
   g.stats.starvedDays ??= 0;
   g.stats.deaths ??= { kamp: 0, natt: 0, tokt: 0 };
-  // lagringer fra før nivåene: omtrent én erfaring per dag spilt, så crewet ikke starter på nivå 1 på dag 13
-  for (const c of g.crew) c.xp ??= Math.max(0, g.day - 1);
+  // lagringer fra før nivåene (ingen i crewet har erfaring): omtrent én erfaring per dag spilt.
+  // Nye spill setter xp: 0, så en nettopp rekruttert nabo får ikke gratis erfaring ved reload.
+  if (g.crew.every((c) => c.xp === undefined)) for (const c of g.crew) c.xp = Math.max(0, g.day - 1);
   return g;
 }
 
@@ -262,7 +263,7 @@ export function resolveDay(s: GameState): LogLine[] {
   const nurses = s.crew.filter((c) => c.task.type === 'pleie');
   if (nurses.length) {
     for (const c of s.crew.filter((c) => c.task.type === 'hvile' && c.hp < 3)) { c.hp++; nursed.add(c); log(`${c.name} ble pleid av ${names(nurses)}, uten at medisinskapet ble åpnet.`); }
-    for (const n of nurses) if (n.trait === 'nattevakt' && n.hp < 3) { n.hp++; log(`${n.name} pleide seg selv også. Gammel vane fra nattevakt på SUS.`); }
+    for (const n of nurses) if (n.trait === 'nattevakt' && n.hp < 3) { n.hp++; log(`${n.name} pleide seg selv også. Gammel vane fra nattevakt på ${LANDMARKS.sus}.`); }
     xp(nurses, 'prat', 1);
   }
 

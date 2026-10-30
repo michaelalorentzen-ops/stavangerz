@@ -119,7 +119,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
     log(`${names(team)} ryddet ${kills} ${plural(kills)} ${def.at}.${sec.z > 0 ? ` ${sec.z} igjen.` : ' Sektoren er tom for synlige zombier.'}`);
     for (const c of team) {
       const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c) * (ranged.has(c) ? RANGED_INJURY : 1), 0.02, 0.45);
-      if (rand(s) < risk) injure(s, c, `i ${def.short}`, log);
+      if (rand(s) < risk) injure(s, c, def.at, log);
     }
     if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
     if (team.some((c) => c.trait === 'russ') && rand(s) < 0.25) log('Sondre filmet alt til en TikTok ingen kommer til å se.', 'fun');

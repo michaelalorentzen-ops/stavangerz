@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CARDS, cardBonus, crewLevel, describeEncounter, ENC_COOLDOWN, ENCOUNTERS, EVENTS, gainXp, LEVEL_BONUS, levelProgress, migrate, newCard, newGame, PHASES, previewChoice,
+  addNeighbor, CARDS, cardBonus, crewLevel, describeEncounter, ENC_COOLDOWN, ENCOUNTERS, EVENTS, gainXp, LEVEL_BONUS, levelProgress, migrate, newCard, newGame, PHASES, previewChoice,
   resolveDay, resolveEncounter, rollEncounter, runChoice, SECTORS, stat, XP_STEP,
 } from '../src/engine';
 import type { GameState, PendingEncounter } from '../src/engine';
@@ -198,5 +198,25 @@ describe('sult tærer på crewet', () => {
       expect(run(0)).toBeGreaterThan(0);
       expect(run(30)).toBe(0);
     } finally { PHASES[1].mods.starveInjury = old; }
+  });
+});
+
+describe('lagring etter rekruttering', () => {
+  it('en nettopp rekruttert nabo får ikke gratis erfaring ved reload', () => {
+    const s = fresh(12);
+    s.day = 10;
+    addNeighbor(s, 'kjell');
+    const m = migrate(JSON.parse(JSON.stringify(s)))!;
+    expect(m.crew.find((c) => c.id === 'kjell')!.xp).toBe(0);
+    expect(JSON.stringify(m)).toBe(JSON.stringify(s));
+  });
+});
+
+describe('forhåndsvisning av tap for godt', () => {
+  it('å la noen dra viser at de er borte for godt', () => {
+    const s = fresh(5);
+    s.day = 8;
+    const ch = EVENTS.find((e) => e.id === 'hurtigbat')!.choices[1];
+    expect(previewChoice(s, ch).ok.join(' · ')).toContain('borte for godt');
   });
 });

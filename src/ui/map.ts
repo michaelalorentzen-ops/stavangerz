@@ -1,6 +1,6 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
-import { GATE_IDS, GATES, SECTORS, sectorIntel, toktAvailable, TOKTS } from '../engine';
+import { GATE_IDS, GATES, SECTORS, sectorIntel, toktAvailable, TOKTS, ZONES } from '../engine';
 import type { CrewMember, SectorId } from '../engine';
 import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
@@ -77,12 +77,12 @@ export function buildStaticMap(onSelect: (s: Selection) => void) {
   // fremtidige soner
   const zones = el('g', {}, root);
   for (const z of MAP.zones) {
-    const p = el('path', { d: z.d, class: 'zone', 'data-zone': z.id, tabindex: 0, role: 'button', 'aria-label': z.name }, zones);
+    const p = el('path', { d: z.d, class: 'zone', 'data-zone': z.id, tabindex: 0, role: 'button', 'aria-label': ZONES[z.id].name }, zones);
     onActivate(p, () => onSelect({ kind: 'zone', id: z.id }));
   }
   for (const z of MAP.zones) {
-    text(zones, { x: z.cx, y: z.cy, class: 'lab zone', 'text-anchor': 'middle' }, z.name);
-    text(zones, { x: z.cx, y: z.cy + 30, class: 'lab zsub', 'text-anchor': 'middle' }, z.id === 'hundvag' ? 'Fase 3 · ukjent' : 'Ukjent');
+    text(zones, { x: z.cx, y: z.cy, class: 'lab zone', 'text-anchor': 'middle' }, ZONES[z.id].name);
+    text(zones, { x: z.cx, y: z.cy + 30, class: 'lab zsub', 'text-anchor': 'middle' }, ZONES[z.id].phase ? `Fase ${ZONES[z.id].phase} · ukjent` : 'Ukjent');
   }
 
   dyn = el('g', {}, root);
