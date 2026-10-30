@@ -464,6 +464,35 @@ Hvert våpenkort har `weaponClass` (slag, egg, prosjektil, skytevåpen, brann, m
 
 ---
 
+## 9b. Fase 2-start i betaen [Forslag, avtalt 30.10]
+
+Betaen har med starten av fase 2. Avgjort med eieren: bare Rosenberg som HQ, Buøy holdes og forfaller sakte, og rollene i HQ er faste poster.
+
+**Overgangen:** Når fase 1 avsluttes (målet nådd, eller fristen på normal/hard), muterer zombiene, og Rosenberg Verft åpnes. Gjerdet har holdt horden inne. Nå skal dere inn.
+
+**Rosenberg som sektor:** Verftet blir en vanlig sektor fra fase 2 (`opensInPhase: 2`), med trussel 5, en stor horde, mange gjemte zombier og mye å finne (metall, skrap, drivstoff, mat i kantina). Det tas på samme måte som sektorene på Buøy: rydde, gjennomsøke og holde kontroll. Transport trengs ikke, fordi verftet ligger rett bak gjerdet.
+
+**Skjulte verdier:** Verftet har fire anlegg, og tilstanden til hvert (god, middels eller ødelagt) er trukket av seeden og skjult:
+- **Verkstedhallen:** Lage utstyr gir ett nivå høyere, og utstyr kan repareres.
+- **Kantina:** gir mat hver dag.
+- **Kontorbygget:** plass til laben senere (fase 2–3).
+- **Kaia:** tokt over vann senere.
+Speiding og gjennomsøking gir rykter («Kantina ser ut til å ha tak»). Den sanne tilstanden vises når verftet er tatt.
+
+**HQ tatt:** Når Rosenberg er trygg, er HQ-et tatt. Det gir senger, og postene åpnes. Et anlegg settes i stand med oppdraget «Sette i stand», som koster materialer. Et anlegg i god stand er billigere.
+
+**Faste poster:** En person settes på en post og blir der. Personen gjør ikke dagsoppdrag, men gir en fast bonus etter ferdigheten sin:
+- **Sikkerhetssjef** (Nerver): sterkere vakt om natta ved alle porter.
+- **Byggeleder** (Mekk): mer arbeid per befesting og istandsetting.
+- **Kokk** (Prat): mindre forbruk av mat.
+Det er et valg: en god arbeider i en post er en arbeider mindre ute.
+
+**Buøy:** Sektorene dere har tatt, holder seg trygge en stund, men kontrollen forfaller sakte. Portene må fortsatt holdes om natta.
+
+**Fasemålet i fase 2 (betaen):** Rosenberg er trygg, og minst ett anlegg er satt i stand. Etter det: «Fortsettelse følger» (fase 3 er ikke bygd).
+
+**[Åpent]** Hvor sterk horden og bonusene skal være, settes med simulering. Transport (bussen, Gann) gir foreløpig ingenting i fase 2.
+
 ## 10. Basen, ledere og politikk (fase 2–5)
 
 Dette er retning, ikke spesifikasjon. Fase 1 skal ikke bygge noe av det, men må ikke stenge for det.
