@@ -1,6 +1,6 @@
 # Kartlegging av Stavanger – forslag til områder etter Buøy
 
-**Status: alt i dette dokumentet er [Åpent].** Det er et grunnlag for diskusjon, ikke vedtak. Ingenting her skal bygges før eieren har sagt ja, og det som blir vedtatt, flyttes inn i `docs/spilldesign.md` og regionens `places.ts`.
+**Status: alt i dette dokumentet er [Åpent], unntatt de tre vedtakene i kapittel 0.1.** Det er et grunnlag for diskusjon, ikke vedtak. Ingenting her skal bygges før eieren har sagt ja, og det som blir vedtatt, flyttes inn i `docs/spilldesign.md`, regionens `places.ts` og atlaset (`src/regions/stavanger/atlas/`).
 
 Merkene brukt i dokumentet:
 
@@ -17,12 +17,20 @@ Koordinatene (bredde, lengde) er hentet fra OSM-dumpen. De er tenkt som utgangsp
 ## 0. Kortversjonen
 
 1. **Byøyene henger sammen i to kjeder, ikke som én ring.** Mot vest går veien fra Buøy over Pyntesund bru til Engøy, så over Engøy bru til Sølyst og Grasholmen, og Bybrua går videre til sentrum. Mot nord og øst går den fra Buøy via Nordkrysset til Hundvåg, så over Bjørnøybroen til Bjørnøy, over Skadesund bru til Roaldsøy og over Ormøybrua til Ormøy og Steinsøy. Ormøy og Steinsøy er en blindvei på land, men ligger bare noen hundre meter fra Buøy og Engøy over sjøen. Det gjør dem perfekte for mutasjonene Svømmere og Dykkere.
-2. **De små øyene er for små til 6–8 sektorer hver.** Engøy, Sølyst og Grasholmen har til sammen rundt 400 boliger. Bjørnøy, Roaldsøy, Ormøy og Steinsøy er nesten bare eneboliger og naust. Jeg foreslår to samleområder, **Vestøyene** og **Østøyene**, i stedet for sju miniområder.
+2. **De små øyene er for små til 6–8 sektorer hver.** Engøy, Sølyst og Grasholmen har til sammen rundt 400 boliger. Bjørnøy, Roaldsøy, Ormøy og Steinsøy er nesten bare eneboliger og naust. Derfor blir det to samleområder, **Vestøyene** og **Østøyene**, i stedet for sju miniområder (vedtatt, kapittel 0.1).
 3. **Fasene kan følge de ekte bydelsgrensene.** Stavangers bydel Hundvåg er nettopp byøyene. Fase 4 «Bydel» kan da bety at hele den ekte bydelen er tatt, og det gir en naturlig bydelsbonus. Etterpå kommer Storhaug, Eiganes og Våland, Madla, Hillevåg og Hinna.
 4. **HQ-kandidater og nøkkelsteder finnes**, men de er ujevnt fordelt. Sentrum har åtte apotek, mens Østøyene ikke har noe som helst. Regelen om høyst ett per område gjør at mange områder får null, og det synes jeg er riktig.
 5. **SUS flyttet til Ullandhaug 16. november 2025.** Det gamle SUS på Våland har fortsatt psykiatri og poliklinikker. Spillet må velge hvilket sykehus som er HQ-kandidaten, eller om begge er det.
 6. **Jeg fant ingen bekreftet jakt- eller våpenbutikk** på Forus eller i Sandnes. Nøkkelstedet «Jaktbutikken» trenger et ekte sted, ellers må det bli generisk.
 7. **Tett mot spredt:** Jeg anbefaler at tett bebyggelse gir *forbruksvarer raskt, men som tar slutt*, og at spredt bebyggelse gir *produksjon som varer* (jorder, skog, fisk). I tillegg bør en sikkerhetsgaranti sørge for at det alltid finnes et område med trygg trussel innen rekkevidde. Detaljer står i kapittel 3.
+
+### 0.1 Vedtatt av eieren
+
+1. **De små øyene slås sammen** til to områder: **Vestøyene** (Engøy, Sølyst og Grasholmen) og **Østøyene** (Bjørnøy, Roaldsøy, Ormøy og Steinsøy).
+2. **Trussel er relativ til fasen.** Sektorene har trussel 1–5 *innenfor sitt område*. Fasen ganger opp via `mods(s)` i fasetabellen, så en 3 i fase 5 er farligere enn en 3 i fase 2. Tallene i dette dokumentet skal leses slik.
+3. **Avstand telles i områder**, i ringer rundt Buøy: ring 0 Buøy; ring 1 Vestøyene, Hundvåg og Østøyene; ring 2 Sentrum, Storhaug, Våland og Eiganes/Bjergsted; ring 3 Madla, Hillevåg, Ullandhaug/Hinna og Forus/Lura.
+
+Vedtakene er skrevet inn i atlaset: skjemaet i `src/regions/stavanger/atlas/atlas.ts` har `ring` og relativ `threat`, og `vestoyene.json` er det første kurerte området. Se `src/regions/stavanger/atlas/README.md` for hvordan resten kureres.
 
 ---
 
@@ -51,13 +59,13 @@ Koordinatene (bredde, lengde) er hentet fra OSM-dumpen. De er tenkt som utgangsp
 
 **[Åpent]** Er fase 2 bare Buøy pluss Rosenberg, eller Buøy, Rosenberg og Vestøyene? Spilldesignet sier ingenting om hvor stort fase 2-kartet er.
 
-**[Problem]** Fra fase 4 blir avstandene på kartet store: Madla og Forus ligger 5–8 km fra Buøy. Spilldesignet sier at «hvert steg øker funn og trussel», og at «Telles avstand i steg mellom sektorer eller i meter?» er åpent. Teller vi i steg mellom sektorer, blir Forus bare noen få steg unna om områdene er store. Jeg foreslår å telle **områder**, ikke sektorer eller meter (se kapittel 3, modell C).
+**Vedtatt (0.1):** Avstand telles i **områder**, ikke sektorer eller meter. Madla og Forus ligger 5–8 km fra Buøy, men bare tre ringer unna (se kapittel 3, modell C).
 
-**[Problem]** OSM-dumpen dekker ikke Madla, Hillevåg, Hinna, Forus eller Sandnes. Før de kan kartlegges skikkelig, må bboxen i `map.config.json` utvides, for eksempel til 58,84–59,02 N og 5,55–5,82 Ø, og `tools/fetch_osm.sh` kjøres på nytt én gang. Fila blir da mye større enn 25 MB. Kanskje bør det være én config per zoomnivå (byøyene, byen og regionen), i tråd med Civilization-zoomen i søylene.
+**Løst for atlaset:** `tools/fetch_atlas.sh` henter POI-er (ikke bygninger) for 58,84–59,02 N og 5,55–5,82 Ø med én spørring til `data/osm-atlas.json` (ca. 2,5 MB), og `tools/build_atlas.py` trekker ut kandidater per område. Kartgeometri for et større spillkart er fortsatt åpent.
 
 ### Hvordan trussel er satt
 
-Buøy har trussel 1–2, og Rosenberg har 5. For senere områder har jeg brukt en **grunntrussel per område** som stiger med avstanden, og deretter ±1 per sektor etter hvor tett den er bebygd. Nøkkelsteder og HQ-kandidater er alltid 4–5 (regelheftet, kapittel 3).
+Buøy har trussel 1–2, og Rosenberg har 5. For senere områder har jeg brukt en **grunntrussel per område**, og deretter ±1 per sektor etter hvor tett den er bebygd. Nøkkelsteder og HQ-kandidater er alltid 4–5 (regelheftet, kapittel 3).
 
 | Område | Grunntrussel |
 |---|---|
@@ -68,7 +76,7 @@ Buøy har trussel 1–2, og Rosenberg har 5. For senere områder har jeg brukt e
 | Madla, Hillevåg | 3–4 |
 | Ullandhaug, Hinna, Forus | 4 |
 
-Trussel 1–5 er tallet i dag. Siden spilldesignet sier at trusselen stiger med fasen, må skalaen enten tøyes (6+) eller tolkes relativt til fasen. **[Åpent]** Hvilket av dem? Jeg har skrevet tallene som om skalaen er fast 1–5. Det betyr at fase 5 nesten bare har 4 og 5, og da forsvinner skillet. Relativ trussel, der fasetabellens `mods(s)` ganger opp, er trolig bedre.
+**Vedtatt (0.1): trusselen er relativ til fasen.** Tallene 1–5 gjelder innenfor området, og fasetabellens `mods(s)` ganger opp. Tabellen over og sektortabellene under ble skrevet før vedtaket, med fast skala. Når et område kureres i atlaset, skal tallene spres over hele 1–5 innenfor området, så det finnes trygge og farlige steder i hver fase.
 
 ---
 
@@ -103,6 +111,8 @@ Merk at munningen til **Hundvågtunnelen** ligger *på Buøy* (ca. 58,987, 5,733
 | `bybrua` | Brufestet | Bybrua | industri | 3 | biler med drivstoff i køen, porten mot byen |
 
 **Nøkkelsted:** ingen. **HQ-kandidat:** ingen.
+
+**Kurert:** `src/regions/stavanger/atlas/vestoyene.json`. OSM viser bare et par blokker på Sølyst, men rundt femti på Grasholmen. Atlaset har derfor én «Blokkene» (Grasholmen), «Parken» på Sølyst (gartneriet og idrettsplassen), og Engøy er delt i «Boligfeltet» (eneboliger) og «Rekkehusene» (Engøy vest). Portene er «Brua mot byen» (Bybrua) og «Brua mot øya» (Pyntesund bru).
 
 **Begrunnelse:** Vestøyene er en flaskehals, ikke et rikt område. Det spennende er porten: alt fra byen kommer over Bybrua. Den gir fase 2 en tydelig oppgave («hold brua») uten et nytt HQ.
 
@@ -493,7 +503,7 @@ Det støttes allerede av spilldesignet: «Mat blir vanskeligere å finne over ti
 
 En regel som verner mot den umulige starten uansett hvilken modell som velges:
 
-1. **Avstand telles i områder, ikke meter.** Ring 0 er Buøy, ring 1 er Vestøyene, Hundvåg og Østøyene, ring 2 er sentrum, Storhaug, Våland og Eiganes, og ring 3 er Madla, Hillevåg, Ullandhaug og Forus. Grunntrusselen følger ringen.
+1. **Avstand telles i områder, ikke meter** (vedtatt, kapittel 0.1). Ring 0 er Buøy, ring 1 er Vestøyene, Hundvåg og Østøyene, ring 2 er sentrum, Storhaug, Våland og Eiganes, og ring 3 er Madla, Hillevåg, Ullandhaug og Forus. Grunntrusselen følger ringen.
 2. **Garantien:** Seed-tillegget (spilldesignet: «noen steder er bare verre») kan aldri gjøre *alle* områdene i neste ring verre enn ringen etter. Minst ett område i hver ring har trussel lik grunntrusselen eller lavere. Det sjekkes når seeden lages, deterministisk.
 3. **Støy fra veksten (fase 4, «risiko ved å vokse for fort»):** Hvert tett område du holder, gir en fast mengde støy per natt til *alle* naboområder. Tre tette områder samtidig trekker horder. Spredte områder gir nesten ingen støy.
 
@@ -518,13 +528,13 @@ Konkret for kartet over: Østøyene og Hundvåg-jordene er de spredte valgene i 
 
 ## 4. Åpne spørsmål til eieren
 
-Alle er [Åpent]. De viktigste står først.
+Alle er [Åpent], unntatt 1, 4 og 5, som er vedtatt (kapittel 0.1). De viktigste står først.
 
-1. **Små øyer:** Er du med på at Engøy, Sølyst og Grasholmen blir *ett* område (Vestøyene), og Bjørnøy, Roaldsøy, Ormøy og Steinsøy *ett* (Østøyene)? Alternativet er færre enn 6 sektorer per område, og det bryter regelen i `docs/region.md`.
+1. ~~**Små øyer**~~ **Vedtatt (0.1):** Vestøyene og Østøyene er hvert sitt område.
 2. **Fase 2-kartet:** Er det bare Buøy og Rosenberg, eller også Vestøyene, og kanskje Storhaug for å få et reelt HQ-valg?
 3. **Tett mot spredt:** Liker du modell B (forbruk mot produksjon) med C som sikkerhetsnett? Eller er A (én skyveknapp) nok for nå?
-4. **Avstand:** Telles den i områder (min anbefaling), i sektorsteg eller i meter?
-5. **Trusselskalaen:** Fast 1–5, eller relativ til fasen via `mods(s)`? Med fast skala har fase 5 bare 4 og 5.
+4. ~~**Avstand**~~ **Vedtatt (0.1):** i områder, i ringer rundt Buøy.
+5. ~~**Trusselskalaen**~~ **Vedtatt (0.1):** relativ til fasen, 1–5 innenfor området, `mods(s)` ganger opp.
 6. **To sykehus:** Gamle SUS på Våland, nye SUS på Ullandhaug, eller begge? Når foregår spillet, før eller etter 16. november 2025?
 7. **Jaktbutikken:** Vet du om en ekte jakt- eller våpenbutikk i Stavanger, Sandnes eller på Forus? Ellers: XXL, generisk eller noe annet?
 8. **Nøkkelsted som funn:** Kan et nøkkelsted ligge *inne i* en sektor (Apoteket i senteret) i stedet for å være en egen sektor? Det løser Hundvåg senter og sentrum.
@@ -544,7 +554,7 @@ Alle er [Åpent]. De viktigste står først.
 - Navnene på senteret på Madla, butikkene i Hillevåg og varehusene på Forus (IKEA, XXL, byggvarehus).
 - Stadionnavnet i Jåttåvågen.
 - Om Kvernevik har brannstasjon i dag (stillingsannonsen var fra 2019).
-- Om Engøyholmen er riktig «båthavn» på Engøy.
+- Om Engøyholmen er riktig «båthavn» på Engøy. (Atlaset bruker foreløpig naustene på sørsiden av Engøy.)
 
 ---
 
