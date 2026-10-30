@@ -1,9 +1,9 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, HEALTH_LABEL, INTRO, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, HEALTH_LABEL, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
-import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
+import type { PendingEncounter, Stats, TraitId } from '../engine';
 import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
 import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
@@ -90,20 +90,22 @@ function pickNeighbors() {
     const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) | 0;
     ui.S = newGame(seed, { name: draft.name.trim() || 'Deg', stats: { ...draft.stats }, trait: draft.trait }, draft.picks);
     ui.sel = { kind: 'sector', id: 'hjem' };
+    queueIntro(ui.S);
     ui.refresh();
-    showEvent(INTRO, () => { closeModal(); ui.refresh(); });
+    settle(() => { closeModal(); ui.refresh(); });
   });
 }
 
-function showEvent(ev: EventDef, done: () => void) {
-  const S = game();
-  const choices = ev.choices.filter((c) => !c.when || c.when(S));
+/** Dagens ventende hendelse fra tilstanden, så den overlever en omlasting. */
+function showEvent(done: () => void) {
+  const S = game(), ev = eventDef(S.event!.id);
+  const choices = eventChoices(S, ev);
   modal(`<div class="radio">${ev.channel ?? 'Samband · kanal 16'} · Dag ${S.day}</div><h2>${ev.title}</h2>
     <div class="transcript">${esc(ev.text(S))}</div>
-    <div class="choices">${choices.map((c, i) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? `<small>${STAT_LABEL[c.check]} · ${esc(best(S, c.check).name)} · ${Math.round(checkOdds(S, c.check) * 100)}%</small>` : ''}</span>${previewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
+    <div class="choices">${choices.map(({ ch: c, i }) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? `<small>${STAT_LABEL[c.check]} · ${esc(best(S, c.check).name)} · ${Math.round(checkOdds(S, c.check) * 100)}%</small>` : ''}</span>${previewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
-    const ch = choices[Number(b.dataset.i)];
-    const r = runChoice(S, ch);
+    const i = Number(b.dataset.i), ch = ev.choices[i];
+    const r = resolveEvent(S, i);
     save();
     const tag = ch.check ? `<div class="tag">${r.ok ? 'Lyktes' : 'Mislyktes'}</div>` : '';
     $('sheet').querySelector('.choices')!.outerHTML = `<div class="result ${ch.check ? (r.ok ? 'ok' : 'fail') : ''}">${tag}${esc(r.text)}${changesHtml(r.changes)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
@@ -155,10 +157,11 @@ function showToktDecision(toktId: string, done: () => void) {
   }));
 }
 
-/** Løser alt som hindrer at dagen avsluttes: encounters, så tokt-valg, så ny leder. Gjentas fordi et encounter kan drepe lederen. */
+/** Løser alt som hindrer at dagen avsluttes: dagens hendelse, encounters, så tokt-valg, så ny leder. Gjentas fordi et encounter kan drepe lederen. */
 function settle(done: () => void) {
   const S = game(), b = endDayBlocker(S);
-  if (b === 'pending') showEncounter(S.pending[0], () => settle(done));
+  if (b === 'event') showEvent(() => settle(done));
+  else if (b === 'pending') showEncounter(S.pending[0], () => settle(done));
   else if (b === 'tokt') showToktDecision(S.tokts.find((t) => t.awaiting)!.id, () => settle(done));
   else if (b === 'leader') chooseLeader(() => settle(done));
   else done();
@@ -194,13 +197,19 @@ export function endDay() {
   const finish = () => { closeModal(); ui.refresh(); if (isFinished(S)) endScreen(); };
   if (endDayBlocker(S)) { settle(finish); return; }
   const lines = resolveDay(S);
-  const ev = S.over ? null : drawEvent(S);
   save();
   modal(`<div class="radio">Vaktlogg · ${AREA.name}</div><h2>Dag ${day} er over</h2>
     <div class="logl">${lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag. Mistenkelig stille.</div>'}</div>
-    <div class="row"><button class="btn" id="ok">${ev ? 'Samband: ny melding' : blockerLabel(S) ?? (isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`)}</button></div>`);
+    <div class="row"><button class="btn" id="ok">${blockerLabel(S) ?? (isFinished(S) ? 'Se oppsummeringen' : `Start dag ${S.day}`)}</button></div>`);
   const after = () => settle(finish);
-  on('ok', () => (ev ? showEvent(ev, after) : after()));
+  on('ok', after);
+}
+
+/** Etter at siden er byttet ut: viser det som venter på et valg (hendelse, encounter, tokt, leder). */
+export function resumePending() {
+  const S = game();
+  if (isFinished(S)) { endScreen(); return; }
+  settle(() => { closeModal(); ui.refresh(); });
 }
 
 export function endScreen() {

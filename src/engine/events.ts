@@ -1,9 +1,9 @@
 // Hendelseskort. when(s) avgjør om et kort kan trekkes, choices[].run(s, ok)
 // endrer tilstanden og returnerer teksten som vises etterpå. check er en
 // stat-sjekk mot crewets beste på den staten.
-import { EVENTS } from '../regions/content';
+import { EVENTS, INTRO } from '../regions/content';
 export { EVENTS, INTRO, phase2Teaser, winBanner } from '../regions/content';
-import { checkEnd, validateTasks } from './engine';
+import { checkEnd, logChoice, validateTasks } from './engine';
 import { mods } from './phases';
 import { clamp, pick, rand } from './rng';
 import { bestOf, checkOddsFor } from './skills';
@@ -30,6 +30,7 @@ export interface EventDef {
 export const best = (s: GameState, k: StatKey): CrewMember => bestOf(s.crew, k);
 export const checkOdds = (s: GameState, k: StatKey, base = 0.25): number => checkOddsFor(s.crew, k, base);
 const roll = (s: GameState, k: StatKey) => rand(s) < checkOdds(s, k);
+/** Trekker et hendelseskort og merker det som sett. Brukes av resolveDay(), som lagrer det i `state.event`. */
 export function drawEvent(s: GameState): EventDef | null {
   const pool = EVENTS.filter((e) => !s.seenEvents.includes(e.id) && (!e.when || e.when(s)));
   // hendelser som må komme nå (for eksempel apoteket etter første skade) går foran tilfeldigheten
@@ -56,4 +57,31 @@ export function runChoice(s: GameState, ch: ChoiceDef): { ok: boolean; text: str
   validateTasks(s);
   checkEnd(s);
   return { ok, text, changes: summarize([delta(before, s)]) };
+}
+
+/** Hendelseskortet med denne id-en, også introen. */
+export function eventDef(id: string): EventDef {
+  const e = id === INTRO.id ? INTRO : EVENTS.find((x) => x.id === id);
+  if (!e) throw new Error(`Ukjent hendelse: ${id}`);
+  return e;
+}
+
+/** Valgene som kan tas i en hendelse nå, med indeksen i `choices`. */
+export const eventChoices = (s: GameState, e: EventDef): { ch: ChoiceDef; i: number }[] =>
+  e.choices.map((ch, i) => ({ ch, i })).filter(({ ch }) => !ch.when || ch.when(s));
+
+/** Introen venter som dagens hendelse i en ny runde. */
+export function queueIntro(s: GameState) {
+  s.event = { id: INTRO.id };
+}
+
+/** Løser dagens ventende hendelse med valg nummer `choiceIdx` i kortets `choices`. `changes` er det som faktisk endret seg. */
+export function resolveEvent(s: GameState, choiceIdx: number): { ok: boolean; text: string; changes: string[] } {
+  if (!s.event) throw new Error('Ingen hendelse venter');
+  const e = eventDef(s.event.id), ch = e.choices[choiceIdx];
+  if (!ch || (ch.when && !ch.when(s))) throw new Error(`Ugyldig valg ${choiceIdx} i ${e.id}`);
+  s.event = null;
+  const r = runChoice(s, ch);
+  logChoice(s, e.title, ch.label, r, !!ch.check);
+  return r;
 }

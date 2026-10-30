@@ -1,8 +1,8 @@
 // En bot som spiller fase 1. Brukes av balansetesten og tools/sim.ts.
 // Den følger en fast prioritetsliste og tenker ikke langt frem. En god spiller skal slå den.
 import {
-  canEndDay, canEndPhase, CARDS, dailyFood, dailyWater, delta, describeEncounter, drawEvent, endPhase, equip, fightPower, GATE_IDS, GATES,
-  isOnTokt, isSafe, LAGE_COST, newGame, toktDecision, toktDef, PLAYABLE, resolveDay, resolveEncounter, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
+  canEndDay, canEndPhase, CARDS, dailyFood, dailyWater, delta, describeEncounter, endPhase, eventChoices, eventDef, equip, fightPower, GATE_IDS, GATES,
+  isOnTokt, isSafe, LAGE_COST, newGame, toktDecision, toktDef, PLAYABLE, resolveDay, resolveEncounter, resolveEvent, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
   SLOTS, taskOptions, THREAT_KILL,
 } from '../src/engine';
 import type { ChoiceDef, CrewMember, GameState, ResKey, SelfSetup, Task } from '../src/engine';
@@ -175,6 +175,13 @@ export function botEventChoice(s: GameState, choices: ChoiceDef[]): ChoiceDef {
   return best;
 }
 
+/** Løser dagens ventende hendelse med valget som har best forventet verdi. */
+export function botEvent(s: GameState) {
+  if (!s.event || s.over) return;
+  const e = eventDef(s.event.id), ch = botEventChoice(s, eventChoices(s, e).map((x) => x.ch));
+  resolveEvent(s, e.choices.indexOf(ch));
+}
+
 /** Løser ventende encounters: det valget med best odds, men tilbaketrekk om noen i gruppa har 1 i liv. */
 export function botEncounters(s: GameState) {
   while (s.pending.length && !s.over) {
@@ -219,8 +226,7 @@ export function playGame(seed: number, neighbors: string[] = BOT_NEIGHBORS, opts
   while (!s.over && s.day < maxDays) {
     botTurn(s, opts);
     resolveDay(s);
-    const ev = s.over ? null : drawEvent(s);
-    if (ev) runChoice(s, botEventChoice(s, ev.choices.filter((c) => !c.when || c.when(s))));
+    botEvent(s);
     // som i spillet: encounters først (de kan drepe lederen), så ny leder
     botEncounters(s);
     botTokts(s);

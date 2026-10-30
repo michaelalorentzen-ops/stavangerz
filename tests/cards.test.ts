@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  armorMult, bestCopy, CARDS, equip, groupStash, injure, lage, salvage, salvageCopy, salvageValue, newCard, newGame, resolveDay, rollCard, SECTORS, stat, toggleFavorite, toolMult, unequip, weaponMult, wear,
+  armorMult, bestCopy, CARDS, equip, groupStash, injure, lage, salvage, salvageCopy, salvageValue, newCard, newGame, resolveDay as resolveDayAndDrawEvent, rollCard, SECTORS, stat, toggleFavorite, toolMult, unequip, weaponMult, wear,
 } from '../src/engine';
 import type { GameState, LogFn, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
 const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+/** Dagsoppgjøret uten dagens hendelse: testene her gjelder dagen, ikke hendelseskortene. */
+const resolveDay = (s: GameState) => { const L = resolveDayAndDrawEvent(s); s.event = null; return L; };
 const log: LogFn = () => {};
 const me = (s: GameState) => s.crew[0];
 

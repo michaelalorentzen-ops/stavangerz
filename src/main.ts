@@ -1,8 +1,8 @@
 import './styles.css';
-import { AREA, isFinished, migrate, newGame } from './engine';
+import { AREA, migrate, newGame } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
-import { draft, endDay, endPhaseNow, endScreen, titleScreen } from './ui/modals';
+import { draft, endDay, endPhaseNow, resumePending, titleScreen } from './ui/modals';
 import { renderStash } from './ui/cards';
 import { renderTutorial } from './ui/tutorial';
 import { renderCrew, renderGoals, renderLog, renderPlan, renderSel, renderTabs, renderTop, showTab } from './ui/panel';
@@ -58,7 +58,7 @@ function start(data: { S?: GameState } = {}) {
   if (carried) {
     ui.S = carried;
     ui.refresh();
-    if (isFinished(ui.S)) endScreen();
+    resumePending();
     return;
   }
   // forhåndsvisning bak tittelskjermen, lagres ikke

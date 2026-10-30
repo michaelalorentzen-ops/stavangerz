@@ -193,6 +193,8 @@ export interface GameState {
   seenEvents: string[];
   /** encounters som venter på valg */
   pending: PendingEncounter[];
+  /** dagens hendelseskort, trukket av resolveDay() og løst med resolveEvent() før neste dag */
+  event: { id: string } | null;
   /** de siste encounterkortene som er trukket, nyest sist. De trekkes ikke igjen med en gang. */
   recentEnc: string[];
   /** tokt som er ute */

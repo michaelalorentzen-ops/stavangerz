@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  acceptQuest, canEndDay, dailyFood, drawEvent, PLAYABLE, checkEnd, endDayBlocker, injure, newCard, newGame, resolveDay, resolveEncounter, taskKey, taskOptions, toktDecision, validateTasks,
+  acceptQuest, canEndDay, dailyFood, drawEvent, PLAYABLE, checkEnd, endDayBlocker, injure, newCard, newGame, resolveDay as resolveDayAndDrawEvent, resolveEncounter, taskKey, taskOptions, toktDecision, validateTasks,
   EVENTS, QUESTS, TOKTS,
 } from '../src/engine';
 import type { GameState } from '../src/engine';
@@ -8,6 +8,8 @@ import { BOT_SELF, playGame, toktStats } from '../tools/bot';
 
 // Bybrua åpnes av et rykte i spillet. Her er det åpent fra start.
 const fresh = (seed = 42) => { const s = newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']); s.toktsOpen.push('bybrua'); return s; };
+/** Dagsoppgjøret uten dagens hendelse: testene her gjelder dagen, ikke hendelseskortene. */
+const resolveDay = (s: GameState) => { const L = resolveDayAndDrawEvent(s); s.event = null; return L; };
 /** Sender de to første på tokt og løser dagen. */
 const out = (s: GameState, id = 'bybrua', ids = ['meg', 'arild']) => {
   for (const c of s.crew) if (ids.includes(c.id)) c.task = { type: 'tokt', target: id };

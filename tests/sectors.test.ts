@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { canRecruit, GATE_IDS, housing, isSafe, newGame, PHASES, resolveDay, sectorIntel, SECTORS, sum, raiseSearched, taskOptions } from '../src/engine';
+import { canRecruit, GATE_IDS, housing, isSafe, newGame, PHASES, resolveDay as resolveDayAndDrawEvent, sectorIntel, SECTORS, sum, raiseSearched, taskOptions } from '../src/engine';
 import type { GameState, SectorId, SectorState } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
 const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+/** Dagsoppgjøret uten dagens hendelse: testene her gjelder dagen, ikke hendelseskortene. */
+const resolveDay = (s: GameState) => { const L = resolveDayAndDrawEvent(s); s.event = null; return L; };
 const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));
 const base = (): SectorState => ({ ...fresh().sectors.hjem, z: 0, hidden: 0, searched: 100, control: 50 });
 /** Gjør en sektor tom og rolig, og sender hele crewet på samme oppdrag. */

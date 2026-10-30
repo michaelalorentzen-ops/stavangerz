@@ -208,6 +208,7 @@ export function infBar(sec: Pick<SectorState, 'z' | 'seen'>, startZ: number): nu
 /** Teksten på knappen når noe hindrer at dagen avsluttes. Samme ordlyd i panelet og i dagsrapporten. */
 export function blockerLabel(s: GameState): string | null {
   const b = endDayBlocker(s);
+  if (b === 'event') return 'Samband: ny melding';
   if (b === 'pending') return s.pending.length > 1 ? `${s.pending.length} encounters venter` : 'Encounter venter';
   if (b === 'tokt') return 'Toktet venter på deg';
   if (b === 'leader') return 'Hvem tar over?';

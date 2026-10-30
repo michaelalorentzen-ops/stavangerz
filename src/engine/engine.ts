@@ -8,6 +8,7 @@ import { AREA, GATES, LANDMARKS, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, ST
 import { advancePhase, BRANCHES, mods, PHASES } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
+import { drawEvent } from './events';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
@@ -34,7 +35,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   const s: GameState = {
     v: 3, seed, rng: seed | 0, day: 1, phase: 1, mutations: [], knownMutations: [], branchWeights: { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 }, goalDay: null, phaseStartDay: 1, moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 0, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
-    flags: {}, crew: [], seenEvents: [], pending: [], recentEnc: [], tokts: [], toktsOpen: [], toktsDone: [], quests: [], log: [], over: null,
+    flags: {}, crew: [], seenEvents: [], pending: [], event: null, recentEnc: [], tokts: [], toktsOpen: [], toktsDone: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
@@ -66,6 +67,7 @@ export function migrate(raw: unknown): GameState | null {
   // v3 fra før utstyrskortene mangler lager og kan ikke brukes
   if (s.v !== 3 || !Array.isArray((raw as GameState).stash)) return null;
   (raw as GameState).needLeader ??= false;
+  (raw as GameState).event ??= null;
   (raw as GameState).pending ??= [];
   (raw as GameState).recentEnc ??= [];
   (raw as GameState).tokts ??= [];
@@ -137,12 +139,28 @@ const whereIs = (t: Task): SectorId | null =>
 export const taskKey = (t: Task) => `${t.type}:${targetOf(t) ?? ''}`;
 export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
 
-/** Kan dagen avsluttes? Ikke før alle encounters er løst, tokt har fått beslutning og en ny leder er valgt. */
-export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.length) && s.pending.length === 0 && !s.tokts.some((t) => t.awaiting);
+/** Kan dagen avsluttes? Ikke før hendelsen og alle encounters er løst, tokt har fått beslutning og en ny leder er valgt. */
+export const canEndDay = (s: GameState): boolean => (!s.needLeader || !s.crew.length) && !s.event && s.pending.length === 0 && !s.tokts.some((t) => t.awaiting);
 
-/** Hva hindrer at dagen avsluttes nå? Ventende encounters først, så tokt-beslutninger, så valg av ny leder. Encounters kan drepe lederen og avslutte toktet, så rekkefølgen er alltid denne. */
-export const endDayBlocker = (s: GameState): 'pending' | 'tokt' | 'leader' | null =>
-  isFinished(s) ? null : s.pending.length ? 'pending' : s.tokts.some((t) => t.awaiting) ? 'tokt' : s.needLeader && s.crew.length ? 'leader' : null;
+/**
+ * Hva hindrer at dagen avsluttes nå? Dagens hendelse først, så ventende encounters, så tokt-beslutninger, så valg
+ * av ny leder. Hendelser og encounters kan drepe lederen og avslutte toktet, så rekkefølgen er alltid denne.
+ */
+export const endDayBlocker = (s: GameState): 'event' | 'pending' | 'tokt' | 'leader' | null =>
+  isFinished(s) ? null : s.event ? 'event' : s.pending.length ? 'pending' : s.tokts.some((t) => t.awaiting) ? 'tokt' : s.needLeader && s.crew.length ? 'leader' : null;
+
+/**
+ * Logger utfallet av en hendelse eller et encounter: tittel, valget, om sjekken lyktes og hva som endret seg.
+ * Linja havner på den siste dagen som er logget (dagen valget kom fra), eller på dagen i dag før den første er over.
+ */
+export function logChoice(s: GameState, title: string, label: string, r: { ok: boolean; changes: string[] }, checked: boolean) {
+  const how = checked ? (r.ok ? ' (lyktes)' : ' (mislyktes)') : '';
+  const what = r.changes.length ? ` ${r.changes.join(', ')}.` : '';
+  const line: LogLine = { t: `${title}: ${label.replace(/[.!?…]$/, '')}${how}.${what}`, kind: checked ? (r.ok ? 'good' : 'bad') : '' };
+  const last = s.log.at(-1);
+  if (last) last.lines.push(line);
+  else s.log.push({ day: s.day, lines: [line] });
+}
 
 /** Er runden avgjort? Bare «won-seen» kan spille videre. */
 export const isFinished = (s: Pick<GameState, 'over'>): boolean => s.over !== null && s.over !== 'won-seen';
@@ -171,6 +189,7 @@ export function endPhase(s: GameState): string[] {
 export function forceEndPhase(s: GameState): string[] {
   if (s.goalDay === null || s.over) return [];
   s.pending = [];
+  s.event = null;
   recallTokts(s);
   if (s.needLeader && s.crew.length) setLeader(s, s.crew[0].id);
   s.needLeader = false;
@@ -395,7 +414,14 @@ export function resolveDay(s: GameState): LogLine[] {
   s.day++;
   validateTasks(s);
   checkEnd(s);
-  s.log.push({ day: s.day - 1, lines: L });
+  // 8) Dagens hendelse trekkes til slutt, etter natta, så rekkefølgen i rng er den samme hver gang.
+  // Den lagres som ventende, og spilleren velger med resolveEvent() før neste dag.
+  const ev = s.over ? null : drawEvent(s);
+  s.event = ev ? { id: ev.id } : null;
+  // linjer som ble logget før den første dagen var over (introen), havner på samme dag
+  const same = s.log.at(-1);
+  if (same && same.day === s.day - 1) same.lines.push(...L);
+  else s.log.push({ day: s.day - 1, lines: [...L] });
   if (s.log.length > 40) s.log.shift();
   return L;
 }
@@ -409,7 +435,7 @@ export function phaseProgress(s: GameState) {
 export function checkEnd(s: GameState) {
   // ventende encounters der ingen i gruppa lever lenger, forsvinner
   s.pending = s.pending.filter((p) => p.crew.some((id) => s.crew.some((c) => c.id === id)));
-  if (!s.crew.length) { s.pending = []; s.tokts = []; }
+  if (!s.crew.length) { s.pending = []; s.tokts = []; s.event = null; }
   // tokt uten levende deltakere er tapt, med alt bytte
   for (const t of s.tokts) t.crew = t.crew.filter((id) => s.crew.some((c) => c.id === id));
   s.tokts = s.tokts.filter((t) => t.crew.length);

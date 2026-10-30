@@ -2,7 +2,7 @@
 import { hasTag, noiseOf } from './cards';
 import { ENCOUNTERS } from '../regions/content';
 import type { LogFn } from './crew';
-import { checkEnd, validateTasks } from './engine';
+import { checkEnd, logChoice, validateTasks } from './engine';
 import { SECTORS } from './data';
 import { delta, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
 import type { PhaseModifiers } from './phases';
@@ -169,5 +169,7 @@ export function resolveEncounter(s: GameState, pid: string, choiceIdx: number): 
   s.moral = clamp(s.moral, 0, 100);
   validateTasks(s);
   checkEnd(s);
-  return { text, ok, changes: summarize([delta(before, s)]) };
+  const changes = summarize([delta(before, s)]);
+  logChoice(s, def.title, ch.label, { ok, changes }, !!ch.check);
+  return { text, ok, changes };
 }

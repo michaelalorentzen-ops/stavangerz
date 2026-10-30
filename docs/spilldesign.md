@@ -60,7 +60,7 @@ Spillet har feilet, selv om det virker, hvis:
 1. **Planlegg:** gi hver person (senere hver leder) en oppgave. Ta valg på ventende encounters.
 2. **Dagen løses:** rydding, leting, bygging, tokt.
 3. **Natta:** angrep på perimeteren og utbrudd fra skjulte zombier.
-4. **Hendelseskort:** sambandet, ofte med et valg.
+4. **Hendelseskort:** sambandet, ofte med et valg. Kortet trekkes når dagen er løst og venter i spilltilstanden til du har valgt, også om siden lastes på nytt. Neste dag kan ikke starte før hendelsen og encounters er avgjort, og utfallet (valget og hva som endret seg) står i loggen for dagen.
 
 **Fasene [Forslag].** Hver fase har sitt eget kjerneverb. Det fasen før handlet om, kan falle bort.
 
