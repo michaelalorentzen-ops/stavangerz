@@ -56,6 +56,13 @@ export const TOKTS: ToktDef[] = [
     reward: { res: { medisin: 8 } },
     recruit: 0.1, locked: true, safeFirst: true, repeat: 0.4,
   },
+  {
+    id: 'grossist', name: `Grossistlageret på ${LANDMARKS.forus}`,
+    desc: `Et grossistlager på ${LANDMARKS.forus}, helt på grensa mot ${LANDMARKS.sandnes}: paller med hermetikk, mel og tørrfisk til halve fylket. Det er langt å gå, og halve ${LANDMARKS.sandnes} har funnet veien dit før dere.`,
+    at: 'sor', days: 3, threat: 4,
+    reward: { res: { mat: 30, vann: 10 } },
+    recruit: 0.1, locked: true, repeat: 0.5,
+  },
 ];
 
 export const QUESTS: QuestDef[] = [

@@ -607,6 +607,7 @@ Fra gjennomgangen 30.10: fase 1 var spillbar, men uten fare. Disse reglene gir s
 - **Knappere økonomi:** sektorene har mindre å finne (`lootMult`), sanking gir mindre (`yieldMult`), det regner sjeldnere (`rainChance`), og maten på lageret blir dårlig litt hver dag (`stashRot`). Fyring (`heatPerCrew`) er av i fase 1 og slår inn fra fase 2.
 - **Tokt har ekte risiko:** hver dag ute kan noen bli skadet (oftere jo farligere), og da mister gruppa en tredel av byttet i flukten. Beslutningen om å fortsette eller snu viser helsen til gruppa.
 - **Dårlige valg:** omtrent en tredel av hendelsene er rent negative, og noen encounters har bare dårlige valg.
+- **Vanskelige sjekker:** et valg i en hendelse eller et encounter kan ha sin egen grunnsjanse (`checkBase`, ellers 0,25), og å verve en fremmed bruker −0,25 (`STRANGER_BASE`), så bare den beste praten har en reell sjanse.
 - **Tokt er turer til strategiske steder** som gir det du ikke får hjemme. Du kan vinne fase 1 uten dem, men de gjør overlevelsen lettere.
   - **Apoteket på Hundvåg** åpnes av hendelsen «Medisinskapet er tomt», som kommer ved første skade, eller senest dag 6. Første tur er trygg: ingen knipe og ingen skader. Senere tur gir mindre, fordi stedet er delvis tømt.
   - **Køen på Bybrua** åpnes av et rykte på radioen fra dag 8. Den gir drivstoff, metall og bildeler, viktig for transport i fase 2.
@@ -626,7 +627,9 @@ Fra spilltesten: fase 1 skal ta rundt 50 dager, og det som var frustrerende, ska
 - **Kaia gir jevn mat:** sanking gir 6 mat (før 4), og Boligfeltet gir 2 (før 1). Det er den fornybare maten i en lang fase.
 - **Helbredelse koster noe:** Pleie og nattevakt var garanterte, så medisinen ble aldri brukt. Se Pleie i kapittel 3.
 - **Verftet i fase 2** har `zombieMult` 1,7 (før 1,45), fordi crewet nå kommer inn i fase 2 med mer på lageret.
-- **[Åpent]** Et tokt etter mat, for eksempel til en grossist, som et valg sent i fasen når Buøy er tømt.
+- **[Bygget] Grossistlageret på Forus:** et tokt etter mat, låst til radioryktet «Lageret på Forus» kommer (fra dag 30, eller fra dag 18 når fem av Buøy-sektorene er trygge). Toktet går gjennom Bybrusperringen, tar 3 dager og har trussel 4, så skader underveis er sannsynlige. Fullført gir det 30 mat og 10 vann i tillegg til byttet underveis, og halvparten neste gang.
+- **[Bygget] Flere hendelser sent i fasen:** 19 nye hendelser, de fleste med krav om dag 12–40 eller om crewets størrelse, så en lang runde ikke går tom. Omtrent en tredel er gode, en tredel vonde og en tredel sjansespill der sjekken avgjør et stort utslag.
+- **[Bygget] Utenfor finnes bare crewet, andre overlevende og zombier.** En som er alene, kan verves med en svært vanskelig Prat-sjekk og blir en ekte nabo med ferdigheter og egenskap (bare når det finnes en ledig seng). En gruppe kan dere handle med, true eller la være, men den blir aldri med.
 
 ### Mål for balanse
 
@@ -634,7 +637,7 @@ Fra spilltesten: fase 1 skal ta rundt 50 dager, og det som var frustrerende, ska
 - Boten vinner 85–97 % med hver kombinasjon (siktet mot 88–95 %).
 - Botens median er 38–50 dager til målet. Boten spiller jevnt, så spredningen hos ekte spillere blir større enn hos boten, og snittet havner nærmere 50.
 - Mat skal ikke være den vanligste dødsårsaken.
-- **[Åpent]** Flaks i hendelsene. Hendelser kommer aldri to ganger i samme runde. Boten ser i snitt 27 av dem i fase 1, og den siste kommer rundt dag 42, så en treg runde går de siste ukene uten hendelser. Skal flaks og ferdighet balansere over 50–75 dager, trengs flere hendelser, og et større sprik mellom de gode og de vonde.
+- **[Åpent]** Flaks i hendelsene. Hendelser kommer aldri to ganger i samme runde. Boten ser i snitt 27 av dem i fase 1, og den siste kommer rundt dag 42, så en treg runde går de siste ukene uten hendelser. Skal flaks og ferdighet balansere over 50–75 dager, trengs flere hendelser, og et større sprik mellom de gode og de vonde. Første steg er bygget: se «Flere hendelser sent i fasen» over.
 
 Balansetesten i `tests/balance.test.ts` oppdateres til de nye reglene.
 

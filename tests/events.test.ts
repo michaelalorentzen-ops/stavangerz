@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { EVENTS, housing, INTRO, newGame, RES, runChoice } from '../src/engine';
+import { addNeighbor, checkOdds, choiceOdds, ENCOUNTERS, encounterOdds, EVENTS, housing, INTRO, newGame, RES, runChoice } from '../src/engine';
 import type { GameState } from '../src/engine';
+import { STRANGER_BASE } from '../src/regions/content';
 import { BOT_SELF } from '../tools/bot';
 
 const fresh = (seed: number) => {
@@ -85,4 +86,75 @@ describe('mat fra hendelser', () => {
     expect(s.stash.length).toBe(n + 1);
     expect(s.stash[s.stash.length - 1].def).toBe('jernia_kasse');
   });
+});
+
+describe('vanskelige sjekker (checkBase)', () => {
+  it('en lavere grunnsjanse gir lavere odds, både i hendelser og encounters', () => {
+    const s = fresh(1);
+    const normal = choiceOdds(s, { label: 'x', check: 'prat', run: () => '' });
+    const hard = choiceOdds(s, { label: 'x', check: 'prat', checkBase: STRANGER_BASE, run: () => '' });
+    expect(normal).toBe(checkOdds(s, 'prat'));
+    expect(hard).toBe(checkOdds(s, 'prat', STRANGER_BASE));
+    expect(hard).toBeLessThan(normal - 0.3);
+    // encounteret «turnus» har et vervevalg ved siden av en vanlig Prat-sjekk
+    const def = ENCOUNTERS.find((e) => e.id === 'turnus')!;
+    const iHard = def.choices.findIndex((c) => c.checkBase !== undefined);
+    const iNormal = def.choices.findIndex((c) => c.check === 'prat' && c.checkBase === undefined);
+    s.pending.push({ pid: 'p1', def: 'turnus', sector: 'hjem', crew: s.crew.map((c) => c.id), threat: 1 });
+    expect(encounterOdds(s, s.pending[0], iHard)).toBeLessThan(encounterOdds(s, s.pending[0], iNormal) - 0.3);
+  });
+
+  it('runChoice bruker grunnsjansen: med den laveste lykkes nesten ingenting', () => {
+    let wins = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      if (runChoice(fresh(seed), { label: 'x', check: 'prat', checkBase: -5, run: () => 'ok' }).ok) wins++;
+    }
+    expect(wins).toBeLessThan(25); // gulvet er 5 %
+  });
+});
+
+describe('fremmede som kan verves', () => {
+  it('vervevalget gir en ekte nabo med navn, og vises ikke når det ikke er seng', () => {
+    const ch = EVENTS.find((e) => e.id === 'tesla')!.choices.find((c) => c.checkBase !== undefined)!;
+    const s = fresh(3);
+    expect(ch.when!(s)).toBe(true);
+    const n = s.crew.length;
+    const text = ch.run(s, true);
+    expect(s.crew.length).toBe(n + 1);
+    expect(text).toContain(s.crew[n].name);
+    const full = fresh(3);
+    while (full.crew.length < housing(full)) full.crew.push({ ...full.crew[1], id: `x${full.crew.length}` });
+    expect(ch.when!(full)).toBe(false);
+  });
+
+  it('grupper kan ikke verves: ingen valg i oljefolk eller generalforsamlingen legger til folk', () => {
+    for (const id of ['oljeskift', 'kartet', 'pokerkveld', 'dugnaden']) {
+      const ev = EVENTS.find((e) => e.id === id)!;
+      for (let seed = 1; seed <= 10; seed++) for (const ch of ev.choices) {
+        const s = fresh(seed); s.day = 30; s.res.mat = 20;
+        if ((ev.when && !ev.when(s)) || (ch.when && !ch.when(s))) continue;
+        const n = s.crew.length;
+        ch.run(s, true);
+        expect(s.crew.length).toBeLessThanOrEqual(n);
+      }
+    }
+  });
+});
+
+describe('sene hendelser', () => {
+  for (const ev of EVENTS) {
+    it(`«${ev.title}»: gyldig tilstand sent i fasen, med stort og lite crew`, () => {
+      for (let seed = 1; seed <= 10; seed++) for (const big of [false, true]) for (const ch of ev.choices) {
+        const s = fresh(seed);
+        s.day = 45;
+        if (big) { for (const id of ['sondre', 'ingrid']) addNeighbor(s, id); /* seks, så mange som det er senger til */ s.res.mat = 30; s.res.vann = 20; s.res.tre = 8; s.gates.nord.work = 12; }
+        if (ev.when && !ev.when(s)) continue;
+        if (ch.when && !ch.when(s)) continue;
+        expect(ev.text(s).length).toBeGreaterThan(10);
+        const r = runChoice(s, ch);
+        expect(r.text.length).toBeGreaterThan(5);
+        valid(s);
+      }
+    });
+  }
 });

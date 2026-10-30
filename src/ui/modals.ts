@@ -137,7 +137,7 @@ function showEvent(done: () => void) {
   const choices = eventChoices(S, ev);
   modal(`<div class="radio">${ev.channel ?? 'Samband · kanal 16'} · Dag ${S.day}</div><h2>${ev.title}</h2>
     <div class="transcript">${esc(ev.text(S))}</div>
-    <div class="choices">${choices.map(({ ch: c, i }) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? `<small>${STAT_LABEL[c.check]} · ${esc(best(S, c.check).name)} · ${Math.round(checkOdds(S, c.check) * 100)}%</small>` : ''}</span>${previewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
+    <div class="choices">${choices.map(({ ch: c, i }) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? `<small>${STAT_LABEL[c.check]} · ${esc(best(S, c.check).name)} · ${Math.round(checkOdds(S, c.check, c.checkBase) * 100)}%</small>` : ''}</span>${previewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.i), ch = ev.choices[i];
     const r = resolveEvent(S, i);
