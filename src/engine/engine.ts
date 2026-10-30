@@ -5,15 +5,18 @@ import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, canRecruit, injure, leteOverlevende, recruitablesNow, setLeader } from './crew';
 import type { LogFn } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
-import { AREA, GATES, LANDMARKS, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
-import { advancePhase, BRANCHES, DIFFICULTY, mods, PHASES } from './phases';
+import { AREA, FACILITIES, GATES, HQ_SECTOR, LANDMARKS, GATE_STEPS, HEALTH_LABEL, SECTOR_IDS, SECTORS, STAT_LABEL, STATS } from './data';
+import { buildLeadMult, checkHq, cookMult, FACILITY_IDS, facilityReady, hearRumor, istand, KANTINE_FOOD, MAX_CRAFT_LEVEL, newHq, POST_IDS, postHolder, POSTS, readyCount, reparere, RUMOR_ON_SEARCH, securityPower, VERKSTED_LEVEL } from './hq';
+import { advancePhase, BRANCHES, BUILT_PHASES, DIFFICULTY, mods, PHASES } from './phases';
+import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
-import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
+import { activeSectors, decay, floorControl, freshSector, isSafe, opensIn, rotFood, rydde, sanke, sectorsOfPhase, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { drawEvent } from './events';
+import { MUTATIONS } from '../regions/content';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
-  CrewMember, Difficulty, GameState, GateId, LogKind, LogLine, Resources, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
+  CrewMember, Difficulty, GameState, GateId, LogKind, LogLine, PostId, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
 } from './types';
 
 /** Vakter ved porten med et rekkevidde-våpen teller mer om natta. */
@@ -38,6 +41,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[], di
     res: { mat: 14, vann: 10, medisin: 0, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
     flags: {}, crew: [], seenEvents: [], pending: [], event: null, recentEnc: [], tokts: [], toktsOpen: [], toktsDone: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
+    hq: newHq(seed),
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
   };
@@ -45,16 +49,8 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[], di
   give(s.crew[0], newCard(s, 'k_ror'));
   give(s.crew[0], newCard(s, 'baufil'));
   for (const id of neighborIds) addNeighbor(s, id);
-  for (const id of PLAYABLE) {
-    const d = SECTORS[id];
-    const M0 = PHASES[1].mods;
-    const loot = Object.fromEntries(Object.entries({ ...d.loot, mat: d.loot.mat * 1.3 }).map(([k, v]) => [k, Math.round(v * M0.lootMult)])) as Resources;
-    const home = id === 'hjem';
-    s.sectors[id] = {
-      z: d.z, hidden: d.hidden, searched: 0, control: home ? 60 : 0, loot, lootMax: sum(Object.values(loot)),
-      seen: home, scouted: home, settled: home, specialFound: false, dropped: [],
-    };
-  }
+  // sektorer for senere faser legges inn nå, men åpnes (med fasens zombier og ressurser) når fasen starter
+  for (const id of SECTOR_IDS) s.sectors[id] = freshSector(id, PHASES[opensIn(id)].mods);
   for (const id of GATE_IDS) s.gates[id] = { work: 0, level: 0 };
   placeUniques(s);
   for (const b of BRANCHES) s.branchWeights[b] = 0.5 + rand(s);
@@ -91,12 +87,20 @@ export function migrate(raw: unknown): GameState | null {
   // lagringer fra før nivåene (ingen i crewet har erfaring): omtrent én erfaring per dag spilt.
   // Nye spill setter xp: 0, så en nettopp rekruttert nabo får ikke gratis erfaring ved reload.
   if (g.crew.every((c) => c.xp === undefined)) for (const c of g.crew) c.xp = Math.max(0, g.day - 1);
+  // lagringer fra før sektorene fikk faser: sektorer som mangler (verftet), åpnes som om fasen nettopp startet
+  for (const id of SECTOR_IDS) if (!g.sectors[id]) g.sectors[id] = openedSector(g, id);
+  g.hq ??= newHq(g.seed);
+  // lagringer fra da fase 1 var siste fase: seieren (eller sandkassa etter den) blir et nådd mål, så fase 2 kan startes
+  if (g.phase === 1 && (g.over === 'won' || g.over === 'won-seen')) { g.over = null; g.goalDay ??= g.day; }
   return g;
 }
 
 // ---------- Avledede verdier ----------
 export const hasTrait = (s: GameState, t: TraitId) => s.crew.some((c) => c.trait === t);
-export const dailyFood = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.6) - (hasTrait(s, 'kokk') ? 1 : 0));
+/** Mat per dag: 0,6 per person, mindre med kokk på posten i HQ-et, og 1 mindre med Kokk-egenskapen. */
+export const dailyFood = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.6 * cookMult(s)) - (hasTrait(s, 'kokk') ? 1 : 0));
+/** Mat som kommer inn hver dag uten at noen sanker: kantina i HQ-et. */
+export const dailyFoodIn = (s: GameState) => (facilityReady(s, 'kantine') ? KANTINE_FOOD : 0);
 export const dailyWater = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.5));
 
 /** Legger arbeid til en sperring og hever nivået når terskelen nås. */
@@ -115,10 +119,11 @@ export function taskOptions(s: GameState): TaskOption[] {
   const opts: TaskOption[] = [
     { type: 'hvile', label: 'Hvile hjemme' },
     { type: 'pleie', label: 'Pleie de som hviler' },
-    { type: 'lage', label: 'Lage utstyr (3 skrap, 1 tre)' },
+    { type: 'lage', label: `Lage utstyr (3 skrap, 1 tre)${facilityReady(s, 'verksted') ? ', nivå +1' : ''}` },
     ...STATS.map((k): TaskOption => ({ type: 'trene', stat: k, label: `Trene ${STAT_LABEL[k]}` })),
   ];
-  for (const id of PLAYABLE) {
+  if (facilityReady(s, 'verksted')) opts.push({ type: 'reparere', label: 'Reparere utstyr (skrap)' });
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id], n = SECTORS[id].short, kind = SECTORS[id].kind;
     if (sec.z > 0 || sec.searched < 100) opts.push({ type: 'rydde', target: id, label: `Rydde ${n}` });
     if (sec.z === 0) opts.push({ type: 'sanke', target: id, label: `Sanke ${n}` });
@@ -132,6 +137,13 @@ export function taskOptions(s: GameState): TaskOption[] {
     opts.push({ type: 'vakt', target: id, label: `Holde vakt ${GATES[id].name}` });
   }
   for (const d of TOKTS) if (toktAvailable(s, d)) opts.push({ type: 'tokt', target: d.id, label: `Tokt: ${d.name}` });
+  // HQ-et: poster når det er tatt, istandsetting når sektoren er tom for zombier
+  if (s.hq.taken) {
+    for (const p of POST_IDS) opts.push({ type: 'post', target: p, label: `Post: ${POSTS[p].name}` });
+    if (s.sectors[HQ_SECTOR].z === 0) {
+      for (const f of FACILITY_IDS) if (!s.hq.facilities[f].ready) opts.push({ type: 'istand', target: f, label: `Sette i stand ${FACILITIES[f].short}` });
+    }
+  }
   return opts;
 }
 
@@ -139,7 +151,7 @@ const targetOf = (t: Task): string | null => ('target' in t ? t.target : 'stat' 
 /** Entydig nøkkel for en ordre, med mål eller ferdighet. */
 /** Sektoren oppgaven foregår i, eller null for tokt. */
 const whereIs = (t: Task): SectorId | null =>
-  !('target' in t) ? 'hjem' : t.target in GATES ? GATES[t.target as GateId].sector : t.target in SECTORS ? (t.target as SectorId) : null;
+  t.type === 'post' || t.type === 'istand' || t.type === 'reparere' ? HQ_SECTOR : !('target' in t) ? 'hjem' : t.target in GATES ? GATES[t.target as GateId].sector : t.target in SECTORS ? (t.target as SectorId) : null;
 export const taskKey = (t: Task) => `${t.type}:${targetOf(t) ?? ''}`;
 export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
 
@@ -179,11 +191,38 @@ export function continueAfterWin(s: GameState): boolean {
 /** Kan spilleren avslutte fasen? Fra og med dagen målet først ble nådd, og ikke mens noe venter på et valg. */
 export const canEndPhase = (s: GameState): boolean => s.goalDay !== null && endDayBlocker(s) === null;
 
-/** Avslutter fasen. Fase 1 er foreløpig siste: fase 2 finnes ikke ennå, så runden er vunnet. */
+/**
+ * Avslutter fasen og starter neste. Den siste fasen som er bygd (BUILT_PHASES) gir seier: «Fortsettelse følger».
+ * Returnerer mutasjonene zombiene fikk.
+ */
 export function endPhase(s: GameState): string[] {
   if (!canEndPhase(s) || s.over) return [];
-  if (s.phase === 1) { s.over = 'won'; return []; }
-  return advancePhase(s);
+  if (s.phase >= BUILT_PHASES) { s.over = 'won'; return []; }
+  return nextPhase(s);
+}
+
+/** En sektor åpnet midt i en runde: zombiene skaleres med fasens zombieMult (med vanskelighet og mutasjoner). */
+function openedSector(s: GameState, id: SectorId) {
+  const later = opensIn(id) > 1 && opensIn(id) <= s.phase;
+  const M: PhaseModifiers = later ? mods(s) : PHASES[opensIn(id)].mods;
+  return freshSector(id, M, later ? M.zombieMult : 1);
+}
+
+/**
+ * Går til neste fase: zombiene muterer (advancePhase), og sektorene som hører til den nye fasen åpnes.
+ * Overgangen logges på dagen i dag, så spilleren ser den i loggen.
+ */
+export function nextPhase(s: GameState, extraPoints = 0): string[] {
+  const added = advancePhase(s, extraPoints);
+  const opened = sectorsOfPhase(s.phase);
+  for (const id of opened) s.sectors[id] = openedSector(s, id);
+  const lines: LogLine[] = [{ t: `Fase ${s.phase} starter.${added.length ? ` Zombiene har mutert: ${added.map((m) => MUTATIONS[m]?.name ?? m).join(', ')}.` : ''}`, kind: 'bad' }];
+  for (const id of opened) lines.push({ t: `${SECTORS[id].name} er åpnet. ${SECTORS[id].desc}`, kind: 'warn' });
+  const last = s.log.at(-1);
+  if (last && last.day === s.day) last.lines.push(...lines);
+  else s.log.push({ day: s.day, lines });
+  if (s.log.length > 40) s.log.shift();
+  return added;
 }
 
 /**
@@ -217,6 +256,9 @@ export function taskText(t: Task): string {
     case 'overlevende': return `lete etter overlevende ${placeName(t.target)}`;
     case 'befeste': return `befeste ${placeName(t.target)}`;
     case 'tokt': return `dra på tokt (${placeName(t.target)})`;
+    case 'post': return `ha posten som ${POSTS[t.target].name.toLowerCase()}`;
+    case 'istand': return `sette i stand ${FACILITIES[t.target].short}`;
+    case 'reparere': return 'reparere utstyr';
   }
 }
 
@@ -230,6 +272,8 @@ function invalidReason(s: GameState, t: Task): string {
     case 'vakt': return sec(t.target)?.z > 0 ? `${placeName(t.target)} har zombier igjen` : 'stedet er ikke lenger tilgjengelig';
     case 'befeste': return sec(t.target)?.z > 0 ? `${placeName(t.target)} har zombier igjen` : `${placeName(t.target)} er fullt utbygd`;
     case 'tokt': return 'toktet er ikke lenger tilgjengelig';
+    case 'istand': return s.hq.facilities[t.target]?.ready ? `${FACILITIES[t.target].short} er allerede i stand` : `${placeName(HQ_SECTOR)} har zombier igjen`;
+    case 'post': return 'posten er besatt';
     default: return 'ordren er ikke lenger mulig';
   }
 }
@@ -242,8 +286,12 @@ export function validateTasks(s: GameState, log?: LogFn): string[] {
   const valid = taskOptions(s);
   const msgs: string[] = [];
   // de som er ute på tokt er låst til det
+  const posts = new Set<PostId>();
   for (const c of s.crew) {
-    if (isOnTokt(s, c) || valid.some((o) => sameTask(o, c.task))) continue;
+    // bare én per post: den første beholder den
+    const dup = c.task.type === 'post' && posts.has(c.task.target);
+    if (c.task.type === 'post') posts.add(c.task.target);
+    if (isOnTokt(s, c) || (!dup && valid.some((o) => sameTask(o, c.task)))) continue;
     const msg = `${c.name} fikk ikke ${taskText(c.task)}: ${invalidReason(s, c.task)}. Hviler i stedet.`;
     c.task = { type: 'hvile' };
     msgs.push(msg);
@@ -277,30 +325,34 @@ export function resolveDay(s: GameState): LogLine[] {
   let encounters = resolveTokts(s, M, log, ENC_MAX_PER_DAY);
 
   // 1) Rydde og 2) Sanke
-  const groups = {} as Record<SectorId, number>;
+  const active = activeSectors(s);
+  const groups: Partial<Record<SectorId, number>> = {};
   const loud: SectorId[] = [];
-  for (const id of PLAYABLE) {
+  for (const id of active) {
     const ry = team('rydde', id), sa = team('sanke', id);
     groups[id] = (ry.length ? 1 : 0) + (sa.length ? 1 : 0);
     if (ry.length) {
       // støyen avgjøres av våpnene gruppa gikk ut med, før noe rekker å gå i stykker
       const noise = noiseProfile(ry);
       if (noise.loud) loud.push(id);
+      const searching = s.sectors[id].z === 0;
       rydde(s, id, ry, M, log); xp(ry, 'muskler', 1.5); xp(ry, 'nerver', 0.5);
+      // gjennomsøking av HQ-sektoren kan gi rykter om anleggene
+      if (id === HQ_SECTOR && searching && rand(s) < RUMOR_ON_SEARCH) hearRumor(s, log);
       if (encounters < ENC_MAX_PER_DAY && rollEncounter(s, M, id, ry, noise, log)) encounters++;
     }
     if (sa.length && s.sectors[id].z === 0) { s.sectors[id].seen = true; s.sectors[id].scouted = true; sanke(s, id, sa, M, log); xp(sa, 'snoking', 1); }
   }
 
   // 2b) Speide
-  for (const id of PLAYABLE) {
+  for (const id of active) {
     const sp = team('speide', id);
-    if (sp.length) { speide(s, id, sp, M, log); xp(sp, 'snoking', 1.5); }
+    if (sp.length) { speide(s, id, sp, M, log); xp(sp, 'snoking', 1.5); if (id === HQ_SECTOR) hearRumor(s, log); }
   }
 
   // 2c) Vakt på sektor gir kontroll
   const watch: Partial<Record<SectorId, number>> = {};
-  for (const id of PLAYABLE) {
+  for (const id of active) {
     const vk = team('vakt', id);
     if (!vk.length) continue;
     watch[id] = watchControl(vk);
@@ -326,7 +378,7 @@ export function resolveDay(s: GameState): LogLine[] {
   for (const id of GATE_IDS) {
     const tm = team('befeste', id);
     if (!tm.length) continue;
-    let work = sum(tm.map((c) => buildPower(s, c)));
+    let work = sum(tm.map((c) => buildPower(s, c))) * buildLeadMult(s);
     const need = Math.ceil(work / 3);
     const used = Math.min(need, s.res.tre + s.res.skrap);
     if (used < need) work *= (used / need) * 0.7 + 0.3;
@@ -338,13 +390,22 @@ export function resolveDay(s: GameState): LogLine[] {
   }
 
   // 3b) Lage utstyr
-  for (const c of team('lage', null)) { lage(s, c, stat(c, 'mekk'), log); xp([c], 'mekk', 1.5); }
+  const lageBonus = facilityReady(s, 'verksted') ? VERKSTED_LEVEL : 0;
+  for (const c of team('lage', null)) { lage(s, c, stat(c, 'mekk'), log, lageBonus, MAX_CRAFT_LEVEL); xp([c], 'mekk', 1.5); }
+
+  // 3b2) HQ-et: reparere utstyr, sette i stand anlegg, og postene
+  for (const c of team('reparere', null)) { reparere(s, c, log); xp([c], 'mekk', 1); }
+  for (const f of FACILITY_IDS) {
+    const tm = team('istand', f);
+    if (tm.length) { istand(s, f, tm, log); xp(tm, 'mekk', 1.5); }
+  }
+  for (const p of POST_IDS) { const c = postHolder(s, p); if (c) xp([c], POSTS[p].stat, 1); }
 
   // 3c) Trene
   for (const c of s.crew.filter((c) => c.task.type === 'trene')) if (c.task.type === 'trene') gainXp(c, c.task.stat, 5);
 
   // 3d) Lete etter overlevende
-  for (const id of PLAYABLE) {
+  for (const id of active) {
     const ov = team('overlevende', id);
     if (ov.length) { leteOverlevende(s, id, ov, log); xp(ov, 'prat', 1.5); }
   }
@@ -375,7 +436,9 @@ export function resolveDay(s: GameState): LogLine[] {
     if (was !== undefined && n > was) log(`${c.name} er nå nivå ${n}. Det merkes på alt ${c.name} gjør.`, 'good');
   }
 
-  // 5) Forbruk
+  // 5) Forbruk. Kantina i HQ-et gir mat først.
+  const kantine = dailyFoodIn(s);
+  if (kantine) { s.res.mat += kantine; log(`${FACILITIES.kantine.name} ga ${kantine} mat.`); }
   s.res.mat -= dailyFood(s); s.res.vann -= dailyWater(s);
   // en sultedag er en dag der det ikke var nok mat eller vann til alle
   const starved = s.res.mat < 0 || s.res.vann < 0;
@@ -410,10 +473,13 @@ export function resolveDay(s: GameState): LogLine[] {
     let n = Math.max(1, 1 + Math.floor(rand(s) * (1 + s.day / M.breachDays)) - st.level);
     const guards = s.crew.filter((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === id);
     if (st.level >= 3 && guards.length) continue;
-    if (guards.length) {
-      const k = Math.min(n, sround(s, guardPower(s, guards) * 0.35));
+    // sikkerhetssjefen i HQ-et styrker vakta ved alle porter, også der ingen står
+    const chief = securityPower(s);
+    if (guards.length || chief > 0) {
+      const k = Math.min(n, sround(s, (guardPower(s, guards) + chief) * 0.35));
       n -= k; s.stats.kills += k;
-      if (!n) { log(`Natt: ${k} ${plural(k)} prøvde seg ved ${g.name}. ${names(guards)} holdt vakt.`, 'good'); continue; }
+      const who = guards.length ? `${names(guards)} holdt vakt` : `Vaktordningen til ${postHolder(s, 'sikkerhet')!.name} holdt`;
+      if (!n) { log(`Natt: ${k} ${plural(k)} prøvde seg ved ${g.name}. ${who}.`, 'good'); continue; }
     }
     const target = g.spills?.length ? pick(s, g.spills) : g.sector;
     const sec = s.sectors[target];
@@ -442,7 +508,7 @@ export function resolveDay(s: GameState): LogLine[] {
   }
 
   // 7) Natt: glemte kjellere, bare i sektorer ingen var i i dag
-  for (const id of PLAYABLE) {
+  for (const id of active) {
     const sec = s.sectors[id];
     if (present.has(id)) continue;
     if (sec.z === 0 && sec.hidden > 0 && sec.searched < 100 && rand(s) < M.hiddenOutbreak * sec.hidden) {
@@ -457,6 +523,7 @@ export function resolveDay(s: GameState): LogLine[] {
 
   // 7b) Bosetting og matråte
   settle(s, log);
+  checkHq(s, log);
   rotFood(s, M);
 
   s.moral = clamp(s.moral + 2, 0, 100);
@@ -468,17 +535,42 @@ export function resolveDay(s: GameState): LogLine[] {
   const ev = s.over ? null : drawEvent(s);
   s.event = ev ? { id: ev.id } : null;
   // linjer som ble logget før den første dagen var over (introen), havner på samme dag
+  // en faseovergang i natt er allerede logget på den nye dagen: dagens linjer skal stå foran den
+  const later = s.log.filter((d) => d.day > s.day - 1);
+  s.log = s.log.filter((d) => d.day <= s.day - 1);
   const same = s.log.at(-1);
   if (same && same.day === s.day - 1) same.lines.push(...L);
   else s.log.push({ day: s.day - 1, lines: [...L] });
-  if (s.log.length > 40) s.log.shift();
+  s.log.push(...later);
+  while (s.log.length > 40) s.log.shift();
   return L;
 }
 
+/** En linje i målpanelet. */
+export interface GoalRow { label: string; value: string; done: boolean }
+
+/**
+ * Hvor langt fasen har kommet. Fase 1: alle fase 1-sektorene trygge og alle porter på nivå 2. Fase 2 (betaen):
+ * HQ-sektoren trygg og minst ett anlegg satt i stand. `safe` og `total` gjelder sektorene i fasens mål.
+ */
 export function phaseProgress(s: GameState) {
-  const safe = PLAYABLE.filter((id) => isSafe(s.sectors[id])).length;
   const gates = GATE_IDS.map((id) => ({ id, name: GATES[id].name, level: s.gates[id].level }));
-  return { safe, total: PLAYABLE.length, gates, done: safe === PLAYABLE.length && gates.every((g) => g.level >= 2) };
+  if (s.phase === 1) {
+    const ids = sectorsOfPhase(1);
+    const safe = ids.filter((id) => isSafe(s.sectors[id])).length;
+    const gatesDone = gates.filter((g) => g.level >= 2).length;
+    const rows: GoalRow[] = [
+      { label: `Gjør alle sektorer ${AREA.at} trygge`, value: `${safe}/${ids.length}`, done: safe === ids.length },
+      ...gates.map((g) => ({ label: `${g.name} på nivå 2`, value: `${g.level}/2`, done: g.level >= 2 })),
+    ];
+    return { safe, total: ids.length, gates, rows, summary: `${safe}/${ids.length} trygge · ${gatesDone}/${gates.length} porter`, done: safe === ids.length && gatesDone === gates.length };
+  }
+  const hqSafe = isSafe(s.sectors[HQ_SECTOR]), ready = readyCount(s);
+  const rows: GoalRow[] = [
+    { label: `Gjør ${SECTORS[HQ_SECTOR].short} trygg`, value: hqSafe ? 'trygg' : s.sectors[HQ_SECTOR].z > 0 ? `${s.sectors[HQ_SECTOR].seen ? s.sectors[HQ_SECTOR].z : '?'} Z` : `${Math.round(s.sectors[HQ_SECTOR].searched)} %`, done: hqSafe },
+    { label: 'Sett i stand minst ett anlegg', value: `${ready}/1`, done: ready >= 1 },
+  ];
+  return { safe: hqSafe ? 1 : 0, total: 1, gates, rows, summary: `${SECTORS[HQ_SECTOR].short} ${hqSafe ? 'trygg' : 'ikke trygg'} · ${ready} anlegg i stand`, done: hqSafe && ready >= 1 };
 }
 
 export function checkEnd(s: GameState) {
@@ -494,7 +586,8 @@ export function checkEnd(s: GameState) {
   if (s.goalDay === null && phaseProgress(s).done) s.goalDay = s.day;
   if (s.day - s.phaseStartDay >= mods(s).turnCap) {
     if (s.goalDay !== null) forceEndPhase(s);
-    else if (DIFFICULTY[s.difficulty].deadline) missDeadline(s);
+    // den siste fasen som er bygd har ingen neste fase å tvinge spilleren over i, så fristen er tap der
+    else if (DIFFICULTY[s.difficulty].deadline && s.phase < BUILT_PHASES) missDeadline(s);
     else s.over = 'timeout';
   }
 }
@@ -511,7 +604,7 @@ function missDeadline(s: GameState) {
   if (s.needLeader && s.crew.length) setLeader(s, s.crew[0].id);
   s.needLeader = false;
   const fallen: string[] = [];
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
     if (isSafe(sec)) continue;
     sec.z = Math.max(sec.z, Math.round(SECTORS[id].z * price.fall));
@@ -521,14 +614,15 @@ function missDeadline(s: GameState) {
   s.moral = clamp(s.moral - price.moral, 0, 100);
   s.forcedPhases++;
   const from = s.phase;
-  const added = advancePhase(s, price.mutations);
+  s.log.push({ day: s.day, lines: [
+    { t: `Fristen gikk ut. Fase ${from} ble ikke ferdig, men tiden venter ikke på deg.`, kind: 'bad' },
+    ...(fallen.length ? [{ t: `Falt tilbake: ${fallen.join(', ')}. Zombiene tok dem igjen.`, kind: 'bad' as const }] : []),
+    { t: `Moralen synker ${price.moral}. Zombiene får ${price.mutations === 1 ? 'en mutasjon' : `${price.mutations} mutasjoner`} ekstra.`, kind: 'bad' },
+  ] });
+  // nextPhase legger overgangen til på samme dag
+  nextPhase(s, price.mutations);
   if (s.phase === from) {
     // siste fase: ingen mutasjoner å trekke, men prisen i sektorene og moralen er betalt
     s.goalDay = null; s.phaseStartDay = s.day;
   }
-  s.log.push({ day: s.day, lines: [
-    { t: `Fristen gikk ut. Fase ${from} ble ikke ferdig, men tiden venter ikke på deg.`, kind: 'bad' },
-    ...(fallen.length ? [{ t: `Falt tilbake: ${fallen.join(', ')}. Zombiene tok dem igjen.`, kind: 'bad' as const }] : []),
-    { t: `Moralen synker ${price.moral}.${added.length ? ` Zombiene har mutert ${added.length === 1 ? 'en gang til' : `${added.length} ganger`}.` : ''}`, kind: 'bad' },
-  ] });
 }

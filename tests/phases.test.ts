@@ -185,11 +185,13 @@ describe('faseslutt og turgrense', () => {
     s.goalDay = 12;
     expect(canEndPhase(s)).toBe(true);
     endPhase(s);
-    expect(s.over).toBe('won');
-    expect(s.mutations).toEqual([]);
+    // fase 1 er ikke lenger siste fase: fase 2 starter, og zombiene muterer
+    expect(s.over).toBeNull();
+    expect(s.phase).toBe(2);
+    expect(s.mutations.length).toBeGreaterThanOrEqual(PHASES[2].mutationPoints[0]);
   });
 
-  it('turgrensen gir timeout uten mål på brutal, og seier med mål', () => {
+  it('turgrensen gir timeout uten mål på brutal, og fase 2 med mål', () => {
     const a = newGame(1, BOT_SELF, [], 'brutal');
     a.day = a.phaseStartDay + PHASES[1].mods.turnCap;
     checkEnd(a);
@@ -198,14 +200,15 @@ describe('faseslutt og turgrense', () => {
     b.goalDay = 20;
     b.day = b.phaseStartDay + PHASES[1].mods.turnCap;
     checkEnd(b);
-    expect(b.over).toBe('won');
+    expect(b.over).toBeNull();
+    expect(b.phase).toBe(2);
     const c = newGame(1, BOT_SELF, []);
     c.day = c.phaseStartDay + PHASES[1].mods.turnCap - 1;
     checkEnd(c);
     expect(c.over).toBeNull();
   });
 
-  it('turgrensen med nådd mål gir seier selv om noe venter', () => {
+  it('turgrensen med nådd mål avslutter fasen selv om noe venter', () => {
     const s = newGame(1, BOT_SELF, ['arild', 'mona', 'toregil']);
     const [a, b, c] = s.crew.filter((x) => !x.me);
     s.goalDay = 30;
@@ -217,7 +220,8 @@ describe('faseslutt og turgrense', () => {
     const skrap = s.res.skrap;
     s.day = s.phaseStartDay + PHASES[1].mods.turnCap;
     checkEnd(s);
-    expect(s.over).toBe('won');
+    expect(s.over).toBeNull();
+    expect(s.phase).toBe(2);
     expect(s.pending).toEqual([]);
     expect(s.tokts).toEqual([]);
     expect(s.res.skrap).toBe(skrap + 3);
@@ -277,11 +281,12 @@ describe('faseslutt og turgrense', () => {
     expect(s.phase).toBe(1);
   });
 
-  it('nådd mål ved fristen gir seier på alle grader', () => {
+  it('nådd mål ved fristen gir fase 2 uten pris på alle grader', () => {
     for (const d of ['normal', 'hard', 'brutal'] as const) {
       const s = atDeadline(d); s.goalDay = 20;
       checkEnd(s);
-      expect(s.over).toBe('won');
+      expect(s.over).toBeNull();
+      expect(s.phase).toBe(2);
       expect(s.forcedPhases).toBe(0);
     }
   });

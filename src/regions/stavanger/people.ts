@@ -24,7 +24,7 @@ export const TRAITS: Record<TraitId, { name: string; desc: string }> = {
   dugnad: { name: 'Fast inventar på dugnad', desc: '+2 når du befester. Har alltid med egen drill.' },
   hms: { name: 'HMS-ansvarlig', desc: 'Befestninger blir solide (+2), men fyller ut avviksskjema etter hver kamp.' },
   nattevakt: { name: `Nattevakt på ${LANDMARKS.sus}`, desc: 'Lapper sammen crewet. Hviledager helbreder alltid, og sparer ofte medisin.' },
-  sveiser: { name: `Sveiser ${SECTORS.rosenberg.at}`, desc: '+3 når du befester. Kjenner verftet ut og inn (fase 2).' },
+  sveiser: { name: `Sveiser ${SECTORS.rosenberg.at}`, desc: '+3 når du befester. Kjenner verftet ut og inn: rykter om anleggene stemmer alltid (fase 2).' },
   russ: { name: 'Russ 2026', desc: 'Løper fort og redd. Har ingen respekt for noe, inkludert zombier.' },
   regneark: { name: 'Regnearket', desc: `Oljeingeniør. Har regneark over alle kjellere ${AREA.at}, og viser det eksakte antallet gjemte zombier.` },
   hv: { name: 'Heimevernet', desc: '+2 i kamp. Forteller om øvelse Cold Response hver kveld.' },

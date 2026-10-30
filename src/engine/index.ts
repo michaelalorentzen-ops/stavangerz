@@ -8,6 +8,7 @@ export * from './sectors';
 export * from './encounters';
 export * from './tokt';
 export * from './phases';
+export * from './hq';
 export * from './engine';
 export * from './events';
 export * from './outcome';
