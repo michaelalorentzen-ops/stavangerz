@@ -129,6 +129,8 @@ export const LANDMARKS = {
   nordsjoen: 'Nordsjøen',
   sus: 'SUS',
   hillevag: 'Hillevåg',
+  /** industriområdet på grensa mot Sandnes, der grossistlagrene ligger */
+  forus: 'Forus',
 } as const;
 
 

@@ -13,6 +13,8 @@ import type { CrewMember, GameState, StatKey } from './types';
 export interface ChoiceDef {
   label: string;
   check?: StatKey;
+  /** grunnsjansen for sjekken i stedet for den vanlige (0,25). Lavere gir en vanskeligere sjekk, for eksempel å verve en fremmed. */
+  checkBase?: number;
   when?: (s: GameState) => boolean;
   run: (s: GameState, ok: boolean) => string;
 }
@@ -29,7 +31,9 @@ export interface EventDef {
 
 export const best = (s: GameState, k: StatKey): CrewMember => bestOf(s.crew, k);
 export const checkOdds = (s: GameState, k: StatKey, base = 0.25): number => checkOddsFor(s.crew, k, base);
-const roll = (s: GameState, k: StatKey) => rand(s) < checkOdds(s, k);
+/** Sjansen for at et hendelsesvalg lykkes, med valgets egen grunnsjanse. 1 når valget ikke har en sjekk. */
+export const choiceOdds = (s: GameState, ch: ChoiceDef): number => (ch.check ? checkOdds(s, ch.check, ch.checkBase) : 1);
+const roll = (s: GameState, ch: ChoiceDef) => rand(s) < choiceOdds(s, ch);
 /** Trekker et hendelseskort og merker det som sett. Brukes av resolveDay(), som lagrer det i `state.event`. */
 export function drawEvent(s: GameState): EventDef | null {
   const pool = EVENTS.filter((e) => !s.seenEvents.includes(e.id) && (!e.when || e.when(s)));
@@ -51,7 +55,7 @@ export function previewChoice(s: GameState, ch: ChoiceDef): ChoicePreview {
 /** Løser et hendelsesvalg. `changes` er det som faktisk endret seg. */
 export function runChoice(s: GameState, ch: ChoiceDef): { ok: boolean; text: string; changes: string[] } {
   const before = structuredClone(s);
-  const ok = ch.check ? roll(s, ch.check) : true;
+  const ok = ch.check ? roll(s, ch) : true;
   const text = plainText(ch.run(s, ok));
   s.moral = clamp(s.moral, 0, 100);
   const resets = validateTasks(s);

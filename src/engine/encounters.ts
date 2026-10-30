@@ -30,6 +30,8 @@ export interface EncChoice {
   check?: StatKey;
   /** våpentagg som gir bedre odds */
   tag?: WeaponTag;
+  /** grunnsjansen for sjekken i stedet for den vanlige (0,25), som i hendelsene. Lavere gir en vanskeligere sjekk. */
+  checkBase?: number;
   /** å trekke seg ut: koster litt, gir ingen belønning */
   retreat?: true;
   run: (s: GameState, ctx: EncounterCtx, ok: boolean) => string;
@@ -147,7 +149,7 @@ export function encounterOdds(s: GameState, p: PendingEncounter, choiceIdx: numb
   if (!ch?.check) return 1;
   const crew = alive(s, p);
   if (!crew.length) return 0.05;
-  const odds = checkOddsFor(crew, ch.check);
+  const odds = checkOddsFor(crew, ch.check, ch.checkBase);
   const tagged = ch.tag && crew.some((c) => hasTag(c, ch.tag!)) ? odds + TAG_ODDS : odds;
   return clamp(tagged - THREAT_ODDS * (p.threat - 1), 0.05, ODDS_MAX);
 }
