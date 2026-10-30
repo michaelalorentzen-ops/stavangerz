@@ -4,6 +4,7 @@ import {
   canEndPhase, craftShortfall, LAGE_COST, nameList, dailyFood, daysLeft, LOW_DAYS, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
+  applyPlan, deletePlan, MAX_PLANS, repeatYesterday, savePlan,
   BUILT_PHASES, COND_LABEL, dailyFoodIn, FACILITIES, FACILITY_IDS, facilityIntel, HQ_SECTOR, ISTAND_WORK, istandMaterials, isLocked, POST_IDS, postEffect, postHolder, POSTS,
 } from '../engine';
 import type { TaskOption, TaskPreview, CrewMember, FacilityId, GameState, GateId, PostId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
@@ -404,6 +405,33 @@ function postsHtml(S: GameState): string {
   }).join('')}<p class="hint">En person på post gjør ikke dagsoppdrag. Mat fra kantina: ${dailyFoodIn(S)} per dag.</p></div>`;
 }
 
+/** Faste planer og «Som i går». Planene ligger i spilltilstanden (S.plans), så de følger lagringen. De setter bare crew.task. */
+function plansHtml(S: GameState): string {
+  const yest = S.day > 1 && Object.keys(S.lastTasks).length > 0;
+  return `<div class="card plans"><span class="eyebrow" style="margin:0">Planer</span>
+    <div class="plan-row">${yest ? '<button class="btn" data-plan-yest title="Sett alle tilbake til oppdragene fra i går, der de fortsatt går an">Som i går</button>' : ''}${S.plans.map((p) => `<span class="plan-chip"><button class="btn" data-plan="${esc(p.name)}" title="Bruk planen «${esc(p.name)}»">${esc(p.name)}</button><button class="btn plan-x" data-plan-del="${esc(p.name)}" aria-label="Slett planen ${esc(p.name)}" title="Slett planen">×</button></span>`).join('')}</div>
+    <form class="plan-save" data-plan-form><input name="name" maxlength="20" placeholder="Navn, f.eks. Morgen" aria-label="Navn på planen" autocomplete="off"><button class="btn" type="submit" title="Lagre dagens fordeling som en plan"${S.plans.length >= MAX_PLANS ? ' disabled' : ''}>Lagre fordeling</button></form>
+    ${ui.planNote ? `<p class="hint" role="status">${esc(ui.planNote)}</p>` : ''}</div>`;
+}
+
+function bindPlans(S: GameState) {
+  const root = $('crew');
+  const report = (r: { set: string[]; skipped: string[] }, what: string) => {
+    const names = r.skipped.map((id) => S.crew.find((c) => c.id === id)?.name).filter(Boolean) as string[];
+    ui.planNote = `${what}: ${r.set.length} satt${names.length ? `, ${nameList(names)} fikk ikke oppdraget (ikke gyldig nå)` : ''}.`;
+    ui.refresh();
+  };
+  root.querySelector('[data-plan-yest]')?.addEventListener('click', () => report(repeatYesterday(S), 'Som i går'));
+  root.querySelectorAll<HTMLElement>('[data-plan]').forEach((b) => b.addEventListener('click', () => report(applyPlan(S, b.dataset.plan!), `Planen «${b.dataset.plan}»`)));
+  root.querySelectorAll<HTMLElement>('[data-plan-del]').forEach((b) => b.addEventListener('click', () => { deletePlan(S, b.dataset.planDel!); ui.planNote = ''; ui.refresh(); }));
+  root.querySelector<HTMLFormElement>('[data-plan-form]')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = (root.querySelector<HTMLInputElement>('[data-plan-form] input')!).value;
+    ui.planNote = savePlan(S, name) ? `Planen «${name.trim().slice(0, 20)}» er lagret.` : 'Gi planen et navn (høyst seks planer).';
+    ui.refresh();
+  });
+}
+
 function bindPosts(S: GameState) {
   $('crew').querySelectorAll<HTMLSelectElement>('[data-post]').forEach((sel) => sel.addEventListener('change', () => {
     const p = sel.dataset.post as PostId;
@@ -436,7 +464,7 @@ const hpHtml = (c: CrewMember) => `<span class="hp h${c.hp}" title="${HEALTH_LAB
 export function renderCrew() {
   const S = game(), opts = taskOptions(S), short = craftShortfall(S);
   if (ui.openCrew && !S.crew.some((c) => c.id === ui.openCrew)) ui.openCrew = null;
-  $('crew').innerHTML = postsHtml(S) + S.crew.map((c) => {
+  $('crew').innerHTML = plansHtml(S) + postsHtml(S) + S.crew.map((c) => {
     const open = ui.openCrew === c.id, away = isOnTokt(S, c);
     const xp = c.xp ?? 0, lvl = crewLevel(xp), prog = Math.round(levelProgress(xp) * 100);
     const help = TASK_HELP[c.task.type];
@@ -461,6 +489,7 @@ export function renderCrew() {
   }).join('');
   bindCards($('crew'));
   bindPosts(S);
+  bindPlans(S);
   const toggle = (id: string) => { ui.openCrew = ui.openCrew === id ? null : id; if (ui.openCrew !== id && ui.picker?.crewId === id) ui.picker = null; renderCrew(); };
   $('crew').querySelectorAll<HTMLElement>('[data-row]').forEach((row) => row.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;

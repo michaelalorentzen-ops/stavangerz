@@ -149,6 +149,8 @@ En person har én oppgave per dag. Oppgaver låses opp per fase **[Forslag]**. A
 | Spionasje | 3 | Fanger opp murring og opprør, senere fraksjoner |
 | Handle / diplomati | 5 | Byttehandel og avtaler med fraksjoner |
 
+**Automatisering:** Ferdig speiding går over i Rydde (hvis det er zombier igjen) ellers Sanke, og ferdig rydding i Sanke eller Holde vakt, i samme sektor og bare hvis ordren er gyldig. Ellers hviler personen. Loggen sier det kort («Mona fortsetter med å sanke Kaia»). I Crew-fanen kan spilleren lagre dagens fordeling som en navngitt plan (høyst seks, i spilltilstanden, så de følger lagringen) og bruke den med ett klikk, og «Som i går» setter alle tilbake til forrige dags oppdrag. Planer og «Som i går» setter bare oppdraget, og ugyldige ordre hoppes over med beskjed. Ingen av delene bruker tilfeldighet.
+
 **[Låst]** Klarering og finsjekk blir én oppgave: **Rydde**. Du sjekker og tar med deg det du finner samtidig. Den gamle «Lete» blir **Sanke**.
 
 ---

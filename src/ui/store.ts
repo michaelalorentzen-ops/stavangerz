@@ -56,6 +56,8 @@ export const ui = {
   picker: null as { crewId: string; slot: Slot } | null,
   /** crewraden som er foldet ut, bare én om gangen */
   openCrew: null as string | null,
+  /** siste melding fra planer og «Som i går» */
+  planNote: '',
   /** personen lageret sammenligner kortene mot */
   compareCrew: null as string | null,
   /** valgt fane i panelet, huskes i sessionStorage */

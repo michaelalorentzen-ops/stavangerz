@@ -83,7 +83,7 @@ describe('småting fra nettlesertesten', () => {
     const s = fresh();
     s.crew[0].task = { type: 'speide', target: 'obs' };
     const lines = resolveDay(s).map((l) => l.t);
-    expect(lines.some((t) => t.includes('Speidingen av') && t.includes('er gjort') && t.includes('hviler i morgen'))).toBe(true);
+    expect(lines.some((t) => t.includes('fortsetter med å'))).toBe(true);
     expect(lines.some((t) => t.includes('fikk ikke'))).toBe(false);
   });
   it('validateTasks utenom dagsslutt beholder den gamle meldingen', () => {

@@ -12,6 +12,7 @@ import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { activeSectors, decay, floorControl, freshSector, isSafe, opensIn, rotFood, rydde, sanke, sectorsOfPhase, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { drawEvent } from './events';
+import { nextTask, rememberTasks } from './plans';
 import { MUTATIONS } from '../regions/content';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
@@ -39,7 +40,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[], di
   const s: GameState = {
     v: 3, seed, rng: seed | 0, day: 1, phase: 1, mutations: [], knownMutations: [], branchWeights: { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 }, difficulty, forcedPhases: 0, goalDay: null, phaseStartDay: 1, moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 0, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
-    flags: {}, crew: [], seenEvents: [], pending: [], event: null, recentEnc: [], tokts: [], toktsOpen: [], toktsDone: [], quests: [], log: [], over: null,
+    flags: {}, crew: [], seenEvents: [], pending: [], event: null, recentEnc: [], plans: [], lastTasks: {}, tokts: [], toktsOpen: [], toktsDone: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     hq: newHq(seed),
     gates: {} as GameState['gates'],
@@ -67,6 +68,8 @@ export function migrate(raw: unknown): GameState | null {
   (raw as GameState).event ??= null;
   (raw as GameState).pending ??= [];
   (raw as GameState).recentEnc ??= [];
+  (raw as GameState).plans ??= [];
+  (raw as GameState).lastTasks ??= {};
   (raw as GameState).tokts ??= [];
   (raw as GameState).quests ??= [];
   // lagringer fra før toktene ble låst opp: Bybrua var åpent fra start
@@ -303,9 +306,12 @@ export function validateTasks(s: GameState, log?: LogFn, endOfDay = false): stri
     const msg = doneToday && (c.task.type === 'speide' || c.task.type === 'rydde')
       ? `${c.task.type === 'speide' ? `Speidingen av ${placeName(c.task.target)} er gjort` : `${placeName(c.task.target)} er ryddet og gjennomsøkt`}. ${c.name} hviler i morgen.`
       : `${c.name} fikk ikke ${taskText(c.task)}: ${invalidReason(s, c.task)}. Hviler i stedet.`;
-    c.task = { type: 'hvile' };
-    msgs.push(msg);
-    log?.(msg, doneToday ? '' : 'warn');
+    // ferdig speiding eller rydding går over i en naturlig neste oppgave i samme sektor, ellers hviler personen
+    const next = doneToday ? nextTask(s, c.task, valid) : null;
+    const text = next ? `${c.name} fortsetter med å ${taskText(next)}.` : msg;
+    c.task = next ?? { type: 'hvile' };
+    msgs.push(text);
+    log?.(text, doneToday ? '' : 'warn');
   }
   return msgs;
 }
@@ -317,6 +323,7 @@ export function resolveDay(s: GameState): LogLine[] {
   // bare «Fortsett på Buøy» kan spille videre etter at runden er avgjort. Dagen kan heller ikke løses mens
   // noe venter på et valg: serveren skal kunne stole på at motoren håndhever det selv.
   if (isFinished(s) || !canEndDay(s)) return [];
+  rememberTasks(s);
   const M = mods(s);
   const L: LogLine[] = [];
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });

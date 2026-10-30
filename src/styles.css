@@ -399,3 +399,14 @@ button { cursor: pointer; }
 .pk .pk-hit:hover .gc { border-color: var(--amber); }
 .pk .pk-hit:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 .pk .pk-take { justify-self: start; }
+
+/* Planer i Crew-fanen */
+.plans { margin-bottom: 10px; }
+.plan-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.plan-row:empty { display: none; }
+.plan-chip { display: inline-flex; }
+.plan-chip .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.plan-chip .plan-x { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; min-width: 44px; }
+.plan-row .btn, .plan-save .btn, .plan-save input { min-height: 44px; }
+.plan-save { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.plan-save input { flex: 1 1 140px; min-width: 0; padding: 0 10px; }

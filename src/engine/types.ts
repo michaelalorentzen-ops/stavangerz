@@ -245,6 +245,10 @@ export interface GameState {
   event: { id: string } | null;
   /** de siste encounterkortene som er trukket, nyest sist. De trekkes ikke igjen med en gang. */
   recentEnc: string[];
+  /** lagrede oppdragsfordelinger (crew-id til ordre), navngitt av spilleren */
+  plans: { name: string; tasks: Record<string, Task> }[];
+  /** ordrene crewet hadde da forrige dag ble løst, for «Som i går» */
+  lastTasks: Record<string, Task>;
   /** tokt som er ute */
   tokts: ToktState[];
   quests: QuestState[];
