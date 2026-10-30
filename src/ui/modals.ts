@@ -1,9 +1,10 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
+  DIFFICULTIES, DIFFICULTY,
   best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
-import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
+import type { Difficulty, EventDef, PendingEncounter, Stats, TraitId } from '../engine';
 import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
 import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
@@ -26,10 +27,12 @@ export function titleScreen() {
     <h1>STAVANGER <b>Z</b></h1>
     <p>Utbruddet starter en tirsdag morgen. Du bor på Buøy. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, rydd øya sektor for sektor og bygg sperringer før natta tar dere.</p>
     <div class="coords">58°59′N 5°43′Ø · Buøy, Hundvåg bydel</div>
+    <div><p class="eyebrow">Vanskelighetsgrad</p><div class="picks">${DIFFICULTIES.map((d) => `<button class="pick" data-d="${d}" aria-pressed="${draft.difficulty === d}"><span class="nm" style="font-size:17px">${DIFFICULTY[d].name}</span><span class="role">${DIFFICULTY[d].desc}</span></button>`).join('')}</div></div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="new">Ny runde</button>
       ${saved && !isFinished(saved) ? `<button class="btn ghost" id="cont">Fortsett dag ${saved.day}</button>` : ''}
     </div></div>`);
+  $('sheet').querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.addEventListener('click', () => { draft.difficulty = b.dataset.d as Difficulty; titleScreen(); }));
   on('new', createSelf);
   on('cont', () => {
     ui.S = saved; closeModal(); ui.refresh();
@@ -38,8 +41,8 @@ export function titleScreen() {
 }
 
 const POOL = 15;
-export const draft: { name: string; stats: Stats; trait: TraitId; picks: string[] } = {
-  name: '', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent', picks: [],
+export const draft: { name: string; stats: Stats; trait: TraitId; picks: string[]; difficulty: Difficulty } = {
+  difficulty: 'normal', name: '', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent', picks: [],
 };
 
 function createSelf() {
@@ -86,7 +89,7 @@ function pickNeighbors() {
   on('go', () => {
     // seeden er det eneste stedet tilfeldighet kommer utenfra
     const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) | 0;
-    ui.S = newGame(seed, { name: draft.name.trim() || 'Deg', stats: { ...draft.stats }, trait: draft.trait }, draft.picks);
+    ui.S = newGame(seed, { name: draft.name.trim() || 'Deg', stats: { ...draft.stats }, trait: draft.trait }, draft.picks, draft.difficulty);
     ui.sel = { kind: 'sector', id: 'hjem' };
     ui.refresh();
     showEvent(INTRO, () => { closeModal(); ui.refresh(); });

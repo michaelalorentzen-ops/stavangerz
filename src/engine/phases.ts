@@ -1,6 +1,6 @@
 // Fasetabellen. All vanskelighetsgrad og alle zombieevner hentes herfra,
 // aldri fra tall spredt rundt i motoren. Les modifikatorer med mods(s).
-import type { Branch, GameState, PhaseId } from './types';
+import type { Branch, Difficulty, GameState, PhaseId } from './types';
 import { BRANCHES, branchMutations, MUTATIONS } from './content/mutations';
 import { rand } from './rng';
 
@@ -86,9 +86,49 @@ export const PHASES: Record<PhaseId, PhaseDef> = {
   },
 };
 
-/** Fasens modifikatorer med mutasjonene ganget inn. Kjente mutasjoner får halv effekt. */
-export function mods(s: Pick<GameState, 'phase' | 'mutations' | 'knownMutations'>): PhaseModifiers {
+export interface DifficultyDef {
+  name: string;
+  desc: string;
+  /** ganger på fasetabellen. Mangler en nøkkel, er den 1. Normal er 1 overalt */
+  mult: Partial<Record<keyof PhaseModifiers, number>>;
+  /** prisen når fristen går ut uten at målet er nådd, eller null når runden er tapt */
+  deadline: null | {
+    /** moral som trekkes fra */
+    moral: number;
+    /** andel av en ikke-trygg sektors startzombier som kommer tilbake */
+    fall: number;
+    /** ekstra mutasjonspoeng ved faseskiftet */
+    mutations: number;
+  };
+}
+
+/**
+ * Vanskelighetsgradene. Gangene legges oppå fasetabellen i mods(), så fase 1 til 5 skalerer likt.
+ * Normal er 1 overalt: balansen i kapittel 11 i spilldesignet måles på normal.
+ */
+export const DIFFICULTY: Record<Difficulty, DifficultyDef> = {
+  normal: {
+    name: 'Normal', desc: 'Går fristen ut, må dere videre likevel, men det koster.', mult: {},
+    deadline: { moral: 15, fall: 0.5, mutations: 1 },
+  },
+  hard: {
+    name: 'Hard', desc: 'Sterkere zombier. Går fristen ut, må dere videre til en høy pris.',
+    mult: { zombieMult: 1.15, killMult: 0.93, injuryMult: 1.15, nightGrowth: 1.1, hiddenOutbreak: 1.15, creepChance: 1.15 },
+    deadline: { moral: 30, fall: 1, mutations: 2 },
+  },
+  brutal: {
+    name: 'Brutal', desc: 'Sterkest zombier. Går fristen ut, er runden tapt.',
+    mult: { zombieMult: 1.3, killMult: 0.88, injuryMult: 1.3, nightGrowth: 1.2, hiddenOutbreak: 1.3, creepChance: 1.3 },
+    deadline: null,
+  },
+};
+
+export const DIFFICULTIES = Object.keys(DIFFICULTY) as Difficulty[];
+
+/** Fasens modifikatorer med vanskelighetsgraden og mutasjonene ganget inn. Kjente mutasjoner får halv effekt. */
+export function mods(s: Pick<GameState, 'phase' | 'mutations' | 'knownMutations'> & { difficulty?: Difficulty }): PhaseModifiers {
   const m = { ...PHASES[s.phase].mods };
+  for (const [k, f] of Object.entries(DIFFICULTY[s.difficulty ?? 'normal'].mult) as [keyof PhaseModifiers, number][]) m[k] *= f;
   for (const id of s.mutations) {
     if (!MUTATIONS[id]) continue; // ukjent id i en gammel lagring
     const known = s.knownMutations.includes(id);
@@ -110,13 +150,13 @@ function nextInBranch(s: GameState, b: Branch): string | null {
  * vektet med branchWeights, blant grener som har en neste mutasjon.
  * Returnerer mutasjonene som ble lagt til.
  */
-export function advancePhase(s: GameState): string[] {
+export function advancePhase(s: GameState, extraPoints = 0): string[] {
   if (s.phase >= 5) return [];
   s.phase = (s.phase + 1) as PhaseId;
   s.phaseStartDay = s.day;
   s.goalDay = null;
   const [min, max] = PHASES[s.phase].mutationPoints;
-  const points = min + Math.floor(rand(s) * (max - min + 1));
+  const points = min + Math.floor(rand(s) * (max - min + 1)) + extraPoints;
   const added: string[] = [];
   for (let i = 0; i < points; i++) {
     const open = BRANCHES.filter((b) => nextInBranch(s, b));
