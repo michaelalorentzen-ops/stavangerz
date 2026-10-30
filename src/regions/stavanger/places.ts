@@ -65,9 +65,9 @@ export const SECTORS: Record<SectorId, SectorDef> = {
     name: 'Rosenberg Verft', short: 'Rosenberg', at: 'på Rosenberg', real: 'Rosenberg Verft', realAt: 'på Rosenberg',
     kind: 'industri', threat: 5, capacity: 8, yield: { metall: 2, skrap: 1, drivstoff: 1 },
     desc: 'Kraner, stål og kaier. Perfekt HQ. Problemet er at hele morgenskiftet fortsatt er på jobb.',
-    z: 52, hidden: 20,
-    loot: { mat: 14, vann: 8, medisin: 2, tre: 4, skrap: 22, metall: 28, strom: 0, drivstoff: 14 },
-    special: { text: 'Lagerhallen bak sveiseverkstedet: stål på paller og en truck med halv tank. Noen har skrevet «IKKE RØR» på pallene. Dere rører.', res: { metall: 8, drivstoff: 4 } },
+    z: 100, hidden: 28,
+    loot: { mat: 20, vann: 8, medisin: 2, tre: 4, skrap: 22, metall: 28, strom: 0, drivstoff: 14 },
+    special: { text: 'Lagerhallen bak sveiseverkstedet: stål på paller og en truck med halv tank. Noen har skrevet «IKKE RØR» på pallene. Dere rører. Bedriftshelsetjenesten har et skap ved siden av, fullt av sportsteip og Paracet.', res: { metall: 8, drivstoff: 4, medisin: 6 } },
     opensInPhase: 2,
   },
 };

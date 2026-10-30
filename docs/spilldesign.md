@@ -498,31 +498,41 @@ Det er et valg: en god arbeider i en post er en arbeider mindre ute.
 ### Slik er det bygd
 
 - **Sektorer per fase:** `SectorDef.opensInPhase`. Verftet (`rosenberg`) er en vanlig sektor i tilstanden fra start, men låst til fase 2. Alle regler løkker over `activeSectors(s)`. Fase 1-målet gjelder bare fase 1-sektorene. Når en fase starter (`nextPhase`), åpnes fasens sektorer med zombier ganget med fasens `zombieMult` (med vanskelighet og mutasjoner), og overgangen logges. Gamle lagringer får verftet og HQ-et lagt til, og en vunnet fase 1 fra før fase 2 fantes blir et nådd mål, så fase 2 kan startes.
-- **Verftet:** trussel 5, 52 zombier og 20 gjemte (×1,3 i fase 2 = 68 og 26), 8 senger, mye metall, skrap og drivstoff, litt mat. Sanke gir metall, skrap og drivstoff. Funnet ved 50 %: stål og diesel i lagerhallen.
+- **Verftet:** trussel 5, 100 zombier og 28 gjemte (×1,3 i fase 2 = 130 og 36), 8 senger, mye metall, skrap og drivstoff, litt mat (20 før `lootMult`). Sanke gir metall, skrap og drivstoff. Funnet ved 50 %: stål og diesel i lagerhallen, og bedriftshelsetjenestens skap (6 medisin).
 - **Anleggene** (`src/engine/hq.ts`, tekster i `places.ts`): tilstanden trekkes fra seeden med en egen tallrekke (god 30 %, middels 40 %, ødelagt 30 %), så fase 1 er helt lik som før. Speiding av verftet gir alltid ett rykte, og gjennomsøking gir et rykte med 50 % sjanse. Et rykte stemmer i 75 % av tilfellene; med en sveiser i crewet stemmer det alltid. Når verftet er trygt i fase 2, er HQ-et tatt, og den sanne tilstanden vises.
 - **Sette i stand** (`istand`): arbeid etter buildPower til 50 (god), 80 (middels) eller 120 (ødelagt), 1 metall eller skrap per 3 arbeid. Krever at verftet er tomt for zombier.
 - **Effekter:** verkstedhallen gir Lage utstyr ett nivå høyere (høyst 3) og oppdraget Reparere (full holdbarhet for 2 skrap per kort, 1 kort pluss 1 per 30 Mekk per dag). Kantina gir 3 mat per dag. Kontorbygget og kaia har bare tilstand og tekst.
 - **Poster** (oppgaven `post`, en per post, blir der fra dag til dag): sikkerhetssjef gir 0,8 vaktkraft per 10 Nerver ved hver port om natta, også uten vakter; byggeleder +6 % arbeid per 10 Mekk på befesting og istandsetting; kokk −5 % mat per 10 Prat (høyst −40 %). Bonusene er regelkonstanter i `hq.ts`, ikke i fasetabellen: de sier hva crewet får til, ikke hvor sterke zombiene er.
+- **Nattepresset regnes fra fasestarten:** sjansen for gjennombrudd vokser med `phaseDay(s) × nightGrowth` og størrelsen med `phaseDay(s) / breachDays`, der `phaseDay` er dagen i fasen (1 på første dag). Før vokste det med dagen i runden, så fase 2 startet med presset fra fase 1 oppå sin egen `nightBase` og endte nær taket. Fase 1 starter på dag 1, så der er tallene helt like (simuleringen gir byte-identisk utskrift). `nightBase` og `breachDays` for fase 3–5 er justert for dette, men ikke simulert.
 - **Buøy i fase 2:** knotten `heldDecay` i fasetabellen (fase 2: 1, fase 3: 1,5, fase 4–5: 2) er kontrollen sektorer fra en tidligere fase mister per dag uten folk, mot `controlDecay` for de nye. Portene virker som før.
 - **Fasemålet:** verftet trygt og minst ett anlegg i stand. Fase 2 er siste bygde fase (`BUILT_PHASES`), så å avslutte den gir seier: «Fortsettelse følger». Fristen er fasetabellens 60 dager; går den ut uten mål, er runden tapt på alle grader, fordi det ikke finnes en fase 3 å tvinges over i.
 
 ### Tall fra simuleringen (300 runder, normal)
 
-Fase 1 er uendret: standardcrewet vinner 95 % med median 27 dager, kombinasjonene 86–97 % med median 28–30.
+Fase 1 er uendret: standardcrewet vinner 95 % med median 27 dager, kombinasjonene 89–96 % med median 28–29 (byte-identisk med før endringene).
 
-Boten spiller videre i fase 2 (`npm run sim -- 300 --fase2`): den rydder verftet med fire når minst tre er friske, setter folk på poster, leter etter overlevende til seks og setter i stand anlegget som er billigst å gjøre ferdig.
+Boten spiller videre i fase 2 (`npm run sim -- 300 --fase2`): den rydder verftet med fire når minst tre er friske, gjennomsøker det med en gang horden er borte, rydder portsektorene på Buøy før resten, sanker mat før kamp, setter folk på poster, leter etter overlevende til seks når det er mat nok, og setter i stand anlegget som er billigst å gjøre ferdig.
 
-| Crew | Seier i fase 2 | Median dager i fase 2 | Crew mistet per runde (hele runden) |
+| Crew | Seier i fase 2 før → nå | Median dager i fase 2 før → nå | Crew mistet per runde (hele runden) før → nå |
 |---|---|---|---|
-| Standard (Arild, Mona, Tor-Egil) | 79 % | 17 | 1,64 |
-| Kombinasjon 1 | 65 % | 18 | 2,66 |
-| Kombinasjon 2 | 77 % | 17 | 1,65 |
-| Kombinasjon 3 | 60 % | 19 | 2,89 |
-| Kombinasjon 4 | 66 % | 18 | 2,80 |
+| Standard (Arild, Mona, Tor-Egil) | 76 % → 88 % | 16 → 26 | 1,77 → 0,79 |
+| Kombinasjon 1 | 65 % → 77 % | 19 → 31 | 2,30 → 1,04 |
+| Kombinasjon 2 | 77 % → 82 % | 17 → 27 | 1,74 → 0,96 |
+| Kombinasjon 3 | 62 % → 76 % | 18 → 29 | 2,47 → 1,19 |
+| Kombinasjon 4 | 64 % → 74 % | 18 → 28 | 2,59 → 1,47 |
 
-Målet foreløpig er 75–95 % og median 20–45 dager med standardcrewet. Seiersandelen er innenfor, men seirene kommer for fort. Rundene er tosidige: enten tar boten verftet på rundt to uker, eller den blir sittende fast i sult og store gjennombrudd på Buøy (nattpresset vokser med dagtallet) og når fristen. En større horde gjorde boten tregere bare litt, men tapte mange flere runder, fordi trussel 5 nesten alltid gir høyeste skaderisiko.
+**Mål for fase 2 [Forslag]:** standardcrewet vinner 80–92 %, kombinasjonene minst 72 %, median 22–40 dager i fase 2, og sultespiraler er ikke hovedgrunnen til tap. `tests/balance-fase2*.test.ts` (80 runder per crew, tre filer som kjører i parallell) feiler hvis dette glipper. En sultespiral er minst tre sultedager i fase 2 som begynte før dag 30 i fasen; under en tredel av tapene får være slike.
 
-**[Åpent]** Slik fase 2 kan bli lengre uten å bli dødeligere: større arbeid i anleggene, eller at nattpresset regnes fra fasestarten. Om Rosenberg-gjerdet fortsatt skal slippe inn zombier når verftet er tatt.
+**Endringer i balansen (30.10), og hvorfor:**
+- **Nattepresset fra fasestarten** (se over). Det tok bort hovedgrunnen til at rundene ble tosidige: med dagen i runden var portene nær taket fra midten av fase 2, og Buøy raste sammen mens crewet var på verftet. Fase 2 har `nightBase` 0,05 (en natt i starten av fase 2 er omtrent like farlig som slutten av fase 1) og `breachDays` 6, så gjennombruddene vokser saktere i størrelse.
+- **Større horde, litt mindre skade per trussel:** verftet har 100 zombier i stedet for 52. Det er det som gjør fasen lengre. `THREAT_INJURY` er 1,45 for trussel 4 og 1,55 for trussel 5 (før 1,6 og 1,9). Risikoen i Rydde når fortsatt taket (45 %) mens horden er stor, men faller under det når en gruppe på fire har tynnet den til rundt 15–20. Verftet er fortsatt det farligste stedet i spillet.
+- **Mat og vann i fase 2:** `yieldMult` 0,95 (havet ved kaia er ikke plyndret, selv om butikkene er det), `rainChance` 0,4 (Stavanger-høst), og kantina på verftet har mat 20 i stedet for 14 å finne. Kantina gir fortsatt bare mat hver dag når den er satt i stand. Medisin var flaskehalsen i kampen om verftet, så bedriftshelsetjenesten gir 6 medisin i funnet ved 50 %.
+- **Boten:** rettet fire åpenbart dumme valg i fase 2. Den hvilte folk med 1 i liv på tom mage (hvile virker ikke da), sanket mat der det nesten ikke er mat når et par streifere sto i den beste matsektoren, rekrutterte flere munner mens maten var tom, og lot verftets kjellere stå usjekket når horden var borte, så de brøt ut igjen. Den rydder også portsektorene før resten av Buøy. Den er fortsatt enkel: ingen vakt ved portene mens den angriper, og den velger anlegg etter pris, ikke nytte.
+- **Prøvd og forkastet:** mer arbeid i anleggene (istandsetting 150–260) gjorde fasen bare to dager lengre, men tapte runder der HQ-et var tatt og materialene tok slutt.
+
+Tapene nå: omtrent to av tre er tidsfristen uten at verftet er tatt, fordi kampen trekker ut og medisinen tar slutt. Runder som ble tvunget over av fristen i fase 1, kommer inn med halve Buøy infisert igjen og taper nesten alltid. Sult kommer i tapte runder, men sent (median rundt dag 40 i fasen), etter at kampen allerede har gått tapt.
+
+**[Åpent]** Om Rosenberg-gjerdet fortsatt skal slippe inn zombier når verftet er tatt. Om en runde som er tvunget over av fristen bør få en bedre sjanse i fase 2. Kontorbygget og kaia gir ingenting ennå.
 
 ## 10. Basen, ledere og politikk (fase 2–5)
 

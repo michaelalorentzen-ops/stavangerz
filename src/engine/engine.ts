@@ -7,7 +7,7 @@ import { names, type LogFn } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { AREA, FACILITIES, GATES, HQ_SECTOR, LANDMARKS, GATE_STEPS, HEALTH_LABEL, RES, SECTOR_IDS, SECTORS, STAT_LABEL, STATS } from './data';
 import { buildLeadMult, checkHq, cookMult, FACILITY_IDS, facilityReady, hearRumor, istand, KANTINE_FOOD, MAX_CRAFT_LEVEL, newHq, POST_IDS, postHolder, POSTS, readyCount, reparere, RUMOR_ON_SEARCH, securityPower, VERKSTED_LEVEL } from './hq';
-import { advancePhase, BRANCHES, BUILT_PHASES, DIFFICULTY, mods, PHASES } from './phases';
+import { advancePhase, BRANCHES, BUILT_PHASES, DIFFICULTY, mods, phaseDay, PHASES } from './phases';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { activeSectors, decay, floorControl, freshSector, isSafe, opensIn, rotFood, rydde, sanke, sectorsOfPhase, settle, speide, updateControl, watchControl, wearTools } from './sectors';
@@ -478,12 +478,14 @@ export function resolveDay(s: GameState): LogLine[] {
   decay(s, M, log);
 
   // 6) Natt: press mot sperringene. Crew som jobber ved porten tar vakta.
+  // Presset vokser med dagene i fasen (phaseDay), så en ny fase starter på sin egen nightBase.
+  const pd = phaseDay(s);
   for (const id of GATE_IDS) {
     const g = GATES[id], st = s.gates[id];
     xp(team('vakt', id), 'nerver', 1);
-    const chance = clamp(g.base + M.nightBase - st.level * M.nightLevelReduction + s.day * M.nightGrowth, 0.02, 0.9);
+    const chance = clamp(g.base + M.nightBase - st.level * M.nightLevelReduction + pd * M.nightGrowth, 0.02, 0.9);
     if (rand(s) >= chance) continue;
-    let n = Math.max(1, 1 + Math.floor(rand(s) * (1 + s.day / M.breachDays)) - st.level);
+    let n = Math.max(1, 1 + Math.floor(rand(s) * (1 + pd / M.breachDays)) - st.level);
     const guards = s.crew.filter((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === id);
     if (st.level >= 3 && guards.length) continue;
     // sikkerhetssjefen i HQ-et styrker vakta ved alle porter, også der ingen står

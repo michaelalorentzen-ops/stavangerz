@@ -12,7 +12,7 @@ import type { CrewMember, GameState, PhaseId, Resources, SectorId, SectorState, 
 
 /** Indeks = trusselnivå 1–5. Indeks 0 er ubrukt. */
 export const THREAT_KILL = [0, 1, 0.9, 0.78, 0.66, 0.55];
-export const THREAT_INJURY = [0, 1, 1.15, 1.35, 1.6, 1.9];
+export const THREAT_INJURY = [0, 1, 1.15, 1.35, 1.45, 1.55];
 
 /** Regelkonstanter for Vakt på sektor og Speide (ikke vanskelighetsknotter). */
 export const WATCH_CONTROL_BASE = 15, WATCH_CONTROL_PER_NERVER = 3;
