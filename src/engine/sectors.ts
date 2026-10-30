@@ -1,7 +1,7 @@
 // Sektorer: Rydde, Sanke, kontroll, forfall og bosetting. Ren logikk.
 import { PLAYABLE, RES, RES_LABEL, SECTORS } from './data';
 import { armorMult, collectDropped, hasTag, isRanged, newCard, rollCard, wear } from './cards';
-import { CARDS } from './content/cards';
+import { CARDS } from '../regions/content';
 import { injure } from './crew';
 import type { LogFn } from './crew';
 import { hasMutation } from './phases';

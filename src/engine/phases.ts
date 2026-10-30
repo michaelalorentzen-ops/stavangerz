@@ -1,10 +1,10 @@
 // Fasetabellen. All vanskelighetsgrad og alle zombieevner hentes herfra,
 // aldri fra tall spredt rundt i motoren. Les modifikatorer med mods(s).
 import type { Branch, GameState, PhaseId } from './types';
-import { BRANCHES, branchMutations, MUTATIONS } from './content/mutations';
+import { BRANCHES, branchMutations, MUTATIONS } from '../regions/content';
 import { rand } from './rng';
 
-export { BRANCHES, BRANCH_LABEL, MUTATIONS } from './content/mutations';
+export { BRANCHES, BRANCH_LABEL, MUTATIONS } from '../regions/content';
 
 export interface PhaseModifiers {
   /** ganges med zombieantall i nye soner som åpnes i denne fasen */

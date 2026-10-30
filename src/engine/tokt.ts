@@ -6,8 +6,8 @@ import { addToktEncounter } from './encounters';
 import { RES, RES_LABEL } from './data';
 import type { PhaseModifiers } from './phases';
 import { pick, rand, sround } from './rng';
-import { QUESTS, questDef, TOKTS, toktDef } from './content/tokts';
-import type { QuestDef, ToktDef } from './content/tokts';
+import { QUESTS, questDef, TOKTS, toktDef } from '../regions/content';
+import type { QuestDef, ToktDef } from '../regions/content';
 import type { CrewMember, GameState, ResKey, ToktState } from './types';
 
 export { QUESTS, TOKTS, toktDef, questDef };

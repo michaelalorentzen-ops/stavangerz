@@ -5,9 +5,9 @@ export type Stats = Record<StatKey, number>;
 export type ResKey = 'mat' | 'vann' | 'medisin' | 'tre' | 'skrap' | 'metall' | 'strom' | 'drivstoff';
 export type Resources = Record<ResKey, number>;
 
-export type SectorId = 'hjem' | 'tommerodden' | 'obs' | 'nordkrysset' | 'buoy_nord' | 'skolen' | 'sorspissen';
-export type MapSectorId = SectorId | 'rosenberg';
-export type GateId = 'nord' | 'sor' | 'ros';
+// Steds-id-ene kommer fra regionpakken
+import type { GateId, MapSectorId, RegionFlag, SectorId, ZoneId } from '../regions/active';
+export type { GateId, MapSectorId, SectorId, ZoneId };
 export type PhaseId = 1 | 2 | 3 | 4 | 5;
 
 export type TraitId =
@@ -157,7 +157,7 @@ export interface GateState {
   level: number;
 }
 
-export type Flag = 'gann' | 'aggregat' | 'buss' | 'katt' | 'svein' | `gone_${string}`;
+export type Flag = RegionFlag | `gone_${string}`;
 
 export interface GameState {
   v: 3;

@@ -1,13 +1,13 @@
 // Encounterkort. Plassholderinnhold: mekanikken er det som gjelder.
 // Belønning og straff skaleres med ctx.threat (1–5).
 import { CARDS } from './cards';
-import { newCard, rollCard } from '../cards';
-import { injure } from '../crew';
-import { SECTORS } from '../data';
-import type { EncChoice, EncounterCtx, EncounterDef } from '../encounters';
-import { pick, rand } from '../rng';
+import { newCard, rollCard } from '../../../engine/cards';
+import { injure } from '../../../engine/crew';
+import { SECTORS } from '../../../engine/data';
+import type { EncChoice, EncounterCtx, EncounterDef } from '../../../engine/encounters';
+import { pick, rand } from '../../../engine/rng';
 import { toktDef, toktSector } from './tokts';
-import type { GameState } from '../types';
+import type { GameState } from '../../../engine/types';
 
 /** Skaden en vanlig tilbaketrekning koster. */
 const RETREAT_INJURY = 0.5, RETREAT_WEAR = 3;

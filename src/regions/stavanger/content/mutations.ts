@@ -1,6 +1,6 @@
 // Mutasjonskatalogen (plassholder). Hver gren har en fast rekkefølge:
 // neste mutasjon i grenen kan først trekkes når den forrige er på plass.
-import type { Branch, MutationDef } from '../types';
+import type { Branch, MutationDef } from '../../../engine/types';
 
 export const BRANCHES: Branch[] = ['bevegelse', 'sanser', 'kropp', 'atferd'];
 

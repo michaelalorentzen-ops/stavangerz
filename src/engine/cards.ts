@@ -1,6 +1,6 @@
 // Utstyrskort: instanser, utstyring, slitasje, funn og Lage utstyr. Ren logikk.
-import { CARDS } from './content/cards';
-import { TOKTS } from './content/tokts';
+import { CARDS } from '../regions/content';
+import { TOKTS } from '../regions/content';
 import type { LogFn } from './crew';
 import { skillLevel } from './levels';
 import { pick, rand } from './rng';

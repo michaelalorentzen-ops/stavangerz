@@ -1,7 +1,7 @@
 // Utfall av valg: hva et valg endret, og hva det kan endre. Forhåndsvisningen kjører valget på kopier av
 // tilstanden med andre frø, så den aldri røper det neste terningkastet og aldri endrer selve spillet.
-import { CARDS } from './content/cards';
-import { questDef } from './content/tokts';
+import { CARDS } from '../regions/content';
+import { questDef } from '../regions/content';
 import { GATES, RES, RES_LABEL } from './data';
 import type { GameState, GateId, ResKey } from './types';
 

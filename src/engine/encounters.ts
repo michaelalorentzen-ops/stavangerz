@@ -1,6 +1,6 @@
 // Encounters: en Rydde-gruppe havner i en knipe, og valget venter til neste planlegging. Ren logikk.
 import { hasTag, noiseOf } from './cards';
-import { ENCOUNTERS } from './content/encounters';
+import { ENCOUNTERS } from '../regions/content';
 import type { LogFn } from './crew';
 import { checkEnd, validateTasks } from './engine';
 import { SECTORS } from './data';

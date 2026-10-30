@@ -1,6 +1,6 @@
 // Tokt og quests. Plassholderinnhold: mekanikken er det som gjelder.
-import { GATES } from '../data';
-import type { Flag, GateId, Resources, SectorId } from '../types';
+import { GATES } from '../../../engine/data';
+import type { Flag, GateId, Resources, SectorId } from '../../../engine/types';
 
 export interface ToktDef {
   id: string;

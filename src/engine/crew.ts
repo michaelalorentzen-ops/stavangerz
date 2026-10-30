@@ -1,6 +1,6 @@
 // Crewet: skader, død, ny leder, plass og rekruttering.
 import { dropGear, give, rollStarter, wear } from './cards';
-import { toktDef, toktSector } from './content/tokts';
+import { toktDef, toktSector } from '../regions/content';
 import { GATES, HEALTH_LABEL, NEIGHBORS, SECTORS, PLAYABLE } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';

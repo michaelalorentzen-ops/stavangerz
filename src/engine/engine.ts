@@ -313,7 +313,7 @@ export function resolveDay(s: GameState): LogLine[] {
       n -= k; s.stats.kills += k;
       if (!n) { log(`Natt: ${k} ${plural(k)} prøvde seg ved ${g.name}. ${names(guards)} holdt vakt.`, 'good'); continue; }
     }
-    const target = id === 'ros' ? pick(s, ['hjem', 'obs', 'tommerodden', 'sorspissen'] as const) : g.sector;
+    const target = g.spills?.length ? pick(s, g.spills) : g.sector;
     const sec = s.sectors[target];
     const wasClear = sec.z === 0;
     sec.z += n;

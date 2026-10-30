@@ -1,6 +1,6 @@
 // Felles UI-tilstand: spillet, hva som er valgt, og lagring i nettleseren.
 import { migrate } from '../engine';
-import type { GameState, GateId, MapSectorId, SectorKind, Slot, TaskType } from '../engine';
+import type { GameState, GateId, MapSectorId, SectorKind, Slot, TaskType, ZoneId } from '../engine';
 import rawMap from '../data/map.json';
 
 export interface MapShape { id: string; d: string; cx: number; cy: number }
@@ -12,7 +12,7 @@ export interface MapData {
   buildings: string;
   roads: { major: string; minor: string };
   sectors: (MapShape & { id: MapSectorId })[];
-  zones: (MapShape & { name: string })[];
+  zones: (MapShape & { id: ZoneId; name: string })[];
   geo: { W: number; N: number; KX: number };
 }
 /** Tekstsymboler (ikke emoji) og navn for sektortypene. \uFE0E tvinger tekstvisning. */

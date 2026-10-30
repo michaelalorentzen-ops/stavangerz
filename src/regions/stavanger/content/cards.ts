@@ -1,5 +1,5 @@
 // Kortkatalogen. Plassholderinnhold: mekanikken er det som gjelder.
-import type { CardDef } from '../types';
+import type { CardDef } from '../../../engine/types';
 
 const defs: CardDef[] = [
   // ---- Makeshift, nivå 1

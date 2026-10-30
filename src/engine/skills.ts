@@ -1,6 +1,6 @@
 // Ferdigheter på skala 1–100. Lagres som desimaltall; UI viser bare stolpe og nivå.
 import { cardBonus, toolMult, weaponMult } from './cards';
-import { CARDS } from './content/cards';
+import { CARDS } from '../regions/content';
 import { clamp, sum } from './rng';
 import type { CrewMember, GameState, StatKey } from './types';
 
