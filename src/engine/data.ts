@@ -48,6 +48,8 @@ export interface NeighborDef {
   trait: TraitId;
   stats: Stats;
   quip: string;
+  /** kommer bare med via et bestemt tokt eller en hendelse, aldri til porten */
+  special?: true;
 }
 
 export const STATS: StatKey[] = ['muskler', 'kondis', 'snoking', 'nerver', 'mekk', 'prat'];

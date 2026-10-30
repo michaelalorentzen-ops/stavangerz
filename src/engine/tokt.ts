@@ -2,9 +2,8 @@
 // å fortsette eller snu. Ren logikk.
 import { armorMult, CARDS, newCard, rollCard } from './cards';
 import { addNeighbor, canRecruit, injure, recruitablesNow, type LogFn } from './crew';
-import { addGateWork } from './engine';
 import { addToktEncounter } from './encounters';
-import { GATES, PHASE_RES, RES, RES_LABEL } from './data';
+import { NEIGHBORS, PHASE_RES, RES, RES_LABEL } from './data';
 import type { PhaseModifiers } from './phases';
 import { pick, rand, sround } from './rng';
 import { QUESTS, questDef, TOKTS, toktDef } from '../regions/content';
@@ -35,8 +34,18 @@ const questOpen = (s: GameState, id: string, days: number): boolean => s.quests.
 /** Er toktet tilgjengelig som ordre nå? Fritt, eller med en aktiv quest. Aldri mens det allerede er ute. */
 export function toktAvailable(s: GameState, d: ToktDef): boolean {
   if (s.tokts.some((t) => t.id === d.id)) return false;
+  if (d.locked && !s.toktsOpen.includes(d.id)) return false;
   return !d.quest || questOpen(s, d.quest, d.days);
 }
+
+/** Låser opp et tokt, for eksempel fra en hendelse eller et rykte. */
+export function unlockTokt(s: GameState, id: string): void {
+  toktDef(id);
+  if (!s.toktsOpen.includes(id)) s.toktsOpen.push(id);
+}
+
+/** Første tur på et tokt med garanti: ingen knipe og ingen skader underveis. */
+const guaranteed = (s: GameState, d: ToktDef) => !!d.safeFirst && !s.toktsDone.includes(d.id);
 
 /** Aksepterer en quest. Fristen regnes fra i dag. Gjør ingenting om den allerede er akseptert. */
 export function acceptQuest(s: GameState, questId: string): void {
@@ -90,7 +99,7 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
     log(`${names(group)} er på tokt (${def.name}), dag ${t.stage} av ${def.days}.${found.length ? ` Fant ${found.join(', ')}.` : ''}`, found.length ? 'find' : '');
     // Dagene ute tærer: skader hoper seg opp, og den som blir skadet, slipper noe av byttet
     let hurt = false;
-    for (const c of group) if (rand(s) < TOKT_DAY_INJURY * def.threat * M.injuryMult * armorMult(c)) { injure(s, c, 'på toktet', log, 'tokt'); hurt = true; }
+    if (!guaranteed(s, def)) for (const c of group) if (rand(s) < TOKT_DAY_INJURY * def.threat * M.injuryMult * armorMult(c)) { injure(s, c, 'på toktet', log, 'tokt'); hurt = true; }
     if (hurt) {
       const lost: string[] = [];
       for (const k of RES) { const n = Math.floor((t.haul[k] ?? 0) * TOKT_DROP); if (n > 0) { t.haul[k]! -= n; lost.push(`${n} ${RES_LABEL[k].toLowerCase()}`); } }
@@ -102,7 +111,7 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
       const cands = recruitablesNow(s);
       if (cands.length) { const n = pick(s, cands); addNeighbor(s, n.id); log(`${names(group)} fant ${n.name} (${n.age}) i en bil på veien. ${n.name} går hjem til basen. «${n.quip}»`, 'good'); }
     }
-    if (added < budget && addToktEncounter(s, group, def.threat, t.id, log)) added++;
+    if (added < budget && !guaranteed(s, def) && addToktEncounter(s, group, def.threat, t.id, log)) added++;
     t.awaiting = true;
   }
   return added;
@@ -133,10 +142,21 @@ export function recallTokts(s: GameState): void {
 /** Gir belønningen for et fullført tokt. */
 function reward(s: GameState, def: ToktDef): string {
   const parts: string[] = [];
-  for (const [k, n] of Object.entries(def.reward.res ?? {}) as [ResKey, number][]) { s.res[k] += n; parts.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
+  // stedet er delvis tømt etter første tur
+  const mult = s.toktsDone.includes(def.id) ? def.repeat ?? 1 : 1;
+  for (const [k, base] of Object.entries(def.reward.res ?? {}) as [ResKey, number][]) {
+    const n = Math.round(base * mult);
+    if (n > 0) { s.res[k] += n; parts.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
+  }
   for (const id of def.reward.cards ?? []) { s.stash.push(newCard(s, id)); parts.push(CARDS[id].name); }
   if (def.reward.flag) s.flags[def.reward.flag] = true;
-  if (def.reward.gate) { addGateWork(s, def.reward.gate.id, def.reward.gate.work); parts.push(`${def.reward.gate.text} (+${def.reward.gate.work} portarbeid ${GATES[def.reward.gate.id].name})`); }
+  if (def.reward.joins) {
+    const n = NEIGHBORS.find((x) => x.id === def.reward.joins);
+    if (n && !s.crew.some((c) => c.id === n.id)) {
+      if (canRecruit(s)) { addNeighbor(s, n.id); parts.push(`${n.name} blir med dere hjem`); }
+      else parts.push(`${n.name} ville blitt med, men dere har ikke senger`);
+    }
+  }
   return parts.join(', ');
 }
 
@@ -157,7 +177,8 @@ export function toktDecision(s: GameState, toktId: string, d: 'fortsett' | 'snu'
     const q = def.quest ? s.quests.find((x) => x.id === def.quest) : undefined;
     if (!q || (!q.done && s.day - 1 <= q.until)) {
       if (q) q.done = true;
-      text += ` Oppdraget er fullført. Belønning: ${reward(s, def)}.`;
+      text += ` Oppdraget er fullført. Belønning: ${reward(s, def) || 'ingenting mer'}.`;
+      if (!s.toktsDone.includes(def.id)) s.toktsDone.push(def.id);
     } else text += ' Fristen var gått ut, så det ble ingen takk.';
   }
   sendHome(s, t);

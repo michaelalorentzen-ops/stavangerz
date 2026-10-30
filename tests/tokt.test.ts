@@ -6,7 +6,8 @@ import {
 import type { GameState } from '../src/engine';
 import { BOT_SELF, playGame, toktStats } from '../tools/bot';
 
-const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+// Bybrua åpnes av et rykte i spillet. Her er det åpent fra start.
+const fresh = (seed = 42) => { const s = newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']); s.toktsOpen.push('bybrua'); return s; };
 /** Sender de to første på tokt og løser dagen. */
 const out = (s: GameState, id = 'bybrua', ids = ['meg', 'arild']) => {
   for (const c of s.crew) if (ids.includes(c.id)) c.task = { type: 'tokt', target: id };
@@ -19,7 +20,7 @@ const hasOpt = (s: GameState, id: string) => taskOptions(s).some((o) => o.type =
 describe('tokt', () => {
   it('innholdet finnes', () => {
     expect(TOKTS.find((t) => t.id === 'kran')).toMatchObject({ at: 'ros', days: 2, threat: 3, quest: 'sos_kran' });
-    expect(TOKTS.find((t) => t.id === 'bybrua')).toMatchObject({ at: 'sor', days: 2, threat: 3, reward: { res: { drivstoff: 6, skrap: 6, mat: 4 } } });
+    expect(TOKTS.find((t) => t.id === 'bybrua')).toMatchObject({ at: 'sor', days: 2, threat: 3, reward: { res: { drivstoff: 8, skrap: 6, metall: 4 } }, locked: true });
     expect(QUESTS.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -68,13 +69,11 @@ describe('tokt', () => {
     resolveDay(s);
     expect(s.tokts[0]).toMatchObject({ stage: 2, awaiting: true });
     answer(s);
-    const dr = s.res.drivstoff, sk = s.res.skrap, haul = { ...s.tokts[0].haul }, gateBefore = { ...s.gates.sor };
+    const dr = s.res.drivstoff, sk = s.res.skrap, haul = { ...s.tokts[0].haul };
     toktDecision(s, 'bybrua', 'fortsett');
-    expect(s.res.drivstoff).toBe(dr + 6 + (haul.drivstoff ?? 0));
+    expect(s.res.drivstoff).toBe(dr + 8 + (haul.drivstoff ?? 0));
     expect(s.res.skrap).toBe(sk + 6 + (haul.skrap ?? 0));
     expect(s.tokts).toHaveLength(0);
-    // materialer i bulk som bare toktet gir: bilvrak foran sperringen
-    expect(s.gates.sor.work + s.gates.sor.level).toBeGreaterThan(gateBefore.work + gateBefore.level);
     expect(s.crew.find((c) => c.id === 'meg')!.task).toEqual({ type: 'hvile' });
   });
 

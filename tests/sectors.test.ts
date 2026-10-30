@@ -26,7 +26,7 @@ describe('sektordata', () => {
   it('har type, trussel, kapasitet og utbytte', () => {
     expect(SECTORS.hjem).toMatchObject({ kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 } });
     expect(SECTORS.tommerodden).toMatchObject({ kind: 'kai', threat: 2, capacity: 2, yield: { mat: 4 } });
-    expect(SECTORS.skolen).toMatchObject({ kind: 'offentlig', capacity: 8, yield: { mat: 1, medisin: 1 } });
+    expect(SECTORS.skolen).toMatchObject({ kind: 'offentlig', capacity: 8, yield: { mat: 1, medisin: 0.5 } });
   });
 
   it('starter med hjem som bosatt og speidet, resten ubrukt', () => {

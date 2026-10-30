@@ -198,6 +198,10 @@ export interface GameState {
   /** tokt som er ute */
   tokts: ToktState[];
   quests: QuestState[];
+  /** tokt som er låst opp av hendelser og rykter */
+  toktsOpen: string[];
+  /** tokt som er fullført minst én gang */
+  toktsDone: string[];
   log: { day: number; lines: LogLine[] }[];
   over: null | 'won' | 'won-seen' | 'dead' | 'timeout';
   stats: {

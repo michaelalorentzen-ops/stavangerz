@@ -87,7 +87,7 @@ export function addNeighbor(s: GameState, id: string) {
 }
 
 /** Naboer som kan komme til porten: ikke i crewet og ikke borte for godt. */
-export const recruitablesNow = (s: GameState) => NEIGHBORS.filter((n) => !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
+export const recruitablesNow = (s: GameState) => NEIGHBORS.filter((n) => !n.special && !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
 
 /** Lete etter overlevende i en tom bolig. Kan gi et nytt crewmedlem, og kan lage bråk. */
 export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {

@@ -1,6 +1,6 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  canEndPhase, dailyFood, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  canEndPhase, dailyFood, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
 } from '../engine';
@@ -162,9 +162,13 @@ function rewardText(id: string): string {
   const r = toktDef(id).reward, parts: string[] = [];
   for (const [k, n] of Object.entries(r.res ?? {})) parts.push(`${n} ${RES_LABEL[k as keyof typeof RES_LABEL].toLowerCase()}`);
   for (const c of r.cards ?? []) parts.push(CARDS[c].rarity === 'unik' ? 'et unikt kort' : CARDS[c].name);
-  if (r.gate) parts.push(`+${r.gate.work} portarbeid ${GATES[r.gate.id].name}`);
-  const rec = toktDef(id).recruit;
-  return (parts.join(', ') || 'ingenting') + (rec ? `. Underveis kan dere finne overlevende (${Math.round(rec * 100)} % per dag)` : '');
+  const d = toktDef(id), S = game();
+  if (d.reward.joins) parts.push(`${NEIGHBORS.find((n) => n.id === d.reward.joins)?.name ?? 'en overlevende'} blir med`);
+  const notes: string[] = [];
+  if (S.toktsDone.includes(id) && d.repeat) notes.push(`stedet er delvis tømt, så belønningen er ${Math.round(d.repeat * 100)} % av første gang`);
+  else if (d.safeFirst) notes.push('første tur er trygg: ingen knipe og ingen skader');
+  if (d.recruit) notes.push(`underveis kan dere finne overlevende (${Math.round(d.recruit * 100)} % per dag)`);
+  return (parts.join(', ') || 'ingenting') + (notes.length ? `. ${notes.map((n) => n[0].toUpperCase() + n.slice(1)).join('. ')}` : '');
 }
 
 /** Tokt-kort for et mål: utgjør både ledige tokt (med crew-knapper) og de som er ute. */

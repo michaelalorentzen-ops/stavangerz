@@ -21,6 +21,8 @@ export interface EventDef {
   title: string;
   channel?: string;
   when?: (s: GameState) => boolean;
+  /** kommer med en gang når dette er sant, uten å vente på tilfeldigheten */
+  urgent?: (s: GameState) => boolean;
   text: (s: GameState) => string;
   choices: ChoiceDef[];
 }
@@ -30,6 +32,9 @@ export const checkOdds = (s: GameState, k: StatKey, base = 0.25): number => chec
 const roll = (s: GameState, k: StatKey) => rand(s) < checkOdds(s, k);
 export function drawEvent(s: GameState): EventDef | null {
   const pool = EVENTS.filter((e) => !s.seenEvents.includes(e.id) && (!e.when || e.when(s)));
+  // hendelser som må komme nå (for eksempel apoteket etter første skade) går foran tilfeldigheten
+  const now = pool.find((e) => e.urgent?.(s));
+  if (now) { s.seenEvents.push(now.id); return now; }
   if (!pool.length || rand(s) > mods(s).eventChance) return null;
   const e = pick(s, pool);
   s.seenEvents.push(e.id);

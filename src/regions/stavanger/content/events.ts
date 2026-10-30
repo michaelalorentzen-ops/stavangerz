@@ -6,7 +6,7 @@ import { addGateWork } from '../../../engine/engine';
 import { dropGear, newCard } from '../../../engine/cards';
 import { pick, rand } from '../../../engine/rng';
 import { raiseSearched } from '../../../engine/sectors';
-import { acceptQuest } from '../../../engine/tokt';
+import { acceptQuest, unlockTokt } from '../../../engine/tokt';
 import { best, type EventDef } from '../../../engine/events';
 import type { CrewMember, GameState, ResKey } from '../../../engine/types';
 
@@ -212,6 +212,28 @@ export const EVENTS: EventDef[] = [
     choices: [
       { label: 'Vi kommer', run: (s) => { acceptQuest(s, 'sos_kran'); return `Roger sier han skal holde ut. Han har tross alt hatt verre mandager. Et tokt til ${GATES.ros.name} er nå mulig.`; } },
       { label: 'Beklager, vi har fullt opp', run: (s) => { s.moral -= 3; return 'Stillhet på kanalen. Så: «Skjønner. Jeg skal se om jeg får inn et avviksskjema.» Det kjennes ikke bra.'; } },
+    ],
+  },
+  // ---- Tokt som låses opp
+  {
+    id: 'medisinskapet', title: 'Medisinskapet er tomt',
+    when: (s) => !s.toktsOpen.includes('apotek'),
+    urgent: (s) => s.crew.some((c) => c.hp < 3) || s.day >= 6,
+    text: (s) => {
+      const hurt = s.crew.find((c) => c.hp < 3);
+      return `${hurt ? `${hurt.name} trenger plaster, smertestillende og noe som ikke er gaffateip.` : 'Noen åpner medisinskapet for å se hva dere har.'} Skapet inneholder en tom eske Paracet og en termometer uten batteri. Nærmeste apotek er på senteret ${ZONES.hundvag.at}.`;
+    },
+    choices: [
+      { label: 'Merk apoteket på kartet', run: (s) => { unlockTokt(s, 'apotek'); return `Et tokt til apoteket ${ZONES.hundvag.at} er nå mulig, gjennom ${GATES.nord.name}. Ingen har vært der siden utbruddet, så første tur bør gå greit.`; } },
+    ],
+  },
+  {
+    id: 'bybrua_rykte', title: `Bilkøen på ${LANDMARKS.bybrua}`,
+    channel: 'Kanal 16 · kortbølge',
+    when: (s) => s.day >= 8 && !s.toktsOpen.includes('bybrua'),
+    text: () => `En stemme på radioen: «Køen på ${LANDMARKS.bybrua} står der fortsatt. Hundre biler med full tank og hyttebagasje. Og noen av dem er ikke tomme for folk, om dere skjønner.»`,
+    choices: [
+      { label: 'Merk køen på kartet', run: (s) => { unlockTokt(s, 'bybrua'); return `Et tokt til køen på ${LANDMARKS.bybrua} er nå mulig, gjennom ${GATES.sor.name}. Drivstoff, metall og bildeler. Og noen som kanskje lever.`; } },
     ],
   },
   // ---- Dårlige valg: hendelser der det handler om hva dere har råd til å miste

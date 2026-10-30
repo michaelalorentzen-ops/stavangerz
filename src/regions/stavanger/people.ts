@@ -13,6 +13,7 @@ export const NEIGHBORS: NeighborDef[] = [
   { id: 'leah', name: 'Leah', age: 28, role: 'Bussjåfør', trait: 'buss', stats: { muskler: 38, kondis: 38, snoking: 38, nerver: 48, mekk: 38, prat: 28 }, quip: 'Har kjørt nattbussen fra Skagen. Dette er bare en vanlig fredag.' },
   { id: 'bjarne', name: 'Bjarne', age: 71, role: 'Los', trait: 'los', stats: { muskler: 18, kondis: 18, snoking: 58, nerver: 58, mekk: 38, prat: 38 }, quip: 'Kaller zombiene «turistene».' },
   { id: 'gunn', name: 'Gunn', age: 58, role: 'Kokk', trait: 'kokk', stats: { muskler: 38, kondis: 28, snoking: 38, nerver: 38, mekk: 28, prat: 48 }, quip: 'Kan lage fiskesuppe av ingenting. Har gjort det før.' },
+  { id: 'roger', name: 'Roger', age: 58, role: 'Kranfører', trait: 'sveiser', stats: { muskler: 38, kondis: 28, snoking: 28, nerver: 58, mekk: 58, prat: 28 }, quip: 'Jeg har meldt avvik på hele apokalypsen.', special: true },
 ];
 export const START_NEIGHBORS = ['kjell', 'mona', 'arild', 'sondre', 'ingrid', 'toregil', 'leah', 'bjarne'];
 

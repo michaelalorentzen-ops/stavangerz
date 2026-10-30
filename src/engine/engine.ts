@@ -18,6 +18,8 @@ import type {
 export const RANGE_GUARD = 1.25;
 /** Så mange zombier kan stå i portens sektor uten at porten stenges for befesting og vakt. Laget tar dem først. */
 export const GATE_STRAGGLERS = 2;
+/** Sjansen for at en dag på sofaen helbreder uten medisin */
+export const REST_HEAL = 0.45;
 /** Med så få igjen kan overlevende banke på om natta, så runden kan reddes. */
 export const COMEBACK_CREW = 2, COMEBACK_KNOCK = 0.3;
 
@@ -31,8 +33,8 @@ export const GATE_IDS = Object.keys(GATES) as GateId[];
 export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): GameState {
   const s: GameState = {
     v: 3, seed, rng: seed | 0, day: 1, phase: 1, mutations: [], knownMutations: [], branchWeights: { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 }, goalDay: null, phaseStartDay: 1, moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
-    res: { mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
-    flags: {}, crew: [], seenEvents: [], pending: [], recentEnc: [], tokts: [], quests: [], log: [], over: null,
+    res: { mat: 14, vann: 10, medisin: 0, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
+    flags: {}, crew: [], seenEvents: [], pending: [], recentEnc: [], tokts: [], toktsOpen: [], toktsDone: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
@@ -68,6 +70,9 @@ export function migrate(raw: unknown): GameState | null {
   (raw as GameState).recentEnc ??= [];
   (raw as GameState).tokts ??= [];
   (raw as GameState).quests ??= [];
+  // lagringer fra før toktene ble låst opp: Bybrua var åpent fra start
+  (raw as GameState).toktsOpen ??= ['bybrua'];
+  (raw as GameState).toktsDone ??= [];
   const g = raw as GameState & { zombieTraits?: unknown };
   delete g.zombieTraits;
   g.mutations ??= [];
@@ -293,7 +298,7 @@ export function resolveDay(s: GameState): LogLine[] {
     if (hungry || c.hp >= 3 || nursed.has(c)) continue;
     const nurse = hasTrait(s, 'nattevakt');
     if (s.res.medisin > 0 && !(nurse && rand(s) < 0.5)) { s.res.medisin--; c.hp++; log(`${c.name} ble plastret med medisin.`); }
-    else if (nurse || rand(s) < 0.35) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse ? ` (og ${s.crew.find((x) => x.trait === 'nattevakt')!.name}s strenge regime)` : ''}.`); }
+    else if (nurse || rand(s) < REST_HEAL) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse ? ` (og ${s.crew.find((x) => x.trait === 'nattevakt')!.name}s strenge regime)` : ''}.`); }
   }
 
   // 4b) Nivåopprykk

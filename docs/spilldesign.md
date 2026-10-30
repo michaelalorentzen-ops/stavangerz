@@ -488,7 +488,12 @@ Fra gjennomgangen 30.10: fase 1 var spillbar, men uten fare. Disse reglene gir s
 - **Knappere økonomi:** sektorene har mindre å finne (`lootMult`), sanking gir mindre (`yieldMult`), det regner sjeldnere (`rainChance`), og maten på lageret blir dårlig litt hver dag (`stashRot`). Fyring (`heatPerCrew`) er av i fase 1 og slår inn fra fase 2.
 - **Tokt har ekte risiko:** hver dag ute kan noen bli skadet (oftere jo farligere), og da mister gruppa en tredel av byttet i flukten. Beslutningen om å fortsette eller snu viser helsen til gruppa.
 - **Dårlige valg:** omtrent en tredel av hendelsene er rent negative, og noen encounters har bare dårlige valg.
-- **Tokt gir det du ikke får hjemme:** materialer i bulk til en bestemt port når toktet fullføres (bilvrak foran Bybrusperringen, containere ved Rosenberg-gjerdet, +18 portarbeid), og sjansen for å finne overlevende ute (10–25 % per dag) som aldri ville kommet til porten. Senere: nøkler til fase 2 (transport, drivstoff), unike kort og ammo fra nøkkelsteder.
+- **Tokt er turer til strategiske steder** som gir det du ikke får hjemme. Du kan vinne fase 1 uten dem, men de gjør overlevelsen lettere.
+  - **Apoteket på Hundvåg** åpnes av hendelsen «Medisinskapet er tomt», som kommer ved første skade, eller senest dag 6. Første tur er trygg: ingen knipe og ingen skader. Senere tur gir mindre, fordi stedet er delvis tømt.
+  - **Køen på Bybrua** åpnes av et rykte på radioen fra dag 8. Den gir drivstoff, metall og bildeler, viktig for transport i fase 2.
+  - **Kranføreren** åpnes av SOS-hendelsen. Roger blir med dere hjem.
+  - Ute kan gruppa finne overlevende som aldri ville kommet til porten.
+- **Medisin er knapp:** dere starter uten medisin, og sektorene har lite. Apoteket er stedet med mye. Uten medisin helbreder hvile fortsatt av og til, så toktet er verdifullt, men ikke tvunget.
 - **Comeback:** når to eller færre er igjen, kan en nabo banke på om natta (30 %).
 - **Lage utstyr** lager aldri kort med et bestemt opphav (`craftable: false`).
 - **Boten** velger hendelsesvalg ut fra forventet verdi, slik en spiller leser forhåndsvisningen.

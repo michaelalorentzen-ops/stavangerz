@@ -99,3 +99,38 @@ describe('xp ved rekruttering', () => {
     expect(s.crew.at(-1)!.xp).toBe(0);
   });
 });
+
+describe('tokt som låses opp', () => {
+  it('apoteket åpnes av første skade, med en gang, og første tur er trygg', async () => {
+    const { drawEvent, runChoice, toktAvailable, toktDef, resolveEncounter, toktDecision } = await import('../src/engine');
+    const s = fresh(2);
+    expect(toktAvailable(s, toktDef('apotek'))).toBe(false);
+    s.crew[1].hp = 2;
+    withMod('eventChance', 0, () => {
+      const ev = drawEvent(s)!;
+      expect(ev.id).toBe('medisinskapet');
+      runChoice(s, ev.choices[0]);
+    });
+    expect(toktAvailable(s, toktDef('apotek'))).toBe(true);
+    for (const c of s.crew) c.task = { type: 'hvile' };
+    s.crew[0].task = { type: 'tokt', target: 'apotek' }; s.crew[2].task = { type: 'tokt', target: 'apotek' };
+    const hp = s.crew.map((c) => c.hp);
+    withMod('injuryMult', 50, () => {
+      for (let d = 0; d < 2; d++) {
+        resolveDay(s);
+        expect(s.pending.filter((p) => p.toktId)).toHaveLength(0);
+        while (s.pending.length) resolveEncounter(s, s.pending[0].pid, 0);
+        toktDecision(s, 'apotek', 'fortsett');
+      }
+    });
+    expect(s.crew[0].hp).toBe(hp[0]);
+    expect(s.res.medisin).toBeGreaterThanOrEqual(toktDef('apotek').reward.res!.medisin!);
+    expect(s.toktsDone).toContain('apotek');
+  });
+
+  it('kranføreren Roger blir med når kran-toktet er fullført, og kommer aldri til porten ellers', async () => {
+    const { recruitablesNow } = await import('../src/engine');
+    const s = fresh();
+    expect(recruitablesNow(s).some((n) => n.id === 'roger')).toBe(false);
+  });
+});

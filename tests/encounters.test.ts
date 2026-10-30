@@ -5,7 +5,8 @@ import {
 import type { EncounterCtx, GameState, PendingEncounter, SectorId, WeaponTag } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
-const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+// Bybrua åpnes av et rykte i spillet. Her er det åpent fra start.
+const fresh = (seed = 42) => { const s = newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']); s.toktsOpen.push('bybrua'); return s; };
 const valid = (s: GameState) => {
   for (const r of RES) expect(s.res[r]).toBeGreaterThanOrEqual(0);
   expect(s.moral).toBeGreaterThanOrEqual(0);
