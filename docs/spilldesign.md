@@ -324,6 +324,55 @@ Beslutninger må tas. Seeden og startstedet kan gi griseflaks eller motgang. Det
 - Fisk, hager og natur gir en jevn, men liten strøm av mat.
 - Fra fase 2 overtar HQ-produksjonen gradvis.
 
+**Hvor ressursene kommer fra [Forslag]:** Funn i byen er en start, ikke en økonomi. Over fasene flytter forsyningen seg fra å lete til å produsere:
+
+| Ressurs | Fase 1 | Senere |
+|---|---|---|
+| Mat | butikker, hager, kjøleskap | jorder og fiske knyttet til HQ |
+| Vann | regn, butikker | regn og rensing i HQ |
+| Tre | byggvarehus, hus | skog knyttet til HQ, rivning av hus |
+| Skrap | alt som står igjen | samles løpende i egen sone |
+| Metall | – | biler: parkeringsplasser, bilforhandlere, verksteder |
+| Medisin | apotek, legekontor | lages i HQ med lab eller apotekutstyr |
+| Tech | – | kontorer, skoler, butikker med elektronikk |
+
+**Tech [Forslag]:** Tech er en ny ressurs: kretskort, datamaskiner, telefoner og batterier. Den finnes på kontorer og i elektronikkbutikker, og den brukes til tech-utstyr og til forskning (kapittel 6). Den kommer tidligst i fase 2.
+
+**Materialer går aldri helt tom [Forslag]:** Skrap, tre og metall er uendelige i praksis. Byen hadde langt flere folk enn basen noen gang får. Det som er knapt, er folk til å hente dem. Materialer er derfor en jobb du setter folk på, ikke noe som tømmes. Mat, medisin og nøkkelfunn er derimot begrenset per sted.
+
+**Jorder [Forslag]:** Mat i stor skala krever dyrkbar mark. Ligger HQ i et område uten jorder, kan dere rive en sone med hus for å lage dem. Det tar lang tid, men gir tre og skrap underveis. Startstedet avgjør hvor lett det er, og det er en del av griseflaksen.
+
+### Butikker og funntabeller
+
+**[Forslag]** Hver butikktype har sin egen funntabell: hvilke ressurser og hvilke utstyrsspor den gir. Sektorens verdier avgjør bare hvor mye. Navnene følger [regelheftet for stedsnavn](stedsnavn.md).
+
+| Type | Ressurser | Utstyr |
+|---|---|---|
+| Matbutikk | mat, vann | lite |
+| Byggvarehus | tre, skrap | verktøy |
+| Dyrebutikk | mat (fôr), litt medisin | feller og nett |
+| Klesbutikk | lite | beskyttelse |
+| Sportsbutikk | lite | beskyttelse, litt våpen |
+| Interiørbutikk | tre | improvisert beskyttelse |
+| Bensinstasjon | drivstoff, litt mat | lite |
+| Bilforhandler, parkeringshus | metall, drivstoff | kjøretøydeler |
+| Kontor | tech | lite |
+
+**Nøkkelsteder [Forslag]:** Høyst ett per område. De er alltid farlige.
+
+| Nøkkelsted | Gir |
+|---|---|
+| Apotek | mye medisin, sjeldne medisinkort |
+| Våpenbutikk / jaktbutikk | bare våpen, ett nivå over trusselen |
+
+**HQ-kandidater [Forslag]:** Sykehus, brannstasjon, politistasjon, verft, kjøpesenter og fort. De er store, har skjulte verdier, og har en sjanse for funn av alle slag. Første gang et HQ-sted gjennomsøkes, trekkes det om noe ligger igjen der. Da gir det mye, men bare én gang.
+
+**Avstand [Forslag]:** Butikker lenger fra basen gir mer, men er farligere. Hvert steg fra HQ eller startsonen øker funnene, trusselen og sjansen for encounters litt. Hvert steg øker også støyen, fordi dere bærer mer hjem. En sone i fase 2 har høyere grunntrussel og bedre funntabeller enn fase 1-området.
+
+**[Åpent]** Telles avstand i steg mellom sektorer eller i meter på kartet?
+
+**[Åpent]** Er feller og nett et eget utstyrsspor, eller våpen med en egen tag?
+
 **Drivstoff og strøm [Låst]:** Drivstoff er knapt. En elbil er kremen, fordi strøm kan produseres.
 
 **Ammo [Låst]:**
@@ -452,6 +501,29 @@ Dette er retning, ikke spesifikasjon. Fase 1 skal ikke bygge noe av det, men må
 - **[Forslag]** I fase 4 fordeles inntekt fra bydeler i prosent på grener: forsvar, bygg, mat og handel. Et nytt HQ kan få en guvernør, og da ser du bare netto inn og ut.
 - **[Åpent]** Styreform, for eksempel demokrati, diktatur eller råd, velges et sted i fase 3–4, med reelle byttehandler.
 - **[Låst]** Kjernecrewet ditt kan alltid sendes ut direkte, uansett fase.
+
+### Skala: crew er enheten [Forslag]
+
+Basen kan vokse fra noen naboer til tusenvis av folk, men spillet skal ikke regne på 150 000 enkeltmennesker. Fra fase 3 er **crewet** enheten. Hvert crew har en leder, og mat, moral og oppdrag regnes per crew. Har du 100 crew-ledere og 10 000 folk, betaler du mat for 100 crew, med en sats som går opp med størrelsen på crewet.
+
+- Fase 1–2: hver person spiser, slik som nå.
+- Fase 3: crew med leder er enheten, og maten følger crewene.
+- Fase 4–5: bydeler gir netto inn og ut (se over).
+
+En større gjeng gir ikke mer funn. Den gir flere hender (flere oppdrag samtidig, raskere gjennomsøking) og større behov. Behovet tømmer området, og det presser dere utover, der det er mer å hente og farligere. Det er motoren i fasene.
+
+**[Åpent]** Hvor mange folk er i et crew, og hvor mange crew-ledere kan du ha?
+
+### HQ produserer [Forslag]
+
+Etter hvert må HQ dekke behovet for våpen, beskyttelse, verktøy og trening. Mat, tre og metall kommer fra steder som er knyttet til HQ: skog, jorder, parkeringsplasser. Medisin lages i HQ når laben eller apotekutstyret er på plass. Skrap samles løpende i egen sone.
+
+### Forskning og lover [Forslag]
+
+- **Teknologitre:** ved siden av mottiltakene mot mutasjoner (kapittel 6) låser tech og forskning opp ny produksjon: verksted, 3D-printer, rensing, drivhus og sjøsperringer.
+- **Lovtre:** hvordan du styrer riket ditt. Lover og regler låses opp og velges, for eksempel rasjonering, verneplikt, handel med fraksjoner og straff. Hver lov har en byttehandel, og den henger sammen med styreformen.
+
+**[Åpent]** Er teknologitreet og lovtreet to trær eller ett? Hvilke fase låser hvert av dem opp?
 
 ---
 
