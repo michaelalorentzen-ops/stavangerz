@@ -31,7 +31,6 @@ Skill butikkene etter hva de selger. Da blir valget av mål et reelt valg.
 | Interiørbutikken | tre, tekstiler, litt beskyttelse | butikk |
 | Klesbutikken | beskyttelse (jakker, støvler) | butikk |
 | Sportsbutikken | beskyttelse, litt våpen, kondis-utstyr | butikk |
-| Apoteket | medisin | offentlig |
 | Bensinstasjonen | drivstoff, snacks, litt verktøy | industri |
 | Bilforhandleren | drivstoff, metall, kjøretøydeler | industri |
 | **Våpenbutikken** / **Jaktbutikken** | våpen, ammunisjon | nøkkelsted |
@@ -69,20 +68,22 @@ Industriområdet, Verkstedet, Lageret, Verftet, Kaia, Båthavna, Ferjekaia, Fisk
 
 Krysset, Rundkjøringen, Brufestet, Tunnelmunningen. Slike steder er ofte der portene ligger.
 
-## 3. Nøkkelsteder
+## 3. Nøkkelsteder og HQ-kandidater
 
-Noen steder er så verdifulle at de bryter balansen hvis det finnes ett i hvert område. Dette er nøkkelsteder (POI):
+Noen steder er så verdifulle at de bryter balansen hvis det finnes ett i hvert område.
 
+**Nøkkelsteder** gir én ting i store mengder:
+
+- **Apoteket:** mye medisin og sjeldne medisinkort.
 - **Våpenbutikken / Jaktbutikken:** de eneste gode skytevåpnene i tidlige faser.
-- **Politistasjonen:** våpen, beskyttelse, samband.
-- **Sykehuset:** mye medisin, mange zombier.
-- **Verftet, kjøpesenteret, fortet:** HQ-kandidater med skjulte verdier.
 
-Reglene for nøkkelsteder:
+**HQ-kandidater** er store bygg med skjulte verdier og en sjanse for funn av alle slag, én gang: Sykehuset, Brannstasjonen, Politistasjonen, Verftet, Kjøpesenteret og Fortet.
 
-1. **Høyst ett nøkkelsted per område** i fase 1. Rosenberg Verft er Buøys.
+Reglene:
+
+1. **Høyst ett nøkkelsted og én HQ-kandidat per område** i fase 1. Rosenberg Verft er Buøys HQ-kandidat.
 2. **Navnet kan være det ekte navnet**, fordi det er et landemerke: «Rosenberg Verft», «Kjøpesenteret på Kvadrat». `short` er da det korte ekte navnet («Rosenberg»).
-3. **Et nøkkelsted er alltid farlig:** trussel 4–5, låst, eller med en pris (støy, horde, lang reise).
+3. **Begge er alltid farlige:** trussel 4–5, låst, eller med en pris (støy, horde, lang reise).
 
 ## 4. Preposisjonen i `at`
 
@@ -103,7 +104,7 @@ En port heter etter det den sperrer, med retning når det trengs: «Brua», «Tu
 
 1. Del opp området slik det ser ut, med 6–8 sektorer.
 2. Gi hver sektor en type og et funksjonsnavn etter kapittel 2.
-3. Velg høyst ett nøkkelsted.
+3. Velg høyst ett nøkkelsted og én HQ-kandidat.
 4. Skill like steder med retning eller et kjennetegn.
 5. Skriv `desc` med ekte navn og lokal humor.
 6. Sjekk at `at` leses riktig i en setning.
@@ -121,4 +122,4 @@ Buøy-sektorene heter nå dette:
 | `buoy_nord` | Buøy nord | Boligfeltet | Buøy nord |
 | `skolen` | Buøy skole | Skolen | Buøy skole |
 | `sorspissen` | Sørspissen | Industriområdet | Sørspissen |
-| `rosenberg` | Rosenberg Verft | Rosenberg Verft (nøkkelsted) | Rosenberg Verft |
+| `rosenberg` | Rosenberg Verft | Rosenberg Verft (HQ-kandidat) | Rosenberg Verft |
