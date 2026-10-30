@@ -4,7 +4,8 @@
 //   --combos           kjører de fire faste kombinasjonene i COMBOS (tools/bot.ts)
 //   --hard, --brutal   vanskelighetsgrad (standard er normal). Seier = målet nådd før fristen, uansett grad
 //   --tokt             boten tar også «Køen på Bybrua» når det er rolig nok
-import { phaseProgress } from '../src/engine';
+//   --fase2            boten spiller videre inn i fase 2 og rapporterer seier, dager og tap i fase 2
+import { FACILITY_IDS, HQ_SECTOR, isSafe, phaseProgress } from '../src/engine';
 import type { Difficulty, GameState } from '../src/engine';
 import { BOT_NEIGHBORS, COMBOS, playGame, toktStats } from './bot';
 
@@ -48,6 +49,35 @@ function report(label: string, neighbors: string[]) {
   if (stuck.length) console.log(`  Eksempler på timeout: ${stuck.join(' · ')}`);
 }
 
+/** Fase 2: bare rundene som kom til fase 2 teller. Seier = fase 2-målet nådd og fasen avsluttet. */
+function reportFase2(label: string, neighbors: string[]) {
+  const games: GameState[] = Array.from({ length: n }, (_, i) => playGame(i + 1, neighbors, { tokt, difficulty, fase2: true }));
+  const in2 = games.filter((s) => s.phase >= 2);
+  const won = in2.filter((s) => s.over === 'won');
+  const dead = in2.filter((s) => s.over === 'dead');
+  const timeout = in2.filter((s) => s.over === 'timeout');
+  const forced = in2.filter((s) => s.forcedPhases > 0);
+  const days = won.map((s) => s.day - s.phaseStartDay);
+  const hq = in2.filter((s) => s.hq.taken);
+  console.log(`\n${label} fase 2${tokt ? ' med tokt' : ''} [${difficulty}] (${neighbors.join(', ')}), ${n} runder`);
+  console.log(`  Kom til fase 2: ${in2.length} (${pct(in2.length, n)}), av dem tvunget av fristen: ${forced.length}`);
+  console.log(`  Vunnet i fase 2: ${won.length} (${pct(won.length, in2.length)} av de som kom dit) · Døde: ${dead.length} · Timeout: ${timeout.length}`);
+  if (days.length) console.log(`  Dager i fase 2 til seier: median ${median(days)}, min ${Math.min(...days)}, maks ${Math.max(...days)}`);
+  console.log(`  HQ tatt: ${hq.length} (${pct(hq.length, in2.length)})`);
+  const lost2 = in2.reduce((a, s) => a + s.stats.lost, 0) / Math.max(1, in2.length);
+  console.log(`  Crew mistet per runde (hele runden): ${lost2.toFixed(2)} · Crew ved slutt (median): ${median(in2.map((s) => s.crew.length))}`);
+  const ready: Record<string, number> = {};
+  for (const s of won) for (const f of FACILITY_IDS) if (s.hq.facilities[f].ready) ready[f] = (ready[f] ?? 0) + 1;
+  console.log(`  Anlegg i stand ved seier: ${FACILITY_IDS.map((f) => `${f} ${ready[f] ?? 0}`).join(', ')}`);
+  const stuck = timeout.slice(0, 4).map((s) => `${HQ_SECTOR} z ${s.sectors[HQ_SECTOR].z}, gjemt ${s.sectors[HQ_SECTOR].hidden}, søkt ${Math.round(s.sectors[HQ_SECTOR].searched)}, trygg ${isSafe(s.sectors[HQ_SECTOR])}, crew ${s.crew.length}`);
+  if (stuck.length) console.log(`  Eksempler på timeout: ${stuck.join(' · ')}`);
+}
+
 const custom = flag('--neighbors');
+if (args.includes('--fase2')) {
+  if (args.includes('--combos')) COMBOS.forEach((c, i) => reportFase2(`Kombinasjon ${i + 1}`, c));
+  else reportFase2(custom ? 'Valgte naboer' : 'Standardcrew', custom ? custom.split(',') : BOT_NEIGHBORS);
+  process.exit(0);
+}
 if (args.includes('--combos')) COMBOS.forEach((c, i) => report(`Kombinasjon ${i + 1}`, c));
 else report(custom ? 'Valgte naboer' : 'Standardcrew', custom ? custom.split(',') : BOT_NEIGHBORS);

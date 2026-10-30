@@ -232,8 +232,11 @@ export function craftShortfall(s: GameState): Set<string> {
   return short;
 }
 
-/** Lage utstyr: koster skrap og tre, lykkes etter Mekk. `mekk` er stat(c, 'mekk'). */
-export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
+/**
+ * Lage utstyr: koster skrap og tre, lykkes etter Mekk. `mekk` er stat(c, 'mekk'). `levelBonus` er nivåer
+ * oppå det Mekk gir (verkstedhallen i HQ-et), men aldri over `maxLevel`.
+ */
+export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn, levelBonus = 0, maxLevel = 3) {
   if (s.res.skrap < LAGE_COST.skrap || s.res.tre < LAGE_COST.tre) {
     log(`${c.name} prøvde å lage utstyr, men det mangler ${LAGE_COST.skrap} skrap og ${LAGE_COST.tre} tre. Det ble et fint moodboard.`, 'warn');
     return;
@@ -242,7 +245,7 @@ export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
   wear(s, c, 'verktoy', log);
   const chance = Math.max(0.3, Math.min(0.9, 0.3 + (mekk / 10) * 0.1));
   if (rand(s) >= chance) { log(`${c.name} bygde noe. Det ble ikke til noe, bortsett fra en stor haug skrap.`, 'warn'); return; }
-  const level = ['God', 'Rå'].includes(skillLevel(mekk)) ? 2 : 1;
+  const level = Math.min(maxLevel, (['God', 'Rå'].includes(skillLevel(mekk)) ? 2 : 1) + levelBonus);
   const cands = Object.values(CARDS).filter((d) => d.family === 'makeshift' && d.level === level && d.rarity !== 'unik' && d.craftable !== false);
   const k = newCard(s, pick(s, cands).id);
   s.stash.push(k);

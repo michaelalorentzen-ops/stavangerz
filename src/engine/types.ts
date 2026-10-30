@@ -92,7 +92,13 @@ export type Task =
   | { type: 'vakt'; target: GateId | SectorId }
   | { type: 'befeste'; target: GateId }
   /** target er id-en til toktet */
-  | { type: 'tokt'; target: string };
+  | { type: 'tokt'; target: string }
+  /** fast post i HQ-et: personen blir der fra dag til dag og gjør ikke annet */
+  | { type: 'post'; target: PostId }
+  /** Sette i stand et anlegg i HQ-et */
+  | { type: 'istand'; target: FacilityId }
+  /** Reparere utstyr i verkstedhallen */
+  | { type: 'reparere' };
 export type TaskType = Task['type'];
 
 export interface CrewMember {
@@ -165,6 +171,30 @@ export interface QuestState {
   done: boolean;
 }
 
+/** Anleggene i HQ-et (fase 2). Navn og tekster står i regionpakken. */
+export type FacilityId = 'verksted' | 'kantine' | 'kontor' | 'kai';
+/** Tilstanden til et anlegg, trukket av seeden ved start og skjult til HQ-et er tatt. */
+export type FacilityCond = 'god' | 'middels' | 'odelagt';
+/** Faste poster i HQ-et */
+export type PostId = 'sikkerhet' | 'bygg' | 'kokk';
+
+export interface FacilityState {
+  /** den sanne tilstanden. Vises ikke før HQ-et er tatt */
+  cond: FacilityCond;
+  /** tilstanden ryktet peker på, eller null før noe er hørt. Rykter kan ta feil */
+  heard: FacilityCond | null;
+  /** arbeid lagt ned i istandsettingen */
+  work: number;
+  /** satt i stand, så anlegget virker */
+  ready: boolean;
+}
+
+export interface HqState {
+  /** HQ-sektoren har vært trygg i fase 2 eller senere: postene er åpne og tilstanden er kjent */
+  taken: boolean;
+  facilities: Record<FacilityId, FacilityState>;
+}
+
 export interface GateState {
   work: number;
   level: number;
@@ -205,6 +235,8 @@ export interface GameState {
   flags: Partial<Record<Flag, boolean>>;
   crew: CrewMember[];
   sectors: Record<SectorId, SectorState>;
+  /** HQ-et i fase 2: anlegg og om det er tatt */
+  hq: HqState;
   gates: Record<GateId, GateState>;
   seenEvents: string[];
   /** encounters som venter på valg */

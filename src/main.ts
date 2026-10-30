@@ -1,5 +1,5 @@
 import './styles.css';
-import { AREA, migrate, newGame } from './engine';
+import { AREA, HQ_SECTOR, migrate, newGame, SECTORS } from './engine';
 import type { GameState } from './engine';
 import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
 import { draft, endDay, endPhaseNow, resumePending, titleScreen } from './ui/modals';
@@ -9,7 +9,6 @@ import { renderCrew, renderGoals, renderLog, renderPlan, renderSel, renderTabs, 
 import { $, MAP, PANEL_TABS, save, ui } from './ui/store';
 import type { PanelTab, Selection } from './ui/store';
 
-$('area-phase').textContent = `Fase 1 · ${AREA.name}`;
 $('area-name').textContent = AREA.name;
 $('area-all').textContent = AREA.surroundings[0].toUpperCase() + AREA.surroundings.slice(1);
 $('map').parentElement!.setAttribute('aria-label', `Kart over ${AREA.name} og ${AREA.surroundings}`);
@@ -24,6 +23,7 @@ function select(s: Selection) {
 }
 
 ui.refresh = () => {
+  $('area-phase').textContent = `Fase ${ui.S?.phase ?? 1} · ${ui.S && ui.S.phase > 1 ? SECTORS[HQ_SECTOR].short : AREA.name}`;
   if (!ui.S) return; // ingen aktiv runde (tittelskjermen): ingenting å tegne
   renderTop(); renderTutorial(ui.S, ui.refresh); renderGoals(); renderTabs(); renderSel(); renderCrew(); renderStash(); renderLog(); renderPlan(); renderMap(select);
   save();

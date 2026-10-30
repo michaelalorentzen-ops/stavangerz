@@ -464,7 +464,7 @@ Hvert våpenkort har `weaponClass` (slag, egg, prosjektil, skytevåpen, brann, m
 
 ---
 
-## 9b. Fase 2-start i betaen [Forslag, avtalt 30.10]
+## 9b. Fase 2-start i betaen [Bygget, avtalt 30.10]
 
 Betaen har med starten av fase 2. Avgjort med eieren: bare Rosenberg som HQ, Buøy holdes og forfaller sakte, og rollene i HQ er faste poster.
 
@@ -492,6 +492,35 @@ Det er et valg: en god arbeider i en post er en arbeider mindre ute.
 **Fasemålet i fase 2 (betaen):** Rosenberg er trygg, og minst ett anlegg er satt i stand. Etter det: «Fortsettelse følger» (fase 3 er ikke bygd).
 
 **[Åpent]** Hvor sterk horden og bonusene skal være, settes med simulering. Transport (bussen, Gann) gir foreløpig ingenting i fase 2.
+
+### Slik er det bygd
+
+- **Sektorer per fase:** `SectorDef.opensInPhase`. Verftet (`rosenberg`) er en vanlig sektor i tilstanden fra start, men låst til fase 2. Alle regler løkker over `activeSectors(s)`. Fase 1-målet gjelder bare fase 1-sektorene. Når en fase starter (`nextPhase`), åpnes fasens sektorer med zombier ganget med fasens `zombieMult` (med vanskelighet og mutasjoner), og overgangen logges. Gamle lagringer får verftet og HQ-et lagt til, og en vunnet fase 1 fra før fase 2 fantes blir et nådd mål, så fase 2 kan startes.
+- **Verftet:** trussel 5, 52 zombier og 20 gjemte (×1,3 i fase 2 = 68 og 26), 8 senger, mye metall, skrap og drivstoff, litt mat. Sanke gir metall, skrap og drivstoff. Funnet ved 50 %: stål og diesel i lagerhallen.
+- **Anleggene** (`src/engine/hq.ts`, tekster i `places.ts`): tilstanden trekkes fra seeden med en egen tallrekke (god 30 %, middels 40 %, ødelagt 30 %), så fase 1 er helt lik som før. Speiding av verftet gir alltid ett rykte, og gjennomsøking gir et rykte med 50 % sjanse. Et rykte stemmer i 75 % av tilfellene; med en sveiser i crewet stemmer det alltid. Når verftet er trygt i fase 2, er HQ-et tatt, og den sanne tilstanden vises.
+- **Sette i stand** (`istand`): arbeid etter buildPower til 50 (god), 80 (middels) eller 120 (ødelagt), 1 metall eller skrap per 3 arbeid. Krever at verftet er tomt for zombier.
+- **Effekter:** verkstedhallen gir Lage utstyr ett nivå høyere (høyst 3) og oppdraget Reparere (full holdbarhet for 2 skrap per kort, 1 kort pluss 1 per 30 Mekk per dag). Kantina gir 3 mat per dag. Kontorbygget og kaia har bare tilstand og tekst.
+- **Poster** (oppgaven `post`, en per post, blir der fra dag til dag): sikkerhetssjef gir 0,8 vaktkraft per 10 Nerver ved hver port om natta, også uten vakter; byggeleder +6 % arbeid per 10 Mekk på befesting og istandsetting; kokk −5 % mat per 10 Prat (høyst −40 %). Bonusene er regelkonstanter i `hq.ts`, ikke i fasetabellen: de sier hva crewet får til, ikke hvor sterke zombiene er.
+- **Buøy i fase 2:** knotten `heldDecay` i fasetabellen (fase 2: 1, fase 3: 1,5, fase 4–5: 2) er kontrollen sektorer fra en tidligere fase mister per dag uten folk, mot `controlDecay` for de nye. Portene virker som før.
+- **Fasemålet:** verftet trygt og minst ett anlegg i stand. Fase 2 er siste bygde fase (`BUILT_PHASES`), så å avslutte den gir seier: «Fortsettelse følger». Fristen er fasetabellens 60 dager; går den ut uten mål, er runden tapt på alle grader, fordi det ikke finnes en fase 3 å tvinges over i.
+
+### Tall fra simuleringen (300 runder, normal)
+
+Fase 1 er uendret: standardcrewet vinner 95 % med median 27 dager, kombinasjonene 86–97 % med median 28–30.
+
+Boten spiller videre i fase 2 (`npm run sim -- 300 --fase2`): den rydder verftet med fire når minst tre er friske, setter folk på poster, leter etter overlevende til seks og setter i stand anlegget som er billigst å gjøre ferdig.
+
+| Crew | Seier i fase 2 | Median dager i fase 2 | Crew mistet per runde (hele runden) |
+|---|---|---|---|
+| Standard (Arild, Mona, Tor-Egil) | 79 % | 17 | 1,64 |
+| Kombinasjon 1 | 65 % | 18 | 2,66 |
+| Kombinasjon 2 | 77 % | 17 | 1,65 |
+| Kombinasjon 3 | 60 % | 19 | 2,89 |
+| Kombinasjon 4 | 66 % | 18 | 2,80 |
+
+Målet foreløpig er 75–95 % og median 20–45 dager med standardcrewet. Seiersandelen er innenfor, men seirene kommer for fort. Rundene er tosidige: enten tar boten verftet på rundt to uker, eller den blir sittende fast i sult og store gjennombrudd på Buøy (nattpresset vokser med dagtallet) og når fristen. En større horde gjorde boten tregere bare litt, men tapte mange flere runder, fordi trussel 5 nesten alltid gir høyeste skaderisiko.
+
+**[Åpent]** Slik fase 2 kan bli lengre uten å bli dødeligere: større arbeid i anleggene, eller at nattpresset regnes fra fasestarten. Om Rosenberg-gjerdet fortsatt skal slippe inn zombier når verftet er tatt.
 
 ## 10. Basen, ledere og politikk (fase 2–5)
 

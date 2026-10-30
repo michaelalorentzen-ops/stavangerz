@@ -33,6 +33,11 @@ export interface PhaseModifiers {
   factionPressure: number;
   /** kontroll en sektor mister per dag uten folk */
   controlDecay: number;
+  /**
+   * kontroll en sektor fra en tidligere fase mister per dag uten folk (fase 2–5: Buøy holdes, men forfaller sakte).
+   * I fase 1 finnes ingen slike sektorer, så verdien der er den samme som controlDecay og brukes ikke.
+   */
+  heldDecay: number;
   /** gjennomsøkt-prosent en sektor mister per dag når kontrollen er under 30 */
   searchedDecay: number;
   /** grunnsjanse per dag for at en sektor uten kontroll får en zombie til */
@@ -68,30 +73,33 @@ export interface PhaseDef {
   mutationPoints: [number, number];
 }
 
+/** Fasene som er bygd. Når den siste av dem avsluttes, er runden vunnet («Fortsettelse følger»). */
+export const BUILT_PHASES: PhaseId = 2;
+
 export const PHASES: Record<PhaseId, PhaseDef> = {
   1: {
     id: 1, name: 'Utbruddet', focus: 'Rydd hjemsonen, sank det dere trenger, sett opp perimeter.',
-    mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 0.73, injuryMult: 2, starveInjury: 0.2, nightBase: 0, nightGrowth: 0.0072, nightLevelReduction: 0.15, breachDays: 5, hiddenOutbreak: 0.18, eventChance: 0.6, factionPressure: 0, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.33, turnCap: 50, foodRot: 0.85, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.75, yieldMult: 0.75, rainChance: 0.35, heatPerCrew: 0, stashRot: 0.03 },
+    mods: { zombieMult: 1, hiddenRatio: 0.25, killMult: 0.73, injuryMult: 2, starveInjury: 0.2, nightBase: 0, nightGrowth: 0.0072, nightLevelReduction: 0.15, breachDays: 5, hiddenOutbreak: 0.18, eventChance: 0.6, factionPressure: 0, heldDecay: 5, controlDecay: 5, searchedDecay: 2, creepChance: 0.12, encounterChance: 0.33, turnCap: 50, foodRot: 0.85, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.75, yieldMult: 0.75, rainChance: 0.35, heatPerCrew: 0, stashRot: 0.03 },
     mutationPoints: [0, 0],
   },
   2: {
     id: 2, name: 'Hovedkvarter', focus: 'Finn transport, ta et HQ, fordel roller.',
-    mods: { zombieMult: 1.3, hiddenRatio: 0.28, killMult: 0.65, injuryMult: 2.2, starveInjury: 0.22, nightBase: 0.03, nightGrowth: 0.0085, nightLevelReduction: 0.15, breachDays: 4.2, hiddenOutbreak: 0.19, eventChance: 0.6, factionPressure: 0, controlDecay: 6, searchedDecay: 2, creepChance: 0.15, encounterChance: 0.37, turnCap: 60, foodRot: 0.8, cardFind: 0.25, noiseAttract: 0.35, lootMult: 0.6, yieldMult: 0.7, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.3, hiddenRatio: 0.28, killMult: 0.65, injuryMult: 2.2, starveInjury: 0.22, nightBase: 0.03, nightGrowth: 0.0085, nightLevelReduction: 0.15, breachDays: 4.2, hiddenOutbreak: 0.19, eventChance: 0.6, factionPressure: 0, heldDecay: 1, controlDecay: 6, searchedDecay: 2, creepChance: 0.15, encounterChance: 0.37, turnCap: 60, foodRot: 0.8, cardFind: 0.25, noiseAttract: 0.35, lootMult: 0.6, yieldMult: 0.7, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
     mutationPoints: [1, 2],
   },
   3: {
     id: 3, name: 'Ekspansjon', focus: 'Ta naboområder, få crew-ledere, rekrutter ved porten.',
-    mods: { zombieMult: 1.6, hiddenRatio: 0.3, killMult: 0.62, injuryMult: 2.4, starveInjury: 0.24, nightBase: 0.06, nightGrowth: 0.009, nightLevelReduction: 0.14, breachDays: 3.8, hiddenOutbreak: 0.2, eventChance: 0.55, factionPressure: 0, controlDecay: 7, searchedDecay: 3, creepChance: 0.18, encounterChance: 0.4, turnCap: 70, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.55, yieldMult: 0.65, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.6, hiddenRatio: 0.3, killMult: 0.62, injuryMult: 2.4, starveInjury: 0.24, nightBase: 0.06, nightGrowth: 0.009, nightLevelReduction: 0.14, breachDays: 3.8, hiddenOutbreak: 0.2, eventChance: 0.55, factionPressure: 0, heldDecay: 1.5, controlDecay: 7, searchedDecay: 3, creepChance: 0.18, encounterChance: 0.4, turnCap: 70, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.55, yieldMult: 0.65, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
     mutationPoints: [1, 3],
   },
   4: {
     id: 4, name: 'Bydel', focus: 'Hold hele bydeler, ikke voks fortere enn forsvaret tåler.',
-    mods: { zombieMult: 1.9, hiddenRatio: 0.3, killMult: 0.6, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.08, nightGrowth: 0.009, nightLevelReduction: 0.13, breachDays: 3.3, hiddenOutbreak: 0.21, eventChance: 0.5, factionPressure: 0.1, controlDecay: 8, searchedDecay: 3, creepChance: 0.2, encounterChance: 0.44, turnCap: 80, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.9, hiddenRatio: 0.3, killMult: 0.6, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.08, nightGrowth: 0.009, nightLevelReduction: 0.13, breachDays: 3.3, hiddenOutbreak: 0.21, eventChance: 0.5, factionPressure: 0.1, heldDecay: 2, controlDecay: 8, searchedDecay: 3, creepChance: 0.2, encounterChance: 0.44, turnCap: 80, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.4, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
     mutationPoints: [2, 3],
   },
   5: {
     id: 5, name: 'Fraksjoner', focus: 'Andre overlevende vil ha det du har. Handel eller krig.',
-    mods: { zombieMult: 1.4, hiddenRatio: 0.25, killMult: 0.72, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.02, nightGrowth: 0.0045, nightLevelReduction: 0.13, breachDays: 4.2, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0.4, controlDecay: 8, searchedDecay: 3, creepChance: 0.15, encounterChance: 0.37, turnCap: 90, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
+    mods: { zombieMult: 1.4, hiddenRatio: 0.25, killMult: 0.72, injuryMult: 2.6, starveInjury: 0.26, nightBase: 0.02, nightGrowth: 0.0045, nightLevelReduction: 0.13, breachDays: 4.2, hiddenOutbreak: 0.1, eventChance: 0.6, factionPressure: 0.4, heldDecay: 2, controlDecay: 8, searchedDecay: 3, creepChance: 0.15, encounterChance: 0.37, turnCap: 90, foodRot: 0.75, cardFind: 0.25, noiseAttract: 0.3, lootMult: 0.5, yieldMult: 0.6, rainChance: 0.3, heatPerCrew: 0.12, stashRot: 0.03 },
     mutationPoints: [1, 2],
   },
 };

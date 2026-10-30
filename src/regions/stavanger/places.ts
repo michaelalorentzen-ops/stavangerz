@@ -1,9 +1,10 @@
 // Stavanger, fase 1: Buøy. Alle steder, porter og soner er definert her, og resten av spillet
 // henter navnene herfra via id. Bytt navn her, så endres det overalt.
-import type { GateDef, SectorDef } from '../../engine/data';
-import type { GateId, MapSectorId, SectorId, ZoneId } from './ids';
+import type { FacilityDef, GateDef, SectorDef } from '../../engine/data';
+import type { FacilityId } from '../../engine/types';
+import type { GateId, SectorId, ZoneId } from './ids';
 
-export const SECTORS: Record<MapSectorId, SectorDef> = {
+export const SECTORS: Record<SectorId, SectorDef> = {
   hjem: {
     name: 'Hjemme', short: 'Hjemme', at: 'hjemme', real: 'Hjemme', realAt: 'hjemme',
     kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 },
@@ -62,12 +63,17 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
   },
   rosenberg: {
     name: 'Rosenberg Verft', short: 'Rosenberg', at: 'på Rosenberg', real: 'Rosenberg Verft', realAt: 'på Rosenberg',
-    kind: 'industri', threat: 5, capacity: 0, yield: {},
+    kind: 'industri', threat: 5, capacity: 8, yield: { metall: 2, skrap: 1, drivstoff: 1 },
     desc: 'Kraner, stål og kaier. Perfekt HQ. Problemet er at hele morgenskiftet fortsatt er på jobb.',
-    z: 0, hidden: 0, loot: { mat: 0, vann: 0, medisin: 0, tre: 0, skrap: 0, metall: 0, strom: 0, drivstoff: 0 },
-    locked: true,
+    z: 52, hidden: 20,
+    loot: { mat: 14, vann: 8, medisin: 2, tre: 4, skrap: 22, metall: 28, strom: 0, drivstoff: 14 },
+    special: { text: 'Lagerhallen bak sveiseverkstedet: stål på paller og en truck med halv tank. Noen har skrevet «IKKE RØR» på pallene. Dere rører.', res: { metall: 8, drivstoff: 4 } },
+    opensInPhase: 2,
   },
 };
+/** Alle sektorene, i fast rekkefølge. Rekkefølgen styrer rekkefølgen i løkkene i motoren. */
+export const SECTOR_IDS: SectorId[] = ['hjem', 'tommerodden', 'obs', 'nordkrysset', 'buoy_nord', 'skolen', 'sorspissen', 'rosenberg'];
+/** Sektorene i fase 1 (uten `opensInPhase`). Fase 1-målet gjelder bare disse. */
 export const PLAYABLE: SectorId[] = ['hjem', 'tommerodden', 'obs', 'nordkrysset', 'buoy_nord', 'skolen', 'sorspissen'];
 
 export const GATES: Record<GateId, GateDef> = {
@@ -124,3 +130,71 @@ export const LANDMARKS = {
   sus: 'SUS',
   hillevag: 'Hillevåg',
 } as const;
+
+
+/** Sektoren som blir HQ i fase 2. Anleggene under ligger her. */
+export const HQ_SECTOR: SectorId = 'rosenberg';
+
+/**
+ * Anleggene på verftet. Tilstanden er skjult: speiding og gjennomsøking gir rykter (`rumor`), og den sanne
+ * tilstanden (`known`) vises når HQ-et er tatt. Hva anleggene gjør, står i motoren (src/engine/hq.ts).
+ */
+export const FACILITIES: Record<FacilityId, FacilityDef> = {
+  verksted: {
+    name: 'Verkstedhallen', short: 'verkstedhallen',
+    effect: 'Lage utstyr gir ett nivå høyere, og utstyr kan repareres.',
+    rumor: {
+      god: 'Det lyser i verkstedhallen om natta. Noen har latt aggregatet stå på.',
+      middels: 'Halve taket på verkstedhallen ligger på gulvet. Den andre halvdelen holder, foreløpig.',
+      odelagt: 'Det kom røyk fra verkstedhallen i forrige uke. Nå kommer det ingenting.',
+    },
+    known: {
+      god: 'Dreiebenker, sveiseapparater og en kaffemaskin. Alt virker.',
+      middels: 'Verktøyet er der, men strømmen må trekkes på nytt og halve taket må tettes.',
+      odelagt: 'Brannen tok det meste. Sveiseapparatene kan reddes, resten er skrap.',
+    },
+  },
+  kantine: {
+    name: 'Kantina', short: 'kantina',
+    effect: 'Gir mat hver dag.',
+    rumor: {
+      god: 'Kantina ser ut til å ha tak, og fryserommet surrer fortsatt.',
+      middels: 'Vinduene i kantina er knust, men kjølerommet er låst fra innsiden.',
+      odelagt: 'Måkene har tatt kantina. Det sier det meste.',
+    },
+    known: {
+      god: 'Fryserom, storkjøkken og 400 porsjoner fiskegrateng. Fredagsmenyen er reddet.',
+      middels: 'Kjøkkenet virker, men fryserommet må få strøm igjen før noe kan lagres.',
+      odelagt: 'Taket har rast over kjøkkenet. Det må bygges opp fra gulvet.',
+    },
+  },
+  kontor: {
+    name: 'Kontorbygget', short: 'kontorbygget',
+    effect: 'Plass til en lab senere.',
+    rumor: {
+      god: 'Kontorbygget er helt. Noen har til og med vannet plantene.',
+      middels: 'Første etasje i kontorbygget er barrikadert med pulter. Det sier noe om andre etasje.',
+      odelagt: 'Kontorbygget brant. HMS-permene også, dessverre for noen.',
+    },
+    known: {
+      god: 'Møterom med whiteboard og prosjektor. Perfekt til en lab, når dere har noen som kan forske.',
+      middels: 'Rommene er hele, men det trengs nye vinduer og nye låser.',
+      odelagt: 'Bare trappehuset står. Resten må bygges om.',
+    },
+  },
+  kai: {
+    name: 'Kaia', short: 'kaia',
+    effect: 'Tokt over vann senere.',
+    rumor: {
+      god: 'Det ligger en arbeidsbåt fortøyd ved verftskaia. Den ser ut til å flyte.',
+      middels: 'Kranen ved kaia står, men fortøyningene er kuttet.',
+      odelagt: 'Halve kaia er borte. Noen har kjørt en lastebil ut i sjøen.',
+    },
+    known: {
+      god: 'Kaia er hel, og båten har diesel. Sjøveien er åpen når dere er klare.',
+      middels: 'Kaia holder, men båten må tettes og kranen få nytt tau.',
+      odelagt: 'Kaia må bygges på nytt før noe kan legge til her.',
+    },
+  },
+};
+

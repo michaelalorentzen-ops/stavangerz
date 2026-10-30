@@ -1,7 +1,7 @@
 // Crewet: skader, død, ny leder, plass og rekruttering.
 import { dropGear, give, rollStarter, wear } from './cards';
 import { toktDef, toktSector } from '../regions/content';
-import { GATES, HEALTH_LABEL, LANDMARKS, NEIGHBORS, SECTORS, PLAYABLE } from './data';
+import { GATES, HEALTH_LABEL, LANDMARKS, NEIGHBORS, SECTOR_IDS, SECTORS } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';
 import type { CrewMember, DeathCause, GameState, LogKind, SectorId } from './types';
@@ -43,7 +43,8 @@ export function deathCause(c: CrewMember): DeathCause {
   if ((t.type === 'befeste' || t.type === 'vakt') && t.target in GATES) return 'natt';
   // Hjemme skader ingenting crewet i fase 1 i dag (encounters setter årsaken selv). Kartleggingen er for
   // senere nattangrep mot basen, så de havner under natt og ikke under kamp.
-  if (t.type === 'hvile' || t.type === 'pleie' || t.type === 'lage' || t.type === 'trene') return 'natt';
+  // arbeid i HQ-et (poster, istandsetting, reparasjon) regnes som hjemme
+  if (t.type === 'hvile' || t.type === 'pleie' || t.type === 'lage' || t.type === 'trene' || t.type === 'post' || t.type === 'istand' || t.type === 'reparere') return 'natt';
   return 'kamp';
 }
 
@@ -73,7 +74,9 @@ export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cau
 
 /** Antall sengeplasser: summen av kapasitet i sektorer som er bosatt. */
 export function housing(s: GameState): number {
-  return PLAYABLE.reduce((n, id) => n + (s.sectors[id].settled ? SECTORS[id].capacity : 0), 0);
+  // låste sektorer (senere faser) gir ingen senger. Samme regel som activeSectors i sectors.ts.
+  return SECTOR_IDS.filter((id) => (SECTORS[id].opensInPhase ?? 1) <= s.phase)
+    .reduce((n, id) => n + (s.sectors[id]?.settled ? SECTORS[id].capacity : 0), 0);
 }
 
 export const canRecruit = (s: GameState): boolean => s.crew.length < housing(s);

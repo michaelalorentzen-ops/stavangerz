@@ -4,8 +4,9 @@ import {
   canEndPhase, craftShortfall, LAGE_COST, nameList, dailyFood, daysLeft, LOW_DAYS, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
+  BUILT_PHASES, COND_LABEL, dailyFoodIn, FACILITIES, FACILITY_IDS, facilityIntel, HQ_SECTOR, ISTAND_WORK, istandMaterials, isLocked, POST_IDS, postEffect, postHolder, POSTS,
 } from '../engine';
-import type { TaskOption, TaskPreview, CrewMember, GameState, GateId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
+import type { TaskOption, TaskPreview, CrewMember, FacilityId, GameState, GateId, PostId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
 import { bindCards, slotsHtml, statAbbr } from './cards';
 import { $, esc, game, HOME_GATE, KIND_ICON, KIND_LABEL, MAP, PANEL_TABS, setTab, ui } from './store';
 import type { PanelTab } from './store';
@@ -23,6 +24,9 @@ export const TASK_HELP: Record<TaskType, string> = {
   overlevende: 'Bank på dører i en tom bolig. Prat avgjør om noen blir med. Kan vekke zombier.',
   hvile: 'Bli hjemme og kom deg. Skadde bruker medisin om det finnes.',
   tokt: 'Langt ut over flere dager. Stort bytte, stor risiko.',
+  post: 'Fast post i HQ-et. Personen blir der fra dag til dag og gir en bonus etter ferdigheten sin, men gjør ikke annet.',
+  istand: 'Sett i stand et anlegg i HQ-et. Mekk teller mest, og hver dag bruker metall og skrap.',
+  reparere: 'Gi slitt utstyr full holdbarhet i verkstedhallen. Koster skrap per kort.',
 };
 
 /**
@@ -33,13 +37,14 @@ export function phaseDeadline(s: GameState): { label: string; days: number; goal
   if (s.over !== null) return null;
   const days = Math.max(0, mods(s).turnCap - (s.day - s.phaseStartDay));
   if (s.goalDay === null) return { label: 'Frist for fasemålet', days, goalReached: false, onExpiry: deadlineText(s) };
-  return { label: s.phase < 5 ? `Fase ${s.phase + 1} tvinges om` : 'Fasen avsluttes om', days, goalReached: true, onExpiry: 'Målet er nådd. Fasen avsluttes selv ved fristen.' };
+  return { label: s.phase < BUILT_PHASES ? `Fase ${s.phase + 1} tvinges om` : 'Fasen avsluttes om', days, goalReached: true, onExpiry: 'Målet er nådd. Fasen avsluttes selv ved fristen.' };
 }
 
 /** Hva som skjer når fristen går ut uten at målet er nådd, for gradens pris (DIFFICULTY i phases.ts). */
-export function deadlineText(s: Pick<GameState, 'difficulty'>): string {
+export function deadlineText(s: Pick<GameState, 'difficulty'> & { phase?: GameState['phase'] }): string {
   const d = DIFFICULTY[s.difficulty].deadline;
-  if (!d) return 'Når fristen går ut uten at målet er nådd, er runden tapt.';
+  // den siste fasen som er bygd har ingen neste fase å tvinge spilleren over i
+  if (!d || (s.phase ?? 1) >= BUILT_PHASES) return 'Når fristen går ut uten at målet er nådd, er runden tapt.';
   return `Når fristen går ut uten at målet er nådd, går dere videre likevel: sektorer som ikke er trygge faller, moralen synker ${d.moral}, og zombiene muterer ${d.mutations === 1 ? 'en gang ekstra' : `${d.mutations} ganger ekstra`}.`;
 }
 
@@ -88,13 +93,11 @@ export function renderGoals() {
     ? `<div class="goal deadline${tight ? ' tight' : ''}"><span>${dl.label} <b>${daysText(dl.days)}</b></span>
         <button class="btn small" id="endphase"${canEndPhase(S) ? '' : ' disabled title="Løs det som venter først"'}>Avslutt fase ${S.phase}</button></div>`
     : `<div class="goal deadline${tight ? ' tight' : ''}" title="${esc(dl.onExpiry)}"><span>${dl.label}</span><b>${daysText(dl.days)}</b></div>`;
-  const gatesDone = p.gates.filter((g) => g.level >= 2).length;
   // Målene er foldet sammen til én linje, så fanene under får plass. Fristen står alltid synlig.
   $('goals').innerHTML = `<details class="goalbox"${goalsOpen() ? ' open' : ''}>
-    <summary><span class="eyebrow">Mål for fase ${S.phase}</span><span class="goalsum">${p.safe}/${p.total} trygge · ${gatesDone}/${p.gates.length} porter</span></summary>
+    <summary><span class="eyebrow">Mål for fase ${S.phase}</span><span class="goalsum">${esc(p.summary)}</span></summary>
     <div class="goals">
-      ${row(`Gjør alle sektorer ${AREA.at} trygge`, `${p.safe}/${p.total}`, p.safe === p.total)}
-      ${p.gates.map((g) => row(`${g.name} på nivå 2`, `${g.level}/2`, g.level >= 2)).join('')}
+      ${p.rows.map((r) => row(r.label, r.value, r.done)).join('')}
       <div class="hint">Crew ${S.crew.length}/${housing(S)} senger</div>
     </div>
   </details>
@@ -141,6 +144,9 @@ function taskShort(t: Task): string {
   if (t.type === 'befeste') return 'bygger';
   if (t.type === 'vakt') return `vakt ${t.target in GATES ? GATES[t.target as GateId].name : SECTORS[t.target as SectorId].short}`;
   if (t.type === 'tokt') return `på tokt: ${toktDef(t.target).name}`;
+  if (t.type === 'post') return `post: ${POSTS[t.target].name.toLowerCase()}`;
+  if (t.type === 'istand') return `setter i stand ${FACILITIES[t.target].short}`;
+  if (t.type === 'reparere') return 'reparerer utstyr';
   const verb = { rydde: 'rydder', sanke: 'sanker', speide: 'speider', overlevende: 'leter etter overlevende' }[t.type];
   return `${verb} ${SECTORS[t.target].short}`;
 }
@@ -154,6 +160,7 @@ export function taskGroups(opts: TaskOption[]): { label: string; opts: TaskOptio
     ['Sanke', (o) => o.type === 'sanke'],
     ['Speide, vakt og overlevende', (o) => ['speide', 'overlevende'].includes(o.type) || (o.type === 'vakt' && o.target in SECTORS)],
     ['Porter', (o) => o.type === 'befeste' || (o.type === 'vakt' && o.target in GATES)],
+    ['HQ', (o) => o.type === 'post' || o.type === 'istand' || o.type === 'reparere'],
     ['Tokt', (o) => o.type === 'tokt'],
     ['Trene', (o) => o.type === 'trene'],
   ];
@@ -268,9 +275,9 @@ function lootHint(sec: SectorState) {
 export function renderSel() {
   const S = game(), sel = ui.sel, box = $('sel');
 
-  if (sel.kind === 'sector' && SECTORS[sel.id].locked) {
+  if (sel.kind === 'sector' && isLocked(S, sel.id)) {
     const ld = SECTORS[sel.id];
-    box.innerHTML = `<div class="card"><span class="badge lock">Horde · Fase 2</span><h2>${ld.name}</h2><p>${ld.desc}</p>
+    box.innerHTML = `<div class="card"><span class="badge lock">Horde · Fase ${ld.opensInPhase}</span><h2>${ld.name}</h2><p>${ld.desc}</p>
       <div class="metrics"><div class="metric"><div class="k">Horde</div><div class="v">60–120</div></div>
       <div class="metric"><div class="k">Kapasitet</div><div class="v">???</div></div><div class="metric"><div class="k">Forsvar</div><div class="v">???</div></div></div>
       <p class="hint">Dette er HQ-et ditt i fase 2. De ekte HQ-verdiene er skjulte. Hold ${GATES[HOME_GATE].name} oppe så horden blir der den er.</p></div>`;
@@ -347,8 +354,65 @@ export function renderSel() {
   </div>`;
   box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
   if (task) bindChips(box, mine, () => task);
+  if (id === HQ_SECTOR) { box.insertAdjacentHTML('beforeend', hqCard(S)); bindHqCard(box, S); }
   box.insertAdjacentHTML('beforeend', toktCards(S, id));
   bindToktCards(box, S);
+}
+
+const COND_CLASS = { god: 'safe', middels: 'clr', odelagt: 'inf' } as const;
+
+/** HQ-kortet under HQ-sektoren: anleggene med rykter eller sann tilstand, og istandsetting når HQ-et er tatt. */
+function hqCard(S: GameState): string {
+  const opts = taskOptions(S);
+  const rows = FACILITY_IDS.map((f) => {
+    const st = S.hq.facilities[f], intel = facilityIntel(S, f), def = FACILITIES[f];
+    const badge = st.ready ? '<span class="badge safe">I stand</span>'
+      : intel.cond ? `<span class="badge ${COND_CLASS[intel.cond]}">${intel.known ? '' : 'Rykte: '}${COND_LABEL[intel.cond]}</span>`
+      : '<span class="badge fog">Ukjent</span>';
+    const t: Task = { type: 'istand', target: f };
+    const canDo = opts.some((o) => sameTask(o, t));
+    const pct = Math.round((st.work / ISTAND_WORK[st.cond]) * 100);
+    const work = S.hq.taken && !st.ready
+      ? `<div class="hint">Sette i stand: ${pct} % ferdig, trenger ca. ${istandMaterials(st)} metall eller skrap til.</div><div class="prog"><i style="width:${pct}%"></i></div>
+         ${canDo ? `<p class="eyebrow" style="margin:0">Send til istandsetting</p>${crewChips((c) => sameTask(c.task, t))}` : `<p class="hint">Rydd ${SECTORS[HQ_SECTOR].short} først.</p>`}`
+      : '';
+    return `<div class="fac" data-fac="${f}"><div class="fac-top"><b>${def.name}</b>${badge}</div>
+      <p class="hint">${esc(intel.text)}</p><p class="hint"><i>${st.ready ? '' : 'I stand: '}${def.effect}</i></p>${work}</div>`;
+  }).join('');
+  const head = S.hq.taken
+    ? 'HQ-et er tatt. Sett i stand minst ett anlegg. Et anlegg i god stand er billigst.'
+    : `Anleggene er skjulte. Speiding og gjennomsøking ${SECTORS[HQ_SECTOR].at} gir rykter, og rykter kan ta feil. Den sanne tilstanden ser dere når sektoren er trygg.`;
+  return `<div class="card hq"><span class="badge ${S.hq.taken ? 'safe' : 'fog'}">${S.hq.taken ? 'HQ' : 'HQ · ikke tatt'}</span><h2>Anlegg</h2><p class="hint">${head}</p>${rows}</div>`;
+}
+
+function bindHqCard(box: HTMLElement, S: GameState) {
+  box.querySelectorAll<HTMLElement>('[data-fac]').forEach((el) => {
+    const f = el.dataset.fac as FacilityId, t: Task = { type: 'istand', target: f };
+    if (!taskOptions(S).some((o) => sameTask(o, t))) return;
+    bindChips(el, (c) => sameTask(c.task, t), () => t);
+  });
+}
+
+/** Postene i HQ-et, øverst i crew-fanen når HQ-et er tatt. Hver post har en nedtrekksmeny med crewet. */
+function postsHtml(S: GameState): string {
+  if (!S.hq.taken) return '';
+  const free = S.crew.filter((c) => !isOnTokt(S, c));
+  return `<div class="card posts"><span class="eyebrow" style="margin:0">Poster i HQ-et</span>${POST_IDS.map((p: PostId) => {
+    const h = postHolder(S, p);
+    return `<div class="post"><div><b>${POSTS[p].name}</b> <small>${STAT_LABEL[POSTS[p].stat]}</small><div class="hint">${h ? esc(postEffect(S, p)) : POSTS[p].desc}</div></div>
+      <select data-post="${p}" aria-label="${POSTS[p].name}"><option value="">Ingen</option>${free.map((c) => `<option value="${c.id}"${h === c ? ' selected' : ''}>${esc(c.name)} · ${skillLevel(stat(c, POSTS[p].stat))}</option>`).join('')}</select></div>`;
+  }).join('')}<p class="hint">En person på post gjør ikke dagsoppdrag. Mat fra kantina: ${dailyFoodIn(S)} per dag.</p></div>`;
+}
+
+function bindPosts(S: GameState) {
+  $('crew').querySelectorAll<HTMLSelectElement>('[data-post]').forEach((sel) => sel.addEventListener('change', () => {
+    const p = sel.dataset.post as PostId;
+    // den som hadde posten går tilbake til å hvile, og den nye flyttes hit
+    for (const c of S.crew) if (c.task.type === 'post' && c.task.target === p) c.task = { type: 'hvile' };
+    const c = S.crew.find((x) => x.id === sel.value);
+    if (c) c.task = { type: 'post', target: p };
+    ui.refresh();
+  }));
 }
 
 /**
@@ -372,7 +436,7 @@ const hpHtml = (c: CrewMember) => `<span class="hp h${c.hp}" title="${HEALTH_LAB
 export function renderCrew() {
   const S = game(), opts = taskOptions(S), short = craftShortfall(S);
   if (ui.openCrew && !S.crew.some((c) => c.id === ui.openCrew)) ui.openCrew = null;
-  $('crew').innerHTML = S.crew.map((c) => {
+  $('crew').innerHTML = postsHtml(S) + S.crew.map((c) => {
     const open = ui.openCrew === c.id, away = isOnTokt(S, c);
     const xp = c.xp ?? 0, lvl = crewLevel(xp), prog = Math.round(levelProgress(xp) * 100);
     const help = TASK_HELP[c.task.type];
@@ -396,6 +460,7 @@ export function renderCrew() {
     </div>`;
   }).join('');
   bindCards($('crew'));
+  bindPosts(S);
   const toggle = (id: string) => { ui.openCrew = ui.openCrew === id ? null : id; if (ui.openCrew !== id && ui.picker?.crewId === id) ui.picker = null; renderCrew(); };
   $('crew').querySelectorAll<HTMLElement>('[data-row]').forEach((row) => row.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -403,7 +468,7 @@ export function renderCrew() {
     if (t.closest('select, .slots, .picker, .cm-more, a, input') || (t.closest('button') && !t.closest('[data-toggle]'))) return;
     toggle(row.dataset.row!);
   }));
-  $('crew').querySelectorAll<HTMLSelectElement>('select').forEach((s) => s.addEventListener('change', () => {
+  $('crew').querySelectorAll<HTMLSelectElement>('select[data-crew]').forEach((s) => s.addEventListener('change', () => {
     const c = S.crew.find((x) => x.id === s.dataset.crew)!;
     const o = opts.find((o) => taskKey(o) === s.value);
     if (o) c.task = bare(o);

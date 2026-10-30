@@ -1,5 +1,5 @@
 // Sektorer: Rydde, Sanke, kontroll, forfall og bosetting. Ren logikk.
-import { PLAYABLE, RES, RES_LABEL, SECTORS } from './data';
+import { RES, RES_LABEL, SECTOR_IDS, SECTORS } from './data';
 import { armorMult, cardWord, collectDropped, hasTag, isRanged, newCard, rollCard, wear } from './cards';
 import { CARDS } from '../regions/content';
 import { injure, names } from './crew';
@@ -8,7 +8,7 @@ import { hasMutation } from './phases';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { detectChance, fightPower, searchPower, stat } from './skills';
-import type { CrewMember, GameState, SectorId, SectorState, WeaponTag } from './types';
+import type { CrewMember, GameState, PhaseId, Resources, SectorId, SectorState, WeaponTag } from './types';
 
 /** Indeks = trusselnivå 1–5. Indeks 0 er ubrukt. */
 export const THREAT_KILL = [0, 1, 0.9, 0.78, 0.66, 0.55];
@@ -22,6 +22,29 @@ export const RANGED_INJURY = 0.75, SPREAD_KILL = 1.1, SPREAD_MIN_Z = 8, PIERCE_K
 /** Kontroll en sektor får av én dags vakt, etter beste Nerver i teamet. */
 export const watchControl = (team: CrewMember[]) =>
   WATCH_CONTROL_BASE + (Math.max(...team.map((c) => stat(c, 'nerver'))) / 10) * WATCH_CONTROL_PER_NERVER;
+
+/** Fasen sektoren åpnes i. */
+export const opensIn = (id: SectorId): PhaseId => SECTORS[id].opensInPhase ?? 1;
+/** Sektorene som hører til en fase. */
+export const sectorsOfPhase = (p: PhaseId): SectorId[] => SECTOR_IDS.filter((id) => opensIn(id) === p);
+/** Sektorene som er åpne i fasen spilleren er i. Reglene løkker over disse, aldri over låste sektorer. */
+export const activeSectors = (s: Pick<GameState, 'phase'>): SectorId[] => SECTOR_IDS.filter((id) => opensIn(id) <= s.phase);
+/** Er sektoren låst til en senere fase? */
+export const isLocked = (s: Pick<GameState, 'phase'>, id: SectorId): boolean => opensIn(id) > s.phase;
+
+/**
+ * En sektor slik den er når den åpnes: zombier, gjemte og ressurser fra places.ts. `M` er modifikatorene
+ * ressursene skaleres med, og `zMult` ganges med zombiene (1 i fase 1, fasens zombieMult for sektorer som åpnes senere).
+ */
+export function freshSector(id: SectorId, M: Pick<PhaseModifiers, 'lootMult'>, zMult = 1): SectorState {
+  const d = SECTORS[id];
+  const loot = Object.fromEntries(Object.entries({ ...d.loot, mat: d.loot.mat * 1.3 }).map(([k, v]) => [k, Math.round(v * M.lootMult)])) as Resources;
+  const home = id === 'hjem';
+  return {
+    z: Math.round(d.z * zMult), hidden: Math.round(d.hidden * zMult), searched: 0, control: home ? 60 : 0, loot, lootMax: sum(Object.values(loot)),
+    seen: home, scouted: home, settled: home, specialFound: false, dropped: [],
+  };
+}
 
 export const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));
 const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
@@ -216,12 +239,13 @@ export function sanke(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
 }
 
 /** Kontroll: +10 per gruppe med Rydde eller Sanke, vakt gir eget tillegg, forfall der ingen er. */
-export function updateControl(s: GameState, M: PhaseModifiers, groups: Record<SectorId, number>, watch: Partial<Record<SectorId, number>> = {}) {
+export function updateControl(s: GameState, M: PhaseModifiers, groups: Partial<Record<SectorId, number>>, watch: Partial<Record<SectorId, number>> = {}) {
   const frozen = Object.values(s.gates).every((g) => g.level >= 3);
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
     if ((groups[id] ?? 0) > 0 || watch[id] !== undefined) sec.control += 10 * (groups[id] ?? 0) + (watch[id] ?? 0);
-    else if (!frozen) sec.control -= M.controlDecay;
+    // sektorer fra en tidligere fase er tatt for lenge siden: de forfaller sakte
+    else if (!frozen) sec.control -= opensIn(id) < s.phase ? M.heldDecay : M.controlDecay;
     sec.control = clamp(sec.control, sec.settled ? 50 : 0, 100);
   }
 }
@@ -229,7 +253,7 @@ export function updateControl(s: GameState, M: PhaseModifiers, groups: Record<Se
 /** Forfall: uten kontroll glemmer sektoren hva dere ryddet, og zombier siver inn. */
 export function decay(s: GameState, M: PhaseModifiers, log: LogFn) {
   const avgGate = sum(Object.values(s.gates).map((g) => g.level)) / Object.keys(s.gates).length;
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
     if (sec.control >= 30) continue;
     sec.searched = Math.max(0, sec.searched - M.searchedDecay);
@@ -243,7 +267,7 @@ export function decay(s: GameState, M: PhaseModifiers, log: LogFn) {
 
 /** Bosatte sektorer holder minst 50 i kontroll. */
 export function floorControl(s: GameState) {
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
     sec.control = clamp(sec.control, sec.settled ? 50 : 0, 100);
   }
@@ -251,7 +275,7 @@ export function floorControl(s: GameState) {
 
 /** En sektor med plass blir bosatt første gang den er trygg. */
 export function settle(s: GameState, log: LogFn) {
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id], def = SECTORS[id];
     if (def.capacity > 0 && !sec.settled && isSafe(sec)) {
       sec.settled = true;
@@ -263,5 +287,5 @@ export function settle(s: GameState, log: LogFn) {
 /** Mat i sektorlagrene råtner hver 10. dag. */
 export function rotFood(s: GameState, M: PhaseModifiers) {
   if (s.day % 10 !== 0) return;
-  for (const id of PLAYABLE) s.sectors[id].loot.mat = Math.floor(s.sectors[id].loot.mat * M.foodRot);
+  for (const id of activeSectors(s)) s.sectors[id].loot.mat = Math.floor(s.sectors[id].loot.mat * M.foodRot);
 }

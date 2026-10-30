@@ -1,5 +1,5 @@
 // Statiske spilldata: sektorer, sperringer, egenskaper og naboer i fase 1.
-import type { Flag, PhaseId, ResKey, Resources, SectorId, SectorKind, StatKey, Stats, TraitId } from './types';
+import type { FacilityCond, Flag, PhaseId, ResKey, Resources, SectorId, SectorKind, StatKey, Stats, TraitId } from './types';
 
 export interface SectorDef {
   name: string;
@@ -23,7 +23,21 @@ export interface SectorDef {
   loot: Resources;
   /** funn når halve sektoren er gjennomsøkt */
   special?: { text: string; res?: Partial<Resources>; card?: string; flag?: Flag; moral?: number };
-  locked?: boolean;
+  /** fasen sektoren åpnes i. Mangler den, er sektoren med fra fase 1. Før det er den låst. */
+  opensInPhase?: PhaseId;
+}
+
+/** Et anlegg i HQ-et. Bare tekst: reglene står i hq.ts. */
+export interface FacilityDef {
+  name: string;
+  /** navnet midt i en setning: «verkstedhallen» */
+  short: string;
+  /** hva anlegget gjør når det er satt i stand */
+  effect: string;
+  /** rykter etter tilstanden ryktet peker på */
+  rumor: Record<FacilityCond, string>;
+  /** den sanne tilstanden, vist når HQ-et er tatt */
+  known: Record<FacilityCond, string>;
 }
 
 export interface GateDef {
@@ -79,4 +93,4 @@ export const GATE_STEPS = [0, 6, 14, 24];
 
 
 // Stedene og folkene kommer fra regionpakken.
-export { AREA, GATES, LANDMARKS, NEIGHBORS, PLAYABLE, SECTORS, SELF_TRAITS, START_NEIGHBORS, TRAITS, ZONE_INFO, ZONES } from '../regions/active';
+export { AREA, FACILITIES, GATES, HQ_SECTOR, LANDMARKS, NEIGHBORS, PLAYABLE, SECTOR_IDS, SECTORS, SELF_TRAITS, START_NEIGHBORS, TRAITS, ZONE_INFO, ZONES } from '../regions/active';
