@@ -488,6 +488,39 @@ Kampkraften fantes fra før og bygger på Muskler. Poengene gjør at utstyr ogs�
 
 **Fordeling:** Du gir kort til folk i crewet (fase 1–2) eller til ledere (fase 3–4). En våpensmed kan ta over fordelingen i senere faser.
 
+**Kortdesign [Forslag]:** Kortet ser ut som et brettspillkort:
+
+- **Bilde** av utstyret.
+- **Navn og nivå** øverst. Nivået står i et hjørne.
+- **Ikoner med tall** for det kortet gir, for eksempel +3 Muskler og ×1,2 kampkraft.
+- **Fargen på rammen** viser sjeldenheten.
+- **Klasse og spor** på et bånd, for eksempel «Makeshift · Egg».
+- **Historie og særegenskap:** en tørr tekst om hvor det kommer fra, og en linje om det som er spesielt med akkurat dette kortet.
+
+**Våpenklasser [Forslag]:**
+
+| Klasse | Typisk | Særpreg |
+|---|---|---|
+| Slag | balltre, hammer, stålrør, stekepanne, spade, brekkjern | holder lenge, svakt mot pansrede |
+| Egg | kjøkkenkniv, glasskår med tape, planke med skruer, spikerrør, slipt stålrør (spyd), skøyte på stang | sterkere, slites raskere |
+| Prosjektil | sprettert med muttere, bue av PVC-rør, harpun, spikerpistol, armbrøst | stille avstand, bruker bolter, spiker eller muttere |
+| Skytevåpen | hagle, rifle | sterkest, bråker, bruker ammo |
+| Brann | flaske med drivstoff og fille | sterkt mot grupper, kan brenne opp funn i sektoren |
+| Motor | motorsag, hekksaks, drill | sterkt, bråker, bruker drivstoff eller strøm |
+
+Brekkjernet er både våpen og verktøy, og det avgjør du når du utstyrer det.
+
+**Nivå og sjeldenhet [Forslag]:**
+- **Nivå** følger hvor avansert ting er bygd. Bunnen er det alle naboer har liggende: et 1 meter langt, gult 20 mm trekkerør for ledninger, med ti spiker slått gjennom den ene enden og elektrikertape i den andre for grepet. Det gir så vidt skade, men det duger i fase 1. Mer arbeid og bedre materialer gir høyere nivå, for eksempel et tykt stålrør med noe festet i enden, eller et slipt stålrør som blir et spyd.
+- **Sjeldenhet** følger hvor spesielt materialet er. Piggtråd er en klassiker, men det er ikke alltid lett å finne. Et balltre med piggtråd er derfor sjeldnere enn et balltre med spiker på samme nivå.
+- Det improviserte gir spillet identitet. Hver nabo har et eller annet slikt våpen.
+
+**Beskyttelse [Forslag]:** avispapir teipet under yttertøyet, grytelokk under klærne, gaffateip-rustning, sykkeldekk og annet gummi, sykkelhjelm, alpinhjelm, motorsykkelhjelm og sveisemaske. Tyngre beskyttelse gir mer vern, men koster Kondis.
+
+**Verktøy [Forslag]:** Garasjer er fulle av elektroverktøy som driller, vinkelslipere og spikerpistoler. Verktøy styrker én bestemt oppgave: brekkjern gir gjennomsøking, byggeverktøy gir befesting, førstehjelpsskrin gir pleie, og kikkert eller radio gir speiding.
+
+**Transport [Åpent]:** Kjøretøy er utstyr for crewet, ikke for én person (se kapittel 7).
+
 **Innhold [Låst]:** Spilleren definerer et lite sett eksempelkort som setter tonen og nivået. En agent lager resten etter samme mønster.
 
 ---
