@@ -75,7 +75,7 @@ Spillet har feilet, selv om det virker, hvis:
 **Faseskifte [Låst]:**
 - Fasemålet må nås før du kan gå videre.
 - Når målet er nådd, velger du selv når fasen avsluttes. Du kan bli værende og bygge deg sterkere først.
-- Det er en grense på antall turer per fase, **[Forslag]** 50 turer, og tallet er ikke låst. Når fasemålet er nådd, velger du selv når du går videre, og ved grensen må du over. Er målet ikke nådd ved grensen, er runden tapt **[Forslag]**. Spillet viser derfor «Frist for fasemålet» før målet er nådd, og «Fase 2 tvinges om» etterpå.
+- Det er en grense på antall turer per fase, **[Forslag]** 50 turer, og tallet er ikke låst. Når fasemålet er nådd, velger du selv når du går videre, og ved grensen må du over. Hva som skjer hvis målet ikke er nådd ved grensen, avhenger av vanskelighetsgraden (kapittel 6, «Vanskelighet»). Spillet viser derfor «Frist for fasemålet» før målet er nådd, og «Fase 2 tvinges om» etterpå.
 - Prisen for å nøle er tid, fordi poengsummen er antall dager. Zombiene muterer ikke mens du venter.
 
 ---
@@ -303,9 +303,31 @@ Utstyret trenger dermed våpenegenskapene *gjennomslag*, *spredning*, *rekkevidd
 ### Vanskelighet
 
 **[Forslag]**
-- Vanskelighetsgraden styrer hvor mange mutasjonspoeng zombiene får og hvor sterke de er.
+- Vanskelighetsgraden styrer hvor mange mutasjoner zombiene får og hvor sterke de er.
 - Noen seeds kan være brutale. Det er lov.
 - Seeden kan deles som en kode, så et umulig kart blir en utfordring mellom venner.
+
+**Balansen i fase 1 er god [Låst]:** Crewet går opp i nivå og får bedre utstyr, så det blir naturlig lettere å ta et område på dag 40 enn på dag 1. Normal skal klares av alle som spiller med vilje.
+
+**Vanskelighetsgrader [Forslag]:** Spilleren velger ved start. Gradene er ganger på fasetabellen, så tallene fortsatt bare ligger i `phases.ts`.
+
+| Grad | For hvem | Når fristen går ut uten at målet er nådd |
+|---|---|---|
+| Normal | alle | Du må videre likevel, men med en pris: sektorer som ikke er trygge, faller, moralen synker, og zombiene får en ekstra mutasjon. |
+| Hard | erfarne | Som normal, men prisen er høyere, og zombiene er sterkere hele veien. |
+| Brutal | de som vil lide | Runden er tapt. |
+
+**På håret [Låst]:** Spillet skal være spennende innimellom. Du skal ikke cruise gjennom, men av og til klare det med nød og neppe.
+
+**Dårlige valg finnes [Forslag]:** Å overleve i en zombieapokalypse er et tøft liv, og ikke alt er en fordel.
+- Noen hendelser og encounters har bare dårlige valg. Spørsmålet er hva du har råd til å tape.
+- Noen valg har så lav sjanse at de nesten aldri lykkes. Forhåndsvisningen viser det ærlig.
+- Omtrent en av fire hendelser bør være rent negative. Noen kan være skikkelig drit.
+
+**Maks uflaks og comeback [Forslag]:** Det skal være mulig, men sjeldent, at en dreven spiller med maks uflaks mister hele gjengen, eller står igjen med én person.
+- Står du igjen alene, er runden ikke over. Lageret, utstyret og erfaringen er der fortsatt. Naboer kommer oftere til porten, så du kan kravle deg tilbake. Det går fortere enn første gang, men det er en tøff hverdag.
+- Runden er tapt først når ingen er igjen.
+- Uflaksen skal være sjelden. Den kommer fra en rekke dårlige trekk, ikke fra ett enkelt kort som dreper alle.
 
 **[Låst]** All vanskelighet hentes fra fasetabellen i `src/engine/phases.ts` via `mods(s)`.
 
