@@ -300,7 +300,7 @@ Trusselnivået styrer:
 | Hard | 92 % → 78 % | 61 % → 41 % |
 | Brutal | 87 % → 59 % | 25 % → 15 % |
 
-Med nedtellingen og portnivå 3 i målet (30.10) ble fase 1 lengre, og hard og brutal fikk mildere nattepress og kryping, fordi presset virker lenger: normal 89–92 % per kombinasjon (median 42–43 dager, p10 35, p90 53), hard 77 % og brutal 60 % (150 runder, median 42–44). Fase 2 på normal: 87 %, median 31 dager i fasen.
+Med nedtellingen og portnivå 3 i målet (30.10) ble fase 1 lengre (se «Lengre fase 1» i kapittel 11). 300 runder: normal 87–95 % per kombinasjon (median 43–47 dager, p10 36–40, p90 52–56), hard 80 % og brutal 63 % (median 46 og 48). Under 0,5 sultedager per runde på normal. Fase 2 på normal: 88 %, median 33 dager i fasen.
 
 Runder som fristen tvang over i fase 2, taper der nesten alltid, så fase 2-tallet på hard er lavt også fordi flere kommer dit tvunget.
 
