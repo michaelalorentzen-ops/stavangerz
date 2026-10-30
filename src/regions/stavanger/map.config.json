@@ -1,0 +1,73 @@
+{
+  "_doc": "Kartoppsett for en region. Leses av tools/fetch_osm.sh (kun 'osm') og tools/build_map.py (alt). Alle koordinater i 'lokale meter' (x = øst, y = sør) er relative til origo under 'origin'. Ny by: kopier fila, hent OSM, bygg kartet, og juster punkter/bokser mens du ser på resultatet.",
+
+  "osm": {
+    "_doc": "Hva som hentes fra Overpass. bbox = [sør, vest, nord, øst] i grader (Overpass-rekkefølge). out = hvor rådata lagres (relativt til repo-roten). Hent én gang og sjekk inn aldri; ikke spør Overpass fra nettleseren.",
+    "bbox": [58.955, 5.69, 59.01, 5.81],
+    "out": "data/osm.json"
+  },
+
+  "origin": {
+    "_doc": "Projeksjon til lokale meter: x = (lon - W) * KX * 1e5, y = (N - lat) * 1e5. W/N = lengde-/breddegrad for (0,0), øverst til venstre i kartet. KX = cos(breddegrad i bymidten), korrigerer for at lengdegrader smalner mot polene.",
+    "W": 5.695,
+    "N": 59.008,
+    "kxLat": 58.988
+  },
+
+  "view": {
+    "_doc": "Synlig utsnitt [x, y, bredde, høyde] i lokale meter, slik klienten ser det. clip = utsnittet buffret med denne margen (meter); alt geometri klippes til dette. frame = [minx, miny, maxx, maxy] som skal være større enn alt kystlinjedata: kystlinjen lukkes mot denne rammen for å finne landpolygoner. focus = [x, y, bredde, høyde] startvisning for fase 1.",
+    "box": [950, 750, 2500, 2550],
+    "clipMargin": 150,
+    "frame": [-200, -600, 6000, 5200],
+    "focus": [1080, 1480, 1560, 1160]
+  },
+
+  "area": {
+    "_doc": "Fase 1-området: landmassen som inneholder 'landmassPoint', skåret av polygonen 'cut' (lokale meter, størst resulterende del beholdes). Resten av landmassen blir sonen 'remainderZone' (se zones).",
+    "landmassPoint": [1850, 2060],
+    "cut": [[900, 1720], [1560, 1665], [1880, 1565], [2060, 1890], [2320, 1910], [2700, 1960], [2700, 2800], [900, 2800]],
+    "remainderZone": "hundvag"
+  },
+
+  "lockedSectors": [
+    {
+      "_doc": "Låst sektor: en OSM-landuse-polygon som inneholder 'point', buffret med 'buffer' meter og skåret ut av fase 1-området. Hele sektoren trekkes fra før Voronoi-delingen. label = fast etikettpunkt (ellers et representativt punkt).",
+      "id": "rosenberg",
+      "landuse": "industrial",
+      "point": [1500, 2300],
+      "buffer": 18,
+      "label": [1430, 2300]
+    }
+  ],
+
+  "sectors": {
+    "_doc": "Voronoi-sektorer i resten av fase 1-området: hvert punkt (lokale meter) er frøet til en sektor med den id-en; cellene avgrenses av 'envelope' [minx, miny, maxx, maxy]. Rekkefølgen styrer rekkefølgen i map.json; låste sektorer kommer sist.",
+    "envelope": [800, 1400, 2800, 2800],
+    "seeds": {
+      "hjem": [1900, 2080],
+      "tommerodden": [1330, 1860],
+      "obs": [1640, 1880],
+      "nordkrysset": [1800, 1690],
+      "buoy_nord": [2120, 1940],
+      "skolen": [2170, 2230],
+      "sorspissen": [2180, 2440]
+    }
+  },
+
+  "zones": {
+    "_doc": "Fremtidige soner utenfor fase 1-området. mainlandPoint = et punkt på fastlandet (den store landmassen). Hver sone har id og én av: 'remainder' (true = resten av fase 1-landmassen, se area), 'landAt' (landmassen som inneholder punktet), 'mainlandBox' ([minx, miny, maxx, maxy], fastlandet skåret med boksen). 'label' er valgfritt etikettpunkt. Visningsnavnene ligger i places.ts (ZONES).",
+    "mainlandPoint": [1500, 3300],
+    "list": [
+      { "id": "hundvag", "remainder": true, "label": [1950, 1250] },
+      { "id": "engoy", "landAt": [2592, 2510] },
+      { "id": "solyst", "landAt": [2406, 3060] },
+      { "id": "grasholmen", "landAt": [2652, 3199] },
+      { "id": "bjornoy", "landAt": [3184, 1100] },
+      { "id": "roaldsoy", "landAt": [3561, 1432] },
+      { "id": "ormoy", "landAt": [3426, 1960] },
+      { "id": "steinsoy", "landAt": [3050, 2234] },
+      { "id": "sentrum", "mainlandBox": [1700, 2900, 3600, 4200], "label": [2350, 3290] },
+      { "id": "bjergsted", "mainlandBox": [0, 1500, 1700, 4200], "label": [1290, 2900] }
+    ]
+  }
+}

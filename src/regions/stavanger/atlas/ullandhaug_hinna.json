@@ -1,0 +1,149 @@
+{
+  "id": "ullandhaug_hinna",
+  "name": "Ullandhaug og Hinna",
+  "at": "på Ullandhaug og Hinna",
+  "ring": 3,
+  "phase": 5,
+  "density": 3,
+  "baseThreat": 3,
+  "gates": [
+    {
+      "name": "Nordporten",
+      "real": "Rv. 44 ved Mariero",
+      "between": ["ullandhaug_hinna", "hillevag"],
+      "lat": 58.9345,
+      "lon": 5.7425,
+      "notes": "Mariero-skjæringen. Hillevåg og alt nordfra kommer inn her."
+    },
+    {
+      "name": "Veien til Madla",
+      "real": "Madlaveien",
+      "between": ["ullandhaug_hinna", "madla"],
+      "lat": 58.9285,
+      "lon": 5.6959,
+      "notes": "Vestover forbi sykehuset og jordene mot Madlamark."
+    },
+    {
+      "name": "Sørporten",
+      "real": "E39 og Solasplitten ved Forus",
+      "between": ["ullandhaug_hinna", "forus_lura"],
+      "lat": 58.9072,
+      "lon": 5.699,
+      "notes": "Motorveien sørover. Solasplitten (rv. 509) tar av mot Sola og flyplassen."
+    },
+    {
+      "name": "Jærbanen",
+      "real": "Sørlandsbanen ved Jåttåvågen",
+      "between": ["ullandhaug_hinna", "forus_lura"],
+      "lat": 58.9146,
+      "lon": 5.728,
+      "notes": "Sporet går under og over alt. Ligger i bro ved Jåttåvågen. [Sjekk] at Jåttåvågen stasjon fortsatt har perrong."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "ullandhaug_skole",
+      "name": "Skolen", "short": "Skolen", "at": "på skolen",
+      "real": "Universitetet i Stavanger", "realAt": "på UiS",
+      "kind": "offentlig", "threat": 4,
+      "lat": 58.9377, "lon": 5.6937,
+      "gives": "tech, lab og forskning, bibliotek, og en idrettshall som er stor nok til hele crewet",
+      "notes": "UiS med bibliotek, idrettsbane og SiS sportssenter. Studentene er fortsatt her. Mange av dem har ikke merket noe."
+    },
+    {
+      "id": "ullandhaug_tarnet",
+      "name": "Tårnet", "short": "Tårnet", "at": "ved tårnet",
+      "real": "Ullandhaugtårnet", "realAt": "ved Ullandhaugtårnet",
+      "kind": "offentlig", "threat": 2,
+      "lat": 58.9404, "lon": 5.7066,
+      "gives": "speiding (ser hele Jæren), radiomast, god plass til én vakt",
+      "notes": "Tårnet med kafé øverst, Geografisk hage og Botanisk hage rett nedenfor. Dokumentet foreslo speiding som ny type; her er det bare en kind «offentlig» med en forklaring."
+    },
+    {
+      "id": "ullandhaug_stadion",
+      "name": "Stadion", "short": "Stadion", "at": "på stadion",
+      "real": "Lyse Arena, Jåttåvågen", "realAt": "på Lyse Arena",
+      "kind": "offentlig", "threat": 4,
+      "lat": 58.9146, "lon": 5.731,
+      "gives": "plass til tusenvis, også zombier; treningsbane, garderober, rimelig eksplosiv sesongstart",
+      "notes": "Vikings hjemmebane. OSM kaller den Lyse Arena, og det er nok det den heter i morgen også. Treningsbanen (58.9155, 5.7337) ligger rett bak."
+    },
+    {
+      "id": "ullandhaug_blokker",
+      "name": "Blokkene", "short": "Blokkene", "at": "i blokkene",
+      "real": "Jåttåvågen", "realAt": "i Jåttåvågen",
+      "kind": "bolig", "threat": 4,
+      "lat": 58.9185, "lon": 5.7341,
+      "gives": "mange folk og mange zombier, mat i leilighetene, kort vei til stasjonen",
+      "notes": "Nye blokker og kontorer rundt Jåttåvågen: Aker BP, Harbour Energy og sporet i bakgrunnen. [Sjekk] om dokumentets «Jåttå» var Jåttåvågen eller Jåttåhaugen lenger vest, som har villaer."
+    },
+    {
+      "id": "ullandhaug_jorder",
+      "name": "Jordene", "short": "Jordene", "at": "på jordene",
+      "real": "Ullandhaug, rundt Jernaldergården", "realAt": "rundt Jernaldergården",
+      "kind": "natur", "threat": 1,
+      "lat": 58.9395, "lon": 5.699,
+      "gives": "mat og matproduksjon, lagerbygg på gårdene, jernalderhus som ingen vil rydde",
+      "notes": "Det store jordet sør for UiS, med Jernaldergården som landemerke. Grensen mot Madla går midt gjennom åkrene."
+    },
+    {
+      "id": "ullandhaug_boligfelt",
+      "name": "Boligfeltet", "short": "Boligfeltet", "at": "i boligfeltet",
+      "real": "Hinna", "realAt": "på Hinna",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.9222, "lon": 5.7221,
+      "gives": "mat og vann i husene, naboer å rekruttere, mange kjellere og garasjer",
+      "notes": "Eneboliger og rekkehus rundt Hinna kirke og Vågedalen. Mange kjellere: dårlig Snoking straffer seg her."
+    },
+    {
+      "id": "ullandhaug_matbutikk",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Stadionparken (Meny og Rema 1000)", "realAt": "i Stadionparken",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 3,
+      "lat": 58.915, "lon": 5.7303,
+      "gives": "mat, vann, hermetikk, litt klær",
+      "notes": "Handelsparken ved stadion, med Meny og Rema 1000 side om side. Ekstra forsyning ved Hinna sentrum (Extra Hinna, 58.9223, 5.7242)."
+    },
+    {
+      "id": "ullandhaug_bathavn",
+      "name": "Båthavna", "short": "Båthavna", "at": "i båthavna",
+      "real": "Jåttåvågen småbåthavn", "realAt": "i Jåttåvågen småbåthavn",
+      "kind": "kai", "threat": 2,
+      "lat": 58.9174, "lon": 5.7402,
+      "gives": "båter, tau, drivstoff til påhengsmotorer",
+      "notes": "Småbåthavnen i Gandsfjorden. Boganes marina ligger litt sør (58.9147, 5.7438)."
+    }
+  ],
+  "hqCandidate": {
+    "id": "ullandhaug_sus",
+    "type": "sykehus",
+    "name": "Sykehuset", "short": "Sykehuset", "at": "på sykehuset",
+    "real": "Stavanger universitetssjukehus, Ullandhaug", "realAt": "på det nye sykehuset på Ullandhaug",
+    "kind": "offentlig", "threat": 5,
+    "lat": 58.9305, "lon": 5.6975,
+    "gives": "medisin, lab, desinfeksjon, generator og skjulte verdier",
+    "notes": "Det nye SUS åpnet 16. november 2025, og er ikke kartlagt i OSM-dumpen. Posisjonen er utledet fra Sykehusveien (58.930, 5.697) og er [Sjekk]. Skjulte verdier: lås, lager og hva som lå igjen i akuttmottaket."
+  },
+  "pois": [
+    { "name": "Universitetet i Stavanger (UiS)", "type": "skole", "lat": 58.9377, "lon": 5.6972, "osm": "way/468653290" },
+    { "name": "Universitetsbibliotek", "type": "offentlig", "lat": 58.9382, "lon": 5.6949, "osm": "node/459432534" },
+    { "name": "Sykehusveien", "type": "hovedvei", "lat": 58.9304, "lon": 5.6973, "osm": "way/622364861" },
+    { "name": "Ullandhaugtårnet", "type": "landemerke", "lat": 58.9404, "lon": 5.7066, "osm": "way/154235474" },
+    { "name": "Jernaldergården", "type": "historisk", "lat": 58.9421, "lon": 5.6951, "osm": "way/35744508" },
+    { "name": "Lyse Arena", "type": "idrett", "lat": 58.9146, "lon": 5.731, "osm": "way/201384256" },
+    { "name": "Viking treningsbane", "type": "idrett", "lat": 58.9155, "lon": 5.7337, "osm": "way/245618570" },
+    { "name": "Stadionparken", "type": "kjopesenter", "lat": 58.9146, "lon": 5.7299, "osm": "way/1041474358" },
+    { "name": "Rema 1000 Stadionparken", "type": "matbutikk", "lat": 58.9151, "lon": 5.7303, "osm": "node/6058221471" },
+    { "name": "Jåttåvågen", "type": "stedsnavn", "lat": 58.9185, "lon": 5.7341, "osm": "node/7650795204" },
+    { "name": "Jåttåvågen småbåthavn", "type": "kai", "lat": 58.9174, "lon": 5.7402, "osm": "way/983145867" },
+    { "name": "Hinna", "type": "stedsnavn", "lat": 58.9222, "lon": 5.7221, "osm": "node/7650786682" },
+    { "name": "Hinna kirke", "type": "offentlig", "lat": 58.9238, "lon": 5.7286, "osm": "way/32135033" },
+    { "name": "Hinna bru (E39)", "type": "bru", "lat": 58.9228, "lon": 5.7071, "osm": "way/158809231" },
+    { "name": "NATO Joint Warfare Center", "type": "hq_kandidat", "lat": 58.907, "lon": 5.7214, "osm": "way/41136849" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.10 Ullandhaug og Hinna"
+  ],
+  "notes": "Ullandhaug (UiS, sykehuset, tårnet, jordene) i nordvest og Hinna med Jåttåvågen (blokker, stadion, havn) i sørøst. HQ-kandidaten er det nye sykehuset, ikke i OSM ennå. Ingen nøkkelsted: Våpendisken ligger på Forus (se forus_lura). NATO Joint Warfare Center (58.907, 5.7214) er også i dumpen som militært anlegg; det er utelatt fordi området allerede har en HQ-kandidat, men er et godt rykte å la gå. Avgrensningen er en håndtegnet polygon (58.905–58.946 N, 5.682–5.7455 Ø) fordi OSM-bydelen Hinna ikke inneholder Ullandhaug, som er Hillevåg-bydel i OSM, og Forus (nord) er Hinna. Forus_lura tar alt sør for 58.905."
+}

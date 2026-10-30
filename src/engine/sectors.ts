@@ -1,18 +1,18 @@
 // Sektorer: Rydde, Sanke, kontroll, forfall og bosetting. Ren logikk.
-import { PLAYABLE, RES, RES_LABEL, SECTORS } from './data';
-import { armorMult, collectDropped, hasTag, isRanged, newCard, rollCard, wear } from './cards';
-import { CARDS } from './content/cards';
-import { injure } from './crew';
+import { RES, RES_LABEL, SECTOR_IDS, SECTORS } from './data';
+import { armorMult, cardWord, collectDropped, hasTag, isRanged, newCard, rollCard, wear } from './cards';
+import { CARDS } from '../regions/content';
+import { injure, names } from './crew';
 import type { LogFn } from './crew';
 import { hasMutation } from './phases';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { detectChance, fightPower, searchPower, stat } from './skills';
-import type { CrewMember, GameState, SectorId, SectorState, WeaponTag } from './types';
+import type { CrewMember, GameState, PhaseId, Resources, SectorId, SectorState, WeaponTag } from './types';
 
 /** Indeks = trusselnivå 1–5. Indeks 0 er ubrukt. */
 export const THREAT_KILL = [0, 1, 0.9, 0.78, 0.66, 0.55];
-export const THREAT_INJURY = [0, 1, 1.15, 1.35, 1.6, 1.9];
+export const THREAT_INJURY = [0, 1, 1.15, 1.35, 1.45, 1.55];
 
 /** Regelkonstanter for Vakt på sektor og Speide (ikke vanskelighetsknotter). */
 export const WATCH_CONTROL_BASE = 15, WATCH_CONTROL_PER_NERVER = 3;
@@ -23,9 +23,31 @@ export const RANGED_INJURY = 0.75, SPREAD_KILL = 1.1, SPREAD_MIN_Z = 8, PIERCE_K
 export const watchControl = (team: CrewMember[]) =>
   WATCH_CONTROL_BASE + (Math.max(...team.map((c) => stat(c, 'nerver'))) / 10) * WATCH_CONTROL_PER_NERVER;
 
+/** Fasen sektoren åpnes i. */
+export const opensIn = (id: SectorId): PhaseId => SECTORS[id].opensInPhase ?? 1;
+/** Sektorene som hører til en fase. */
+export const sectorsOfPhase = (p: PhaseId): SectorId[] => SECTOR_IDS.filter((id) => opensIn(id) === p);
+/** Sektorene som er åpne i fasen spilleren er i. Reglene løkker over disse, aldri over låste sektorer. */
+export const activeSectors = (s: Pick<GameState, 'phase'>): SectorId[] => SECTOR_IDS.filter((id) => opensIn(id) <= s.phase);
+/** Er sektoren låst til en senere fase? */
+export const isLocked = (s: Pick<GameState, 'phase'>, id: SectorId): boolean => opensIn(id) > s.phase;
+
+/**
+ * En sektor slik den er når den åpnes: zombier, gjemte og ressurser fra places.ts. `M` er modifikatorene
+ * ressursene skaleres med, og `zMult` ganges med zombiene (1 i fase 1, fasens zombieMult for sektorer som åpnes senere).
+ */
+export function freshSector(id: SectorId, M: Pick<PhaseModifiers, 'lootMult'>, zMult = 1): SectorState {
+  const d = SECTORS[id];
+  const loot = Object.fromEntries(Object.entries({ ...d.loot, mat: d.loot.mat * 1.3 }).map(([k, v]) => [k, Math.round(v * M.lootMult)])) as Resources;
+  const home = id === 'hjem';
+  return {
+    z: Math.round(d.z * zMult), hidden: Math.round(d.hidden * zMult), searched: 0, control: home ? 60 : 0, loot, lootMax: sum(Object.values(loot)),
+    seen: home, scouted: home, settled: home, specialFound: false, dropped: [],
+  };
+}
+
 export const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));
 const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
-const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 /**
  * Øker gjennomsøkt-prosenten utenom et vanlig søk (kamp, hendelser). De siste kjellerne sjekkes bare
@@ -65,7 +87,29 @@ export function sectorIntel(s: GameState, id: SectorId): SectorIntel {
 }
 
 /** Gjennomsøkt-gevinst på en dag med full innsats mot en tom sektor. */
-const searchGain = (s: GameState, team: CrewMember[]) => clamp(sum(team.map((c) => searchPower(s, c))) * 4, 8, 45);
+export const searchGain = (s: GameState, team: CrewMember[]) => clamp(sum(team.map((c) => searchPower(s, c))) * 4, 8, 45);
+
+/** Kampstyrken til en Rydde-gruppe og gruppens multiplikator på drap (før trekningen 0.35–0.60 og avrunding). */
+export function ryddeKillParams(s: GameState, id: SectorId, team: CrewMember[], M: PhaseModifiers) {
+  const power = sum(team.map((c) => fightPower(s, c)));
+  const before = s.sectors[id].z;
+  const anyTag = (tag: WeaponTag) => team.some((c) => hasTag(c, tag));
+  let tagMult = 1;
+  if (before >= SPREAD_MIN_Z && anyTag('spredning')) tagMult *= SPREAD_KILL;
+  if (anyTag('gjennomslag') && (hasMutation(s, 'seige') || hasMutation(s, 'pansret'))) tagMult *= PIERCE_KILL;
+  return { power, mult: M.killMult * THREAT_KILL[SECTORS[id].threat] * tagMult };
+}
+/** Drap per kampstyrke: trekkes uniformt mellom disse i `rydde`. */
+export const KILL_ROLL_MIN = 0.35, KILL_ROLL_SPAN = 0.25;
+
+/** Sjansen for at én person blir skadet i en Rydde-kamp mot `before` zombier. */
+/** `ranged` er om personen hadde et rekkevidde-våpen da gruppa gikk ut (før slitasje). */
+export function ryddeInjuryRisk(c: CrewMember, before: number, power: number, id: SectorId, M: PhaseModifiers, ranged = isRanged(c)): number {
+  return clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[SECTORS[id].threat] * armorMult(c) * (ranged ? RANGED_INJURY : 1), 0.02, 0.45);
+}
+
+/** Det Sanke gir av en ressurs før avrunding, gitt sektorens grunnutbytte og gruppens samlede søkestyrke. */
+export const sankeAmount = (base: number, power: number, M: PhaseModifiers): number => base * (0.5 + 0.1 * power) * M.yieldMult;
 
 /** Sektorens funn tas første gang gjennomsøkt-prosenten krysser 50. */
 function checkSpecial(s: GameState, id: SectorId, before: number, log: LogFn) {
@@ -77,7 +121,7 @@ function checkSpecial(s: GameState, id: SectorId, before: number, log: LogFn) {
   if (sp.card) {
     const k = newCard(s, sp.card);
     s.stash.push(k);
-    log(`Crewet fikk med seg ${CARDS[k.def].name}.`, 'find');
+    log(`Crewet fikk med seg ${cardWord(CARDS[k.def].name)}.`, 'find');
   }
   if (sp.flag) s.flags[sp.flag] = true;
   if (sp.moral) s.moral += sp.moral;
@@ -90,7 +134,7 @@ function checkUnique(s: GameState, id: SectorId, before: number, log: LogFn) {
   delete s.uniques[id];
   const k = newCard(s, def);
   s.stash.push(k);
-  log(`Gjemt bak et panel ${SECTORS[id].at} lå ${CARDS[def].name}. ${CARDS[def].text}`, 'find');
+  log(`Gjemt bak et panel ${SECTORS[id].at} lå ${cardWord(CARDS[def].name)}. ${CARDS[def].text}`, 'find');
 }
 
 /** Slitasje på verktøy for alle i teamet. */
@@ -105,24 +149,20 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   const searchedBefore = sec.searched;
 
   if (sec.z > 0) {
-    const power = sum(team.map((c) => fightPower(s, c)));
+    const { power, mult } = ryddeKillParams(s, id, team, M);
     const before = sec.z;
-    const anyTag = (tag: WeaponTag) => team.some((c) => hasTag(c, tag));
-    let tagMult = 1;
-    if (before >= SPREAD_MIN_Z && anyTag('spredning')) tagMult *= SPREAD_KILL;
-    if (anyTag('gjennomslag') && (hasMutation(s, 'seige') || hasMutation(s, 'pansret'))) tagMult *= PIERCE_KILL;
     const ranged = new Set(team.filter(isRanged));
-    const kills = Math.min(sec.z, sround(s, power * (0.35 + rand(s) * 0.25) * M.killMult * THREAT_KILL[def.threat] * tagMult));
+    const kills = Math.min(sec.z, sround(s, power * (KILL_ROLL_MIN + rand(s) * KILL_ROLL_SPAN) * mult));
     for (const c of team) wear(s, c, 'vapen', log);
     sec.z -= kills; s.stats.kills += kills;
     for (let i = 0; i < kills; i++) pick(s, team).kills++;
     log(`${names(team)} ryddet ${kills} ${plural(kills)} ${def.at}.${sec.z > 0 ? ` ${sec.z} igjen.` : ' Sektoren er tom for synlige zombier.'}`);
     for (const c of team) {
-      const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c) * (ranged.has(c) ? RANGED_INJURY : 1), 0.02, 0.45);
-      if (rand(s) < risk) injure(s, c, `i ${def.short}`, log);
+      const risk = ryddeInjuryRisk(c, before, power, id, M, ranged.has(c));
+      if (rand(s) < risk) injure(s, c, def.at, log);
     }
-    if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
-    if (team.some((c) => c.trait === 'russ') && rand(s) < 0.25) log('Sondre filmet alt til en TikTok ingen kommer til å se.', 'fun');
+    if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log(`${team.find((c) => c.trait === 'hv')!.name} sammenlignet det med øvelse Cold Response. Igjen.`, 'fun');
+    if (team.some((c) => c.trait === 'russ') && rand(s) < 0.25) log(`${team.find((c) => c.trait === 'russ')!.name} filmet alt til en TikTok ingen kommer til å se.`, 'fun');
     raiseSearched(sec, searchGain(s, team) * 0.3);
     checkSpecial(s, id, searchedBefore, log);
     checkUnique(s, id, searchedBefore, log);
@@ -135,7 +175,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   if (rand(s) < M.cardFind) {
     const k = rollCard(s, def.threat);
     s.stash.push(k);
-    log(`${names(team)} fant ${CARDS[k.def].name} ${def.at}.`, 'find');
+    log(`${names(team)} fant ${cardWord(CARDS[k.def].name)} ${def.at}.`, 'find');
   }
   const gain = searchGain(s, team);
   if (sec.hidden > 0) {
@@ -183,14 +223,14 @@ function pickUp(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
 }
 
 /** Sanke: hent dagens utbytte fra en sektor uten zombier. */
-export function sanke(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
+export function sanke(s: GameState, id: SectorId, team: CrewMember[], M: PhaseModifiers, log: LogFn) {
   const def = SECTORS[id];
   const power = sum(team.map((c) => searchPower(s, c)));
   const got: string[] = [];
   for (const r of RES) {
     const base = def.yield[r];
     if (!base) continue;
-    const n = sround(s, base * (0.5 + 0.1 * power));
+    const n = sround(s, sankeAmount(base, power, M));
     if (n > 0) { s.res[r] += n; s.stats.found += n; got.push(`${n} ${RES_LABEL[r].toLowerCase()}`); }
   }
   log(`${names(team)} sanket ${def.at}: ${got.length ? got.join(', ') : 'ingenting i dag'}.`);
@@ -199,12 +239,13 @@ export function sanke(s: GameState, id: SectorId, team: CrewMember[], log: LogFn
 }
 
 /** Kontroll: +10 per gruppe med Rydde eller Sanke, vakt gir eget tillegg, forfall der ingen er. */
-export function updateControl(s: GameState, M: PhaseModifiers, groups: Record<SectorId, number>, watch: Partial<Record<SectorId, number>> = {}) {
+export function updateControl(s: GameState, M: PhaseModifiers, groups: Partial<Record<SectorId, number>>, watch: Partial<Record<SectorId, number>> = {}) {
   const frozen = Object.values(s.gates).every((g) => g.level >= 3);
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
     if ((groups[id] ?? 0) > 0 || watch[id] !== undefined) sec.control += 10 * (groups[id] ?? 0) + (watch[id] ?? 0);
-    else if (!frozen) sec.control -= M.controlDecay;
+    // sektorer fra en tidligere fase er tatt for lenge siden: de forfaller sakte
+    else if (!frozen) sec.control -= opensIn(id) < s.phase ? M.heldDecay : M.controlDecay;
     sec.control = clamp(sec.control, sec.settled ? 50 : 0, 100);
   }
 }
@@ -212,7 +253,7 @@ export function updateControl(s: GameState, M: PhaseModifiers, groups: Record<Se
 /** Forfall: uten kontroll glemmer sektoren hva dere ryddet, og zombier siver inn. */
 export function decay(s: GameState, M: PhaseModifiers, log: LogFn) {
   const avgGate = sum(Object.values(s.gates).map((g) => g.level)) / Object.keys(s.gates).length;
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
     if (sec.control >= 30) continue;
     sec.searched = Math.max(0, sec.searched - M.searchedDecay);
@@ -226,7 +267,7 @@ export function decay(s: GameState, M: PhaseModifiers, log: LogFn) {
 
 /** Bosatte sektorer holder minst 50 i kontroll. */
 export function floorControl(s: GameState) {
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
     sec.control = clamp(sec.control, sec.settled ? 50 : 0, 100);
   }
@@ -234,11 +275,11 @@ export function floorControl(s: GameState) {
 
 /** En sektor med plass blir bosatt første gang den er trygg. */
 export function settle(s: GameState, log: LogFn) {
-  for (const id of PLAYABLE) {
+  for (const id of activeSectors(s)) {
     const sec = s.sectors[id], def = SECTORS[id];
     if (def.capacity > 0 && !sec.settled && isSafe(sec)) {
       sec.settled = true;
-      log(`${def.name} er trygg. Det er plass til ${def.capacity} flere her.`, 'good');
+      log(`Det er trygt ${def.at} nå. Det er plass til ${def.capacity} flere her.`, 'good');
     }
   }
 }
@@ -246,5 +287,5 @@ export function settle(s: GameState, log: LogFn) {
 /** Mat i sektorlagrene råtner hver 10. dag. */
 export function rotFood(s: GameState, M: PhaseModifiers) {
   if (s.day % 10 !== 0) return;
-  for (const id of PLAYABLE) s.sectors[id].loot.mat = Math.floor(s.sectors[id].loot.mat * M.foodRot);
+  for (const id of activeSectors(s)) s.sectors[id].loot.mat = Math.floor(s.sectors[id].loot.mat * M.foodRot);
 }

@@ -1,0 +1,114 @@
+{
+  "id": "vestoyene",
+  "name": "Vestøyene",
+  "at": "på Vestøyene",
+  "ring": 1,
+  "phase": 2,
+  "density": 2,
+  "baseThreat": 2,
+  "gates": [
+    {
+      "name": "Brua mot byen",
+      "real": "Stavanger bybru",
+      "between": ["vestoyene", "sentrum"],
+      "lat": 58.9748,
+      "lon": 5.7472,
+      "notes": "Landingen på Grasholmen og Sølyst. Alt fra sentrum og Storhaug kommer over her; Bybrutunnelen på bysiden munner ut ved Verven."
+    },
+    {
+      "name": "Brua mot øya",
+      "real": "Pyntesund bru",
+      "between": ["vestoyene", "buoy"],
+      "lat": 58.9833,
+      "lon": 5.74,
+      "notes": "Egen side. Bybrusperringen på Buøy står i den andre enden."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "klasaskjeret",
+      "name": "Industriområdet", "short": "Industriområdet", "at": "på industriområdet",
+      "real": "Klasaskjeret", "realAt": "på Klasaskjeret",
+      "kind": "industri", "threat": 2,
+      "lat": 58.97932, "lon": 5.73775,
+      "gives": "skrap, metall, litt drivstoff",
+      "notes": "Lagerhaller og verksteder på vestspissen av Engøy, rett under Pyntesund bru."
+    },
+    {
+      "id": "engoy_rekkehus",
+      "name": "Rekkehusene", "short": "Rekkehusene", "at": "i rekkehusene",
+      "real": "Engøy vest", "realAt": "på Engøy vest",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.9818, "lon": 5.74096,
+      "gives": "mange naboer å rekruttere, korte avstander, få kjellere",
+      "notes": "Rekkehus og tomannsboliger langs Halvorstraen og Smaleveien."
+    },
+    {
+      "id": "engoy_bolig",
+      "name": "Boligfeltet", "short": "Boligfeltet", "at": "i boligfeltet",
+      "real": "Engøy", "realAt": "på Engøy",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.98286, "lon": 5.74531,
+      "gives": "mat og vann i husene, mange kjellere og garasjer",
+      "notes": "Rundt hundre eneboliger og nesten like mange garasjer: mye å finne, men mange kjellere å rydde (dårlig Snoking straffer seg her)."
+    },
+    {
+      "id": "engoy_naust",
+      "name": "Båthavna", "short": "Båthavna", "at": "i båthavna",
+      "real": "naustene på Engøy", "realAt": "i naustene på Engøy",
+      "kind": "kai", "threat": 1,
+      "lat": 58.98088, "lon": 5.739,
+      "gives": "fisk, båter (transport i fase 2), tau, presenning og litt drivstoff til påhengsmotorer",
+      "notes": "Naustrekka på sørsiden av Engøy. [Sjekk] Engøyholmen kystkultursenter ligger på en holme utenfor og er ikke tatt med."
+    },
+    {
+      "id": "solyst_park",
+      "name": "Parken", "short": "Parken", "at": "i parken",
+      "real": "Sølyst", "realAt": "på Sølyst",
+      "kind": "natur", "threat": 1,
+      "lat": 58.9776, "lon": 5.7428,
+      "gives": "litt mat og frø fra gartneriet (drivhus til dyrking senere), tre, åpent og oversiktlig",
+      "notes": "Gartneriet, idrettsplassen og skogholtet på Sølyst, med noen få nye blokker langs Karen A. Sømmes vei."
+    },
+    {
+      "id": "grasholmen_blokk",
+      "name": "Blokkene", "short": "Blokkene", "at": "i blokkene",
+      "real": "Grasholmen", "realAt": "på Grasholmen",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.976, "lon": 5.747,
+      "gives": "mange folk og mange zombier, mat i leilighetene, utsikt over Vågen (speiding)",
+      "notes": "Rundt femti boligblokker på en holme. Trappeoppganger og én vei inn."
+    },
+    {
+      "id": "bybrua_feste",
+      "name": "Brufestet", "short": "Brufestet", "at": "ved brufestet",
+      "real": "Bybrua", "realAt": "ved Bybrua",
+      "kind": "industri", "threat": 4,
+      "lat": 58.9789, "lon": 5.7456,
+      "gives": "biler med drivstoff i køen, porten mot byen",
+      "notes": "Rundkjøringen der Bybrua, Engøy bru og Grasholmen møtes. Det varmeste stedet på Vestøyene, fordi alt fra byen kommer hit først."
+    }
+  ],
+  "pois": [
+    { "name": "Stavanger bybru", "type": "landemerke", "lat": 58.97484, "lon": 5.74719, "osm": "node/5582174853" },
+    { "name": "Bybrua", "type": "hovedvei", "lat": 58.97885, "lon": 5.74555, "osm": "way/24382405" },
+    { "name": "Pyntesund bru", "type": "bru", "lat": 58.98307, "lon": 5.74106, "osm": "way/1176299404" },
+    { "name": "Engøy bru", "type": "bru", "lat": 58.98153, "lon": 5.74454, "osm": "way/24382117" },
+    { "name": "Grasholmen (bru)", "type": "bru", "lat": 58.97696, "lon": 5.7455, "osm": "way/41659276" },
+    { "name": "Klasaskjeret", "type": "industri", "lat": 58.97922, "lon": 5.73752, "osm": "way/37297051" },
+    { "name": "Engøy", "type": "stedsnavn", "lat": 58.98286, "lon": 5.74531, "osm": "node/354884599" },
+    { "name": "Sølyst", "type": "stedsnavn", "lat": 58.97742, "lon": 5.74165, "osm": "node/354931144" },
+    { "name": "Sølyst (idrettsplass)", "type": "idrett", "lat": 58.9779, "lon": 5.74444, "osm": "way/578940048" },
+    { "name": "Gartneri på Sølyst (uten navn i OSM)", "type": "jorder", "lat": 58.97732, "lon": 5.74289, "osm": "way/32050123" },
+    { "name": "Skogholt på Sølyst (uten navn i OSM)", "type": "skog", "lat": 58.9781, "lon": 5.74254, "osm": "way/32050140" },
+    { "name": "Grasholmen (boligområde)", "type": "bolig", "lat": 58.97589, "lon": 5.7465, "osm": "way/32050183" },
+    { "name": "Naust på Engøy (uten navn i OSM)", "type": "kai", "lat": 58.98091, "lon": 5.73882, "osm": "way/699475553" },
+    { "name": "Kirke- eller bedehusbygg på Engøy (uten navn i OSM)", "type": "offentlig", "lat": 58.98142, "lon": 5.74046, "osm": "way/175159893" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "OpenStreetMap, data/osm.json (bygninger og arealbruk på byøyene, tools/fetch_osm.sh)",
+    "docs/kartlegging-stavanger.md, 1.1 Vestøyene"
+  ],
+  "notes": "Tre små øyer: Engøy (eneboliger, rekkehus, naust og industri på Klasaskjeret), Sølyst (gartneri og idrettsplass) og Grasholmen (blokker). Kartleggingen foreslo blokker både på Sølyst og Grasholmen, men OSM viser bare et par blokker på Sølyst og rundt femti på Grasholmen, så det blir én «Blokkene» og ingen retning. Ingen butikker, ingen nøkkelsted og ingen HQ-kandidat: Vestøyene er en flaskehals, og oppgaven er å holde brua. Sjøen mot Vågen og Byfjorden blir en inngang først med Svømmere."
+}

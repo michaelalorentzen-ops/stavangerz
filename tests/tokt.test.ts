@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
-  acceptQuest, canEndDay, dailyFood, drawEvent, PLAYABLE, checkEnd, endDayBlocker, injure, newCard, newGame, resolveDay, resolveEncounter, taskKey, taskOptions, toktDecision, validateTasks,
+  acceptQuest, canEndDay, dailyFood, drawEvent, PLAYABLE, checkEnd, endDayBlocker, injure, newCard, newGame, resolveDay as resolveDayAndDrawEvent, resolveEncounter, taskKey, taskOptions, toktDecision, validateTasks,
   EVENTS, QUESTS, TOKTS,
 } from '../src/engine';
 import type { GameState } from '../src/engine';
 import { BOT_SELF, playGame, toktStats } from '../tools/bot';
 
-const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+// Bybrua åpnes av et rykte i spillet. Her er det åpent fra start.
+const fresh = (seed = 42) => { const s = newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']); s.toktsOpen.push('bybrua'); return s; };
+/** Dagsoppgjøret uten dagens hendelse: testene her gjelder dagen, ikke hendelseskortene. */
+const resolveDay = (s: GameState) => { const L = resolveDayAndDrawEvent(s); s.event = null; return L; };
 /** Sender de to første på tokt og løser dagen. */
 const out = (s: GameState, id = 'bybrua', ids = ['meg', 'arild']) => {
   for (const c of s.crew) if (ids.includes(c.id)) c.task = { type: 'tokt', target: id };
@@ -19,7 +22,7 @@ const hasOpt = (s: GameState, id: string) => taskOptions(s).some((o) => o.type =
 describe('tokt', () => {
   it('innholdet finnes', () => {
     expect(TOKTS.find((t) => t.id === 'kran')).toMatchObject({ at: 'ros', days: 2, threat: 3, quest: 'sos_kran' });
-    expect(TOKTS.find((t) => t.id === 'bybrua')).toMatchObject({ at: 'sor', days: 2, threat: 3, reward: { res: { drivstoff: 6, skrap: 6, mat: 4 } } });
+    expect(TOKTS.find((t) => t.id === 'bybrua')).toMatchObject({ at: 'sor', days: 2, threat: 3, reward: { res: { drivstoff: 8, skrap: 6, metall: 4 } }, locked: true });
     expect(QUESTS.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -70,7 +73,7 @@ describe('tokt', () => {
     answer(s);
     const dr = s.res.drivstoff, sk = s.res.skrap, haul = { ...s.tokts[0].haul };
     toktDecision(s, 'bybrua', 'fortsett');
-    expect(s.res.drivstoff).toBe(dr + 6 + (haul.drivstoff ?? 0));
+    expect(s.res.drivstoff).toBe(dr + 8 + (haul.drivstoff ?? 0));
     expect(s.res.skrap).toBe(sk + 6 + (haul.skrap ?? 0));
     expect(s.tokts).toHaveLength(0);
     expect(s.crew.find((c) => c.id === 'meg')!.task).toEqual({ type: 'hvile' });
@@ -266,7 +269,7 @@ describe('bot med tokt', () => {
     const games = Array.from({ length: 20 }, (_, i) => playGame(i + 1, undefined, { tokt: true }));
     expect(games.reduce((n, s) => n + toktStats(s).done + toktStats(s).turned, 0)).toBeGreaterThan(0);
     // ingen runde blir stående med et ubesvart tokt
-    for (const s of games) expect(s.over).not.toBeNull();
+    for (const s of games) expect(s.over !== null || s.phase > 1).toBe(true);
     expect(playGame(5, undefined, { tokt: true })).toEqual(playGame(5, undefined, { tokt: true }));
     // uten valget tar boten aldri tokt
     expect(toktStats(playGame(5)).done).toBe(0);

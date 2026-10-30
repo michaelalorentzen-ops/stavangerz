@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { canRecruit, GATE_IDS, housing, isSafe, newGame, resolveDay, sectorIntel, SECTORS, sum, raiseSearched, taskOptions } from '../src/engine';
+import { canRecruit, GATE_IDS, housing, isSafe, newGame, PHASES, resolveDay as resolveDayAndDrawEvent, sectorIntel, SECTORS, sum, raiseSearched, taskOptions } from '../src/engine';
 import type { GameState, SectorId, SectorState } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
 const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+/** Dagsoppgjøret uten dagens hendelse: testene her gjelder dagen, ikke hendelseskortene. */
+const resolveDay = (s: GameState) => { const L = resolveDayAndDrawEvent(s); s.event = null; return L; };
 const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));
 const base = (): SectorState => ({ ...fresh().sectors.hjem, z: 0, hidden: 0, searched: 100, control: 50 });
 /** Gjør en sektor tom og rolig, og sender hele crewet på samme oppdrag. */
@@ -26,7 +28,7 @@ describe('sektordata', () => {
   it('har type, trussel, kapasitet og utbytte', () => {
     expect(SECTORS.hjem).toMatchObject({ kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 } });
     expect(SECTORS.tommerodden).toMatchObject({ kind: 'kai', threat: 2, capacity: 2, yield: { mat: 4 } });
-    expect(SECTORS.skolen).toMatchObject({ kind: 'offentlig', capacity: 8, yield: { mat: 1, medisin: 1 } });
+    expect(SECTORS.skolen).toMatchObject({ kind: 'offentlig', capacity: 8, yield: { mat: 1, medisin: 0.5 } });
   });
 
   it('starter med hjem som bosatt og speidet, resten ubrukt', () => {
@@ -35,8 +37,8 @@ describe('sektordata', () => {
     expect(s.sectors.skolen).toMatchObject({ control: 0, settled: false, searched: 0, scouted: false });
   });
 
-  it('gir 30 % mer mat i sektorbyttet', () => {
-    expect(fresh().sectors.buoy_nord.loot.mat).toBe(Math.round(SECTORS.buoy_nord.loot.mat * 1.3));
+  it('gir 30 % mer mat i sektorbyttet, ganget med fasens lootMult', () => {
+    expect(fresh().sectors.buoy_nord.loot.mat).toBe(Math.round(SECTORS.buoy_nord.loot.mat * 1.3 * PHASES[1].mods.lootMult));
   });
 });
 

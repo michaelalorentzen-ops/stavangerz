@@ -1,7 +1,10 @@
 // Felles UI-tilstand: spillet, hva som er valgt, og lagring i nettleseren.
-import { migrate } from '../engine';
-import type { GameState, GateId, MapSectorId, SectorKind, Slot, TaskType } from '../engine';
+import { GATES, migrate } from '../engine';
+import type { GameState, GateId, MapSectorId, SectorKind, Slot, TaskType, ZoneId } from '../engine';
 import rawMap from '../data/map.json';
+
+/** Porten som skjermer hjemsonen (regionens eneste sperring bak hjemsektoren). */
+export const HOME_GATE = (Object.keys(GATES) as GateId[]).find((g) => GATES[g].sector === 'hjem')!;
 
 export interface MapShape { id: string; d: string; cx: number; cy: number }
 export interface MapData {
@@ -12,7 +15,7 @@ export interface MapData {
   buildings: string;
   roads: { major: string; minor: string };
   sectors: (MapShape & { id: MapSectorId })[];
-  zones: (MapShape & { name: string })[];
+  zones: (MapShape & { id: ZoneId })[];
   geo: { W: number; N: number; KX: number };
 }
 /** Tekstsymboler (ikke emoji) og navn for sektortypene. \uFE0E tvinger tekstvisning. */
@@ -53,6 +56,8 @@ export const ui = {
   picker: null as { crewId: string; slot: Slot } | null,
   /** crewraden som er foldet ut, bare én om gangen */
   openCrew: null as string | null,
+  /** siste melding fra planer og «Som i går» */
+  planNote: '',
   /** personen lageret sammenligner kortene mot */
   compareCrew: null as string | null,
   /** valgt fane i panelet, huskes i sessionStorage */

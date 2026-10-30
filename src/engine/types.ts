@@ -5,10 +5,13 @@ export type Stats = Record<StatKey, number>;
 export type ResKey = 'mat' | 'vann' | 'medisin' | 'tre' | 'skrap' | 'metall' | 'strom' | 'drivstoff';
 export type Resources = Record<ResKey, number>;
 
-export type SectorId = 'hjem' | 'tommerodden' | 'obs' | 'nordkrysset' | 'buoy_nord' | 'skolen' | 'sorspissen';
-export type MapSectorId = SectorId | 'rosenberg';
-export type GateId = 'nord' | 'sor' | 'ros';
+// Steds-id-ene kommer fra regionpakken
+import type { GateId, MapSectorId, RegionFlag, SectorId, ZoneId } from '../regions/active';
+export type { GateId, MapSectorId, SectorId, ZoneId };
 export type PhaseId = 1 | 2 | 3 | 4 | 5;
+
+/** Vanskelighetsgrad. Styrer zombienes styrke og hva som skjer når fristen for fasen går ut. */
+export type Difficulty = 'normal' | 'hard' | 'brutal';
 
 export type TraitId =
   | 'lokalkjent' | 'filmnerd' | 'dugnad' | 'hms' | 'nattevakt' | 'sveiser'
@@ -39,6 +42,10 @@ export type Rarity = 'vanlig' | 'sjelden' | 'episk' | 'unik';
 
 export type WeaponRange = 'naerkamp' | 'avstand';
 export type WeaponNoise = 'stille' | 'normal' | 'brak';
+/** Våpenklasse (kap. 9). Styrer standard støy og hva utstyret er godt mot. */
+export type WeaponClass = 'slag' | 'egg' | 'prosjektil' | 'skytevapen' | 'brann' | 'motor';
+/** Beskyttelsens vekt: tung gir mer vern, men koster Kondis. */
+export type ArmorWeight = 'lett' | 'tung';
 export type WeaponTag = 'gjennomslag' | 'spredning' | 'rekkevidde';
 
 export interface CardDef {
@@ -53,6 +60,12 @@ export interface CardDef {
   range?: WeaponRange;
   /** bare våpen: hvor mye støy det lager, standard 'normal' */
   noise?: WeaponNoise;
+  /** bare våpen: klassen. Gir standard støy hvis `noise` mangler */
+  weaponClass?: WeaponClass;
+  /** bare beskyttelse: lett eller tung */
+  weight?: ArmorWeight;
+  /** false for kort med bestemt opphav («fra Obs»): kan ikke lages med Lage utstyr */
+  craftable?: boolean;
   /** bare våpen: særegenskaper */
   tags?: WeaponTag[];
   durability: number;
@@ -79,7 +92,13 @@ export type Task =
   | { type: 'vakt'; target: GateId | SectorId }
   | { type: 'befeste'; target: GateId }
   /** target er id-en til toktet */
-  | { type: 'tokt'; target: string };
+  | { type: 'tokt'; target: string }
+  /** fast post i HQ-et: personen blir der fra dag til dag og gjør ikke annet */
+  | { type: 'post'; target: PostId }
+  /** Sette i stand et anlegg i HQ-et */
+  | { type: 'istand'; target: FacilityId }
+  /** Reparere utstyr i verkstedhallen */
+  | { type: 'reparere' };
 export type TaskType = Task['type'];
 
 export interface CrewMember {
@@ -152,12 +171,37 @@ export interface QuestState {
   done: boolean;
 }
 
+/** Anleggene i HQ-et (fase 2). Navn og tekster står i regionpakken. */
+export type FacilityId = 'verksted' | 'kantine' | 'kontor' | 'kai';
+/** Tilstanden til et anlegg, trukket av seeden ved start og skjult til HQ-et er tatt. */
+export type FacilityCond = 'god' | 'middels' | 'odelagt';
+/** Faste poster i HQ-et */
+export type PostId = 'sikkerhet' | 'bygg' | 'kokk';
+
+export interface FacilityState {
+  /** den sanne tilstanden. Vises ikke før HQ-et er tatt */
+  cond: FacilityCond;
+  /** tilstanden ryktet peker på, eller null før noe er hørt. Rykter kan ta feil */
+  heard: FacilityCond | null;
+  /** arbeid lagt ned i istandsettingen */
+  work: number;
+  /** satt i stand, så anlegget virker */
+  ready: boolean;
+}
+
+export interface HqState {
+  /** HQ-sektoren har vært trygg i fase 2 eller senere: postene er åpne og tilstanden er kjent */
+  taken: boolean;
+  facilities: Record<FacilityId, FacilityState>;
+}
+
 export interface GateState {
   work: number;
   level: number;
 }
 
-export type Flag = 'gann' | 'aggregat' | 'buss' | 'katt' | 'svein' | `gone_${string}`;
+/** gone_: borte for godt (død eller gått). dead_: døde, så det skilles fra de som forlot crewet. */
+export type Flag = RegionFlag | `gone_${string}` | `dead_${string}`;
 
 export interface GameState {
   v: 3;
@@ -172,6 +216,10 @@ export interface GameState {
   /** hvor sannsynlig hver gren er for neste mutasjon, trukket ved start */
   branchWeights: Record<Branch, number>;
   /** dagen målet for fasen først ble nådd */
+  /** vanskelighetsgrad, valgt ved start */
+  difficulty: Difficulty;
+  /** antall ganger fristen tvang spilleren videre uten at målet var nådd */
+  forcedPhases: number;
   goalDay: number | null;
   /** dagen fasen startet, turgrensen telles herfra */
   phaseStartDay: number;
@@ -187,15 +235,27 @@ export interface GameState {
   flags: Partial<Record<Flag, boolean>>;
   crew: CrewMember[];
   sectors: Record<SectorId, SectorState>;
+  /** HQ-et i fase 2: anlegg og om det er tatt */
+  hq: HqState;
   gates: Record<GateId, GateState>;
   seenEvents: string[];
   /** encounters som venter på valg */
   pending: PendingEncounter[];
+  /** dagens hendelseskort, trukket av resolveDay() og løst med resolveEvent() før neste dag */
+  event: { id: string } | null;
   /** de siste encounterkortene som er trukket, nyest sist. De trekkes ikke igjen med en gang. */
   recentEnc: string[];
+  /** lagrede oppdragsfordelinger (crew-id til ordre), navngitt av spilleren */
+  plans: { name: string; tasks: Record<string, Task> }[];
+  /** ordrene crewet hadde da forrige dag ble løst, for «Som i går» */
+  lastTasks: Record<string, Task>;
   /** tokt som er ute */
   tokts: ToktState[];
   quests: QuestState[];
+  /** tokt som er låst opp av hendelser og rykter */
+  toktsOpen: string[];
+  /** tokt som er fullført minst én gang */
+  toktsDone: string[];
   log: { day: number; lines: LogLine[] }[];
   over: null | 'won' | 'won-seen' | 'dead' | 'timeout';
   stats: {

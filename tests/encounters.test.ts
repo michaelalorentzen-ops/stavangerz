@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  acceptQuest, canEndDay, CARDS, fightPower, guardPower, mods, PIERCE_KILL, RANGE_GUARD, rydde, endDayBlocker, injure, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
+  acceptQuest, canEndDay, CARDS, noiseOfDef, fightPower, guardPower, mods, PIERCE_KILL, RANGE_GUARD, rydde, endDayBlocker, injure, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
 } from '../src/engine';
 import type { EncounterCtx, GameState, PendingEncounter, SectorId, WeaponTag } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
-const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+// Bybrua åpnes av et rykte i spillet. Her er det åpent fra start.
+const fresh = (seed = 42) => { const s = newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']); s.toktsOpen.push('bybrua'); return s; };
 const valid = (s: GameState) => {
   for (const r of RES) expect(s.res[r]).toBeGreaterThanOrEqual(0);
   expect(s.moral).toBeGreaterThanOrEqual(0);
@@ -84,7 +85,7 @@ describe('encounters', () => {
           const s = fresh(seed);
           for (const c of s.crew) c.gear.vapen = newCard(s, 'hagle_politibil');
           const p = pend(s, def.id, undefined, 1 + (seed % 5));
-          const ctx: EncounterCtx = { sector: p.sector, crew: s.crew, threat: p.threat };
+          const ctx: EncounterCtx = { sector: p.sector, crew: s.crew, threat: p.threat, zombies: 20 };
           if (def.when && !def.when(s, ctx)) continue;
           expect(def.text(s, ctx).length).toBeGreaterThan(10);
           const r = resolveEncounter(s, 'p1', i);
@@ -189,11 +190,13 @@ describe('våpenegenskaper', () => {
     expect(weapons.length).toBeGreaterThan(0);
     for (const d of weapons) {
       expect(['naerkamp', 'avstand'], d.id).toContain(d.range);
-      expect(['stille', 'normal', 'brak'], d.id).toContain(d.noise ?? 'normal');
+      expect(['stille', 'normal', 'brak'], d.id).toContain(noiseOfDef(d));
     }
-    expect(CARDS.hagle_politibil).toMatchObject({ range: 'avstand', noise: 'brak', tags: ['spredning'] });
+    expect(CARDS.hagle_politibil).toMatchObject({ range: 'avstand', tags: ['spredning'] });
+    expect(noiseOfDef(CARDS.hagle_politibil)).toBe('brak');
     expect(CARDS.spikerpistol_obs).toMatchObject({ range: 'avstand', noise: 'normal' });
-    expect(CARDS.k_ror).toMatchObject({ range: 'naerkamp', noise: 'normal' });
+    expect(CARDS.k_ror).toMatchObject({ range: 'naerkamp' });
+    expect(noiseOfDef(CARDS.k_ror)).toBe('normal');
   });
 
   /** Skader i løpet av en dag for en alenegruppe, summert over seeds. */
@@ -305,7 +308,7 @@ describe('våpenegenskaper', () => {
 });
 
 describe('encounters på tokt og dagstaket', () => {
-  const toktCtx = (s: GameState): EncounterCtx => ({ sector: null, crew: s.crew.slice(0, 2), threat: 3, toktId: 'bybrua' });
+  const toktCtx = (s: GameState): EncounterCtx => ({ sector: null, crew: s.crew.slice(0, 2), threat: 3, zombies: null, toktId: 'bybrua' });
   const zOf = (s: GameState) => JSON.stringify(Object.fromEntries(Object.entries(s.sectors).map(([id, sec]) => [id, sec.z])));
 
   it('kiosken på tokt infiserer ikke Hjemme når skuddet bommer', () => {

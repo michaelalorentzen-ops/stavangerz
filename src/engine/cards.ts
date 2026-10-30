@@ -1,10 +1,10 @@
 // Utstyrskort: instanser, utstyring, slitasje, funn og Lage utstyr. Ren logikk.
-import { CARDS } from './content/cards';
-import { TOKTS } from './content/tokts';
+import { CARDS } from '../regions/content';
+import { TOKTS } from '../regions/content';
 import type { LogFn } from './crew';
 import { skillLevel } from './levels';
 import { pick, rand } from './rng';
-import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot, StatKey, Stats, WeaponNoise, WeaponTag } from './types';
+import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot, StatKey, Stats, WeaponClass, WeaponNoise, WeaponTag } from './types';
 
 export { CARDS };
 export const SLOTS: Slot[] = ['vapen', 'beskyttelse', 'verktoy'];
@@ -13,6 +13,11 @@ export const SLOT_LABEL: Record<Slot, string> = { vapen: 'Våpen', beskyttelse: 
 /** Kostnad for Lage utstyr. */
 export const LAGE_COST = { skrap: 3, tre: 1 };
 const RARITY_WEIGHT = { vanlig: 6, sjelden: 3, episk: 1, unik: 0 };
+
+/** Kortnavn midt i en setning: liten forbokstav, bortsett fra egennavn («Kaptein Tvedts øks») og tall. */
+export function cardWord(name: string): string {
+  return /^[A-ZÆØÅ][a-zæøå]/.test(name) && !/^\S+ [A-ZÆØÅ]/.test(name) ? name[0].toLowerCase() + name.slice(1) : name;
+}
 
 export function newCard(s: GameState, defId: string): CardInst {
   const def = CARDS[defId];
@@ -48,6 +53,17 @@ export function unequip(s: GameState, crewId: string, slot: Slot): boolean {
   return true;
 }
 
+/** Standard støy per våpenklasse. Kortets egen `noise` vinner hvis den er satt. */
+export const CLASS_NOISE: Record<WeaponClass, WeaponNoise> = { slag: 'normal', egg: 'normal', prosjektil: 'stille', skytevapen: 'brak', brann: 'normal', motor: 'brak' };
+export const CLASS_LABEL: Record<WeaponClass, string> = { slag: 'Slag', egg: 'Egg', prosjektil: 'Prosjektil', skytevapen: 'Skytevåpen', brann: 'Brann', motor: 'Motor' };
+export const WEAPON_CLASSES = Object.keys(CLASS_LABEL) as WeaponClass[];
+/** Tung beskyttelse: ekstra vern (ganges med skaderisikoen) til prisen av færre Kondis-poeng per kort. */
+export const HEAVY_ARMOR_MULT = 0.9;
+export const HEAVY_KONDIS_PENALTY = 4;
+export const WEIGHT_LABEL = { lett: 'Lett', tung: 'Tung' };
+/** Støyen et våpenkort har, med klassens standard som reserve. */
+export const noiseOfDef = (d: CardDef): WeaponNoise => d.noise ?? (d.weaponClass ? CLASS_NOISE[d.weaponClass] : 'normal');
+
 /** Kampkraft per våpennivå (indeks = nivå). Uten våpen: ×0,8. */
 const WEAPON_MULT = [0.8, 1.0, 1.2, 1.4, 1.6, 1.8];
 /** Skaderisiko per beskyttelsesnivå. */
@@ -67,6 +83,7 @@ export function cardBonus(def: CardDef): Partial<Stats> {
   const out: Partial<Stats> = {};
   for (const [k, v] of Object.entries(SLOT_BONUS[def.slot]) as [StatKey, number][]) out[k] = v * def.level;
   for (const [k, v] of Object.entries(def.bonus ?? {}) as [StatKey, number][]) out[k] = (out[k] ?? 0) + v;
+  if (def.weight === 'tung') out.kondis = (out.kondis ?? 0) - HEAVY_KONDIS_PENALTY;
   return out;
 }
 
@@ -74,21 +91,24 @@ export function cardBonus(def: CardDef): Partial<Stats> {
 export function cardEffect(def: CardDef): string {
   const pct = (m: number) => Math.round(Math.abs(m - 1) * 100);
   if (def.slot === 'vapen') return `Kampkraft ×${WEAPON_MULT[def.level].toFixed(1).replace('.', ',')}`;
-  if (def.slot === 'beskyttelse') return `Skaderisiko −${pct(ARMOR_MULT[def.level])} %`;
+  if (def.slot === 'beskyttelse') return `Skaderisiko −${Math.round((1 - ARMOR_MULT[def.level] * (def.weight === 'tung' ? HEAVY_ARMOR_MULT : 1)) * 100)} %`;
   return `Søk og bygging +${pct(TOOL_MULT[def.level])} %`;
 }
 
 export const weaponMult = (c: CrewMember): number => WEAPON_MULT[levelOf(c, 'vapen')];
 const weaponDef = (c: CrewMember): CardDef | null => (c.gear.vapen ? CARDS[c.gear.vapen.def] : null);
 /** Støyen fra det utstyrte våpenet, eller null uten våpen. */
-export const noiseOf = (c: CrewMember): WeaponNoise | null => { const d = weaponDef(c); return d ? d.noise ?? 'normal' : null; };
+export const noiseOf = (c: CrewMember): WeaponNoise | null => { const d = weaponDef(c); return d ? noiseOfDef(d) : null; };
 /** Har personen et utstyrt våpen på avstand? */
 export const isRanged = (c: CrewMember): boolean => weaponDef(c)?.range === 'avstand';
 /** Har personen et utstyrt våpen med taggen? */
 export const hasTag = (c: CrewMember, tag: WeaponTag): boolean => !!weaponDef(c)?.tags?.includes(tag);
 
 /** Ganges med skaderisiko. */
-export const armorMult = (c: CrewMember): number => ARMOR_MULT[levelOf(c, 'beskyttelse')];
+export const armorMult = (c: CrewMember): number => {
+  const k = c.gear.beskyttelse;
+  return ARMOR_MULT[levelOf(c, 'beskyttelse')] * (k && CARDS[k.def].weight === 'tung' ? HEAVY_ARMOR_MULT : 1);
+};
 /** Ganges med searchPower og buildPower. */
 export const toolMult = (c: CrewMember): number => TOOL_MULT[levelOf(c, 'verktoy')];
 
@@ -115,7 +135,7 @@ export function dropGear(s: GameState, c: CrewMember, where: SectorId | 'stash')
 export function collectDropped(s: GameState, id: SectorId, log: LogFn) {
   const sec = s.sectors[id];
   if (!sec.dropped.length) return;
-  const names = sec.dropped.map((k) => CARDS[k.def].name).join(', ');
+  const names = sec.dropped.map((k) => cardWord(CARDS[k.def].name)).join(', ');
   s.stash.push(...sec.dropped);
   sec.dropped = [];
   log(`Crewet hentet utstyr som lå igjen: ${names}.`, 'find');
@@ -200,8 +220,23 @@ export function toggleFavorite(s: GameState, uid: string): boolean {
   return true;
 }
 
-/** Lage utstyr: koster skrap og tre, lykkes etter Mekk. `mekk` er stat(c, 'mekk'). */
-export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
+/** Hvor mange av de som er satt til Lage utstyr i dag som mangler materialer (de første får dem). */
+export function craftShortfall(s: GameState): Set<string> {
+  const short = new Set<string>();
+  let n = 0;
+  for (const c of s.crew) {
+    if (c.task.type !== 'lage') continue;
+    n++;
+    if (s.res.skrap < LAGE_COST.skrap * n || s.res.tre < LAGE_COST.tre * n) short.add(c.id);
+  }
+  return short;
+}
+
+/**
+ * Lage utstyr: koster skrap og tre, lykkes etter Mekk. `mekk` er stat(c, 'mekk'). `levelBonus` er nivåer
+ * oppå det Mekk gir (verkstedhallen i HQ-et), men aldri over `maxLevel`.
+ */
+export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn, levelBonus = 0, maxLevel = 3) {
   if (s.res.skrap < LAGE_COST.skrap || s.res.tre < LAGE_COST.tre) {
     log(`${c.name} prøvde å lage utstyr, men det mangler ${LAGE_COST.skrap} skrap og ${LAGE_COST.tre} tre. Det ble et fint moodboard.`, 'warn');
     return;
@@ -210,9 +245,9 @@ export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
   wear(s, c, 'verktoy', log);
   const chance = Math.max(0.3, Math.min(0.9, 0.3 + (mekk / 10) * 0.1));
   if (rand(s) >= chance) { log(`${c.name} bygde noe. Det ble ikke til noe, bortsett fra en stor haug skrap.`, 'warn'); return; }
-  const level = ['God', 'Rå'].includes(skillLevel(mekk)) ? 2 : 1;
-  const cands = Object.values(CARDS).filter((d) => d.family === 'makeshift' && d.level === level && d.rarity !== 'unik');
+  const level = Math.min(maxLevel, (['God', 'Rå'].includes(skillLevel(mekk)) ? 2 : 1) + levelBonus);
+  const cands = Object.values(CARDS).filter((d) => d.family === 'makeshift' && d.level === level && d.rarity !== 'unik' && d.craftable !== false);
   const k = newCard(s, pick(s, cands).id);
   s.stash.push(k);
-  log(`${c.name} laget ${CARDS[k.def].name}.`, 'good');
+  log(`${c.name} laget ${cardWord(CARDS[k.def].name)}.`, 'good');
 }

@@ -1,6 +1,6 @@
 // Ferdigheter på skala 1–100. Lagres som desimaltall; UI viser bare stolpe og nivå.
 import { cardBonus, toolMult, weaponMult } from './cards';
-import { CARDS } from './content/cards';
+import { CARDS } from '../regions/content';
 import { clamp, sum } from './rng';
 import type { CrewMember, GameState, StatKey } from './types';
 
@@ -29,7 +29,11 @@ export function gainXp(c: CrewMember, k: StatKey, amount: number): void {
 }
 
 // Styrkeformlene regner i gamle prikkenheter: stat(c, k) / 10.
-const moralMult = (s: GameState) => (s.moral < 25 ? 0.75 : s.moral < 50 ? 0.9 : 1);
+/** Moral: under MORAL_LOW og MORAL_MID jobber alle dårligere, over MORAL_HIGH litt bedre. Regelkonstanter. */
+export const MORAL_LOW = 25, MORAL_MID = 50, MORAL_HIGH = 80;
+export const MORAL_LOW_MULT = 0.75, MORAL_MID_MULT = 0.9, MORAL_HIGH_MULT = 1.05;
+export const moralMult = (s: Pick<GameState, 'moral'>) =>
+  s.moral < MORAL_LOW ? MORAL_LOW_MULT : s.moral < MORAL_MID ? MORAL_MID_MULT : s.moral >= MORAL_HIGH ? MORAL_HIGH_MULT : 1;
 const hpMult = (c: CrewMember) => (c.hp >= 3 ? 1 : c.hp === 2 ? 0.85 : 0.55);
 
 export function fightPower(s: GameState, c: CrewMember): number {
@@ -60,5 +64,7 @@ export function buildPower(s: GameState, c: CrewMember): number {
 export const bestOf = (crew: CrewMember[], k: StatKey): CrewMember =>
   crew.reduce((a, c) => (stat(c, k) > stat(a, k) ? c : a), crew[0]);
 /** Sjansen for å lykkes med en sjekk, etter gruppas beste på ferdigheten. */
+/** Ingen sjekk er helt sikker. Selv den beste kan bomme. */
+export const ODDS_MAX = 0.9;
 export const checkOddsFor = (crew: CrewMember[], k: StatKey, base = 0.25): number =>
-  clamp(base + (stat(bestOf(crew, k), k) / 10) * 0.12, 0.05, 0.95);
+  clamp(base + (stat(bestOf(crew, k), k) / 10) * 0.12, 0.05, ODDS_MAX);

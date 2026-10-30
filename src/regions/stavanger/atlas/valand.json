@@ -1,0 +1,151 @@
+{
+  "id": "valand",
+  "name": "Våland",
+  "at": "på Våland",
+  "ring": 2,
+  "phase": 4,
+  "density": 3,
+  "baseThreat": 3,
+  "gates": [
+    {
+      "name": "Tunnelmunningen",
+      "real": "Hundvågtunnelen og Eiganestunnelen ved E39",
+      "between": ["valand", "hundvag"],
+      "lat": 58.9602,
+      "lon": 5.7272,
+      "notes": "Munningen av E39 under fjorden mot Hundvåg. Alt som kommer fra byøyene under vann, kommer ut her."
+    },
+    {
+      "name": "Vestporten",
+      "real": "Motorveien og Vålandshaugen",
+      "between": ["valand", "eiganes_bjergsted"],
+      "lat": 58.9596,
+      "lon": 5.7229,
+      "notes": "E39 vestover mot Eiganes og Mosvatnet."
+    },
+    {
+      "name": "Lagårdsveien",
+      "real": "Lagårdsveien",
+      "between": ["valand", "sentrum"],
+      "lat": 58.9615,
+      "lon": 5.7385,
+      "notes": "Hovedveien nordover til politistasjonen og sentrum."
+    },
+    {
+      "name": "Strømsbrua",
+      "real": "Strømsbrua",
+      "between": ["valand", "storhaug"],
+      "lat": 58.9553,
+      "lon": 5.7447,
+      "notes": "Over Hillevågsvannet mot Storhaug og Hillevåg. Jærbanen går rett ved siden av."
+    },
+    {
+      "name": "Jernbanen",
+      "real": "Jærbanen ved Paradis",
+      "between": ["valand", "hillevag"],
+      "lat": 58.9538,
+      "lon": 5.7398,
+      "notes": "Sporene sørover mot Hillevåg og Sandnes. [Sjekk] Nøyaktig plassering av stasjonen."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "valandsskogen",
+      "name": "Skogen", "short": "Skogen", "at": "i skogen",
+      "real": "Vålandsskogen", "realAt": "i Vålandsskogen",
+      "kind": "natur", "threat": 1,
+      "lat": 58.9566, "lon": 5.7255,
+      "gives": "tre, vilt, skjul. Få zombier, men vanskelig å se dem",
+      "notes": "Skogen vest på Våland, mot Mosvatnet. Roligste stedet i området, så lenge man ikke prøver å ta snarveien til Hundvåg."
+    },
+    {
+      "id": "lille_ullevaal",
+      "name": "Idrettsplassen", "short": "Idrettsplassen", "at": "på idrettsplassen",
+      "real": "Lille Ullevål", "realAt": "på Lille Ullevål",
+      "kind": "offentlig", "threat": 2,
+      "lat": 58.9565, "lon": 5.7259,
+      "gives": "plass, åpent område, lagerskur med utstyr",
+      "notes": "Ligger innerst i Vålandsskogen. Brukes best som oppsamlingspunkt."
+    },
+    {
+      "id": "valand_villa",
+      "name": "Villaene", "short": "Villaene", "at": "i villaene",
+      "real": "Våland", "realAt": "på Våland",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.9583, "lon": 5.7310,
+      "gives": "få folk, mye å finne per hus, hager og vinkjellere",
+      "notes": "Villastrøket rundt Vålandshaugen og Gamlingen [revet]."
+    },
+    {
+      "id": "paradis_interior",
+      "name": "Interiørbutikken", "short": "Interiørbutikken", "at": "på interiørbutikken",
+      "real": "HTH og Rusta på Paradis", "realAt": "på HTH og Rusta på Paradis",
+      "kind": "butikk", "shopType": "interiorbutikk", "threat": 2,
+      "lat": 58.9593, "lon": 5.7390,
+      "gives": "tre, tekstiler, madrasser, kjøkkenutstyr, litt beskyttelse",
+      "notes": "Kjøkkenbutikkene langs Lagårdsveien og Rusta på Paradis. Mye å barrikadere med, lite å spise."
+    },
+    {
+      "id": "paradis_mat",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Extra og Kiwi på Paradis", "realAt": "på Extra Paradis",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 3,
+      "lat": 58.9575, "lon": 5.7406,
+      "gives": "mat, vann",
+      "notes": "Extra Paradis, Jærbakeren og Norvasia Marked. Brødhyllene tømt første dagen; resten av butikken holder til dag fire."
+    },
+    {
+      "id": "paradis_legesenter",
+      "name": "Legesenteret", "short": "Legesenteret", "at": "på legesenteret",
+      "real": "Aleris, Paradis legesenter og Colosseumsklinikken", "realAt": "på Paradis legesenter",
+      "kind": "offentlig", "threat": 3,
+      "lat": 58.9573, "lon": 5.7399,
+      "gives": "medisin (bandasjer, smertestillende), sjeldne kort fra Aleris",
+      "notes": "Aleris har et privatsykehus på Paradis. Det er ikke apotek, men ligger rett ved Vitusapotek Paradis, så mye er plukket."
+    },
+    {
+      "id": "valand_tunnel",
+      "name": "Tunnelmunningen", "short": "Tunnelmunningen", "at": "ved tunnelmunningen",
+      "real": "E39 ved Mosvatnet", "realAt": "ved E39 ved Mosvatnet",
+      "kind": "industri", "threat": 4,
+      "lat": 58.9602, "lon": 5.7272,
+      "gives": "biler med drivstoff i køen, porten mot Hundvåg",
+      "notes": "Alt som kommer opp av Hundvågtunnelen, møter murveggen av biler først."
+    }
+  ],
+  "hqCandidate": {
+    "id": "sus_valand",
+    "type": "sykehus",
+    "name": "Sykehuset", "short": "Sykehuset", "at": "på sykehuset",
+    "real": "gamle Stavanger universitetssjukehus, Våland", "realAt": "på gamle SUS",
+    "kind": "offentlig", "threat": 5,
+    "lat": 58.95241, "lon": 5.73464,
+    "gives": "medisin og lab høyt, zombier svært mange, delvis tomt etter flyttingen",
+    "notes": "SUS flyttet til Ullandhaug 16. november 2025; psykiatri og mange poliklinikker ble på Våland. Modell (b) i dokumentet: gamle SUS er halvtomt og nært, nye SUS er fullt og langt unna (HQ-kandidat i Ullandhaug og Hinna)."
+  },
+  "pois": [
+    { "name": "Stavanger Universitetssjukehus", "type": "hq_kandidat", "lat": 58.95241, "lon": 5.73464, "osm": "way/152636077" },
+    { "name": "Aleris sykehus", "type": "hq_kandidat", "lat": 58.95706, "lon": 5.74083, "osm": "node/9975858558" },
+    { "name": "Vitusapotek Paradis Stavanger", "type": "apotek", "lat": 58.95756, "lon": 5.74057, "osm": "node/9172563339" },
+    { "name": "Extra Paradis", "type": "matbutikk", "lat": 58.95749, "lon": 5.74061, "osm": "node/9169989739" },
+    { "name": "Kiwi Lagårdsveien", "type": "matbutikk", "lat": 58.95358, "lon": 5.74145, "osm": "node/2836727815" },
+    { "name": "Rusta", "type": "interiorbutikk", "lat": 58.95753, "lon": 5.74059, "osm": "node/9975858565" },
+    { "name": "HTH Stavanger", "type": "interiorbutikk", "lat": 58.95937, "lon": 5.739, "osm": "node/14143229453" },
+    { "name": "Scandinavia kjøkken", "type": "interiorbutikk", "lat": 58.96069, "lon": 5.73706, "osm": "node/1859562925" },
+    { "name": "Paradis Legesenter", "type": "helse", "lat": 58.95796, "lon": 5.73974, "osm": "node/767870633" },
+    { "name": "Colosseumsklinikken", "type": "helse", "lat": 58.95682, "lon": 5.74005, "osm": "node/1599972832" },
+    { "name": "Vålandsskogen", "type": "skog", "lat": 58.95661, "lon": 5.72551, "osm": "way/31780919" },
+    { "name": "Lille Ullevål", "type": "idrett", "lat": 58.95651, "lon": 5.72592, "osm": "way/31782569" },
+    { "name": "Våland", "type": "stedsnavn", "lat": 58.95835, "lon": 5.73099, "osm": "node/351122203" },
+    { "name": "Vålandshaugen", "type": "stedsnavn", "lat": 58.95724, "lon": 5.72816, "osm": "node/5761740690" },
+    { "name": "Hundvågtunnelen", "type": "tunnel", "lat": 58.96091, "lon": 5.72647, "osm": "way/192602764" },
+    { "name": "Eiganestunnelen", "type": "tunnel", "lat": 58.95822, "lon": 5.72588, "osm": "way/1176299259" },
+    { "name": "Strømsbrua", "type": "bru", "lat": 58.95532, "lon": 5.74468, "osm": "way/43892009" },
+    { "name": "Lagårdsveien", "type": "hovedvei", "lat": 58.96066, "lon": 5.73803, "osm": "way/34290006" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.6 Våland"
+  ],
+  "notes": "Roligste av de tette områdene i fase 4: skog, villaer og sykehusområdet Paradis. Syv sektorer. Vitusapotek Paradis og Aleris er IKKE nøkkelsted her (i motsetning til kartleggingsdokumentet): sentrum har allerede Mediegården, og tre apotek innen 1,5 km i fase 4 gir for mye medisin (jf. [Problem] i dok 1.7). Medisinen kommer i stedet fra Legesenteret og HQ-kandidaten. HQ-kandidat: gamle SUS på Våland (sykehus), valgt fordi det er byttehandelen med det fulle, nye SUS på Ullandhaug. Utelatt: Kannik skole og St. Johannes/Hetland gravlund (ligger i sentrum- og Storhaug-grensene i dagens oppsett). [Sjekk] Jernbaneporten og stasjonsplasseringen. [Sjekk] Våland skole står ikke i dumpen (bare barnehager), så Skolen er ikke med."
+}

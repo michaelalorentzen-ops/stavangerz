@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newGame, taskOptions } from '../src/engine';
+import { GATE_STRAGGLERS, newGame, taskOptions } from '../src/engine';
 import { dismissKey, stepFor, TUTORIAL } from '../src/ui/tutorial';
 import { BOT_SELF } from '../tools/bot';
 
@@ -52,8 +52,8 @@ describe('tutorial', () => {
   it('dag 2 godtar rydding av Hjemme så lenge det er zombier der, siden gjerdet da ikke kan bygges', () => {
     const s = game(), d = TUTORIAL[1].done;
     expect(TUTORIAL[1].text).toContain('rydd det ferdig først');
-    s.sectors.hjem.z = 2;
-    // gjerdet er ikke en gyldig ordre mens Hjemme er infisert
+    s.sectors.hjem.z = GATE_STRAGGLERS + 1;
+    // gjerdet er ikke en gyldig ordre mens Hjemme har mer enn noen få zombier
     expect(taskOptions(s).some((o) => o.type === 'befeste' && o.target === 'ros')).toBe(false);
     expect(d(s)).toBe(false);
     s.crew[0].task = { type: 'rydde', target: 'obs' };

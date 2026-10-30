@@ -1,7 +1,7 @@
 // Crewet: skader, død, ny leder, plass og rekruttering.
 import { dropGear, give, rollStarter, wear } from './cards';
-import { toktDef, toktSector } from './content/tokts';
-import { GATES, HEALTH_LABEL, NEIGHBORS, SECTORS, PLAYABLE } from './data';
+import { toktDef, toktSector } from '../regions/content';
+import { GATES, HEALTH_LABEL, LANDMARKS, NEIGHBORS, SECTOR_IDS, SECTORS } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';
 import type { CrewMember, DeathCause, GameState, LogKind, SectorId } from './types';
@@ -11,10 +11,17 @@ const RECRUIT_BASE = 0.15, RECRUIT_PER_PRAT = 0.05, RECRUIT_NOISE = 0.2;
 
 export type LogFn = (t: string, kind?: LogKind) => void;
 
+/** «Du», «Du og Mona», «Du, Mona og Tor-Egil»: komma mellom, «og» bare før siste. */
+export function nameList(names: string[]): string {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} og ${names[names.length - 1]}`;
+}
+/** Navnene på en gruppe crewmedlemmer som en leselig liste. */
+export const names = (cs: CrewMember[]): string => nameList(cs.map((c) => c.name));
+
 const EULOGY: ((c: CrewMember) => string)[] = [
   (c) => `Hvil i fred, ${c.name}. Vi tar vare på kaffekoppen din.`,
   (c) => `${c.name} er ikke lenger med oss. Teknisk sett er ${c.name} fortsatt med oss, bare ikke på vår side.`,
-  () => 'Crewet holder ett minutts stillhet. Det blir avbrutt av stønning fra Bybrua.',
+  () => `Crewet holder ett minutts stillhet. Det blir avbrutt av stønning fra ${LANDMARKS.bybrua}.`,
 ];
 
 /** Sektoren personen jobber i, eller 'stash' når personen er hjemme eller hviler. */
@@ -36,7 +43,8 @@ export function deathCause(c: CrewMember): DeathCause {
   if ((t.type === 'befeste' || t.type === 'vakt') && t.target in GATES) return 'natt';
   // Hjemme skader ingenting crewet i fase 1 i dag (encounters setter årsaken selv). Kartleggingen er for
   // senere nattangrep mot basen, så de havner under natt og ikke under kamp.
-  if (t.type === 'hvile' || t.type === 'pleie' || t.type === 'lage' || t.type === 'trene') return 'natt';
+  // arbeid i HQ-et (poster, istandsetting, reparasjon) regnes som hjemme
+  if (t.type === 'hvile' || t.type === 'pleie' || t.type === 'lage' || t.type === 'trene' || t.type === 'post' || t.type === 'istand' || t.type === 'reparere') return 'natt';
   return 'kamp';
 }
 
@@ -51,6 +59,8 @@ export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cau
     s.moral -= 15; s.stats.lost++; s.stats.deaths[cause]++;
     dropGear(s, c, where);
     s.crew = s.crew.filter((x) => x !== c);
+    s.flags[`gone_${c.id}`] = true; // de døde kommer aldri tilbake som rekrutter
+    s.flags[`dead_${c.id}`] = true;
     if (!s.crew.length) s.needLeader = false;
     else if (c.me) {
       s.needLeader = true;
@@ -62,9 +72,18 @@ export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cau
   }
 }
 
+/** En person forlater crewet for godt (ikke død). Utstyret havner på lageret, og personen kommer aldri tilbake som rekrutt. */
+export function leaveForGood(s: GameState, c: CrewMember) {
+  dropGear(s, c, 'stash');
+  s.crew = s.crew.filter((x) => x !== c);
+  s.flags[`gone_${c.id}`] = true;
+}
+
 /** Antall sengeplasser: summen av kapasitet i sektorer som er bosatt. */
 export function housing(s: GameState): number {
-  return PLAYABLE.reduce((n, id) => n + (s.sectors[id].settled ? SECTORS[id].capacity : 0), 0);
+  // låste sektorer (senere faser) gir ingen senger. Samme regel som activeSectors i sectors.ts.
+  return SECTOR_IDS.filter((id) => (SECTORS[id].opensInPhase ?? 1) <= s.phase)
+    .reduce((n, id) => n + (s.sectors[id]?.settled ? SECTORS[id].capacity : 0), 0);
 }
 
 export const canRecruit = (s: GameState): boolean => s.crew.length < housing(s);
@@ -82,23 +101,23 @@ export function setLeader(s: GameState, crewId: string): boolean {
 export function addNeighbor(s: GameState, id: string) {
   const n = NEIGHBORS.find((x) => x.id === id);
   if (!n) throw new Error(`Ukjent nabo: ${id}`);
-  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {} });
+  s.crew.push({ id: n.id, name: n.name, role: n.role, trait: n.trait, stats: { ...n.stats }, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, xp: 0 });
   give(s.crew[s.crew.length - 1], rollStarter(s));
 }
 
 /** Naboer som kan komme til porten: ikke i crewet og ikke borte for godt. */
-export const recruitablesNow = (s: GameState) => NEIGHBORS.filter((n) => !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
+export const recruitablesNow = (s: GameState) => NEIGHBORS.filter((n) => !n.special && !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
 
 /** Lete etter overlevende i en tom bolig. Kan gi et nytt crewmedlem, og kan lage bråk. */
 export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
   const sec = s.sectors[id], def = SECTORS[id];
   const prat = Math.max(...team.map((c) => stat(c, 'prat')));
   const chance = clamp(RECRUIT_BASE + (prat / 10) * RECRUIT_PER_PRAT, 0, 0.95);
-  const who = team.map((c) => c.name).join(' og ');
+  const who = names(team);
   if (rand(s) < chance) {
     const cands = recruitablesNow(s);
     if (!cands.length) log(`${who} ropte ${def.at}. Ingen svarte, bortsett fra en måke.`);
-    else if (!canRecruit(s)) log('Vi har ikke senger til flere. Noen i trappegangen i ' + def.short + ' ser veldig sultne ut.', 'warn');
+    else if (!canRecruit(s)) log(`Vi har ikke senger til flere. Noen i en trappegang ${def.at} ser veldig sultne ut.`, 'warn');
     else {
       const n = pick(s, cands);
       addNeighbor(s, n.id);

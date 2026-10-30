@@ -1,5 +1,5 @@
 // Kortvisning: små brettspillkort, spor på crewkortet, velger og lager.
-import { bestCopy, cardBonus, cardEffect, CARDS, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, STATS, toggleFavorite, unequip } from '../engine';
+import { AREA, bestCopy, cardBonus, cardEffect, CARDS, CLASS_LABEL, noiseOfDef, WEIGHT_LABEL, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, STATS, toggleFavorite, unequip } from '../engine';
 import type { CardDef, CardInst, CrewMember, Slot, StatKey } from '../engine';
 import { $, esc, game, ui } from './store';
 
@@ -39,8 +39,12 @@ const RANGE_LABEL = { naerkamp: 'Nærkamp', avstand: 'Avstand' };
 const NOISE_LABEL = { stille: 'Stille', normal: 'Normal støy', brak: 'Bråk' };
 export const TAG_LABEL = { gjennomslag: 'Gjennomslag', spredning: 'Spredning', rekkevidde: 'Rekkevidde' };
 /** Små merker for våpen: nærkamp eller avstand, støy og taggene. */
-export const weaponBadges = (d: (typeof CARDS)[string]): string => d.slot !== 'vapen' ? '' :
-  `<div class="gc-tags">${d.range ? `<span class="tagchip">${RANGE_LABEL[d.range]}</span>` : ''}<span class="tagchip n-${d.noise ?? 'normal'}">${NOISE_LABEL[d.noise ?? 'normal']}</span>${(d.tags ?? []).map((t) => `<span class="tagchip t">${TAG_LABEL[t]}</span>`).join('')}</div>`;
+export const weaponBadges = (d: (typeof CARDS)[string]): string => {
+  if (d.slot === 'beskyttelse') return d.weight ? `<div class="gc-tags"><span class="tagchip w-${d.weight}">${WEIGHT_LABEL[d.weight]}</span></div>` : '';
+  if (d.slot !== 'vapen') return '';
+  const noise = noiseOfDef(d);
+  return `<div class="gc-tags">${d.weaponClass ? `<span class="tagchip c-${d.weaponClass}">${CLASS_LABEL[d.weaponClass]}</span>` : ''}${d.range ? `<span class="tagchip">${RANGE_LABEL[d.range]}</span>` : ''}<span class="tagchip n-${noise}">${NOISE_LABEL[noise]}</span>${(d.tags ?? []).map((t) => `<span class="tagchip t">${TAG_LABEL[t]}</span>`).join('')}</div>`;
+};
 
 /** Ett kort, eller en stabel med identiske kort. Navn, spor, nivå, bonus, holdbarhet, demonteringsverdi og tekst i kursiv. */
 export function cardHtml(k: CardInst, group: CardInst[] = [k], inStash = false, forCrew: CrewMember | null = null): string {
@@ -91,7 +95,7 @@ function pickerHtml(c: CrewMember, slot: Slot): string {
   const cur = c.gear[slot];
   return `<div class="picker">
     ${cur ? `<div class="pk"><div class="gc-label">Utstyrt</div>${cardHtml(cur)}<button class="btn ghost small" data-unequip="${slot}" data-crew="${c.id}">Ta av</button></div>` : ''}
-    ${groupStash(fits).map((g) => `<div class="pk">${cardHtml(g.cards[0], g.cards, false, c)}<button class="btn small" data-equip="${bestCopy(g.cards).uid}" data-crew="${c.id}">Ta på</button></div>`).join('')}
+    ${groupStash(fits).map((g) => `<div class="pk"><div class="pk-hit" role="button" tabindex="0" data-hit="${bestCopy(g.cards).uid}" data-crew="${c.id}" aria-label="Ta på ${esc(CARDS[g.def].name)}">${cardHtml(g.cards[0], g.cards, false, c)}</div><button class="btn small pk-take" data-equip="${bestCopy(g.cards).uid}" data-crew="${c.id}">Ta på</button></div>`).join('')}
     ${!cur && !fits.length ? `<p class="hint">Ingen ${SLOT_LABEL[slot].toLowerCase()}-kort på lageret.</p>` : ''}
   </div>`;
 }
@@ -121,7 +125,7 @@ export function bindCards(root: HTMLElement) {
     const d = CARDS[k.def];
     if (d.rarity === 'unik') {
       // unike kort finnes bare ett av, så demontering må bekreftes
-      if (!confirm(`${d.name} er unik. Det finnes ikke flere av den i Stavanger. Demontere likevel for ${salvageValue(d).skrap} skrap?`)) return;
+      if (!confirm(`${d.name} er unik. Det finnes ikke flere av den i ${AREA.city}. Demontere likevel for ${salvageValue(d).skrap} skrap?`)) return;
       salvage(game(), k.uid, { allowUnique: true });
     } else salvage(game(), k.uid);
     ui.refresh();
@@ -130,6 +134,12 @@ export function bindCards(root: HTMLElement) {
     equip(game(), b.dataset.crew!, b.dataset.equip!);
     ui.refresh();
   }));
+  // hele kortet i velgeren er klikkbart (knapper og kopilisten i kortet har egne handlinger)
+  root.querySelectorAll<HTMLElement>('[data-hit]').forEach((el) => {
+    const take = () => { equip(game(), el.dataset.crew!, el.dataset.hit!); ui.refresh(); };
+    el.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('button, summary, details')) take(); });
+    el.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === el) { e.preventDefault(); take(); } });
+  });
   root.querySelectorAll<HTMLButtonElement>('[data-unequip]').forEach((b) => b.addEventListener('click', () => {
     unequip(game(), b.dataset.crew!, b.dataset.unequip as Slot);
     ui.refresh();

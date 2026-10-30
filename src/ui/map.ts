@@ -1,7 +1,7 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
-import { GATE_IDS, GATES, SECTORS, sectorIntel, toktAvailable, TOKTS } from '../engine';
-import type { CrewMember } from '../engine';
+import { GATE_IDS, GATES, HQ_SECTOR, isLocked, SECTORS, sectorIntel, toktAvailable, toktDays, TOKTS, ZONES } from '../engine';
+import type { CrewMember, SectorId } from '../engine';
 import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
 
@@ -64,7 +64,7 @@ export function buildStaticMap(onSelect: (s: Selection) => void) {
   el('path', { ...road, d: MAP.roads.minor, stroke: 'var(--road)', 'stroke-width': 3 }, root);
   el('path', { ...road, d: MAP.roads.major, stroke: 'var(--road-major)', 'stroke-width': 6 }, root);
 
-  // tåke over alt som ikke er Buøy
+  // tåke over alt som ikke er startområdet
   const fogBox = { x: x - 300, y: y - 300, width: w + 600, height: h + 600, mask: 'url(#fogmask)' };
   el('rect', { ...fogBox, filter: 'url(#fog)' }, root);
   el('rect', { ...fogBox, fill: '#070d12', 'fill-opacity': 0.2 }, root);
@@ -77,12 +77,12 @@ export function buildStaticMap(onSelect: (s: Selection) => void) {
   // fremtidige soner
   const zones = el('g', {}, root);
   for (const z of MAP.zones) {
-    const p = el('path', { d: z.d, class: 'zone', 'data-zone': z.id, tabindex: 0, role: 'button', 'aria-label': z.name }, zones);
+    const p = el('path', { d: z.d, class: 'zone', 'data-zone': z.id, tabindex: 0, role: 'button', 'aria-label': ZONES[z.id].name }, zones);
     onActivate(p, () => onSelect({ kind: 'zone', id: z.id }));
   }
   for (const z of MAP.zones) {
-    text(zones, { x: z.cx, y: z.cy, class: 'lab zone', 'text-anchor': 'middle' }, z.name);
-    text(zones, { x: z.cx, y: z.cy + 30, class: 'lab zsub', 'text-anchor': 'middle' }, z.id === 'hundvag' ? 'Fase 3 · ukjent' : 'Ukjent');
+    text(zones, { x: z.cx, y: z.cy, class: 'lab zone', 'text-anchor': 'middle' }, ZONES[z.id].name);
+    text(zones, { x: z.cx, y: z.cy + 30, class: 'lab zsub', 'text-anchor': 'middle' }, ZONES[z.id].phase ? `Fase ${ZONES[z.id].phase} · ukjent` : 'Ukjent');
   }
 
   dyn = el('g', {}, root);
@@ -123,12 +123,13 @@ export function renderMap(onSelect: (s: Selection) => void) {
   const tokensBy: Record<string, CrewMember[]> = {};
   for (const c of S.crew) {
     const t = c.task;
-    const key = !('target' in t) ? 'hjem' : t.type === 'tokt' ? `t_${t.target}` : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
+    // poster, istandsetting og reparasjon skjer i HQ-et
+    const key = t.type === 'post' || t.type === 'istand' || t.type === 'reparere' ? HQ_SECTOR : !('target' in t) ? 'hjem' : t.type === 'tokt' ? `t_${t.target}` : t.type === 'befeste' || (t.type === 'vakt' && t.target in GATES) ? `g_${t.target}` : t.target;
     (tokensBy[key] ??= []).push(c);
   }
   for (const m of MAP.sectors) {
     const id = m.id;
-    const cls = id === 'rosenberg' ? 's-lock' : S.sectors[id].z > 0 ? 's-inf' : sectorIntel(S, id).safe ? 's-safe' : 's-clr';
+    const cls = isLocked(S, id) ? 's-lock' : S.sectors[id as SectorId].z > 0 ? 's-inf' : sectorIntel(S, id as SectorId).safe ? 's-safe' : 's-clr';
     const g = el('g', { class: `sector ${cls}${sel.kind === 'sector' && sel.id === id ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': SECTORS[id].name }, dyn);
     el('path', { d: m.d, class: 'fillbase' }, g);
     el('path', { d: m.d, class: 'edge', 'stroke-linejoin': 'round' }, g);
@@ -136,14 +137,14 @@ export function renderMap(onSelect: (s: Selection) => void) {
   }
   for (const m of MAP.sectors) {
     const mid = { 'text-anchor': 'middle' };
-    if (m.id === 'rosenberg') {
+    if (isLocked(S, m.id)) {
       text(dyn, { ...mid, x: m.cx, y: m.cy - 10, class: 'lab big' }, 'HORDE');
-      text(dyn, { ...mid, x: m.cx, y: m.cy + 28, class: 'lab' }, 'Rosenberg Verft');
-      text(dyn, { ...mid, x: m.cx, y: m.cy + 58, class: 'lab sub inf' }, 'Fase 2');
+      text(dyn, { ...mid, x: m.cx, y: m.cy + 28, class: 'lab' }, SECTORS[m.id].name);
+      text(dyn, { ...mid, x: m.cx, y: m.cy + 58, class: 'lab sub inf' }, `Fase ${SECTORS[m.id].opensInPhase}`);
       continue;
     }
-    const intel = sectorIntel(S, m.id);
-    const inf = S.sectors[m.id].z > 0;
+    const intel = sectorIntel(S, m.id as SectorId);
+    const inf = S.sectors[m.id as SectorId].z > 0;
     text(dyn, { ...mid, x: m.cx, y: m.cy - 40, class: 'lab sub kind' }, KIND_ICON[SECTORS[m.id].kind]);
     text(dyn, { ...mid, x: m.cx, y: m.cy - 6, class: 'lab' }, SECTORS[m.id].short);
     text(dyn, { ...mid, x: m.cx, y: m.cy + 22, class: `lab sub ${inf ? 'inf' : intel.safe ? 'safe' : 'clr'}` }, inf ? `${intel.estimate} Z` : intel.safe ? '✓ Trygg' : `${intel.searched} %`);
@@ -174,7 +175,7 @@ function drawTokts(onSelect: (s: Selection) => void, tokensBy: Record<string, Cr
     const y = isGate ? (p as { y: number }).y - 34 : (p as { cy: number }).cy - 70;
     const g = el('g', { class: `toktmark${active ? ' out' : ''}`, transform: `translate(${x} ${y})`, tabindex: 0, role: 'button', 'aria-label': `Tokt: ${d.name}` }, dyn);
     el('path', { class: 'flag', d: 'M0 22 V-22 L30 -12 L0 -2' }, g);
-    text(g, { x: 14, y: 42, 'text-anchor': 'middle' }, active ? `Dag ${active.stage}/${d.days}` : 'Tokt');
+    text(g, { x: 14, y: 42, 'text-anchor': 'middle' }, active ? `Dag ${active.stage}/${toktDays(S, d)}` : 'Tokt');
     onActivate(g, () => onSelect(isGate ? { kind: 'gate', id: d.at as keyof typeof GATES } : { kind: 'sector', id: d.at as never }));
     drawTokens(tokensBy[`t_${d.id}`], x + 14, y + 90);
   }

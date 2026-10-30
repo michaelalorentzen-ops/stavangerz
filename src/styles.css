@@ -35,6 +35,8 @@ button { cursor: pointer; }
 .r .v { font: 500 18px/1.1 var(--f-mono); font-variant-numeric: tabular-nums; }
 .r .d { font: 12px/1 var(--f-mono); color: var(--faint); }
 .r.low .v { color: var(--red); }
+.r.low .d { color: var(--red); }
+.task-help.low { color: var(--red); border-color: var(--red); }
 .moral { min-width: 92px; }
 .moral .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 5px; grid-column: 1 / -1; }
 .moral .bar i { display: block; height: 100%; background: var(--amber); }
@@ -115,6 +117,7 @@ button { cursor: pointer; }
 
 .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 10px; }
 .card h2 { margin: 0; font: 700 26px/1.05 var(--f-cond); letter-spacing: .04em; text-transform: uppercase; text-wrap: balance; }
+.card .real { margin: 2px 0 0; font: 500 12px/1.2 var(--f-mono); letter-spacing: .06em; color: var(--muted); }
 .card p { margin: 0; color: #c9c3b6; }
 .badge { justify-self: start; font: 700 12px/1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; padding: 4px 7px; border-radius: 3px; }
 .badge.inf { background: var(--red-soft); color: #ff8b8e; }
@@ -137,6 +140,8 @@ button { cursor: pointer; }
 .metric .v { font: 500 18px/1.3 var(--f-mono); font-variant-numeric: tabular-nums; }
 .metric .v small { font-size: 11px; color: var(--muted); }
 .hint { font-size: 13px; color: var(--muted); }
+.preview { margin: 0; padding: 6px 8px; border-left: 2px solid var(--teal); background: var(--panel-2); font-size: 13px; color: var(--ink); }
+.preview b { color: var(--teal); font-weight: 600; }
 .seg { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .seg button { flex: 1; border: 0; background: none; padding: 7px 8px; font: 600 13px/1 var(--f-cond); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .seg button[aria-pressed="true"] { background: var(--line); color: var(--ink); }
@@ -212,7 +217,7 @@ button { cursor: pointer; }
 
 /* ---- modal ---- */
 .modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); background: rgba(5,10,14,.78); backdrop-filter: blur(3px); overflow-y: auto; }
-.sheet { width: min(640px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; display: grid; gap: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.sheet { box-sizing: border-box; width: min(640px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; display: grid; gap: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
 .sheet.wide { width: min(980px, 100%); }
 .sheet h2 { margin: 0; font: 700 30px/1.05 var(--f-cond); letter-spacing: .04em; text-transform: uppercase; text-wrap: balance; }
 .sheet p { margin: 0; max-width: 62ch; }
@@ -323,6 +328,8 @@ button { cursor: pointer; }
 .tagchip { font: 700 9px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; background: var(--line); color: var(--muted); }
 .tagchip.n-brak { background: var(--red-soft); color: #ff8b8e; }
 .tagchip.n-stille { background: rgba(123,196,127,.16); color: var(--green); }
+.tagchip[class*="c-"], .tagchip[class*="w-"] { background: rgba(120,160,220,.16); color: #8fb4ec; }
+.tagchip.w-tung { background: rgba(180,140,90,.2); color: #d2a86a; }
 .tagchip.t { background: var(--amber-soft); color: var(--amber); }
 .choice.retreat { border-style: dashed; }
 .choice small b { color: var(--amber); font-weight: 600; }
@@ -348,3 +355,58 @@ button { cursor: pointer; }
 /* tutorial */
 .card.tut { border-color: var(--amber); }
 .card.tut .row { display: flex; gap: 8px; justify-content: flex-start; }
+
+/* Fase 2: HQ-kortet, postene og mutasjonene i overgangen */
+.card.hq { gap: 12px; }
+.fac { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
+.fac-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fac-top b { font: 700 17px/1.1 var(--f-cond); letter-spacing: .04em; text-transform: uppercase; }
+.fac .chip { min-height: 44px; }
+.posts { margin-bottom: 10px; }
+.post { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; }
+.post > div { min-width: 0; flex: 1 1 160px; }
+.post small { color: var(--muted); }
+.post select { min-height: 44px; flex: 0 1 180px; max-width: 100%; }
+.mutlist { margin: 0; padding-left: 18px; display: grid; gap: 8px; color: #c9c3b6; }
+.mutlist small { font: 500 11px var(--f-mono); color: var(--muted); }
+
+/* Rekorder, låste grader og seed */
+.pick.locked { opacity: .55; cursor: not-allowed; }
+.pick.locked .nm small { font: 600 11px var(--f-cond); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+.records { border-collapse: collapse; font: 14px var(--f-body); width: min(420px, 100%); }
+.records th, .records td { text-align: left; padding: 4px 12px 4px 0; font-variant-numeric: tabular-nums; }
+.records thead th { font: 600 11px var(--f-cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.records tbody th { font-weight: 600; }
+.seedin summary { cursor: pointer; font-size: 13px; color: var(--muted); min-height: 24px; }
+.seedin .field { margin-top: 8px; }
+.seedcode { font: 600 13px var(--f-mono); letter-spacing: .12em; color: var(--ink); user-select: all; }
+.recnote { display: grid; gap: 6px; }
+
+/* Crew på bred skjerm: navnet får fast plass, chipsene byttes ikke om når teksten endres */
+.cm { grid-template-columns: minmax(150px, 1fr) minmax(0, 1.25fr); }
+.cm .nm { min-width: 7ch; }
+.chip { display: inline-flex; align-items: baseline; justify-content: center; gap: 4px; width: 148px; overflow: hidden; white-space: nowrap; min-height: 32px; box-sizing: border-box; }
+.chip small { margin-left: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+@media (max-width: 860px) { .chip, .btn, .seedin summary, .pick, .pk-take { min-height: 44px; align-items: center; } .seedin summary { display: flex; }
+  .panel summary, .seg button, .cmp select { min-height: 44px; }
+  .panel summary { display: flex; align-items: center; }
+  .fav { min-width: 44px; min-height: 44px; margin: -12px -10px -12px -12px; }
+}
+@media (max-width: 380px) { .cm { grid-template-columns: 1fr; } .chip { width: auto; flex: 1 1 124px; } }
+/* hele kortet i velgeren er et mål */
+.pk { position: relative; }
+.pk .pk-hit { cursor: pointer; border-radius: 6px; }
+.pk .pk-hit:hover .gc { border-color: var(--amber); }
+.pk .pk-hit:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.pk .pk-take { justify-self: start; }
+
+/* Planer i Crew-fanen */
+.plans { margin-bottom: 10px; }
+.plan-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.plan-row:empty { display: none; }
+.plan-chip { display: inline-flex; }
+.plan-chip .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.plan-chip .plan-x { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; min-width: 44px; }
+.plan-row .btn, .plan-save .btn, .plan-save input { min-height: 44px; }
+.plan-save { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.plan-save input { flex: 1 1 140px; min-width: 0; padding: 0 10px; }

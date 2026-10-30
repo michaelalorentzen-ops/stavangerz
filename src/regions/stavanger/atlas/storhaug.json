@@ -1,0 +1,166 @@
+{
+  "id": "storhaug",
+  "name": "Storhaug",
+  "at": "på Storhaug",
+  "ring": 2,
+  "phase": 4,
+  "density": 4,
+  "baseThreat": 3,
+  "gates": [
+    {
+      "name": "Brutunnelen",
+      "real": "Bybrutunnelen og Haugesundsgata",
+      "between": ["storhaug", "vestoyene"],
+      "lat": 58.9685,
+      "lon": 5.7491,
+      "notes": "Bybrutunnelen fra Bybrua kommer ut i Haugesundsgata. Alt fra Vestøyene og Buøy som ikke går via sentrum, kommer hit."
+    },
+    {
+      "name": "Haugesundsgata mot sentrum",
+      "real": "Haugesundsgata og Lenden",
+      "between": ["storhaug", "sentrum"],
+      "lat": 58.9702,
+      "lon": 5.7436,
+      "notes": "Hetlandsgata og Haugesundsgata inn mot Bergelandstunnelen. Trangt, tett og full av parkerte biler."
+    },
+    {
+      "name": "Strømsbrua",
+      "real": "Strømsbrua",
+      "between": ["storhaug", "valand"],
+      "lat": 58.9556,
+      "lon": 5.7459,
+      "notes": "Over Hillevågsvannet mot Paradis og Våland. Smal, med jernbanen rett ved siden av."
+    },
+    {
+      "name": "Tunnelen mot Hillevåg",
+      "real": "Storhaugtunnelen",
+      "between": ["storhaug", "hillevag"],
+      "lat": 58.9560,
+      "lon": 5.7477,
+      "notes": "Sørenden av Storhaugtunnelen. Trafikk fra Hillevåg og Sandnes-siden."
+    },
+    {
+      "name": "Lervigkaia",
+      "real": "Lervig brygge",
+      "between": ["storhaug", "hundvag"],
+      "lat": 58.9645,
+      "lon": 5.7673,
+      "notes": "Sjøsiden mot Hundvåg. Åpen for Svømmere."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "stoperigarden",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Extra og Europris i Støperigården", "realAt": "i Støperigården",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 3,
+      "lat": 58.9702, "lon": 5.7534,
+      "gives": "mat, vann, litt husholdning fra Europris",
+      "notes": "Støperigården har både Extra, Europris og to apotek, men apotekene er plyndret og bare omtalt i teksten. Tett: varene tar slutt."
+    },
+    {
+      "id": "haugesundsgata_tank",
+      "name": "Bensinstasjonen", "short": "Bensinstasjonen", "at": "på bensinstasjonen",
+      "real": "Circle K Haugesundsgaten", "realAt": "på Circle K Haugesundsgaten",
+      "kind": "industri", "shopType": "bensinstasjon", "threat": 3,
+      "lat": 58.9687, "lon": 5.7507,
+      "gives": "drivstoff, snacks, litt verktøy",
+      "notes": "Rett ved Bybrutunnelen. Vil du ha drivstoff og samtidig være tilbake på Vestøyene før mørket, er det her."
+    },
+    {
+      "id": "lervig_brygge",
+      "name": "Blokkene", "short": "Blokkene", "at": "i blokkene",
+      "real": "Lervig brygge", "realAt": "på Lervig brygge",
+      "kind": "bolig", "threat": 4,
+      "lat": 58.9655, "lon": 5.7635,
+      "gives": "mange folk, mange zombier, mat i leilighetene, parkeringskjellere, heis",
+      "notes": "Nye boligblokker langs Byfjorden, med Kiwi i første etasje. Trappeoppgangene er trange og kjellerne dype."
+    },
+    {
+      "id": "kjelvene",
+      "name": "Rekkehusene", "short": "Rekkehusene", "at": "i rekkehusene",
+      "real": "Kjelvene og Jammerdalen", "realAt": "i Kjelvene og Jammerdalen",
+      "kind": "bolig", "threat": 3,
+      "lat": 58.9695, "lon": 5.7500,
+      "gives": "mange naboer å rekruttere, korte avstander, få kjellere",
+      "notes": "Trehusene i Kjelvene og Jammerdalen. Trangt, tett og brannfarlig. Brannvåpen er effektive her, men bydelen kan ta fyr [Åpent]."
+    },
+    {
+      "id": "storhaug_skole",
+      "name": "Skolen", "short": "Skolen", "at": "på skolen",
+      "real": "Lervig skole og Nylund skole", "realAt": "på Lervig skole",
+      "kind": "offentlig", "threat": 2,
+      "lat": 58.9670, "lon": 5.7576,
+      "gives": "mat fra skolekjøkkenet, plass, gymsal",
+      "notes": "Lervig skole er den som står nærmest brannstasjonen. [Sjekk] Nylund skole (58,9647, 5,7508) er nærmere Storhaug sentrum."
+    },
+    {
+      "id": "storhaug_hall",
+      "name": "Idrettshallen", "short": "Idrettshallen", "at": "på idrettshallen",
+      "real": "Storhaug idrettshall og Midjord", "realAt": "på Storhaug idrettshall",
+      "kind": "offentlig", "threat": 2,
+      "lat": 58.9591, "lon": 5.7572,
+      "gives": "plass til mange, idrettsutstyr, matter",
+      "notes": "Midjord idrettspark og hallen. Sørover mot Ramsvig og Rosendal."
+    },
+    {
+      "id": "verket",
+      "name": "Industriområdet", "short": "Industriområdet", "at": "på industriområdet",
+      "real": "Verket og Bekhuskaien", "realAt": "på Verket og Bekhuskaien",
+      "kind": "industri", "threat": 3,
+      "lat": 58.9722, "lon": 5.7440,
+      "gives": "skrap, metall, tau, litt drivstoff",
+      "notes": "Verkene og kaia mellom Bybrua og Haugesundsgata. Nær porten mot Vestøyene."
+    },
+    {
+      "id": "storhaugmarka",
+      "name": "Parken", "short": "Parken", "at": "i parken",
+      "real": "Storhaugmarka og Kyviksmarka", "realAt": "i Storhaugmarka",
+      "kind": "natur", "threat": 1,
+      "lat": 58.9640, "lon": 5.7490,
+      "gives": "litt av alt, åpent og oversiktlig, utsikt over Storhaug",
+      "notes": "Det eneste stedet på Storhaug der man kan se bort fra husveggene. Måkene vet det også."
+    }
+  ],
+  "hqCandidate": {
+    "id": "varmen",
+    "type": "brannstasjon",
+    "name": "Brannstasjonen", "short": "Brannstasjonen", "at": "på brannstasjonen",
+    "real": "Varmen brannstasjon, Lervig", "realAt": "på Varmen brannstasjon",
+    "kind": "offentlig", "threat": 5,
+    "lat": 58.96609, "lon": 5.76026,
+    "gives": "brannbiler (kjøretøy med vann og stige), aggregat, førstehjelp, brannvåpen (fakler, gass)",
+    "notes": "Låst: porten står åpen til dem som ikke lenger har noe å varsle. [Sjekk] OSM har Varmen ved 58,966, 5,760. Statsforvalteren ga løyve i 2021 til ny brannstasjon i Lervig: er det samme bygg, og er den i drift?"
+  },
+  "pois": [
+    { "name": "Varmen brannstasjon", "type": "hq_kandidat", "lat": 58.96609, "lon": 5.76026, "osm": "way/1088930980" },
+    { "name": "Extra Støperigården", "type": "matbutikk", "lat": 58.97017, "lon": 5.75337, "osm": "node/452556602" },
+    { "name": "Europris Støperigaten Stavanger", "type": "matbutikk", "lat": 58.97015, "lon": 5.7534, "osm": "node/590989251" },
+    { "name": "Extra Lervig", "type": "matbutikk", "lat": 58.96774, "lon": 5.75543, "osm": "node/3870600844" },
+    { "name": "Kiwi Lervig brygge", "type": "matbutikk", "lat": 58.96532, "lon": 5.76159, "osm": "node/2180171999" },
+    { "name": "Coop Prix Badedammen", "type": "matbutikk", "lat": 58.97181, "lon": 5.74907, "osm": "node/388585491" },
+    { "name": "Rema 1000 Storhaug", "type": "matbutikk", "lat": 58.96595, "lon": 5.75843, "osm": "node/1726378728" },
+    { "name": "Apotek 1 Østre bydel", "type": "apotek", "lat": 58.96792, "lon": 5.75548, "osm": "node/6336088348" },
+    { "name": "Støperigården apotek", "type": "apotek", "lat": 58.97009, "lon": 5.75384, "osm": "node/11033712699" },
+    { "name": "Circle K Haugesundsgaten", "type": "bensinstasjon", "lat": 58.96872, "lon": 5.7507, "osm": "node/6066248796" },
+    { "name": "Lervig skole", "type": "skole", "lat": 58.96704, "lon": 5.75764, "osm": "node/12636051468" },
+    { "name": "Nylund skole", "type": "skole", "lat": 58.96474, "lon": 5.75078, "osm": "way/1557802264" },
+    { "name": "Storhaug idrettshall", "type": "idrett", "lat": 58.95912, "lon": 5.7572, "osm": "way/32774946" },
+    { "name": "Midjord idrettspark 1", "type": "idrett", "lat": 58.95971, "lon": 5.75489, "osm": "way/32774929" },
+    { "name": "Verket", "type": "industri", "lat": 58.97217, "lon": 5.74332, "osm": "way/32871619" },
+    { "name": "Bekhuskaien", "type": "kai", "lat": 58.97255, "lon": 5.7449, "osm": "way/33914534" },
+    { "name": "Storhaugmarka", "type": "natur", "lat": 58.96298, "lon": 5.74903, "osm": "way/31755485" },
+    { "name": "Kyviksmarka", "type": "natur", "lat": 58.96861, "lon": 5.74269, "osm": "way/202801155" },
+    { "name": "Kjelvene", "type": "stedsnavn", "lat": 58.9692, "lon": 5.75132, "osm": "node/530680988" },
+    { "name": "Jammerdalen", "type": "stedsnavn", "lat": 58.97046, "lon": 5.74949, "osm": "node/2405798383" },
+    { "name": "Lervig", "type": "stedsnavn", "lat": 58.9675, "lon": 5.75666, "osm": "node/10004622011" },
+    { "name": "Bybrutunnelen", "type": "tunnel", "lat": 58.96853, "lon": 5.74908, "osm": "way/31722444" },
+    { "name": "Storhaugtunnelen", "type": "tunnel", "lat": 58.95603, "lon": 5.74772, "osm": "way/842268294" },
+    { "name": "Strømsbrua", "type": "bru", "lat": 58.95579, "lon": 5.74672, "osm": "way/91650982" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.5 Storhaug"
+  ],
+  "notes": "Fastlands-Storhaug (bbox strammet til: administrativ grense for Storhaug inneholder også Vassøy, Lindøy og Langøy, som ikke er med). Mest hus i atlaset (rundt 1 740 hus, 340 blokker, 180 rekkehus), tett men mer mangfoldig enn sentrum: matbutikk, bensinstasjon, blokker, trehus, skole, idrettshall, industri og en park. Ingen nøkkelsted, med vilje: Apotek 1 Østre bydel og Støperigården apotek finnes, men sentrum ligger ved siden av og har allerede apoteket. HQ-kandidat: Varmen brannstasjon (kjøretøy og vann). Ingen klesbutikk, interiør eller elektronikk: det er sentrum. Spilleren får kjøre til Storhaug for mat, drivstoff og folk, ikke for shopping. [Åpent] Trehusene kan få en egen brannregel."
+}

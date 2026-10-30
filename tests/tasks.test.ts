@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canEndDay, canRecruit, checkEnd, GATE_IDS, housing, injure, NEIGHBORS, newGame, PLAYABLE, resolveDay, sameTask, sectorIntel,
+  canEndDay, canRecruit, checkEnd, GATE_IDS, housing, injure, NEIGHBORS, newGame, PLAYABLE, resolveDay as resolveDayAndDrawEvent, sameTask, sectorIntel,
   setLeader, stat, taskKey, taskOptions, addNeighbor, TOKTS,
 } from '../src/engine';
 import type { GameState, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
 const fresh = (seed = 42) => newGame(seed, BOT_SELF, ['arild', 'mona', 'toregil']);
+/** Dagsoppgjøret uten dagens hendelse: testene her gjelder dagen, ikke hendelseskortene. */
+const resolveDay = (s: GameState) => { const L = resolveDayAndDrawEvent(s); s.event = null; return L; };
 const me = (s: GameState) => s.crew.find((c) => c.me)!;
 const nobody = () => undefined;
 /** Alle sektorer tomme og rolige, alle porter på nivå 3. */
@@ -22,7 +24,7 @@ describe('Vakt på port', () => {
     sealed(s);
     GATE_IDS.forEach((g, i) => { s.crew[i].task = { type: 'vakt', target: g }; });
     for (let i = 0; i < 100; i++) {
-      s.day = 40; s.over = null;
+      s.day = 40; s.over = null; s.res.mat = 20; s.res.vann = 20; // sult tar livet av vaktene på 100 dager
       resolveDay(s);
       expect(totalZ(s)).toBe(0);
     }

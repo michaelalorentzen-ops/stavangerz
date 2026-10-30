@@ -54,20 +54,26 @@ src/
   engine/             spillmotoren, ren TypeScript uten DOM
     types.ts          spilltilstand og ordre
     phases.ts         fasetabellen og zombieevner
-    data.ts           sektorer, sperringer, naboer, egenskaper
+    data.ts           ferdigheter, ressurser og typer for sektorer og porter
     engine.ts         newGame, resolveDay, taskOptions …
-    sectors.ts, crew.ts, skills.ts, cards.ts, encounters.ts, tokt.ts
-                      reglene for sektorer, crew, ferdigheter, utstyr, encounters og tokt
-    content/          innhold: utstyrskort, encounters, tokt og mutasjoner
-    events.ts         hendelseskort
+    sectors.ts, crew.ts, skills.ts, cards.ts, encounters.ts, tokt.ts, events.ts
+                      reglene for sektorer, crew, ferdigheter, utstyr, encounters, tokt og hendelser
     rng.ts            seedet tilfeldighet
+  regions/            regionpakker (se docs/region.md)
+    active.ts, content.ts   velger regionen spillet bruker
+    stavanger/
+      ids.ts          id-er for sektorer, porter, soner og flagg
+      places.ts       stedsnavn, sektorer, porter, soner (eneste kilde for navn)
+      people.ts       naboer og egenskaper
+      content/        utstyrskort, encounters, hendelser, tokt, mutasjoner og faste tekster
+      map.config.json oppsett for kartbyggingen
   ui/                 kart, panel og dialoger
   data/map.json       ferdigbygget kart (generert)
 tests/                Vitest-tester for motoren, fasene, hendelsene og balansen
 tools/
   bot.ts, sim.ts      bot og balansesimulering
-  fetch_osm.sh        henter rådata fra OpenStreetMap til data/osm.json
-  build_map.py        gjør rådata om til kart og soner
+  fetch_osm.sh        henter rådata fra OpenStreetMap til data/osm.json (leser regionens map.config.json)
+  build_map.py        gjør rådata om til kart og soner (leser regionens map.config.json)
   artifact.mjs        lager dist/artifact.html for publisering som Claude-artifact
 ```
 

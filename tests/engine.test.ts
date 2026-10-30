@@ -143,7 +143,7 @@ describe('lagring', () => {
 
 describe('oppsett', () => {
   it('starter med de nye ressursene', () => {
-    expect(fresh().res).toEqual({ mat: 14, vann: 10, medisin: 2, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 });
+    expect(fresh().res).toEqual({ mat: 14, vann: 10, medisin: 0, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 });
   });
 
   it('regner spillerens prikker om til ferdigheter 1–100', () => {
