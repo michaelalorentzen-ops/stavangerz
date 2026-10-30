@@ -30,6 +30,17 @@ export type Selection =
   | { kind: 'gate'; id: GateId }
   | { kind: 'zone'; id: string };
 
+export type PanelTab = 'sted' | 'crew' | 'lager' | 'logg';
+export const PANEL_TABS: PanelTab[] = ['sted', 'crew', 'lager', 'logg'];
+const TAB_KEY = 'stavanger-z-tab';
+function loadTab(): PanelTab {
+  try { const t = sessionStorage.getItem(TAB_KEY) as PanelTab | null; return t && PANEL_TABS.includes(t) ? t : 'sted'; } catch { return 'sted'; }
+}
+export function setTab(t: PanelTab) {
+  ui.tab = t;
+  try { sessionStorage.setItem(TAB_KEY, t); } catch { /* fanen huskes da bare til siden lastes på nytt */ }
+}
+
 export const ui = {
   /** null bare før første runde er startet */
   S: null as GameState | null,
@@ -40,6 +51,12 @@ export const ui = {
   stashSort: 'spor' as 'spor' | 'nivå' | 'sjeldenhet' | 'holdbarhet',
   /** åpen kortvelger på et crewkort */
   picker: null as { crewId: string; slot: Slot } | null,
+  /** crewraden som er foldet ut, bare én om gangen */
+  openCrew: null as string | null,
+  /** personen lageret sammenligner kortene mot */
+  compareCrew: null as string | null,
+  /** valgt fane i panelet, huskes i sessionStorage */
+  tab: loadTab(),
   /** true mens forhåndsvisningen bak tittelskjermen tegnes, så den ikke lagres */
   previewing: false,
   /** settes av main.ts, tegner alt på nytt */
