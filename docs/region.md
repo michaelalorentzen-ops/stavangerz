@@ -26,7 +26,7 @@ Endre navnet i `places.ts`. Alle tekster, logglinjer og UI-en henter navnet derf
 2. **Kopier `stavanger/`** til en ny mappe, for eksempel `src/regions/bergen/`.
 3. **`ids.ts`:** skriv inn id-ene. Sektoren `hjem` må finnes i alle regioner. Det er der crewet bor, og der Hvile, Trene, Lage og Pleie skjer.
 4. **`map.config.json`:** sett utsnittet (bbox), origo og frøpunktene for sektorene. Hvert felt har en `_doc` som forklarer det. Hent data én gang med `tools/fetch_osm.sh <config>`, og bygg kartet med `python tools/build_map.py <osm.json> src/data/map.json <config>`. Nettleseren skal aldri spørre Overpass.
-5. **`places.ts`:** gi sektorene navn, type (`hjem`, `butikk`, `industri`, `bolig`, `natur`, `kai`, `offentlig`), trussel 1–5, verdier og et funn hver. Gi portene navn og sektor. Fyll ut `AREA`, `ZONES` og `LANDMARKS`.
+5. **`places.ts`:** gi sektorene navn etter [regelheftet for stedsnavn](stedsnavn.md), type (`hjem`, `butikk`, `industri`, `bolig`, `natur`, `kai`, `offentlig`), trussel 1–5, verdier og et funn hver. Gi portene navn og sektor. Fyll ut `AREA`, `ZONES` og `LANDMARKS`.
 6. **`people.ts` og `content/`:** skriv naboer og innhold med lokal humor. Kortenes `places` er sektortyper, ikke id-er, så de fleste encounters fungerer i alle byer. Hendelser og tokt som nevner bestemte steder, må skrives om.
 7. **Bytt inn regionen** i `src/regions/active.ts` og `src/regions/content.ts`.
 8. **Kjør `npm test`, `npm run typecheck` og `npm run sim -- 300 --combos`.** Balansemålene i `CLAUDE.md` gjelder for alle regioner. Juster verdiene i `places.ts` (zombier, kjellere, funn) før du endrer reglene.
