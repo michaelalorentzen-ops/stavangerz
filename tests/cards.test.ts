@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  armorMult, bestCopy, CARDS, equip, groupStash, injure, lage, salvage, salvageCopy, salvageValue, newCard, newGame, resolveDay as resolveDayAndDrawEvent, rollCard, SECTORS, stat, toggleFavorite, toolMult, unequip, weaponMult, wear,
+  armorMult, bestCopy, cardBonus, CARDS, noiseOfDef, WEAPON_CLASSES, equip, groupStash, injure, lage, salvage, salvageCopy, salvageValue, newCard, newGame, resolveDay as resolveDayAndDrawEvent, rollCard, SECTORS, stat, toggleFavorite, toolMult, unequip, weaponMult, wear,
 } from '../src/engine';
 import type { GameState, LogFn, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -382,5 +382,48 @@ describe('vern av utstyr', () => {
     expect(s.stash).toContain(k);
     // de som er hjemme kan fortsatt bytte
     expect(equip(s, 'arild', k.uid)).toBe(true);
+  });
+
+  it('hver våpenklasse har minst ett kort, og klassen styrer standard støy', () => {
+    for (const k of WEAPON_CLASSES) expect(Object.values(CARDS).some((d) => d.slot === 'vapen' && d.weaponClass === k), k).toBe(true);
+    for (const d of Object.values(CARDS).filter((x) => x.slot === 'vapen')) {
+      expect(d.weaponClass, d.id).toBeDefined();
+      expect(d.weight).toBeUndefined();
+    }
+    expect(noiseOfDef(CARDS.sprettert)).toBe('stille');
+    expect(noiseOfDef(CARDS.motorsag)).toBe('brak');
+    expect(noiseOfDef(CARDS.hagle_politibil)).toBe('brak');
+    expect(noiseOfDef(CARDS.hammer)).toBe('normal');
+  });
+
+  it('k_ror er egg på nivå 1, vanlig', () => {
+    expect(CARDS.k_ror).toMatchObject({ weaponClass: 'egg', level: 1, rarity: 'vanlig', slot: 'vapen' });
+  });
+
+  it('tung beskyttelse gir mer vern men koster Kondis', () => {
+    const prot = Object.values(CARDS).filter((d) => d.slot === 'beskyttelse');
+    for (const d of prot) expect(d.weight, d.id).toBeDefined();
+    expect(prot.some((d) => d.weight === 'lett') && prot.some((d) => d.weight === 'tung')).toBe(true);
+    for (const d of prot.filter((x) => x.weight === 'tung')) expect(cardBonus(d).kondis ?? 0, d.id).toBeLessThan(3 * d.level + (d.bonus?.kondis ?? 0));
+    const s = fresh();
+    const c = me(s);
+    c.gear = { beskyttelse: newCard(s, 'alpinhjelm') };
+    const kLett = stat(c, 'kondis'), mLett = armorMult(c);
+    c.gear = { beskyttelse: newCard(s, 'gaffa_rustning') };
+    expect(CARDS.alpinhjelm.level).toBe(CARDS.gaffa_rustning.level);
+    expect(armorMult(c)).toBeLessThan(mLett);
+    expect(stat(c, 'kondis')).toBeLessThan(kLett);
+  });
+
+  it('Lage utstyr lager bare craftable makeshift-kort', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const s = fresh(seed);
+      s.res.skrap = 3; s.res.tre = 1;
+      s.stash = [];
+      lage(s, me(s), 100, log);
+      for (const k of s.stash) expect(CARDS[k.def]).toMatchObject({ family: 'makeshift' });
+      for (const k of s.stash) expect(CARDS[k.def].craftable).not.toBe(false);
+    }
+    expect(CARDS.spikerpistol_obs.craftable).toBe(false);
   });
 });

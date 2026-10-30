@@ -1,5 +1,5 @@
 // Kortvisning: små brettspillkort, spor på crewkortet, velger og lager.
-import { AREA, bestCopy, cardBonus, cardEffect, CARDS, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, STATS, toggleFavorite, unequip } from '../engine';
+import { AREA, bestCopy, cardBonus, cardEffect, CARDS, CLASS_LABEL, noiseOfDef, WEIGHT_LABEL, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, STATS, toggleFavorite, unequip } from '../engine';
 import type { CardDef, CardInst, CrewMember, Slot, StatKey } from '../engine';
 import { $, esc, game, ui } from './store';
 
@@ -39,8 +39,12 @@ const RANGE_LABEL = { naerkamp: 'Nærkamp', avstand: 'Avstand' };
 const NOISE_LABEL = { stille: 'Stille', normal: 'Normal støy', brak: 'Bråk' };
 export const TAG_LABEL = { gjennomslag: 'Gjennomslag', spredning: 'Spredning', rekkevidde: 'Rekkevidde' };
 /** Små merker for våpen: nærkamp eller avstand, støy og taggene. */
-export const weaponBadges = (d: (typeof CARDS)[string]): string => d.slot !== 'vapen' ? '' :
-  `<div class="gc-tags">${d.range ? `<span class="tagchip">${RANGE_LABEL[d.range]}</span>` : ''}<span class="tagchip n-${d.noise ?? 'normal'}">${NOISE_LABEL[d.noise ?? 'normal']}</span>${(d.tags ?? []).map((t) => `<span class="tagchip t">${TAG_LABEL[t]}</span>`).join('')}</div>`;
+export const weaponBadges = (d: (typeof CARDS)[string]): string => {
+  if (d.slot === 'beskyttelse') return d.weight ? `<div class="gc-tags"><span class="tagchip w-${d.weight}">${WEIGHT_LABEL[d.weight]}</span></div>` : '';
+  if (d.slot !== 'vapen') return '';
+  const noise = noiseOfDef(d);
+  return `<div class="gc-tags">${d.weaponClass ? `<span class="tagchip c-${d.weaponClass}">${CLASS_LABEL[d.weaponClass]}</span>` : ''}${d.range ? `<span class="tagchip">${RANGE_LABEL[d.range]}</span>` : ''}<span class="tagchip n-${noise}">${NOISE_LABEL[noise]}</span>${(d.tags ?? []).map((t) => `<span class="tagchip t">${TAG_LABEL[t]}</span>`).join('')}</div>`;
+};
 
 /** Ett kort, eller en stabel med identiske kort. Navn, spor, nivå, bonus, holdbarhet, demonteringsverdi og tekst i kursiv. */
 export function cardHtml(k: CardInst, group: CardInst[] = [k], inStash = false, forCrew: CrewMember | null = null): string {

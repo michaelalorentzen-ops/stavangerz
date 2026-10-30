@@ -122,4 +122,5 @@ export const LANDMARKS = {
   sandnes: 'Sandnes',
   nordsjoen: 'Nordsjøen',
   sus: 'SUS',
+  hillevag: 'Hillevåg',
 } as const;

@@ -42,6 +42,10 @@ export type Rarity = 'vanlig' | 'sjelden' | 'episk' | 'unik';
 
 export type WeaponRange = 'naerkamp' | 'avstand';
 export type WeaponNoise = 'stille' | 'normal' | 'brak';
+/** Våpenklasse (kap. 9). Styrer standard støy og hva utstyret er godt mot. */
+export type WeaponClass = 'slag' | 'egg' | 'prosjektil' | 'skytevapen' | 'brann' | 'motor';
+/** Beskyttelsens vekt: tung gir mer vern, men koster Kondis. */
+export type ArmorWeight = 'lett' | 'tung';
 export type WeaponTag = 'gjennomslag' | 'spredning' | 'rekkevidde';
 
 export interface CardDef {
@@ -56,12 +60,16 @@ export interface CardDef {
   range?: WeaponRange;
   /** bare våpen: hvor mye støy det lager, standard 'normal' */
   noise?: WeaponNoise;
+  /** bare våpen: klassen. Gir standard støy hvis `noise` mangler */
+  weaponClass?: WeaponClass;
+  /** bare beskyttelse: lett eller tung */
+  weight?: ArmorWeight;
+  /** false for kort med bestemt opphav («fra Obs»): kan ikke lages med Lage utstyr */
+  craftable?: boolean;
   /** bare våpen: særegenskaper */
   tags?: WeaponTag[];
   durability: number;
   text: string;
-  /** false for kort med et bestemt opphav («fra Obs»), som ikke kan lages med Lage utstyr */
-  craftable?: false;
   /** bare unike kort: sektorene kortet kan ligge i */
   places?: SectorId[];
 }

@@ -451,6 +451,17 @@ Kampkraften fantes fra før og bygger på Muskler. Poengene gjør at utstyr ogs�
 
 **Innhold [Låst]:** Spilleren definerer et lite sett eksempelkort som setter tonen og nivået. En agent lager resten etter samme mønster.
 
+### Våpenklasser og vekt – bygget
+
+Hvert våpenkort har `weaponClass` (slag, egg, prosjektil, skytevåpen, brann, motor), hver beskyttelse har `weight` (lett eller tung), og kort med bestemt opphav («fra Obs») har `craftable: false` og lages aldri med Lage utstyr.
+
+- **Støy** hentes fra klassen hvis kortet ikke setter sin egen: prosjektil er stille, skytevåpen og motor bråker, resten er normale (`CLASS_NOISE`).
+- **Holdbarhet** settes per kort i dataene: egg slites raskere enn slag (typisk 8–10 mot 14–16), brann er engangs.
+- **Tung beskyttelse** ganger skaderisikoen med 0,9 (`HEAVY_ARMOR_MULT`) og trekker 4 Kondis (`HEAVY_KONDIS_PENALTY`) fra kortets poeng. Lett har ingen av delene.
+- **Bunnen:** `k_ror` er trekkerøret: egg, nivå 1, vanlig.
+- Klassen og vekten vises som en chip på kortet. Katalogen har 10 slag, 8 egg, 7 prosjektil, 1 skytevåpen, 1 brann og 2 motor, og 8 lette og 7 tunge beskyttelser. Brekkjernet er to kort: `brekkjern_v` (våpen) og `brekkjern_t` (verktøy).
+- Ennå ikke bygd: ammo, at brann brenner opp funn, at motorvåpen bruker drivstoff, og at forskning låser opp motspillene.
+
 ---
 
 ## 10. Basen, ledere og politikk (fase 2–5)
