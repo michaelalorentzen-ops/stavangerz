@@ -75,7 +75,7 @@ Spillet har feilet, selv om det virker, hvis:
 **Faseskifte [Låst]:**
 - Fasemålet må nås før du kan gå videre.
 - Når målet er nådd, velger du selv når fasen avsluttes. Du kan bli værende og bygge deg sterkere først.
-- Det er en grense på antall turer per fase. Når grensen nås, går spillet videre til neste fase uansett. Grensen er **[Forslag]** 50 turer, og tallet er ikke låst.
+- Det er en grense på antall turer per fase, **[Forslag]** 50 turer, og tallet er ikke låst. Når fasemålet er nådd, velger du selv når du går videre, og ved grensen må du over. Er målet ikke nådd ved grensen, er runden tapt **[Forslag]**. Spillet viser derfor «Frist for fasemålet» før målet er nådd, og «Fase 2 tvinges om» etterpå.
 - Prisen for å nøle er tid, fordi poengsummen er antall dager. Zombiene muterer ikke mens du venter.
 
 ---
@@ -100,6 +100,11 @@ Spillet har feilet, selv om det virker, hvis:
 - **Erfaring:** å gjøre oppgaven.
 - **Trening:** en egen oppgave.
 - **Utstyr:** kortene.
+- **Nivå:** se under.
+
+**Nivå [Forslag]:** Hver person samler erfaring fra alt de gjør, og går opp i nivå (1–20). Hvert nivå over 1 gir +1 i alle ferdigheter, og hvert nivå tar litt lenger tid enn det forrige (nivå n krever 6 · n(n−1)/2 erfaring). Nivået vises på personen, og opprykk meldes i loggen. Det er de som har overlevd lengst, som blir crew-ledere og får roller i HQ senere.
+
+Det skal kjennes: mot slutten av en fase er crewet raskere til å rydde, drepe og lete, og du er på toppen av haugen. Så kommer neste fase med mutasjoner og høyere vanskelighet, og du er en pusling igjen. Skaleringen må være forsiktig, så ingen blir urørlige. Bonusen per nivå er en vanskelighetsknott som kan justeres.
 
 Sjansen for et vanlig utfall regnes ut fra ferdighet pluss utstyr mot sektorens trusselnivå. Sjansen vises alltid før du velger.
 
@@ -190,6 +195,8 @@ Kartet viser ikonene for hva sektoren gir, også før den er speidet.
 
 God Snoking gir raskere og sikrere søk. Dårlig Snoking gir flere glemte kjellere, som er prinsippet om at stats skal gi konsekvenser.
 
+**Glemte kjellere [Forslag]:** Skjulte zombier kan bryte ut om natta, men bare i sektorer der ingen fra crewet var den dagen. Er noen der og rydder eller sanker, hører de det.
+
 ### Perimeteren
 
 **[Låst]** Perimeteren har porter som oppgraderes. Personer på vakt hjelper om natta.
@@ -223,6 +230,10 @@ Trusselnivået styrer:
 - Et encounter oppstår når dagen løses. Det blir liggende som *ventende* til neste planlegging, der spilleren velger.
 - `resolveDay()` forblir ett steg med ordre inn og resultat ut. Det trengs for asynkron multiplayer.
 - Høyst ett encounter per gruppe per dag, og høyst to per tur totalt.
+
+**Stedet [Forslag]:** Hvert kort sier hvor det kan skje: hvilke sektortyper (hjem, bolig, kai, butikk, industri, offentlig) og om det kan skje på tokt. Det blir ingen heis i rekkehuset. De fire sist trukne kortene trekkes ikke igjen før andre har vært innom.
+
+**Innsatsen vises [Forslag]:** Hvert valg viser før du velger hva det kan gi når det lykkes, og hva det kan koste når det går galt, for eksempel «+1 medisin» eller «opptil −2 mat · kan gi skade». Etterpå vises hva som faktisk endret seg. Det samme gjelder hendelser som måkene.
 
 ---
 
@@ -382,6 +393,7 @@ Begge følger en basisverdi for sitt nivå.
 | Nivå | 1–5. Basisverdien kommer fra nivået |
 | Sjeldenhet | Vanlig, sjelden, episk eller unik |
 | Bonus | En liten ekstra effekt, for eksempel +Snoking eller stille |
+| Ferdighetspoeng | Fra sporet, ganger nivået (se under) |
 | Holdbarhet | Antall bruk før det ryker. Makeshift ryker fort, ting fra før holder |
 | Tekst | «Funnet bak Obs Bygg. Fortsatt med prislapp.» |
 
@@ -394,6 +406,16 @@ Begge følger en basisverdi for sitt nivå.
   - *rekkevidde* er godt på vakt.
 
 Taggene kobles mot mutasjoner og forskning, og encounter-kort kan sjekke dem.
+
+**Hva sporet gir [Forslag], i Fallout Shelter-stil:** Hvert kort gir ferdighetspoeng etter sporet, ganger kortets nivå, pluss kortets egen bonus. Poengene vises på kortet og som en grønn forlengelse av ferdighetsstolpen.
+
+| Spor | Poeng per nivå | I tillegg |
+|---|---|---|
+| Våpen | +3 Muskler, +2 Prat | Kampkraft ×1,0–1,8 etter nivå (×0,8 uten våpen) |
+| Beskyttelse | +3 Kondis, +2 Nerver | Skaderisiko −10 % per nivå |
+| Verktøy | +3 Mekk, +2 Snoking | Søk og bygging +10 % per nivå |
+
+Kampkraften fantes fra før og bygger på Muskler. Poengene gjør at utstyr også teller i encounter-sjekker, som bare ser på ferdighetene.
 
 **Spor [Forslag]:** Hver person har tre spor: ett våpen, én beskyttelse og ett verktøy. Ammo hører til våpenet.
 
