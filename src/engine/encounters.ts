@@ -97,7 +97,7 @@ export function rollEncounter(s: GameState, M: PhaseModifiers, sector: SectorId,
   const pool = poolFor(s, SECTORS[sector].kind, ctx);
   if (!pool.length) return false;
   push(s, pick(s, pool), { sector, crew: group.map((c) => c.id), threat });
-  log(`${names(group)} havnet i en knipe i ${SECTORS[sector].short}.`, 'warn');
+  log(`${names(group)} havnet i en knipe ${SECTORS[sector].at}.`, 'warn');
   return true;
 }
 
@@ -125,7 +125,8 @@ export interface EncounterView {
   title: string;
   text: string;
   crew: string[];
-  choices: { label: string; check?: StatKey; tag?: WeaponTag; retreat?: true; odds: number; best?: string; tagBonus: boolean; preview: ChoicePreview }[];
+  /** `preview` er null når forhåndsvisningen er slått av (boten trenger bare oddsen) */
+  choices: { label: string; check?: StatKey; tag?: WeaponTag; retreat?: true; odds: number; best?: string; tagBonus: boolean; preview: ChoicePreview | null }[];
 }
 
 /** Hva et valg kan gi når det lykkes og når det går galt, prøvd ut på kopier av tilstanden. */
@@ -135,8 +136,8 @@ export function previewEncounter(s: GameState, p: PendingEncounter, choiceIdx: n
   return { ok: run(true), fail: ch.check ? run(false) : null };
 }
 
-/** Alt UI-en trenger for å vise et ventende encounter. */
-export function describeEncounter(s: GameState, p: PendingEncounter): EncounterView {
+/** Alt UI-en trenger for å vise et ventende encounter. Forhåndsvisningen koster 24 kopier per valg, så den kan slås av. */
+export function describeEncounter(s: GameState, p: PendingEncounter, opts: { preview?: boolean } = {}): EncounterView {
   const def = defOf(p.def), ctx = ctxOf(s, p);
   return {
     title: def.title,
@@ -147,7 +148,7 @@ export function describeEncounter(s: GameState, p: PendingEncounter): EncounterV
       odds: encounterOdds(s, p, i),
       best: ch.check && ctx.crew.length ? bestOf(ctx.crew, ch.check).name : undefined,
       tagBonus: !!ch.tag && ctx.crew.some((c) => hasTag(c, ch.tag!)),
-      preview: previewEncounter(s, p, i),
+      preview: opts.preview === false ? null : previewEncounter(s, p, i),
     })),
   };
 }

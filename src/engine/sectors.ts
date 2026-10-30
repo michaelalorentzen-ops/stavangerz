@@ -90,7 +90,7 @@ function checkUnique(s: GameState, id: SectorId, before: number, log: LogFn) {
   delete s.uniques[id];
   const k = newCard(s, def);
   s.stash.push(k);
-  log(`Gjemt bak et panel i ${SECTORS[id].short} lå ${CARDS[def].name}. ${CARDS[def].text}`, 'find');
+  log(`Gjemt bak et panel ${SECTORS[id].at} lå ${CARDS[def].name}. ${CARDS[def].text}`, 'find');
 }
 
 /** Slitasje på verktøy for alle i teamet. */
@@ -116,7 +116,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
     for (const c of team) wear(s, c, 'vapen', log);
     sec.z -= kills; s.stats.kills += kills;
     for (let i = 0; i < kills; i++) pick(s, team).kills++;
-    log(`${names(team)} ryddet ${kills} ${plural(kills)} i ${def.short}.${sec.z > 0 ? ` ${sec.z} igjen.` : ' Sektoren er tom for synlige zombier.'}`);
+    log(`${names(team)} ryddet ${kills} ${plural(kills)} ${def.at}.${sec.z > 0 ? ` ${sec.z} igjen.` : ' Sektoren er tom for synlige zombier.'}`);
     for (const c of team) {
       const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c) * (ranged.has(c) ? RANGED_INJURY : 1), 0.02, 0.45);
       if (rand(s) < risk) injure(s, c, `i ${def.short}`, log);
@@ -135,7 +135,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   if (rand(s) < M.cardFind) {
     const k = rollCard(s, def.threat);
     s.stash.push(k);
-    log(`${names(team)} fant ${CARDS[k.def].name} i ${def.short}.`, 'find');
+    log(`${names(team)} fant ${CARDS[k.def].name} ${def.at}.`, 'find');
   }
   const gain = searchGain(s, team);
   if (sec.hidden > 0) {
@@ -144,7 +144,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
     for (let i = 0; i < sec.hidden; i++) if (rand(s) < p) found++;
     if (found) {
       sec.hidden -= found; s.stats.kills += found;
-      log(`Fant ${found} ${plural(found)} gjemt i kjellerboder i ${def.short}. Tatt hånd om.`, 'good');
+      log(`Fant ${found} ${plural(found)} gjemt i kjellerboder ${def.at}. Tatt hånd om.`, 'good');
       if (rand(s) < 0.15 * M.injuryMult) injure(s, pick(s, team), 'i en kjellerbod', log);
     }
   }
@@ -158,7 +158,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   log(`${names(team)} gjennomsøkte ${def.short}: ${got.length ? got.join(', ') : 'ingenting av verdi, bare IKEA-møbler'}. ${Math.round(sec.searched)} % gjennomsøkt.`);
   if (sec.searched >= 100 && sec.hidden > 0) {
     s.stats.kills += sec.hidden;
-    log(`I den siste kjelleren i ${def.short} lå ${sec.hidden} ${plural(sec.hidden)}. Ingen gjemmer seg lenger.`, 'good');
+    log(`I den siste kjelleren ${def.at} lå ${sec.hidden} ${plural(sec.hidden)}. Ingen gjemmer seg lenger.`, 'good');
     sec.hidden = 0;
     if (rand(s) < 0.15 * M.injuryMult) injure(s, pick(s, team), 'i den siste kjelleren', log);
   }
@@ -172,9 +172,9 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
 export function speide(s: GameState, id: SectorId, team: CrewMember[], M: PhaseModifiers, log: LogFn) {
   const sec = s.sectors[id], def = SECTORS[id];
   sec.seen = true; sec.scouted = true;
-  log(`${names(team)} speidet i ${def.short}: trusselnivå ${def.threat} av 5, og ${sec.z} ${plural(sec.z)} i sikte.`);
-  if (s.uniques[id]) log(`Rykter om noe spesielt i ${def.short}. Ingen vet hva, men alle har en mening.`, 'find');
-  for (const c of team) if (rand(s) < SPEIDE_INJURY * THREAT_INJURY[def.threat] * M.injuryMult) injure(s, c, `på speiding i ${def.short}`, log);
+  log(`${names(team)} speidet ${def.at}: trusselnivå ${def.threat} av 5, og ${sec.z} ${plural(sec.z)} i sikte.`);
+  if (s.uniques[id]) log(`Rykter om noe spesielt ${def.at}. Ingen vet hva, men alle har en mening.`, 'find');
+  for (const c of team) if (rand(s) < SPEIDE_INJURY * THREAT_INJURY[def.threat] * M.injuryMult) injure(s, c, `på speiding ${def.at}`, log);
 }
 
 /** Utstyr som ligger igjen hentes av de som er i sektoren. */
@@ -193,7 +193,7 @@ export function sanke(s: GameState, id: SectorId, team: CrewMember[], log: LogFn
     const n = sround(s, base * (0.5 + 0.1 * power));
     if (n > 0) { s.res[r] += n; s.stats.found += n; got.push(`${n} ${RES_LABEL[r].toLowerCase()}`); }
   }
-  log(`${names(team)} sanket i ${def.short}: ${got.length ? got.join(', ') : 'ingenting i dag'}.`);
+  log(`${names(team)} sanket ${def.at}: ${got.length ? got.join(', ') : 'ingenting i dag'}.`);
   wearTools(s, team, log);
   pickUp(s, id, team, log);
 }
@@ -219,7 +219,7 @@ export function decay(s: GameState, M: PhaseModifiers, log: LogFn) {
     if (rand(s) < M.creepChance * (1 - sec.control / 30) * (1 - avgGate / 3)) {
       const wasClear = sec.z === 0;
       sec.z++;
-      if (wasClear) log(`Noe har sneket seg inn i ${SECTORS[id].short} mens ingen holdt øye med den.`, 'warn');
+      if (wasClear) log(`Noe har sneket seg inn igjen ${SECTORS[id].at} mens ingen holdt øye med sektoren.`, 'warn');
     }
   }
 }

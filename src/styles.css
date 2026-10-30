@@ -280,7 +280,11 @@ button { cursor: pointer; }
   .legend { display: none; }
   .se { grid-template-columns: 92px 1fr auto; }
   .tabs { top: 0; }
+  /* tap-mål på minst 44 px på mobil */
+  .tabs button, .cm-tog, .slot, .cm select { min-height: 44px; }
 }
+/* den utfoldede raden viser hele navnet, også på utstyret */
+.cm.open .nm, .cm.open .slot .sn { white-space: normal; overflow: visible; }
 @media (max-width: 380px) {
   .cm { grid-template-columns: 1fr; }
 }

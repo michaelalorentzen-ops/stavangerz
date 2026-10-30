@@ -97,17 +97,17 @@ export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], 
   const who = team.map((c) => c.name).join(' og ');
   if (rand(s) < chance) {
     const cands = recruitablesNow(s);
-    if (!cands.length) log(`${who} ropte i ${def.short}. Ingen svarte, bortsett fra en måke.`);
+    if (!cands.length) log(`${who} ropte ${def.at}. Ingen svarte, bortsett fra en måke.`);
     else if (!canRecruit(s)) log('Vi har ikke senger til flere. Noen i trappegangen i ' + def.short + ' ser veldig sultne ut.', 'warn');
     else {
       const n = pick(s, cands);
       addNeighbor(s, n.id);
-      log(`${who} fant ${n.name} (${n.role.toLowerCase()}) i ${def.short}. ${n.quip}`, 'good');
+      log(`${who} fant ${n.name} (${n.role.toLowerCase()}) ${def.at}. ${n.quip}`, 'good');
     }
-  } else log(`${who} banket på dører i ${def.short}. Det eneste som svarte var ekko og en radio på lavt volum.`);
+  } else log(`${who} banket på dører ${def.at}. Det eneste som svarte var ekko og en radio på lavt volum.`);
   if (rand(s) < RECRUIT_NOISE) {
     const n = 1 + Math.floor(rand(s) * 2);
     sec.z += n;
-    log(`Roping i ${def.short} vekket ${n} ${n === 1 ? 'zombie' : 'zombier'}. Det er sånt som skjer.`, 'bad');
+    log(`Roping ${def.at} vekket ${n} ${n === 1 ? 'zombie' : 'zombier'}. Det er sånt som skjer.`, 'bad');
   }
 }

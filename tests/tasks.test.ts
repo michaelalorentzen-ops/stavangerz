@@ -44,7 +44,7 @@ describe('Vakt på port', () => {
       s.res.tre = 0; s.res.skrap = 0;
       let breaches = 0;
       for (let i = 0; i < 150; i++) {
-        s.day = 40; s.over = null; s.moral = 80;
+        s.day = 40; s.over = null; s.moral = 80; s.res.mat = 20; s.res.vann = 20;
         for (const c of s.crew) c.task = { type: 'hvile' };
         s.crew[1].task = type === 'befeste' ? { type, target: 'nord' } : { type, target: 'nordkrysset' };
         s.gates.nord.level = 2; s.gates.nord.work = 0;

@@ -15,6 +15,10 @@ export type { QuestDef, ToktDef };
 
 /** Regelkonstant: antall ressurser et tokt finner per dag ute. */
 const HAUL_KINDS = 2;
+/** Byttet per dag er opptil så mye ganger trusselen. Tokt skal lønne seg mer enn å sanke hjemme. */
+export const HAUL_PER_THREAT = 3;
+/** Sjansen for kort per dag ute, ganget med fasens cardFind */
+export const TOKT_CARD_MULT = 2;
 
 const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
@@ -72,10 +76,10 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
     t.stage++;
     const found: string[] = [];
     for (let i = 0; i < HAUL_KINDS; i++) {
-      const k: ResKey = pick(s, RES), n = sround(s, rand(s) * 2 * def.threat);
+      const k: ResKey = pick(s, RES), n = sround(s, rand(s) * HAUL_PER_THREAT * def.threat);
       if (n > 0) { t.haul[k] = (t.haul[k] ?? 0) + n; found.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
     }
-    if (rand(s) < M.cardFind) {
+    if (rand(s) < M.cardFind * TOKT_CARD_MULT) {
       const k = rollCard(s, def.threat);
       t.cards.push(k);
       found.push(CARDS[k.def].name);

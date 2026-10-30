@@ -30,13 +30,13 @@ export const TOKTS: ToktDef[] = [
     id: 'kran', name: 'Kranføreren på Rosenberg-gjerdet',
     desc: 'Kranføreren sitter fast i førerhuset, rett over horden. Han har radio, kaffe og sterke meninger om sikkerhetsrutiner.',
     at: 'ros', days: 2, threat: 3, quest: 'sos_kran',
-    reward: { cards: ['u_kiste'], res: { skrap: 4 } },
+    reward: { cards: ['u_kiste'], res: { skrap: 6, tre: 4 } },
   },
   {
     id: 'bybrua', name: 'Køen på Bybrua',
     desc: 'Rushtrafikken sto stille i går, og står fortsatt stille. Bilene er fulle av ting folk ikke fikk tatt med på hytta.',
     at: 'sor', days: 2, threat: 3,
-    reward: { res: { drivstoff: 4, skrap: 4 } },
+    reward: { res: { drivstoff: 6, skrap: 6, mat: 4 } },
   },
 ];
 

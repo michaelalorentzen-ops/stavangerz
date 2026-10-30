@@ -117,7 +117,7 @@ function showEncounter(p: PendingEncounter, done: () => void) {
     ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag].toLowerCase()}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
   modal(`<div class="radio">Samband · ${esc(v.crew.join(' og '))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
     <div class="transcript">${esc(v.text)}</div>
-    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span class="ch-top"><span>${esc(c.label)}</span>${odds(c)}</span>${previewHtml(c.preview)}</button>`).join('')}</div>`);
+    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span class="ch-top"><span>${esc(c.label)}</span>${odds(c)}</span>${(c.preview ? previewHtml(c.preview) : "")}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.i), c = v.choices[i];
     const r = resolveEncounter(S, p.pid, i);

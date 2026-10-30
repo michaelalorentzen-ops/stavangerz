@@ -19,7 +19,7 @@ const hasOpt = (s: GameState, id: string) => taskOptions(s).some((o) => o.type =
 describe('tokt', () => {
   it('innholdet finnes', () => {
     expect(TOKTS.find((t) => t.id === 'kran')).toMatchObject({ at: 'ros', days: 2, threat: 3, quest: 'sos_kran' });
-    expect(TOKTS.find((t) => t.id === 'bybrua')).toMatchObject({ at: 'sor', days: 2, threat: 3, reward: { res: { drivstoff: 4, skrap: 4 } } });
+    expect(TOKTS.find((t) => t.id === 'bybrua')).toMatchObject({ at: 'sor', days: 2, threat: 3, reward: { res: { drivstoff: 6, skrap: 6, mat: 4 } } });
     expect(QUESTS.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -70,8 +70,8 @@ describe('tokt', () => {
     answer(s);
     const dr = s.res.drivstoff, sk = s.res.skrap, haul = { ...s.tokts[0].haul };
     toktDecision(s, 'bybrua', 'fortsett');
-    expect(s.res.drivstoff).toBe(dr + 4 + (haul.drivstoff ?? 0));
-    expect(s.res.skrap).toBe(sk + 4 + (haul.skrap ?? 0));
+    expect(s.res.drivstoff).toBe(dr + 6 + (haul.drivstoff ?? 0));
+    expect(s.res.skrap).toBe(sk + 6 + (haul.skrap ?? 0));
     expect(s.tokts).toHaveLength(0);
     expect(s.crew.find((c) => c.id === 'meg')!.task).toEqual({ type: 'hvile' });
   });

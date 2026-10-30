@@ -10,7 +10,7 @@ export { crewLevel, levelProgress, MAX_LEVEL, skillLevel, toSkill, XP_STEP } fro
 export type { SkillLevel } from './levels';
 
 /** Hvert nivå over 1 gir så mange poeng i alle ferdigheter. */
-export const LEVEL_BONUS = 1;
+export const LEVEL_BONUS = 2;
 
 /** Effektiv ferdighet (1–100) med nivå, utstyr og egenskaper. */
 export function stat(c: CrewMember, k: StatKey): number {

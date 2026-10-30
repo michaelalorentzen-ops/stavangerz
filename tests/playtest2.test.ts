@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CARDS, cardBonus, crewLevel, describeEncounter, ENC_COOLDOWN, ENCOUNTERS, EVENTS, gainXp, levelProgress, newCard, newGame, PHASES, previewChoice,
+  CARDS, cardBonus, crewLevel, describeEncounter, ENC_COOLDOWN, ENCOUNTERS, EVENTS, gainXp, LEVEL_BONUS, levelProgress, migrate, newCard, newGame, PHASES, previewChoice,
   resolveDay, resolveEncounter, rollEncounter, runChoice, SECTORS, stat, XP_STEP,
 } from '../src/engine';
 import type { GameState, PendingEncounter } from '../src/engine';
@@ -63,10 +63,10 @@ describe('valg viser hva de kan gi', () => {
     const before = JSON.stringify(s);
     const v = describeEncounter(s, p);
     expect(JSON.stringify(s)).toBe(before);
-    expect(v.choices[0].preview.ok).toContain('+1 medisin');
-    expect(v.choices[0].preview.fail!.join(' ')).toMatch(/mat/);
-    expect(v.choices[0].preview.fail!.join(' ')).toMatch(/skade/);
-    expect(v.choices[1].preview.fail).toBeNull();
+    expect(v.choices[0].preview!.ok).toContain('+1 medisin');
+    expect(v.choices[0].preview!.fail!.join(' ')).toMatch(/mat/);
+    expect(v.choices[0].preview!.fail!.join(' ')).toMatch(/skade/);
+    expect(v.choices[1].preview!.fail).toBeNull();
   });
 
   it('måkene: å gi dem mat viser −2 mat og +4 moral, både før og etter', () => {
@@ -75,6 +75,18 @@ describe('valg viser hva de kan gi', () => {
     const ch = EVENTS.find((e) => e.id === 'maaker')!.choices[1];
     expect(previewChoice(s, ch).ok).toEqual(['−2 mat', '+4 moral']);
     expect(runChoice(s, ch).changes).toEqual(['−2 mat', '+4 moral']);
+  });
+
+  it('forhåndsvisningen viser også portarbeid, nye crew, oppdrag og speiding', () => {
+    const s = fresh(5);
+    s.day = 8;
+    const ok = (ev: string, i: number) => previewChoice(s, EVENTS.find((e) => e.id === ev)!.choices[i]).ok.join(' · ');
+    expect(ok('sirene', 1)).toContain('portarbeid Rosenberg-gjerdet');
+    expect(ok('oljeskift', 1)).toContain('portarbeid');
+    expect(ok('hurtigbat', 0)).toContain('crewet');
+    expect(ok('sos_kran', 0)).toContain('oppdrag');
+    expect(ok('sandnes', 1)).toMatch(/speidet/);
+    expect(ok('fryseboks', 1)).toContain('kontroll');
   });
 
   it('et løst encounter sier hva som faktisk endret seg', () => {
@@ -102,6 +114,18 @@ describe('kjellere bryter bare ut der ingen er', () => {
       expect(a.sectors.buoy_nord.z).toBe(0);
       const b = setup(false); resolveDay(b);
       expect(b.sectors.buoy_nord.z).toBeGreaterThanOrEqual(5);
+    } finally { PHASES[1].mods.hiddenOutbreak = old; }
+  });
+
+  it('de som hviler eller trener hjemme teller som til stede hjemme', () => {
+    PHASES[1].mods.hiddenOutbreak = 1;
+    try {
+      const s = setup(false);
+      s.sectors.hjem.hidden = 3;
+      s.crew[0].task = { type: 'trene', stat: 'kondis' };
+      resolveDay(s);
+      expect(s.sectors.hjem.z).toBe(0);
+      expect(s.sectors.hjem.hidden).toBe(3);
     } finally { PHASES[1].mods.hiddenOutbreak = old; }
   });
 });
@@ -133,13 +157,21 @@ describe('nivåer fra erfaring', () => {
     expect(levelProgress(XP_STEP / 2)).toBeCloseTo(0.5);
   });
 
-  it('erfaring gir nivå, og nivået gir +1 i alle ferdigheter', () => {
+  it(`erfaring gir nivå, og nivået gir +${LEVEL_BONUS} i alle ferdigheter`, () => {
     const s = fresh();
     const c = s.crew[1];
     const before = stat(c, 'prat');
     gainXp(c, 'muskler', XP_STEP * 3);
     expect(crewLevel(c.xp!)).toBe(3);
-    expect(stat(c, 'prat')).toBe(before + 2);
+    expect(stat(c, 'prat')).toBe(before + 2 * LEVEL_BONUS);
+  });
+
+  it('gamle lagringer uten erfaring får erfaring etter dagene som er spilt', () => {
+    const s = fresh();
+    s.day = 13;
+    for (const c of s.crew) delete c.xp;
+    const m = migrate(JSON.parse(JSON.stringify(s)))!;
+    expect(m.crew.every((c) => crewLevel(c.xp!) === 2)).toBe(true);
   });
 
   it('nivåopprykk meldes i loggen', () => {
@@ -148,5 +180,23 @@ describe('nivåer fra erfaring', () => {
     s.crew[1].task = { type: 'trene', stat: 'kondis' };
     const log = resolveDay(s);
     expect(log.some((l) => l.t.includes(`${s.crew[1].name} er nå nivå 2`))).toBe(true);
+  });
+});
+
+describe('sult tærer på crewet', () => {
+  it('en dag uten mat koster helse, og uten sult skjer ingenting', () => {
+    const old = PHASES[1].mods.starveInjury;
+    PHASES[1].mods.starveInjury = 1;
+    try {
+      const run = (mat: number) => {
+        const s = fresh(4);
+        for (const c of s.crew) { c.task = { type: 'hvile' }; c.hp = 3; }
+        s.res.mat = mat; s.res.vann = 30; s.pending = [];
+        resolveDay(s);
+        return s.crew.filter((c) => c.hp < 3).length;
+      };
+      expect(run(0)).toBeGreaterThan(0);
+      expect(run(30)).toBe(0);
+    } finally { PHASES[1].mods.starveInjury = old; }
   });
 });

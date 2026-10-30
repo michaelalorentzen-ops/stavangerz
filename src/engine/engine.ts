@@ -2,9 +2,9 @@
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
-import { addNeighbor, leteOverlevende, setLeader } from './crew';
+import { addNeighbor, injure, leteOverlevende, setLeader } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
-import { GATES, GATE_STEPS, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
+import { GATES, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { advancePhase, BRANCHES, mods } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
@@ -72,6 +72,8 @@ export function migrate(raw: unknown): GameState | null {
   g.phaseStartDay ??= 1;
   g.stats.starvedDays ??= 0;
   g.stats.deaths ??= { kamp: 0, natt: 0, tokt: 0 };
+  // lagringer fra før nivåene: omtrent én erfaring per dag spilt, så crewet ikke starter på nivå 1 på dag 13
+  for (const c of g.crew) c.xp ??= Math.max(0, g.day - 1);
   return g;
 }
 
@@ -118,6 +120,9 @@ export function taskOptions(s: GameState): TaskOption[] {
 
 const targetOf = (t: Task): string | null => ('target' in t ? t.target : 'stat' in t ? t.stat : null);
 /** Entydig nøkkel for en ordre, med mål eller ferdighet. */
+/** Sektoren oppgaven foregår i, eller null for tokt. */
+const whereIs = (t: Task): SectorId | null =>
+  !('target' in t) ? 'hjem' : t.target in GATES ? GATES[t.target as GateId].sector : t.target in SECTORS ? (t.target as SectorId) : null;
 export const taskKey = (t: Task) => `${t.type}:${targetOf(t) ?? ''}`;
 export const sameTask = (a: Task, b: Task) => taskKey(a) === taskKey(b);
 
@@ -183,8 +188,9 @@ export function resolveDay(s: GameState): LogLine[] {
   expireQuests(s, log);
   /** Nivået hver person startet dagen på, så nivåopprykk kan meldes */
   const levels = new Map(s.crew.map((c) => [c.id, crewLevel(c.xp ?? 0)]));
-  /** Sektorer noen fra crewet jobbet i i dag. Der blir ingen kjeller glemt. */
-  const present = new Set(s.crew.map((c) => targetOf(c.task)));
+  /** Sektorer noen fra crewet var i i dag. Der blir ingen kjeller glemt. Vakt og befesting står ved portens sektor,
+   *  og hvile, trening, laging og pleie skjer hjemme. Tokt er langt unna. */
+  const present = new Set(s.crew.map((c) => whereIs(c.task)));
   /** Erfaring til de som fortsatt er med i crewet */
   const xp = (cs: CrewMember[], k: StatKey, n: number) => { for (const c of cs) if (s.crew.includes(c)) gainXp(c, k, n); };
 
@@ -219,7 +225,7 @@ export function resolveDay(s: GameState): LogLine[] {
     const vk = team('vakt', id);
     if (!vk.length) continue;
     watch[id] = watchControl(vk);
-    log(`${names(vk)} holdt vakt i ${SECTORS[id].short}.`);
+    log(`${names(vk)} holdt vakt ${SECTORS[id].at}.`);
     xp(vk, 'nerver', 1);
   }
 
@@ -277,9 +283,16 @@ export function resolveDay(s: GameState): LogLine[] {
   // 5) Forbruk
   s.res.mat -= dailyFood(s); s.res.vann -= dailyWater(s);
   // en sultedag er en dag der det ikke var nok mat eller vann til alle
-  if (s.res.mat < 0 || s.res.vann < 0) s.stats.starvedDays++;
+  const starved = s.res.mat < 0 || s.res.vann < 0;
+  if (starved) s.stats.starvedDays++;
   if (s.res.mat < 0) { s.res.mat = 0; s.moral -= 10; log('Det er tomt for mat. Noen foreslo å spise måkene. Ingen lo.', 'bad'); }
   if (s.res.vann < 0) { s.res.vann = 0; s.moral -= 12; log('Tomt for vann. I Stavanger. Det er nesten imponerende.', 'bad'); }
+  // sult tærer på kroppen: de svakeste kan dø av det
+  if (starved) for (const c of [...s.crew]) {
+    if (rand(s) >= M.starveInjury) continue;
+    if (c.hp > 1) { c.hp--; log(`${c.name} er svak av sult (${HEALTH_LABEL[c.hp].toLowerCase()}).`, 'bad'); }
+    else injure(s, c, 'av sulten, på en måte', log);
+  }
   if (rand(s) < 0.4) { const n = 3 + Math.floor(rand(s) * 4); s.res.vann += n; log(`Det regnet. Selvfølgelig. +${n} vann.`, 'fun'); }
 
   // Kontroll og forfall
@@ -306,14 +319,14 @@ export function resolveDay(s: GameState): LogLine[] {
     sec.z += n;
     sec.control -= 20;
     if (wasClear) s.moral -= 4;
-    log(`Natt: ${n} ${plural(n)} kom forbi ${g.name} og inn i ${SECTORS[target].short}.${wasClear ? ' Sektoren er infisert igjen.' : ''}`, wasClear ? 'bad' : 'warn');
+    log(`Natt: ${n} ${plural(n)} kom forbi ${g.name} og står nå ${SECTORS[target].at}.${wasClear ? ' Sektoren er infisert igjen.' : ''}`, wasClear ? 'bad' : 'warn');
   }
 
   // 6b) Natt: bråk fra Rydde trekker zombier
   for (const id of loud) {
     if (rand(s) >= M.noiseAttract) continue;
     s.sectors[id].z++;
-    log(`Natt: Bråket fra ryddingen i ${SECTORS[id].short} trakk til seg en zombie.`, 'warn');
+    log(`Natt: Bråket fra ryddingen ${SECTORS[id].at} trakk til seg en zombie.`, 'warn');
   }
 
   // 7) Natt: glemte kjellere, bare i sektorer ingen var i i dag
@@ -324,7 +337,7 @@ export function resolveDay(s: GameState): LogLine[] {
       const n = sec.hidden + Math.floor(rand(s) * 3);
       sec.z = n; sec.hidden = 0; sec.control -= 20;
       s.moral -= 8;
-      log(`Natt: Noen glemte å sjekke kjelleren i ${SECTORS[id].short}. ${n} zombier strømmer ut. Sektoren er infisert igjen.`, 'bad');
+      log(`Natt: Noen glemte å sjekke kjelleren ${SECTORS[id].at}. ${n} zombier strømmer ut. Sektoren er infisert igjen.`, 'bad');
     }
   }
 
