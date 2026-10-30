@@ -85,7 +85,7 @@ describe('encounters', () => {
           const s = fresh(seed);
           for (const c of s.crew) c.gear.vapen = newCard(s, 'hagle_politibil');
           const p = pend(s, def.id, undefined, 1 + (seed % 5));
-          const ctx: EncounterCtx = { sector: p.sector, crew: s.crew, threat: p.threat };
+          const ctx: EncounterCtx = { sector: p.sector, crew: s.crew, threat: p.threat, zombies: 20 };
           if (def.when && !def.when(s, ctx)) continue;
           expect(def.text(s, ctx).length).toBeGreaterThan(10);
           const r = resolveEncounter(s, 'p1', i);
@@ -308,7 +308,7 @@ describe('våpenegenskaper', () => {
 });
 
 describe('encounters på tokt og dagstaket', () => {
-  const toktCtx = (s: GameState): EncounterCtx => ({ sector: null, crew: s.crew.slice(0, 2), threat: 3, toktId: 'bybrua' });
+  const toktCtx = (s: GameState): EncounterCtx => ({ sector: null, crew: s.crew.slice(0, 2), threat: 3, zombies: null, toktId: 'bybrua' });
   const zOf = (s: GameState) => JSON.stringify(Object.fromEntries(Object.entries(s.sectors).map(([id, sec]) => [id, sec.z])));
 
   it('kiosken på tokt infiserer ikke Hjemme når skuddet bommer', () => {

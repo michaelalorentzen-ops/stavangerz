@@ -51,7 +51,7 @@ export function previewTask(s: GameState, task: Task, team: CrewMember[]): TaskP
     return { kind: 'sanke', yield: out };
   }
   const M = mods(s);
-  const encounter = encounterChance(M, def.threat, noiseProfile(group));
+  const encounter = encounterChance(M, def.threat, noiseProfile(group), sec.z);
   if (sec.z === 0) return { kind: 'rydde-tom', searchGain: searchGain(s, group), encounter };
   const { power, mult } = ryddeKillParams(s, id, group, M);
   const expected = power * (KILL_ROLL_MIN + KILL_ROLL_SPAN / 2) * mult;
