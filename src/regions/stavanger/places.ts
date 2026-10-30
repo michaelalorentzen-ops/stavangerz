@@ -5,7 +5,7 @@ import type { GateId, MapSectorId, SectorId, ZoneId } from './ids';
 
 export const SECTORS: Record<MapSectorId, SectorDef> = {
   hjem: {
-    name: 'Hjemme', short: 'Hjemme', at: 'hjemme',
+    name: 'Hjemme', short: 'Hjemme', at: 'hjemme', real: 'Hjemme', realAt: 'hjemme',
     kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 },
     desc: 'Rekkehuset ditt ved motorveien. Kaffetrakteren virker fortsatt. Naboen gjør ikke det.',
     z: 4, hidden: 1,
@@ -13,7 +13,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     special: { text: 'Naboens fryseboks: 6 kilo elgkjøttdeig og en pose isbiter fra 2019.', res: { mat: 6 } },
   },
   tommerodden: {
-    name: 'Tømmerodden', short: 'Tømmerodden', at: 'på Tømmerodden',
+    name: 'Kaia', short: 'Kaia', at: 'på kaia', real: 'Tømmerodden', realAt: 'på Tømmerodden',
     kind: 'kai', threat: 2, capacity: 2, yield: { mat: 4 },
     desc: 'SOTS sikkerhetssenter og Skoleskipet Gann. Folk her har kurs i å overleve. Kurset dekket ikke dette.',
     z: 9, hidden: 3,
@@ -21,7 +21,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     special: { text: 'Skoleskipet Gann ligger fortøyd med fulle tanker. Noter deg det til fase 2. Dere tar med førstehjelpsskapet.', res: { medisin: 4 }, flag: 'gann' },
   },
   obs: {
-    name: 'Obs Bygg Buøy', short: 'Obs Bygg', at: 'på Obs Bygg',
+    name: 'Byggvarehuset', short: 'Byggvarehuset', at: 'på byggvarehuset', real: 'Obs Bygg', realAt: 'på Obs Bygg',
     kind: 'butikk', threat: 2, capacity: 0, yield: { skrap: 1 },
     desc: 'Ukens tilbud: alt. Gangene er fulle av spikerpistoler, presenning og zombier i arbeidsklær.',
     z: 11, hidden: 3,
@@ -29,7 +29,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     special: { text: 'Verktøyavdelingen er urørt. En spikerpistol havner på lageret. Ukens tilbud, tilsynelatende.', card: 'spikerpistol_obs' },
   },
   nordkrysset: {
-    name: 'Nordkrysset', short: 'Nordkrysset', at: 'i Nordkrysset',
+    name: 'Krysset', short: 'Krysset', at: 'i krysset', real: 'Nordkrysset', realAt: 'i Nordkrysset',
     kind: 'industri', threat: 2, capacity: 0, yield: { skrap: 2, drivstoff: 1 },
     desc: 'Rundkjøringene mot Hundvåg. Rushtidskø fra helvete, bokstavelig talt. Mange biler med full tank.',
     z: 14, hidden: 3,
@@ -37,7 +37,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     special: { text: 'En politibil står i grøfta. Bagasjerommet har en hagle og en eske patroner. Betjenten trenger dem ikke lenger.', card: 'hagle_politibil' },
   },
   buoy_nord: {
-    name: 'Buøy nord', short: 'Buøy nord', at: 'på Buøy nord',
+    name: 'Boligfeltet', short: 'Boligfeltet', at: 'i boligfeltet', real: 'Buøy nord', realAt: 'på Buøy nord',
     kind: 'bolig', threat: 1, capacity: 6, yield: { mat: 1, vann: 1, tre: 1 },
     desc: 'Eneboliger, barnehage og trampoliner. Rolig nabolag. Var det.',
     z: 10, hidden: 3,
@@ -45,7 +45,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     special: { text: 'En garasje med aggregat og hele Biltema-katalogen. Befesting går raskere fra nå.', flag: 'aggregat' },
   },
   skolen: {
-    name: 'Buøy skole', short: 'Skolen', at: 'på skolen',
+    name: 'Skolen', short: 'Skolen', at: 'på skolen', real: 'Buøy skole', realAt: 'på Buøy skole',
     kind: 'offentlig', threat: 2, capacity: 8, yield: { mat: 1, medisin: 1 },
     desc: 'Det var foreldremøte i går kveld. Mange ble igjen. Kantina har frysevafler.',
     z: 16, hidden: 4,
@@ -53,7 +53,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     special: { text: 'Kantina: 300 frysevafler og en spann syltetøy. Moralen stiger merkbart.', res: { mat: 6 }, moral: 15 },
   },
   sorspissen: {
-    name: 'Sørspissen', short: 'Sørspissen', at: 'på Sørspissen',
+    name: 'Industriområdet', short: 'Industriområdet', at: 'på industriområdet', real: 'Sørspissen', realAt: 'på Sørspissen',
     kind: 'industri', threat: 2, capacity: 0, yield: { skrap: 2 },
     desc: 'Rundkjøringen ved Bybrua. Herfra kommer alt som vil inn fra byen.',
     z: 12, hidden: 3,
@@ -61,7 +61,7 @@ export const SECTORS: Record<MapSectorId, SectorDef> = {
     special: { text: 'En Kolumbus-buss står parkert med nøkkelen i. Rute 6, Hundvåg via sentrum. Transport til fase 2 er sikret.', flag: 'buss' },
   },
   rosenberg: {
-    name: 'Rosenberg Verft', short: 'Rosenberg', at: 'på Rosenberg',
+    name: 'Rosenberg Verft', short: 'Rosenberg', at: 'på Rosenberg', real: 'Rosenberg Verft', realAt: 'på Rosenberg',
     kind: 'industri', threat: 5, capacity: 0, yield: {},
     desc: 'Kraner, stål og kaier. Perfekt HQ. Problemet er at hele morgenskiftet fortsatt er på jobb.',
     z: 0, hidden: 0, loot: { mat: 0, vann: 0, medisin: 0, tre: 0, skrap: 0, metall: 0, strom: 0, drivstoff: 0 },

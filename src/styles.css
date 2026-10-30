@@ -115,6 +115,7 @@ button { cursor: pointer; }
 
 .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 10px; }
 .card h2 { margin: 0; font: 700 26px/1.05 var(--f-cond); letter-spacing: .04em; text-transform: uppercase; text-wrap: balance; }
+.card .real { margin: 2px 0 0; font: 500 12px/1.2 var(--f-mono); letter-spacing: .06em; color: var(--muted); }
 .card p { margin: 0; color: #c9c3b6; }
 .badge { justify-self: start; font: 700 12px/1 var(--f-cond); letter-spacing: .14em; text-transform: uppercase; padding: 4px 7px; border-radius: 3px; }
 .badge.inf { background: var(--red-soft); color: #ff8b8e; }

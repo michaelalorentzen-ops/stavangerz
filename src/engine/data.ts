@@ -7,6 +7,10 @@ export interface SectorDef {
   short: string;
   /** stedet med preposisjon, slik det står i en setning: «på skolen», «hjemme» */
   at: string;
+  /** det ekte stedet, til lokale tekster og undertittel: «Obs Bygg», «Tømmerodden» (se docs/stedsnavn.md) */
+  real: string;
+  /** det ekte stedet med preposisjon: «på Obs Bygg» */
+  realAt: string;
   desc: string;
   kind: SectorKind;
   /** 1–5, styrer hvor seige zombiene er og hvor farlig det er å rydde */

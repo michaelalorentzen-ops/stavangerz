@@ -8,7 +8,7 @@ Tonen er Dead of Winter: et kart over funksjoner, ikke adresser. Spilleren skal 
 
 1. **Funksjon først.** Navnet sier hva stedet er: «Byggvarehuset», ikke «Obs Bygg Buøy».
 2. **Bestemt form entall, ett eller to ord.** «Kaia», «Boligfeltet», «Bilforhandleren». `short` er som regel det samme som `name`.
-3. **Det ekte navnet står i beskrivelsen.** «Ukens tilbud: alt. Obs Bygg har gangene fulle av spikerpistoler …». Merkenavn, gatenavn og lokale kallenavn hører hjemme i `desc`, i funn og i hendelser, aldri i navnet.
+3. **Det ekte navnet står i `real`, `realAt` og beskrivelsen.** `real` vises som undertittel på sektorkortet, og lokale tekster (hendelser, encounters) bruker `real`, mens logg og UI bruker funksjonsnavnet. «Ukens tilbud: alt. Obs Bygg har gangene fulle av spikerpistoler …». Merkenavn, gatenavn og lokale kallenavn hører hjemme i `desc`, i funn og i hendelser, aldri i navnet.
 4. **Ingen vitser i navnet.** Humoren står i teksten rundt. Navnet er tørt og nyttig.
 5. **Like steder skilles med retning**, sett fra midten av området: «Boligfeltet nord», «Boligfeltet sør». Bruk retningen bare når det finnes to av samme slag.
 6. **Mer enn to av samme slag skilles med et kjennetegn:** «Blokkene ved kaia», «Villaene på høyden». Kjennetegnet skal være noe man ser på kartet.
@@ -110,15 +110,15 @@ En port heter etter det den sperrer, med retning når det trengs: «Brua», «Tu
 
 ## Eksempel: Buøy
 
-Slik kunne Buøy-sektorene hett etter reglene. Dette er bare et forslag, og ingenting er endret i spillet ennå.
+Buøy-sektorene heter nå dette:
 
-| Id | I dag | Etter reglene | Ekte sted i `desc` |
+| Id | Før | Navn | `real` |
 |---|---|---|---|
-| `hjem` | Hjemme | Hjemme | rekkehuset ved motorveien |
-| `tommerodden` | Tømmerodden | Kaia | Tømmerodden, SOTS, Skoleskipet Gann |
+| `hjem` | Hjemme | Hjemme | Hjemme |
+| `tommerodden` | Tømmerodden | Kaia | Tømmerodden |
 | `obs` | Obs Bygg Buøy | Byggvarehuset | Obs Bygg |
-| `nordkrysset` | Nordkrysset | Krysset | rundkjøringene mot Hundvåg |
-| `buoy_nord` | Buøy nord | Boligfeltet | eneboliger og trampoliner på nordsiden |
+| `nordkrysset` | Nordkrysset | Krysset | Nordkrysset |
+| `buoy_nord` | Buøy nord | Boligfeltet | Buøy nord |
 | `skolen` | Buøy skole | Skolen | Buøy skole |
-| `sorspissen` | Sørspissen | Industriområdet | Sørspissen ved Bybrua |
-| `rosenberg` | Rosenberg Verft | Rosenberg Verft (nøkkelsted) | |
+| `sorspissen` | Sørspissen | Industriområdet | Sørspissen |
+| `rosenberg` | Rosenberg Verft | Rosenberg Verft (nøkkelsted) | Rosenberg Verft |

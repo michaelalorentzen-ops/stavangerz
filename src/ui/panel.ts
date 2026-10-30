@@ -272,7 +272,7 @@ export function renderSel() {
   const housingNote = def.capacity > 0 ? `Plass til ${def.capacity}${sec.settled ? ', bosatt' : ', når den er trygg'}.` : 'Ingen boliger her.';
   box.innerHTML = `<div class="card">
     <span class="badge ${intel.safe ? 'safe' : inf ? 'inf' : 'clr'}">${intel.safe ? 'Trygg' : inf ? 'Infisert' : 'Ryddet'}${id === 'hjem' ? ' · Du bor her' : ''}</span>
-    <h2>${def.name}</h2><p>${def.desc}</p>
+    <h2>${def.name}</h2>${def.real !== def.name ? `<p class="real">${def.real}</p>` : ""}<p>${def.desc}</p>
     <div class="metrics">
       <div class="metric"><div class="k">Type</div><div class="v">${KIND_ICON[def.kind]} <small>${KIND_LABEL[def.kind]}</small></div></div>
       <div class="metric"><div class="k">Trussel</div><div class="v">${intel.threat ?? '?'}<small>/5</small></div></div>

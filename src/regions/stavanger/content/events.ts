@@ -27,7 +27,7 @@ export const EVENTS: EventDef[] = [
     id: 'tesla', title: 'Naboen med Tesla',
     text: () => 'En mann i dunvest banker på. Han vil lade Teslaen sin på aggregatet deres. «Jeg skal bare til Forus», sier han. Det er zombier i baksetet hans.',
     choices: [
-      { label: 'Si nei', run: () => `Han rygger ut og kjører inn i ${SECTORS.obs.short}. Dere hører alarmen i en time.` },
+      { label: 'Si nei', run: () => `Han rygger ut og kjører inn i ${SECTORS.obs.real}. Dere hører alarmen i en time.` },
       { label: 'Overtal ham til å gi fra seg bilen', check: 'prat', run: (s, ok) => { if (ok) { s.res.drivstoff += 4; s.res.skrap += 3; s.res.mat += 2; return 'Han gir dere bilen mot at dere sier han kjører «en ekte fremtidsbil». Dere tapper alt brukbart og tar med niste fra hanskerommet.'; } s.moral -= 3; return 'Han blir fornærmet og kjører. Zombiene i baksetet vinker.'; } },
     ],
   },
@@ -51,7 +51,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'hurtigbat', title: 'Hurtigbåten',
     when: (s) => recruitable(s).length > 0,
-    text: (s) => { const n = recruitable(s)[0]; return `En Kolumbus-hurtigbåt driver forbi ${SECTORS.tommerodden.short} uten fører. Én person står på dekk og vinker: ${n.name} (${n.age}), ${n.role.toLowerCase()}. «${n.quip}»`; },
+    text: (s) => { const n = recruitable(s)[0]; return `En Kolumbus-hurtigbåt driver forbi ${SECTORS.tommerodden.real} uten fører. Én person står på dekk og vinker: ${n.name} (${n.age}), ${n.role.toLowerCase()}. «${n.quip}»`; },
     choices: [
       { label: 'Hent personen i land', check: 'kondis', run: (s, ok) => { const n = recruitable(s)[0]; if (!canRecruit(s)) { s.flags[`gone_${n.id}`] = true; return `${n.name} står klar på kaia, men det er ikke plass til flere. Dere har ikke senger til ${s.crew.length + 1}. Båten fortsetter mot Tau.`; } if (ok) { addNeighbor(s, n.id); return `${n.name} er med i crewet. Neste gang dere ser hurtigbåten, kjører den mot Tau.`; } s.flags[`gone_${n.id}`] = true; return `Dere når ikke fram. ${n.name} vinker tappert mens båten forsvinner mot Tau.`; } },
       { label: 'Vi har nok munner å mette', run: (s) => { const n = recruitable(s)[0]; s.flags[`gone_${n.id}`] = true; s.moral -= 4; return 'Båten forsvinner i regnet. Det føles feil.'; } },
@@ -102,7 +102,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'oljeskift', title: 'Oljefolk på avveie',
     when: (s) => s.day >= 4,
-    text: () => `En gruppe i oransje kjeledresser kommer gående fra ${SECTORS.tommerodden.short}. De har nettopp kommet fra en tre ukers turnus i ${LANDMARKS.nordsjoen} og vet ingenting om noe.`,
+    text: () => `En gruppe i oransje kjeledresser kommer gående fra ${SECTORS.tommerodden.real}. De har nettopp kommet fra en tre ukers turnus i ${LANDMARKS.nordsjoen} og vet ingenting om noe.`,
     choices: [
       { label: 'Forklar situasjonen', check: 'prat', run: (s, ok) => { if (ok) { s.res.skrap += 4; s.res.drivstoff += 3; s.res.mat += 3; s.moral += 4; return 'De tar det overraskende pent, gir dere utstyret og turnusmaten sin og drar for å finne familiene sine.'; } return '«Er dette en sikkerhetsøvelse?» De går videre for å finne en kaffemaskin.'; } },
       { label: 'Be dem om hjelp til gjerdet', run: (s) => { addGateWork(s, 'ros', 5); return 'De bygger på gjerdet i én dag, med full sikkerhetsbrief først.'; } },
@@ -120,7 +120,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'dronningen', title: 'Seilbåten',
     when: (s) => s.day >= 3,
-    text: () => `En seilbåt glir inn mot kaia ved ${SECTORS.sorspissen.short}. Rorsmannen roper: «Har dere drivstoff? Jeg har hermetikk!»`,
+    text: () => `En seilbåt glir inn mot kaia ved ${SECTORS.sorspissen.real}. Rorsmannen roper: «Har dere drivstoff? Jeg har hermetikk!»`,
     choices: [
       { label: 'Bytt 3 drivstoff mot mat', when: (s) => s.res.drivstoff >= 3, run: (s) => { s.res.drivstoff -= 3; s.res.mat += 10; return 'Handel gjennomført. Han seiler mot Kvitsøy og ønsker dere lykke til.'; } },
       { label: 'Prut', check: 'prat', run: (s, ok) => { if (ok) { s.res.mat += 6; return 'Han gir dere seks hermetikkbokser bare fordi du minner ham om nevøen hans.'; } return 'Han seiler videre og mumler noe om «byfolk».'; } },
@@ -139,7 +139,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'vaffel', title: 'Foreldrekomiteen',
     when: (s) => s.sectors.skolen.z === 0,
-    text: () => `På ${SECTORS.skolen.name} finner dere FAU-lista over hvem som skulle bake til 17. mai. Halvparten har krysset seg av.`,
+    text: () => `På ${SECTORS.skolen.real} finner dere FAU-lista over hvem som skulle bake til 17. mai. Halvparten har krysset seg av.`,
     choices: [
       { label: 'Les den høyt med NRK-stemme', run: (s) => { s.moral += 6; return 'Det er dumt. Alle ler likevel.'; } },
       { label: 'Sjekk skapene til de som ikke krysset av', check: 'snoking', run: (s, ok) => { if (ok) { s.res.mat += 6; s.res.medisin += 1; return 'De som ikke hadde bakt, hadde kjøpt ferdigkake. Mange av dem.'; } return 'Bare tomme Tupperware-bokser. Lokkene mangler.'; } },
@@ -174,7 +174,7 @@ export const EVENTS: EventDef[] = [
   {
     id: 'ryktet', title: 'Rykter ved bussholdeplassen',
     when: (s) => s.day >= 3 && s.sectors.obs.control < 100,
-    text: () => `Noen har skrevet med tusj på ruta ved bussholdeplassen: «${SECTORS.obs.short}: tomt for folk, fullt av hermetikk». Skrifta ligner mistenkelig på Sveins.`,
+    text: () => `Noen har skrevet med tusj på ruta ved bussholdeplassen: «${SECTORS.obs.real}: tomt for folk, fullt av hermetikk». Skrifta ligner mistenkelig på Sveins.`,
     choices: [
       { label: 'Gå dit og sjekk', check: 'snoking', run: (s, ok) => { if (ok) { s.sectors.obs.seen = true; raiseSearched(s.sectors.obs, 10); s.res.mat += 3; return 'Tre bokser pasta og en uåpnet pose Grandiosa. Dere finner også ut hvor lagerinngangen er.'; } s.sectors.obs.control = Math.max(0, s.sectors.obs.control - 5); return 'Rykter er rykter. Og noen har vært der før dere.'; } },
       { label: 'Visk ut teksten', run: (s) => { s.moral += 2; return 'Ingen trenger å lese det samme som nabolaget. Moralen hever seg litt.'; } },

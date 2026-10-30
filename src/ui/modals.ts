@@ -207,10 +207,10 @@ export function endScreen() {
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
     modal(`<div class="radio">Samband · alle stasjoner</div><h2>${AREA.name} er sikret</h2>
-      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner ${SECTORS.obs.at}: «${AREA.name.toUpperCase()}: 1 – APOKALYPSEN: 0».</p>
+      <p>Fase 1 er fullført på ${S.day - S.phaseStartDay} dager, og færre er bedre. Sperringene holder, kjellerne er (antakelig) tomme, og noen har hengt opp et banner ${SECTORS.obs.realAt}: «${AREA.name.toUpperCase()}: 1 – APOKALYPSEN: 0».</p>
       <div class="metrics">${metric('Zombier ryddet', st.kills)}${metric('Ressurser funnet', st.found)}${metric('Crew mistet', st.lost)}</div>
       <div class="card"><span class="badge lock">Neste: Fase 2</span><h2>${LOCKED.name}</h2>
-      <p>Horden på verftet venter. ${S.flags.gann ? `Skoleskipet Gann ligger klart ved ${SECTORS.tommerodden.short}.` : 'Dere har ingen båt ennå.'} ${S.flags.buss ? `Kolumbus-bussen ${SECTORS.sorspissen.at} har full tank.` : 'Dere har ikke funnet transport ennå.'}</p></div>
+      <p>Horden på verftet venter. ${S.flags.gann ? `Skoleskipet Gann ligger klart ved ${SECTORS.tommerodden.real}.` : 'Dere har ingen båt ennå.'} ${S.flags.buss ? `Kolumbus-bussen ${SECTORS.sorspissen.realAt} har full tank.` : 'Dere har ikke funnet transport ennå.'}</p></div>
       <div class="row"><button class="btn ghost" id="newr">Ny runde</button><button class="btn" id="cont">Fortsett ${AREA.at}</button></div>`);
     on('cont', () => { continueAfterWin(S); closeModal(); ui.refresh(); });
   } else if (S.over === 'timeout') {

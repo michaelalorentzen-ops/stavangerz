@@ -16,7 +16,7 @@ const code = (t: string) => t.replace(/Stavanger Z\b/g, '').replace(/\/\*[\s\S]*
 
 describe('regionpakken er eneste kilde for stedsnavn', () => {
   const names = [
-    ...Object.values(SECTORS).flatMap((d) => [d.name, d.short]),
+    ...Object.values(SECTORS).flatMap((d) => [d.name, d.short, d.real]),
     ...Object.values(GATES).map((g) => g.name),
     ...Object.values(ZONES).map((z) => z.name),
     AREA.name, AREA.city, AREA.district,
