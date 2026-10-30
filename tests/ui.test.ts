@@ -31,12 +31,20 @@ describe('panelet', () => {
     expect(blockerLabel(s)).toBeNull();
   });
 
+  it('fristlinjen sier hva som skjer ved fristen for hver grad', () => {
+    const t = (difficulty: 'normal' | 'hard' | 'brutal') => { const s = fresh(); s.difficulty = difficulty; return phaseDeadline(s)!.onExpiry; };
+    expect(t('normal')).toContain('går dere videre likevel');
+    expect(t('normal')).toContain('synker 15');
+    expect(t('hard')).toContain('synker 30');
+    expect(t('brutal')).toContain('er runden tapt');
+  });
+
   it('fristen sier «Frist for fasemålet» før målet er nådd, og hvilken fase som tvinges fram etter', () => {
     const s = fresh(), cap = mods(s).turnCap;
     s.day = 11;
-    expect(phaseDeadline(s)).toEqual({ label: 'Frist for fasemålet', days: cap - 10, goalReached: false });
+    expect(phaseDeadline(s)).toMatchObject({ label: 'Frist for fasemålet', days: cap - 10, goalReached: false });
     s.goalDay = 9;
-    expect(phaseDeadline(s)).toEqual({ label: 'Fase 2 tvinges om', days: cap - 10, goalReached: true });
+    expect(phaseDeadline(s)).toMatchObject({ label: 'Fase 2 tvinges om', days: cap - 10, goalReached: true });
     s.day = s.phaseStartDay + cap + 3;
     expect(phaseDeadline(s)?.days).toBe(0);
     s.over = 'won';

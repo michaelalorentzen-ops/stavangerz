@@ -6,14 +6,14 @@ import { addNeighbor, canRecruit, injure, leteOverlevende, recruitablesNow, setL
 import type { LogFn } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { AREA, GATES, LANDMARKS, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
-import { advancePhase, BRANCHES, mods, PHASES } from './phases';
+import { advancePhase, BRANCHES, DIFFICULTY, mods, PHASES } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { drawEvent } from './events';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
-  CrewMember, GameState, GateId, LogKind, LogLine, Resources, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
+  CrewMember, Difficulty, GameState, GateId, LogKind, LogLine, Resources, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
 } from './types';
 
 /** Vakter ved porten med et rekkevidde-våpen teller mer om natta. */
@@ -32,9 +32,9 @@ export const guardPower = (s: GameState, guards: CrewMember[]): number =>
 export const GATE_IDS = Object.keys(GATES) as GateId[];
 
 // ---------- Oppsett ----------
-export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): GameState {
+export function newGame(seed: number, self: SelfSetup, neighborIds: string[], difficulty: Difficulty = 'normal'): GameState {
   const s: GameState = {
-    v: 3, seed, rng: seed | 0, day: 1, phase: 1, mutations: [], knownMutations: [], branchWeights: { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 }, goalDay: null, phaseStartDay: 1, moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
+    v: 3, seed, rng: seed | 0, day: 1, phase: 1, mutations: [], knownMutations: [], branchWeights: { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 }, difficulty, forcedPhases: 0, goalDay: null, phaseStartDay: 1, moral: 70, stash: [], uniques: {}, nextUid: 1, needLeader: false,
     res: { mat: 14, vann: 10, medisin: 0, tre: 3, skrap: 3, metall: 0, strom: 0, drivstoff: 0 },
     flags: {}, crew: [], seenEvents: [], pending: [], event: null, recentEnc: [], tokts: [], toktsOpen: [], toktsDone: [], quests: [], log: [], over: null,
     sectors: {} as GameState['sectors'],
@@ -81,6 +81,9 @@ export function migrate(raw: unknown): GameState | null {
   g.mutations ??= [];
   g.knownMutations ??= [];
   g.branchWeights ??= { bevegelse: 1, sanser: 1, kropp: 1, atferd: 1 };
+  // gamle lagringer fikk fristen som tap. Normal har samme tall som før, så de får normal, ikke brutal (som også gir sterkere zombier midt i en runde).
+  g.difficulty ??= 'normal';
+  g.forcedPhases ??= 0;
   g.goalDay ??= null;
   g.phaseStartDay ??= 1;
   g.stats.starvedDays ??= 0;
@@ -491,6 +494,41 @@ export function checkEnd(s: GameState) {
   if (s.goalDay === null && phaseProgress(s).done) s.goalDay = s.day;
   if (s.day - s.phaseStartDay >= mods(s).turnCap) {
     if (s.goalDay !== null) forceEndPhase(s);
+    else if (DIFFICULTY[s.difficulty].deadline) missDeadline(s);
     else s.over = 'timeout';
   }
+}
+
+/**
+ * Fristen gikk ut uten at målet var nådd, på normal eller hard: fasen avsluttes likevel, med en pris.
+ * Ikke-trygge sektorer faller (zombier tilbake, kontroll borte), moralen synker og zombiene får ekstra
+ * mutasjonspoeng. Det som venter, forsvinner som ved forceEndPhase.
+ */
+function missDeadline(s: GameState) {
+  const price = DIFFICULTY[s.difficulty].deadline!;
+  s.pending = [];
+  recallTokts(s);
+  if (s.needLeader && s.crew.length) setLeader(s, s.crew[0].id);
+  s.needLeader = false;
+  const fallen: string[] = [];
+  for (const id of PLAYABLE) {
+    const sec = s.sectors[id];
+    if (isSafe(sec)) continue;
+    sec.z = Math.max(sec.z, Math.round(SECTORS[id].z * price.fall));
+    sec.control = 0;
+    fallen.push(SECTORS[id].short);
+  }
+  s.moral = clamp(s.moral - price.moral, 0, 100);
+  s.forcedPhases++;
+  const from = s.phase;
+  const added = advancePhase(s, price.mutations);
+  if (s.phase === from) {
+    // siste fase: ingen mutasjoner å trekke, men prisen i sektorene og moralen er betalt
+    s.goalDay = null; s.phaseStartDay = s.day;
+  }
+  s.log.push({ day: s.day, lines: [
+    { t: `Fristen gikk ut. Fase ${from} ble ikke ferdig, men tiden venter ikke på deg.`, kind: 'bad' },
+    ...(fallen.length ? [{ t: `Falt tilbake: ${fallen.join(', ')}. Zombiene tok dem igjen.`, kind: 'bad' as const }] : []),
+    { t: `Moralen synker ${price.moral}.${added.length ? ` Zombiene har mutert ${added.length === 1 ? 'en gang til' : `${added.length} ganger`}.` : ''}`, kind: 'bad' },
+  ] });
 }

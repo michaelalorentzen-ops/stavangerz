@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advancePhase, canEndPhase, checkEnd, endPhase, ENCOUNTERS, isFinished, migrate, hasMutation, MUTATIONS, mods, newGame, PHASES, PLAYABLE, resolveDay } from '../src/engine';
+import { DIFFICULTY, advancePhase, canEndPhase, checkEnd, endPhase, ENCOUNTERS, isFinished, migrate, hasMutation, MUTATIONS, mods, newGame, PHASES, PLAYABLE, resolveDay } from '../src/engine';
 import type { PhaseModifiers } from '../src/engine';
 import type { PhaseId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -47,6 +47,36 @@ describe('fasetabell', () => {
       for (const k of Object.keys(m.mult)) expect(knobs).toContain(k);
     }
     for (const id of ids) for (const k of knobs) expect(PHASES[id].mods[k as keyof PhaseModifiers]).toBeTypeOf('number');
+  });
+});
+
+describe('vanskelighetsgrad', () => {
+  it('normal gir nøyaktig fasetabellen i alle faser, også med mutasjoner', () => {
+    for (const phase of [1, 2, 3, 4, 5] as const) {
+      expect(mods({ phase, mutations: [], knownMutations: [], difficulty: 'normal' })).toEqual(PHASES[phase].mods);
+      expect(mods({ phase, mutations: ['lopere'], knownMutations: [], difficulty: 'normal' })).toEqual(mods({ phase, mutations: ['lopere'], knownMutations: [] }));
+    }
+    expect(DIFFICULTY.normal.mult).toEqual({});
+  });
+
+  it('hard og brutal gir sterkere zombier, brutal mest, og lar fristen stå', () => {
+    for (const phase of [1, 3, 5] as const) {
+      const [n, h, b] = (['normal', 'hard', 'brutal'] as const).map((difficulty) => mods({ phase, mutations: [], knownMutations: [], difficulty }));
+      expect(h.zombieMult).toBeGreaterThan(n.zombieMult);
+      expect(b.zombieMult).toBeGreaterThan(h.zombieMult);
+      expect(h.killMult).toBeLessThan(n.killMult);
+      expect(b.killMult).toBeLessThan(h.killMult);
+      expect(h.turnCap).toBe(n.turnCap);
+      expect(b.turnCap).toBe(n.turnCap);
+    }
+  });
+
+  it('newGame tar grad (standard normal), og gamle lagringer blir normal', () => {
+    expect(newGame(1, BOT_SELF, []).difficulty).toBe('normal');
+    expect(newGame(1, BOT_SELF, [], 'hard').difficulty).toBe('hard');
+    const old = JSON.parse(JSON.stringify(newGame(1, BOT_SELF, []))); delete old.difficulty; delete old.forcedPhases;
+    const m = migrate(old)!;
+    expect([m.difficulty, m.forcedPhases]).toEqual(['normal', 0]);
   });
 });
 
@@ -159,8 +189,8 @@ describe('faseslutt og turgrense', () => {
     expect(s.mutations).toEqual([]);
   });
 
-  it('turgrensen gir timeout uten mål, og seier med mål', () => {
-    const a = newGame(1, BOT_SELF, []);
+  it('turgrensen gir timeout uten mål på brutal, og seier med mål', () => {
+    const a = newGame(1, BOT_SELF, [], 'brutal');
     a.day = a.phaseStartDay + PHASES[1].mods.turnCap;
     checkEnd(a);
     expect(a.over).toBe('timeout');
@@ -197,12 +227,63 @@ describe('faseslutt og turgrense', () => {
     expect(c.hp).toBe(3);
   });
 
-  it('turgrensen uten mål gir timeout også når noe venter', () => {
-    const s = newGame(1, BOT_SELF, ['arild']);
+  it('turgrensen uten mål gir timeout også når noe venter (brutal)', () => {
+    const s = newGame(1, BOT_SELF, ['arild'], 'brutal');
     s.pending.push({ pid: 'e1', def: ENCOUNTERS[0].id, sector: 'obs', crew: [s.crew[1].id], threat: 2 });
     s.day = s.phaseStartDay + PHASES[1].mods.turnCap;
     checkEnd(s);
     expect(s.over).toBe('timeout');
+  });
+
+  const atDeadline = (d: 'normal' | 'hard' | 'brutal') => {
+    const s = newGame(7, BOT_SELF, ['arild'], d);
+    s.sectors.hjem.z = 0; s.sectors.hjem.hidden = 0; s.sectors.hjem.searched = 100; s.sectors.hjem.control = 100; // hjem er trygg, resten er det ikke
+    s.sectors.obs.z = 0; s.sectors.obs.control = 40;
+    s.pending.push({ pid: 'e1', def: ENCOUNTERS[0].id, sector: 'obs', crew: [s.crew[1].id], threat: 2 });
+    s.day = s.phaseStartDay + PHASES[1].mods.turnCap;
+    return s;
+  };
+
+  it.each([['normal', 15, 1], ['hard', 30, 2]] as const)('turgrensen uten mål på %s tvinger fase 2 med en pris', (d, moral, extra) => {
+    const s = atDeadline(d), m0 = s.moral;
+    const before = PHASES[2].mutationPoints;
+    checkEnd(s);
+    expect(s.over).toBeNull();
+    expect(s.phase).toBe(2);
+    expect(s.phaseStartDay).toBe(s.day);
+    expect(s.forcedPhases).toBe(1);
+    expect(s.pending).toEqual([]);
+    expect(s.moral).toBe(m0 - moral);
+    expect(s.mutations.length).toBeGreaterThanOrEqual(before[0] + extra);
+    expect(s.sectors.obs.z).toBeGreaterThan(0);
+    expect(s.sectors.obs.control).toBe(0);
+    expect(s.sectors.hjem.z).toBe(0);
+    expect(s.sectors.hjem.control).toBe(100);
+    expect(s.log.at(-1)!.lines[0].t).toContain('Fristen gikk ut');
+  });
+
+  it('hard tar mer enn normal fra samme stilling', () => {
+    const n = atDeadline('normal'), h = atDeadline('hard');
+    checkEnd(n); checkEnd(h);
+    expect(h.moral).toBeLessThan(n.moral);
+    expect(h.sectors.obs.z).toBeGreaterThan(n.sectors.obs.z);
+    expect(h.mutations.length).toBeGreaterThan(n.mutations.length);
+  });
+
+  it('brutal: fristen uten mål er tap, ingen faseskifte', () => {
+    const s = atDeadline('brutal');
+    checkEnd(s);
+    expect(s.over).toBe('timeout');
+    expect(s.phase).toBe(1);
+  });
+
+  it('nådd mål ved fristen gir seier på alle grader', () => {
+    for (const d of ['normal', 'hard', 'brutal'] as const) {
+      const s = atDeadline(d); s.goalDay = 20;
+      checkEnd(s);
+      expect(s.over).toBe('won');
+      expect(s.forcedPhases).toBe(0);
+    }
   });
 
   it('turgrense og mål utløses ikke i won-seen', () => {

@@ -75,7 +75,7 @@ Spillet har feilet, selv om det virker, hvis:
 **Faseskifte [Låst]:**
 - Fasemålet må nås før du kan gå videre.
 - Når målet er nådd, velger du selv når fasen avsluttes. Du kan bli værende og bygge deg sterkere først.
-- Det er en grense på antall turer per fase, **[Forslag]** 50 turer, og tallet er ikke låst. Når fasemålet er nådd, velger du selv når du går videre, og ved grensen må du over. Er målet ikke nådd ved grensen, er runden tapt **[Forslag]**. Spillet viser derfor «Frist for fasemålet» før målet er nådd, og «Fase 2 tvinges om» etterpå.
+- Det er en grense på antall turer per fase, **[Forslag]** 50 turer, og tallet er ikke låst. Når fasemålet er nådd, velger du selv når du går videre, og ved grensen må du over. Hva som skjer hvis målet ikke er nådd ved grensen, avhenger av vanskelighetsgraden (kapittel 6, «Vanskelighet»): på normal og hard må du videre likevel, med en pris, og på brutal er runden tapt. Spillet viser derfor «Frist for fasemålet» før målet er nådd, og «Fase 2 tvinges om» etterpå.
 - Prisen for å nøle er tid, fordi poengsummen er antall dager. Zombiene muterer ikke mens du venter.
 
 ---
@@ -280,6 +280,16 @@ Trusselnivået styrer:
 - Vanskelighetsgraden styrer hvor mange mutasjonspoeng zombiene får og hvor sterke de er.
 - Noen seeds kan være brutale. Det er lov.
 - Seeden kan deles som en kode, så et umulig kart blir en utfordring mellom venner.
+
+**Vanskelighetsgrader [Forslag]:** Spilleren velger ved ny runde (`GameState.difficulty`, standard normal). Gradene er ganger på fasetabellen (`DIFFICULTY` i `phases.ts`, lest av `mods(s)`), så tallene fortsatt bare ligger i `phases.ts`. Normal er 1 overalt, så balansen i kapittel 11 gjelder normal. Lagringer uten grad blir normal: tallene er de samme som før, mens brutal ville gjort zombiene sterkere midt i en runde.
+
+| Grad | Zombiene | Når fristen går ut uten at fasemålet er nådd |
+|---|---|---|
+| Normal (standard) | som fasetabellen | Du må videre likevel, med en pris: sektorer som ikke er trygge faller (halvparten av startzombiene kommer tilbake, kontrollen er borte), moralen synker 15, og zombiene får 1 ekstra mutasjonspoeng ved faseskiftet. |
+| Hard | +15 % antall, −7 % drap, +15 % skaderisiko, raskere gjennombrudd og kjellerutbrudd | Som normal, men prisen er høyere: hele startantallet kommer tilbake, moralen synker 30, og 2 ekstra mutasjonspoeng. |
+| Brutal | +30 % antall, −12 % drap, +30 % skaderisiko, enda raskere gjennombrudd | Runden er tapt (`over = 'timeout'`). |
+
+Prisen ved fristen er også data i `DIFFICULTY` (`deadline`). Ventende encounters forsvinner og tokt kommer hjem, som når fristen treffer etter nådd mål. Er målet nådd ved fristen, vinner du på alle grader. Spillet viser graden ved siden av dagen (ikke på normal), og fristlinjen forklarer hva som skjer. Simuleringen (`npm run sim -- 300 --hard` / `--brutal`) teller «mål nådd før fristen» som seier.
 
 **[Låst]** All vanskelighet hentes fra fasetabellen i `src/engine/phases.ts` via `mods(s)`.
 

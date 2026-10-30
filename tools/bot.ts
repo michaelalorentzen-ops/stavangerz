@@ -5,7 +5,7 @@ import {
   isOnTokt, isSafe, LAGE_COST, newGame, toktDecision, toktDef, PLAYABLE, resolveDay, resolveEncounter, resolveEvent, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
   SLOTS, taskOptions, THREAT_KILL,
 } from '../src/engine';
-import type { ChoiceDef, CrewMember, GameState, ResKey, SelfSetup, Task } from '../src/engine';
+import type { ChoiceDef, CrewMember, Difficulty, GameState, ResKey, SelfSetup, Task } from '../src/engine';
 
 export const BOT_SELF: SelfSetup = { name: 'Bot', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent' };
 export const BOT_NEIGHBORS = ['arild', 'mona', 'toregil'];
@@ -18,7 +18,7 @@ export const COMBOS: string[][] = [
 ];
 
 /** Valg for boten. `tokt` sender to på «Køen på Bybrua» når det er rolig nok. */
-export interface BotOptions { tokt?: boolean; maxDays?: number }
+export interface BotOptions { tokt?: boolean; maxDays?: number; difficulty?: Difficulty }
 
 /** Toktet boten tar, og hvor mange den sender. */
 const BOT_TOKT = 'bybrua', TOKT_TEAM = 2, TOKT_MIN_CREW = 4;
@@ -221,9 +221,10 @@ export const toktStats = (s: GameState) => {
 };
 
 export function playGame(seed: number, neighbors: string[] = BOT_NEIGHBORS, opts: BotOptions = {}): GameState {
-  const s = newGame(seed, BOT_SELF, neighbors);
+  const s = newGame(seed, BOT_SELF, neighbors, opts.difficulty);
   const maxDays = opts.maxDays ?? 80;
-  while (!s.over && s.day < maxDays) {
+  // spillet er fase 1: en frist som tvinger oss over til fase 2 (normal og hard) avslutter runden for boten
+  while (!s.over && s.phase === 1 && s.day < maxDays) {
     botTurn(s, opts);
     resolveDay(s);
     botEvent(s);

@@ -1,5 +1,6 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
+  DIFFICULTY,
   canEndPhase, dailyFood, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
@@ -28,11 +29,18 @@ export const TASK_HELP: Record<TaskType, string> = {
  * Fristen for fasen. Før målet er nådd taper man når den går ut; etter velger spilleren selv
  * når fasen avsluttes, og ved grensen tvinges man over.
  */
-export function phaseDeadline(s: GameState): { label: string; days: number; goalReached: boolean } | null {
+export function phaseDeadline(s: GameState): { label: string; days: number; goalReached: boolean; onExpiry: string } | null {
   if (s.over !== null) return null;
   const days = Math.max(0, mods(s).turnCap - (s.day - s.phaseStartDay));
-  if (s.goalDay === null) return { label: 'Frist for fasemålet', days, goalReached: false };
-  return { label: s.phase < 5 ? `Fase ${s.phase + 1} tvinges om` : 'Fasen avsluttes om', days, goalReached: true };
+  if (s.goalDay === null) return { label: 'Frist for fasemålet', days, goalReached: false, onExpiry: deadlineText(s) };
+  return { label: s.phase < 5 ? `Fase ${s.phase + 1} tvinges om` : 'Fasen avsluttes om', days, goalReached: true, onExpiry: 'Målet er nådd. Fasen avsluttes selv ved fristen.' };
+}
+
+/** Hva som skjer når fristen går ut uten at målet er nådd, for gradens pris (DIFFICULTY i phases.ts). */
+export function deadlineText(s: Pick<GameState, 'difficulty'>): string {
+  const d = DIFFICULTY[s.difficulty].deadline;
+  if (!d) return 'Når fristen går ut uten at målet er nådd, er runden tapt.';
+  return `Når fristen går ut uten at målet er nådd, går dere videre likevel: sektorer som ikke er trygge faller, moralen synker ${d.moral}, og zombiene muterer ${d.mutations === 1 ? 'en gang ekstra' : `${d.mutations} ganger ekstra`}.`;
 }
 
 const daysText = (n: number) => `${n} ${n === 1 ? 'dag' : 'dager'}`;
@@ -62,7 +70,7 @@ export function renderTop() {
   const food = dailyFood(S), water = dailyWater(S);
   const cell = (k: string, v: number, d = '', low = false) =>
     `<div class="r${low ? ' low' : ''}"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
-  $('day').textContent = `Dag ${S.day}`;
+  $('day').textContent = `Dag ${S.day}${S.difficulty === 'normal' ? '' : ` · ${DIFFICULTY[S.difficulty].name}`}`;
   const shown = RES.filter((k) => PHASE_RES[S.phase].includes(k) || S.res[k] > 0);
   const detail = (k: string) => (k === 'mat' ? [`−${food}/d`, S.res.mat < food * 2] : k === 'vann' ? [`−${water}/d`, S.res.vann < water * 2] : ['', false]) as [string, boolean];
   $('res').innerHTML =
@@ -77,7 +85,7 @@ export function renderGoals() {
   const deadline = !dl ? '' : dl.goalReached
     ? `<div class="goal deadline${tight ? ' tight' : ''}"><span>${dl.label} <b>${daysText(dl.days)}</b></span>
         <button class="btn small" id="endphase"${canEndPhase(S) ? '' : ' disabled title="Løs det som venter først"'}>Avslutt fase ${S.phase}</button></div>`
-    : `<div class="goal deadline${tight ? ' tight' : ''}" title="Når fristen går ut uten at målet er nådd, er runden tapt."><span>${dl.label}</span><b>${daysText(dl.days)}</b></div>`;
+    : `<div class="goal deadline${tight ? ' tight' : ''}" title="${esc(dl.onExpiry)}"><span>${dl.label}</span><b>${daysText(dl.days)}</b></div>`;
   const gatesDone = p.gates.filter((g) => g.level >= 2).length;
   // Målene er foldet sammen til én linje, så fanene under får plass. Fristen står alltid synlig.
   $('goals').innerHTML = `<details class="goalbox"${goalsOpen() ? ' open' : ''}>

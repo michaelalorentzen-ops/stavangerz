@@ -10,6 +10,9 @@ import type { GateId, MapSectorId, RegionFlag, SectorId, ZoneId } from '../regio
 export type { GateId, MapSectorId, SectorId, ZoneId };
 export type PhaseId = 1 | 2 | 3 | 4 | 5;
 
+/** Vanskelighetsgrad. Styrer zombienes styrke og hva som skjer når fristen for fasen går ut. */
+export type Difficulty = 'normal' | 'hard' | 'brutal';
+
 export type TraitId =
   | 'lokalkjent' | 'filmnerd' | 'dugnad' | 'hms' | 'nattevakt' | 'sveiser'
   | 'russ' | 'regneark' | 'hv' | 'buss' | 'los' | 'kokk';
@@ -174,6 +177,10 @@ export interface GameState {
   /** hvor sannsynlig hver gren er for neste mutasjon, trukket ved start */
   branchWeights: Record<Branch, number>;
   /** dagen målet for fasen først ble nådd */
+  /** vanskelighetsgrad, valgt ved start */
+  difficulty: Difficulty;
+  /** antall ganger fristen tvang spilleren videre uten at målet var nådd */
+  forcedPhases: number;
   goalDay: number | null;
   /** dagen fasen startet, turgrensen telles herfra */
   phaseStartDay: number;
