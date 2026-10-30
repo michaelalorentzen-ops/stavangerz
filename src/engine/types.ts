@@ -92,6 +92,8 @@ export interface CrewMember {
   hp: number;
   task: Task;
   kills: number;
+  /** all erfaring personen har samlet. Gir nivå, se crewLevel */
+  xp?: number;
   gear: Partial<Record<Slot, CardInst>>;
   me?: boolean;
 }
@@ -189,6 +191,8 @@ export interface GameState {
   seenEvents: string[];
   /** encounters som venter på valg */
   pending: PendingEncounter[];
+  /** de siste encounterkortene som er trukket, nyest sist. De trekkes ikke igjen med en gang. */
+  recentEnc: string[];
   /** tokt som er ute */
   tokts: ToktState[];
   quests: QuestState[];

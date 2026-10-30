@@ -146,7 +146,7 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
 /** Løser ventende encounters: det valget med best odds, men tilbaketrekk om noen i gruppa har 1 i liv. */
 export function botEncounters(s: GameState) {
   while (s.pending.length && !s.over) {
-    const p = s.pending[0], v = describeEncounter(s, p);
+    const p = s.pending[0], v = describeEncounter(s, p, { preview: false });
     const weak = s.crew.some((c) => p.crew.includes(c.id) && c.hp === 1);
     let idx = v.choices.findIndex((c) => c.retreat);
     if (!weak) {

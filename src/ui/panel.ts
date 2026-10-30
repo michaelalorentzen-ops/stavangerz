@@ -2,11 +2,60 @@
 import {
   canEndPhase, dailyFood, endDayBlocker, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, sameTask,
-  CARDS, isOnTokt, toktAvailable, toktDef, TOKTS,
+  CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
 } from '../engine';
-import type { CrewMember, GameState, GateId, SectorId, SectorState, Stats, Task, TaskType } from '../engine';
-import { bindCards, slotsHtml } from './cards';
-import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, ui } from './store';
+import type { CrewMember, GameState, GateId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
+import { bindCards, slotsHtml, statAbbr } from './cards';
+import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, PANEL_TABS, setTab, ui } from './store';
+import type { PanelTab } from './store';
+
+/** Kort forklaring på hver oppgavetype. Vises under nedtrekket og som tooltip. */
+export const TASK_HELP: Record<TaskType, string> = {
+  rydde: 'Drep zombier og let i kjellere og boder. Farligst, men det er sånn en sone blir trygg.',
+  sanke: 'Samle mat, vann og materialer i en sone uten synlige zombier.',
+  speide: 'Finn ut hvor mange zombier og hvor farlig en sone er, uten kamp.',
+  vakt: 'Hold en port eller en sone. Gir kontroll og stopper inntrengere om natta.',
+  befeste: 'Bygg på en sperring med tre og skrap. Høyere nivå gir færre gjennombrudd.',
+  lage: 'Bruk 3 skrap og 1 tre på et makeshift-kort. Mekk avgjør om det går.',
+  trene: 'Øv på én ferdighet hjemme. Trygt, men gir ikke noe annet.',
+  pleie: 'Stell de som hviler, så de blir friske uten medisin.',
+  overlevende: 'Bank på dører i en tom bolig. Prat avgjør om noen blir med. Kan vekke zombier.',
+  hvile: 'Bli hjemme og kom deg. Skadde bruker medisin om det finnes.',
+  tokt: 'Langt ut over flere dager. Stort bytte, stor risiko.',
+};
+
+/**
+ * Fristen for fasen. Før målet er nådd taper man når den går ut; etter velger spilleren selv
+ * når fasen avsluttes, og ved grensen tvinges man over.
+ */
+export function phaseDeadline(s: GameState): { label: string; days: number; goalReached: boolean } | null {
+  if (s.over !== null) return null;
+  const days = Math.max(0, mods(s).turnCap - (s.day - s.phaseStartDay));
+  if (s.goalDay === null) return { label: 'Frist for fasemålet', days, goalReached: false };
+  return { label: s.phase < 5 ? `Fase ${s.phase + 1} tvinges om` : 'Fasen avsluttes om', days, goalReached: true };
+}
+
+const daysText = (n: number) => `${n} ${n === 1 ? 'dag' : 'dager'}`;
+
+/** En endringslinje fra motoren er negativ når den starter med minus eller handler om skade, død eller slitasje. */
+export function isBadChange(line: string): boolean {
+  return /^[−-]/.test(line.trim()) || /skadet|døde|slites/i.test(line);
+}
+
+/** Endringene etter et valg som chips. */
+export function changesHtml(lines: string[]): string {
+  if (!lines.length) return '';
+  return `<div class="pv">${lines.map((l) => `<i class="${isBadChange(l) ? 'bad' : 'good'}">${esc(l)}</i>`).join('')}</div>`;
+}
+
+/** En forhåndsvisningslinje som varsler om noe vondt, også uten minus: «kan gi skade», «kan slite utstyr». */
+export const isBadPreview = (line: string): boolean => isBadChange(line) || /opptil\s*[−-]|skade|slit|døde|dør\b/i.test(line);
+
+/** Hva et valg kan gi: ok-linjer grønne (røde om de varsler om skade eller tap), fail-linjer røde bak «Feiler:». */
+export function previewHtml(p: { ok: string[]; fail: string[] | null }): string {
+  if (!p.ok.length && !p.fail?.length) return '';
+  return `<span class="pv">${p.ok.map((l) => `<i class="${isBadPreview(l) ? 'bad' : 'good'}">${esc(l)}</i>`).join('')}${p.fail?.length ? `<b class="pv-l">Feiler:</b>${p.fail.map((l) => `<i class="bad">${esc(l)}</i>`).join('')}` : ''}</span>`;
+}
 
 export function renderTop() {
   const S = game();
@@ -22,15 +71,56 @@ export function renderTop() {
 }
 
 export function renderGoals() {
-  const S = game(), p = phaseProgress(S);
+  const S = game(), p = phaseProgress(S), dl = phaseDeadline(S);
   const row = (txt: string, val: string, done: boolean) => `<div class="goal${done ? ' done' : ''}"><span>${done ? '✓ ' : ''}${txt}</span><b>${val}</b></div>`;
-  $('goals').innerHTML = `<div class="goals">
-    ${row('Gjør alle sektorer på Buøy trygge', `${p.safe}/${p.total}`, p.safe === p.total)}
-    ${p.gates.map((g) => row(`${g.name} på nivå 2`, `${g.level}/2`, g.level >= 2)).join('')}
-    ${S.over === null ? `<div class="goal"><span>Turer igjen i fasen</span><b>${Math.max(0, mods(S).turnCap - (S.day - S.phaseStartDay))}</b></div>` : ''}
-    ${canEndPhase(S) && !S.over ? `<button class="btn small" id="endphase">Avslutt fase ${S.phase}</button>` : ''}
-    <div class="hint">Utstyr på lager: ${S.stash.length} · Crew ${S.crew.length}/${housing(S)} senger</div>
-  </div>`;
+  const tight = dl && dl.days <= 5;
+  const deadline = !dl ? '' : dl.goalReached
+    ? `<div class="goal deadline${tight ? ' tight' : ''}"><span>${dl.label} <b>${daysText(dl.days)}</b></span>
+        <button class="btn small" id="endphase"${canEndPhase(S) ? '' : ' disabled title="Løs det som venter først"'}>Avslutt fase ${S.phase}</button></div>`
+    : `<div class="goal deadline${tight ? ' tight' : ''}" title="Når fristen går ut uten at målet er nådd, er runden tapt."><span>${dl.label}</span><b>${daysText(dl.days)}</b></div>`;
+  const gatesDone = p.gates.filter((g) => g.level >= 2).length;
+  // Målene er foldet sammen til én linje, så fanene under får plass. Fristen står alltid synlig.
+  $('goals').innerHTML = `<details class="goalbox"${goalsOpen() ? ' open' : ''}>
+    <summary><span class="eyebrow">Mål for fase ${S.phase}</span><span class="goalsum">${p.safe}/${p.total} trygge · ${gatesDone}/${p.gates.length} porter</span></summary>
+    <div class="goals">
+      ${row('Gjør alle sektorer på Buøy trygge', `${p.safe}/${p.total}`, p.safe === p.total)}
+      ${p.gates.map((g) => row(`${g.name} på nivå 2`, `${g.level}/2`, g.level >= 2)).join('')}
+      <div class="hint">Crew ${S.crew.length}/${housing(S)} senger</div>
+    </div>
+  </details>
+  <div class="goals">${deadline}</div>`;
+  $('goals').querySelector('details')!.addEventListener('toggle', (e) => setGoalsOpen((e.target as HTMLDetailsElement).open));
+}
+
+const GOALS_KEY = 'stavanger-z-goals';
+function goalsOpen(): boolean {
+  try { return sessionStorage.getItem(GOALS_KEY) === '1'; } catch { return false; }
+}
+function setGoalsOpen(open: boolean) {
+  try { sessionStorage.setItem(GOALS_KEY, open ? '1' : '0'); } catch { /* lagring er bare en bekvemmelighet */ }
+}
+
+const TAB_LABEL: Record<PanelTab, string> = { sted: 'Sted', crew: 'Crew', lager: 'Lager', logg: 'Logg' };
+
+/** Fanene i panelet. Bare valgt fane vises, de andre tegnes men skjules. */
+export function renderTabs() {
+  const S = game();
+  const count: Partial<Record<PanelTab, number>> = { crew: S.crew.length, lager: S.stash.length };
+  $('tabs').innerHTML = PANEL_TABS.map((t) => `<button role="tab" id="tab-${t}" data-tab="${t}" aria-selected="${ui.tab === t}" aria-controls="pane-${t}">${TAB_LABEL[t]}${count[t] !== undefined ? ` <small>${count[t]}</small>` : ''}</button>`).join('');
+  for (const t of PANEL_TABS) $(`pane-${t}`).hidden = ui.tab !== t;
+}
+
+export function showTab(t: PanelTab) {
+  setTab(t);
+  renderTabs();
+}
+
+/** Loggen fra tidligere dager, nyest først. */
+export function renderLog() {
+  const S = game();
+  $('log').innerHTML = S.log.length
+    ? [...S.log].reverse().map((d) => `<div class="logday"><p class="eyebrow">Dag ${d.day}</p><div class="logl">${d.lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag.</div>'}</div></div>`).join('')
+    : '<p class="hint">Ingenting å melde ennå. Vaktloggen fylles når dagen er over.</p>';
 }
 
 function taskShort(t: Task): string {
@@ -203,22 +293,56 @@ export function renderSel() {
   bindToktCards(box, S);
 }
 
-/** Ferdigheter som stolpe og nivånavn. Tallene vises aldri. */
-export function statPips(st: Stats) {
-  return STATS.map((k) => `<div class="st" title="${STAT_LABEL[k]}: ${skillLevel(st[k])}">${STAT_LABEL[k].slice(0, 3)}<div class="sbar"><i style="width:${Math.round(st[k])}%"></i></div><small>${skillLevel(st[k])}</small></div>`).join('');
+/**
+ * Ferdigheter som stolpe og nivånavn. Grunnverdien er den lyse stolpen, `bonus` (utstyr, nivå og egenskap)
+ * en grønn forlengelse. Tallene står bare i tooltipen.
+ */
+export function statPips(st: Stats, bonus: Partial<Stats> = {}) {
+  return STATS.map((k) => {
+    const base = Math.round(st[k]), extra = Math.max(0, Math.round(bonus[k] ?? 0)), total = Math.min(100, base + extra);
+    const tip = extra ? `${STAT_LABEL[k]}: ${skillLevel(total)} · ${base} + ${extra} fra utstyr, nivå og egenskap = ${total}` : `${STAT_LABEL[k]}: ${skillLevel(base)} · ${base}`;
+    return `<div class="st" title="${tip}">${statAbbr(k)}<div class="sbar"><i style="width:${base}%"></i>${extra ? `<i class="plus" style="width:${total - base}%"></i>` : ''}</div><small>${skillLevel(total)}</small></div>`;
+  }).join('');
 }
+
+/** Det personen får i tillegg til grunnverdien: utstyr, nivå og egenskap, som motoren regner det. */
+export const statBonus = (c: CrewMember): Partial<Stats> =>
+  Object.fromEntries(STATS.map((k: StatKey) => [k, stat(c, k) - c.stats[k]]));
+
+const hpHtml = (c: CrewMember) => `<span class="hp h${c.hp}" title="${HEALTH_LABEL[c.hp]}">${[1, 2, 3].map((i) => `<i class="${i <= c.hp ? 'on' : ''}"></i>`).join('')}</span>`;
 
 export function renderCrew() {
   const S = game(), opts = taskOptions(S);
-  $('crew').innerHTML = S.crew.map((c) => `<div class="cm${c.task.type !== 'hvile' ? ' busy' : ''}">
-      <div class="nm">${esc(c.name)}<small>${esc(c.role)}</small></div>
-      <div class="hp h${c.hp}" title="${HEALTH_LABEL[c.hp]}">${[1, 2, 3].map((i) => `<i class="${i <= c.hp ? 'on' : ''}"></i>`).join('')}</div>
-      <div class="tr"><b>${TRAITS[c.trait].name}.</b> ${TRAITS[c.trait].desc}</div>
-      <div class="statrow">${statPips(c.stats)}</div>
-      ${slotsHtml(c)}
-      ${isOnTokt(S, c) ? `<select data-crew="${c.id}" disabled aria-label="Oppdrag for ${esc(c.name)}"><option>${esc(taskShort(c.task))}</option></select>` : `<select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}">${opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</select>`}
-    </div>`).join('');
+  if (ui.openCrew && !S.crew.some((c) => c.id === ui.openCrew)) ui.openCrew = null;
+  $('crew').innerHTML = S.crew.map((c) => {
+    const open = ui.openCrew === c.id, away = isOnTokt(S, c);
+    const xp = c.xp ?? 0, lvl = crewLevel(xp), prog = Math.round(levelProgress(xp) * 100);
+    const help = TASK_HELP[c.task.type];
+    const select = away
+      ? `<select data-crew="${c.id}" disabled aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}"><option>${esc(taskShort(c.task))}</option></select>`
+      : `<select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}">${opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</select>`;
+    const more = open ? `<div class="cm-more">
+        <p class="task-help">${esc(help)}</p>
+        <div class="tr">${esc(c.role)}. <b>${TRAITS[c.trait].name}:</b> ${TRAITS[c.trait].desc}</div>
+        <div class="lvlrow" title="${lvl >= MAX_LEVEL ? 'Høyeste nivå' : `${prog} % mot Nv ${lvl + 1}`}"><span>Nv ${lvl}</span><span class="prog"><i style="width:${prog}%"></i></span><span>${lvl >= MAX_LEVEL ? 'maks' : `Nv ${lvl + 1}`}</span></div>
+        <div class="statrow">${statPips(c.stats, statBonus(c))}</div>
+      </div>` : '';
+    return `<div class="cm${c.task.type !== 'hvile' ? ' busy' : ''}${open ? ' open' : ''}" data-row="${c.id}">
+      <button class="cm-tog" data-toggle="${c.id}" aria-expanded="${open}" title="${open ? 'Fold sammen' : 'Vis ferdigheter og utstyr'}">
+        <span class="nm">${esc(c.name)}</span><span class="lvl" title="Nivå ${lvl}">Nv ${lvl}</span>${hpHtml(c)}<span class="chev" aria-hidden="true">${open ? '▴' : '▾'}</span></button>
+      ${select}
+      ${slotsHtml(c, open)}
+      ${more}
+    </div>`;
+  }).join('');
   bindCards($('crew'));
+  const toggle = (id: string) => { ui.openCrew = ui.openCrew === id ? null : id; if (ui.openCrew !== id && ui.picker?.crewId === id) ui.picker = null; renderCrew(); };
+  $('crew').querySelectorAll<HTMLElement>('[data-row]').forEach((row) => row.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    // knapper, nedtrekk og velgeren har egne handlinger; resten av raden folder ut
+    if (t.closest('select, .slots, .picker, .cm-more, a, input') || (t.closest('button') && !t.closest('[data-toggle]'))) return;
+    toggle(row.dataset.row!);
+  }));
   $('crew').querySelectorAll<HTMLSelectElement>('select').forEach((s) => s.addEventListener('change', () => {
     const c = S.crew.find((x) => x.id === s.dataset.crew)!;
     const o = opts.find((o) => taskKey(o) === s.value);

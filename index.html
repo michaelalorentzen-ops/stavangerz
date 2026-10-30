@@ -35,10 +35,12 @@
     <aside class="panel">
       <div class="scroll">
         <section id="tutorial"></section>
-        <section><p class="eyebrow">Mål for fase 1</p><div id="goals"></div></section>
-        <section id="sel"></section>
-        <section><p class="eyebrow">Crew</p><div class="crew" id="crew"></div></section>
-        <section><p class="eyebrow">Utstyrslager</p><div id="stash"></div></section>
+        <section id="goals"></section>
+        <nav class="tabs" id="tabs" role="tablist" aria-label="Panel"></nav>
+        <section class="pane" id="pane-sted" role="tabpanel" aria-labelledby="tab-sted"><div id="sel"></div></section>
+        <section class="pane" id="pane-crew" role="tabpanel" aria-labelledby="tab-crew" hidden><div class="crew" id="crew"></div></section>
+        <section class="pane" id="pane-lager" role="tabpanel" aria-labelledby="tab-lager" hidden><div id="stash"></div></section>
+        <section class="pane" id="pane-logg" role="tabpanel" aria-labelledby="tab-logg" hidden><div id="log"></div></section>
       </div>
       <div class="foot">
         <div class="plan" id="plan"></div>

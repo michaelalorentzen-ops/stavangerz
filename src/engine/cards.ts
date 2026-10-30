@@ -4,7 +4,7 @@ import { TOKTS } from './content/tokts';
 import type { LogFn } from './crew';
 import { skillLevel } from './levels';
 import { pick, rand } from './rng';
-import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot, WeaponNoise, WeaponTag } from './types';
+import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot, StatKey, Stats, WeaponNoise, WeaponTag } from './types';
 
 export { CARDS };
 export const SLOTS: Slot[] = ['vapen', 'beskyttelse', 'verktoy'];
@@ -48,7 +48,37 @@ export function unequip(s: GameState, crewId: string, slot: Slot): boolean {
   return true;
 }
 
-export const weaponMult = (c: CrewMember): number => (c.gear.vapen ? [0, 1.0, 1.2, 1.4, 1.6, 1.8][levelOf(c, 'vapen')] : 0.8);
+/** Kampkraft per våpennivå (indeks = nivå). Uten våpen: ×0,8. */
+const WEAPON_MULT = [0.8, 1.0, 1.2, 1.4, 1.6, 1.8];
+/** Skaderisiko per beskyttelsesnivå. */
+const ARMOR_MULT = [1, 0.9, 0.8, 0.7, 0.6, 0.5];
+/** Søk og bygging per verktøynivå. */
+const TOOL_MULT = [1, 1.1, 1.2, 1.3, 1.4, 1.5];
+
+/** Ferdighetspoeng hvert spor gir per kortnivå, i tillegg til kortets egen bonus (kap. 9). */
+export const SLOT_BONUS: Record<Slot, Partial<Stats>> = {
+  vapen: { muskler: 3, prat: 2 },
+  beskyttelse: { kondis: 3, nerver: 2 },
+  verktoy: { mekk: 3, snoking: 2 },
+};
+
+/** Alle ferdighetspoeng kortet gir: sporets poeng ganger nivået, pluss kortets egen bonus. */
+export function cardBonus(def: CardDef): Partial<Stats> {
+  const out: Partial<Stats> = {};
+  for (const [k, v] of Object.entries(SLOT_BONUS[def.slot]) as [StatKey, number][]) out[k] = v * def.level;
+  for (const [k, v] of Object.entries(def.bonus ?? {}) as [StatKey, number][]) out[k] = (out[k] ?? 0) + v;
+  return out;
+}
+
+/** Den andre effekten kortet har, utover ferdighetspoengene. Til visning. */
+export function cardEffect(def: CardDef): string {
+  const pct = (m: number) => Math.round(Math.abs(m - 1) * 100);
+  if (def.slot === 'vapen') return `Kampkraft ×${WEAPON_MULT[def.level].toFixed(1).replace('.', ',')}`;
+  if (def.slot === 'beskyttelse') return `Skaderisiko −${pct(ARMOR_MULT[def.level])} %`;
+  return `Søk og bygging +${pct(TOOL_MULT[def.level])} %`;
+}
+
+export const weaponMult = (c: CrewMember): number => WEAPON_MULT[levelOf(c, 'vapen')];
 const weaponDef = (c: CrewMember): CardDef | null => (c.gear.vapen ? CARDS[c.gear.vapen.def] : null);
 /** Støyen fra det utstyrte våpenet, eller null uten våpen. */
 export const noiseOf = (c: CrewMember): WeaponNoise | null => { const d = weaponDef(c); return d ? d.noise ?? 'normal' : null; };
@@ -58,9 +88,9 @@ export const isRanged = (c: CrewMember): boolean => weaponDef(c)?.range === 'avs
 export const hasTag = (c: CrewMember, tag: WeaponTag): boolean => !!weaponDef(c)?.tags?.includes(tag);
 
 /** Ganges med skaderisiko. */
-export const armorMult = (c: CrewMember): number => (c.gear.beskyttelse ? [0, 0.9, 0.8, 0.7, 0.6, 0.5][levelOf(c, 'beskyttelse')] : 1);
+export const armorMult = (c: CrewMember): number => ARMOR_MULT[levelOf(c, 'beskyttelse')];
 /** Ganges med searchPower og buildPower. */
-export const toolMult = (c: CrewMember): number => (c.gear.verktoy ? [0, 1.1, 1.2, 1.3, 1.4, 1.5][levelOf(c, 'verktoy')] : 1);
+export const toolMult = (c: CrewMember): number => TOOL_MULT[levelOf(c, 'verktoy')];
 
 /** Trekker 1 holdbarhet. På 0 ryker kortet. */
 export function wear(_s: GameState, c: CrewMember, slot: Slot, log: LogFn) {

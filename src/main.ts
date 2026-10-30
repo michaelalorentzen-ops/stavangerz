@@ -5,20 +5,21 @@ import { animateView, buildStaticMap, renderMap, updateScale } from './ui/map';
 import { draft, endDay, endPhaseNow, endScreen, titleScreen } from './ui/modals';
 import { renderStash } from './ui/cards';
 import { renderTutorial } from './ui/tutorial';
-import { renderCrew, renderGoals, renderPlan, renderSel, renderTop } from './ui/panel';
-import { $, MAP, save, ui } from './ui/store';
-import type { Selection } from './ui/store';
+import { renderCrew, renderGoals, renderLog, renderPlan, renderSel, renderTabs, renderTop, showTab } from './ui/panel';
+import { $, MAP, PANEL_TABS, save, ui } from './ui/store';
+import type { PanelTab, Selection } from './ui/store';
 
 function select(s: Selection) {
   ui.sel = s;
   ui.selAction = null;
+  showTab('sted'); // et klikk på kartet viser alltid stedet
   renderSel();
   renderMap(select);
   if (innerWidth <= 860) $('sel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 ui.refresh = () => {
-  renderTop(); renderTutorial(ui.S, ui.refresh); renderGoals(); renderSel(); renderCrew(); renderStash(); renderPlan(); renderMap(select);
+  renderTop(); renderTutorial(ui.S, ui.refresh); renderGoals(); renderTabs(); renderSel(); renderCrew(); renderStash(); renderLog(); renderPlan(); renderMap(select);
   save();
 };
 
@@ -31,6 +32,10 @@ $('v-focus').onclick = () => setView('focus');
 $('v-all').onclick = () => setView('all');
 $('end').onclick = endDay;
 $('goals').addEventListener('click', (e) => { if ((e.target as HTMLElement).id === 'endphase') endPhaseNow(); });
+$('tabs').addEventListener('click', (e) => {
+  const t = (e.target as HTMLElement).closest<HTMLElement>('[data-tab]')?.dataset.tab as PanelTab | undefined;
+  if (t && PANEL_TABS.includes(t)) showTab(t);
+});
 addEventListener('resize', updateScale);
 
 // Artifact-visningen kan bytte ut siden mens noen spiller; hot lar oss ta med tilstanden over.

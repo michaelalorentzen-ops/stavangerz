@@ -1,10 +1,10 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, INTRO, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
-import { blockerLabel, statPips } from './panel';
+import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
 import { TAG_LABEL } from './cards';
 import { $, esc, game, load, save, ui, wipe } from './store';
 
@@ -98,13 +98,13 @@ function showEvent(ev: EventDef, done: () => void) {
   const choices = ev.choices.filter((c) => !c.when || c.when(S));
   modal(`<div class="radio">${ev.channel ?? 'Samband · kanal 16'} · Dag ${S.day}</div><h2>${ev.title}</h2>
     <div class="transcript">${esc(ev.text(S))}</div>
-    <div class="choices">${choices.map((c, i) => `<button class="choice" data-i="${i}"><span>${c.label}</span>${c.check ? `<small>${STAT_LABEL[c.check]} · ${esc(best(S, c.check).name)} · ${Math.round(checkOdds(S, c.check) * 100)}%</small>` : ''}</button>`).join('')}</div>`);
+    <div class="choices">${choices.map((c, i) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? `<small>${STAT_LABEL[c.check]} · ${esc(best(S, c.check).name)} · ${Math.round(checkOdds(S, c.check) * 100)}%</small>` : ''}</span>${previewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
     const ch = choices[Number(b.dataset.i)];
     const r = runChoice(S, ch);
     save();
     const tag = ch.check ? `<div class="tag">${r.ok ? 'Lyktes' : 'Mislyktes'}</div>` : '';
-    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result ${ch.check ? (r.ok ? 'ok' : 'fail') : ''}">${tag}${esc(r.text)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
+    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result ${ch.check ? (r.ok ? 'ok' : 'fail') : ''}">${tag}${esc(r.text)}${changesHtml(r.changes)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
     $('ok').focus();
     on('ok', done);
   }));
@@ -117,13 +117,13 @@ function showEncounter(p: PendingEncounter, done: () => void) {
     ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag].toLowerCase()}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
   modal(`<div class="radio">Samband · ${esc(v.crew.join(' og '))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
     <div class="transcript">${esc(v.text)}</div>
-    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span>${esc(c.label)}</span>${odds(c)}</button>`).join('')}</div>`);
+    <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span class="ch-top"><span>${esc(c.label)}</span>${odds(c)}</span>${(c.preview ? previewHtml(c.preview) : "")}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.i), c = v.choices[i];
     const r = resolveEncounter(S, p.pid, i);
     save();
     const tag = c.check ? `<div class="tag">${r.ok ? 'Lyktes' : 'Mislyktes'}</div>` : '';
-    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result ${c.check ? (r.ok ? 'ok' : 'fail') : ''}">${tag}${esc(r.text)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
+    $('sheet').querySelector('.choices')!.outerHTML = `<div class="result ${c.check ? (r.ok ? 'ok' : 'fail') : ''}">${tag}${esc(r.text)}${changesHtml(r.changes)}</div><div class="row"><button class="btn" id="ok">Videre</button></div>`;
     $('ok').focus();
     on('ok', done);
   }));
@@ -141,8 +141,8 @@ function showToktDecision(toktId: string, done: () => void) {
     <div class="transcript">${esc(`Dag ${t.stage} av ${def.days}. ${last ? 'Dere er framme. Gjør oppdraget ferdig, eller snu med det dere har.' : 'Dere kan gå videre, eller snu og komme hjem i natt.'}`)}</div>
     <p class="hint">Gruppa bærer: ${carried.length ? esc(carried.join(', ')) : 'ingenting ennå'}.</p>
     <div class="choices">
-      <button class="choice" data-d="fortsett"><span>Fortsett</span><small>${last ? 'Fullfør og få belønningen' : 'Mer bytte, mer risiko'}</small></button>
-      <button class="choice retreat" data-d="snu"><span>Snu</span><small>Hjem i natt med det dere bærer</small></button></div>`);
+      <button class="choice" data-d="fortsett"><span class="ch-top"><span>Fortsett</span><small>${last ? 'Fullfør og få belønningen' : 'Mer bytte, mer risiko'}</small></span></button>
+      <button class="choice retreat" data-d="snu"><span class="ch-top"><span>Snu</span><small>Hjem i natt med det dere bærer</small></span></button></div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-d]').forEach((b) => b.addEventListener('click', () => {
     const text = toktDecision(S, toktId, b.dataset.d as 'fortsett' | 'snu');
     save();
