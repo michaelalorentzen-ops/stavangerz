@@ -1,10 +1,10 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
   canEndPhase, dailyFood, endDayBlocker, dailyWater, GATE_STEPS, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
-  housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, taskKey, taskOptions, ZONE_INFO, sameTask,
+  housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
 } from '../engine';
-import type { CrewMember, GameState, GateId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
+import type { TaskOption, TaskPreview, CrewMember, GameState, GateId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
 import { bindCards, slotsHtml, statAbbr } from './cards';
 import { $, esc, game, KIND_ICON, KIND_LABEL, MAP, PANEL_TABS, setTab, ui } from './store';
 import type { PanelTab } from './store';
@@ -39,7 +39,7 @@ const daysText = (n: number) => `${n} ${n === 1 ? 'dag' : 'dager'}`;
 
 /** En endringslinje fra motoren er negativ når den starter med minus eller handler om skade, død eller slitasje. */
 export function isBadChange(line: string): boolean {
-  return /^[−-]/.test(line.trim()) || /skadet|døde|slites/i.test(line);
+  return /^[−-]/.test(line.trim()) || /skadet|døde|slites|fikk ikke/i.test(line);
 }
 
 /** Endringene etter et valg som chips. */
@@ -134,6 +134,40 @@ function taskShort(t: Task): string {
   const verb = { rydde: 'rydder', sanke: 'sanker', speide: 'speider', overlevende: 'leter etter overlevende' }[t.type];
   return `${verb} ${SECTORS[t.target].short}`;
 }
+
+
+/** Oppdragene i nedtrekksmenyen, gruppert slik at det vanligste står øverst. */
+export function taskGroups(opts: TaskOption[]): { label: string; opts: TaskOption[] }[] {
+  const groups: [string, (o: TaskOption) => boolean][] = [
+    ['Hjemme', (o) => ['hvile', 'pleie', 'lage'].includes(o.type)],
+    ['Rydde', (o) => o.type === 'rydde'],
+    ['Sanke', (o) => o.type === 'sanke'],
+    ['Speide, vakt og overlevende', (o) => ['speide', 'overlevende'].includes(o.type) || (o.type === 'vakt' && o.target in SECTORS)],
+    ['Porter', (o) => o.type === 'befeste' || (o.type === 'vakt' && o.target in GATES)],
+    ['Tokt', (o) => o.type === 'tokt'],
+    ['Trene', (o) => o.type === 'trene'],
+  ];
+  return groups.map(([label, f]) => ({ label, opts: opts.filter(f) })).filter((g) => g.opts.length);
+}
+
+const pct = (x: number) => `${Math.round(x * 100)} %`;
+const num = (x: number) => (Math.round(x * 10) / 10).toString().replace('.', ',');
+
+/** Forhåndsvisningen som kort tekst: «~3 drap · skaderisiko 12 % · knipe 30 %». */
+export function previewText(p: TaskPreview): string {
+  if (p.kind === 'sanke') {
+    const got = RES.filter((r) => p.yield[r]).map((r) => `${num(p.yield[r]!)} ${RES_LABEL[r].toLowerCase()}`);
+    return `~${got.join(', ') || 'ingenting'}`;
+  }
+  const knipe = `knipe ${pct(p.encounter)}`;
+  if (p.kind === 'rydde-tom') return `~${Math.round(p.searchGain)} % mer gjennomsøkt · ${knipe}`;
+  const lo = Math.min(...p.risk.map((r) => r.risk)), hi = Math.max(...p.risk.map((r) => r.risk));
+  const risk = Math.round(lo * 100) === Math.round(hi * 100) ? pct(hi) : `${Math.round(lo * 100)}–${Math.round(hi * 100)} %`;
+  return `~${num(p.kills)} av ${p.zombies} drap · skaderisiko ${risk} · ${knipe}`;
+}
+
+/** Tooltip med skaderisiko per person. */
+const riskTitle = (p: TaskPreview): string => (p.kind === 'rydde' ? `Skaderisiko: ${p.risk.map((r) => `${r.name} ${pct(r.risk)}`).join(', ')}` : '');
 
 /** Ordren uten visningsteksten. */
 const bare = (o: Task & { label?: string }): Task => { const { label: _label, ...t } = o; return t as Task; };
@@ -268,6 +302,11 @@ export function renderSel() {
   const bar = (cls: string, label: string, pct: number | null, val: string) =>
     `<div class="bar-row ${cls}${pct === null ? ' unknown' : ''}"><span>${label}</span><span class="tr"><i style="width:${pct === null ? 100 : Math.max(0, Math.min(100, pct))}%"></i></span><b>${val}</b></div>`;
   const infPct = infBar(sec, def.z);
+  const team = task ? S.crew.filter(mine) : [];
+  const pv = task ? previewTask(S, task, team) : null;
+  const previewLine = !task || !['rydde', 'sanke'].includes(task.type) ? ''
+    : pv ? `<p class="preview" title="${esc(riskTitle(pv))}"><b>${team.length > 1 ? 'Forventet for gruppa' : 'Forventet'}:</b> ${esc(previewText(pv))}</p>`
+    : `<p class="hint">Velg hvem som går, så ser du hva det kan gi.</p>`;
   const housingNote = def.capacity > 0 ? `Plass til ${def.capacity}${sec.settled ? ', bosatt' : ', når den er trygg'}.` : 'Ingen boliger her.';
   box.innerHTML = `<div class="card">
     <span class="badge ${intel.safe ? 'safe' : inf ? 'inf' : 'clr'}">${intel.safe ? 'Trygg' : inf ? 'Infisert' : 'Ryddet'}${id === 'hjem' ? ' · Du bor her' : ''}</span>
@@ -285,7 +324,7 @@ export function renderSel() {
     ${intel.hidden !== null ? `<p class="hint">Regnearket: ${intel.hidden} gjemt i kjellere og boder.</p>` : ''}
     <p class="hint">${inf ? 'Muskler og Nerver dreper zombier. Rydd flere sammen for å unngå skader.' : `${lootHint(sec)} ${intel.safe ? '' : 'Rydd til sektoren er gjennomsøkt, og hold kontrollen oppe, ellers siver de inn igjen.'}`} ${housingNote}</p>
     ${actions.length > 1 ? `<div class="seg" role="group">${actions.map((a) => `<button data-act="${a}" aria-pressed="${a === act}">${actLabel[a]}</button>`).join('')}</div>` : ''}
-    ${act && task ? `<p class="eyebrow" style="margin:0">Send til ${actLabel[act].toLowerCase()}</p>${crewChips(mine)}` : '<p class="hint">Ingenting mer å gjøre her.</p>'}
+    ${act && task ? `<p class="eyebrow" style="margin:0">Send til ${actLabel[act].toLowerCase()}</p>${crewChips(mine)}${previewLine}` : '<p class="hint">Ingenting mer å gjøre her.</p>'}
   </div>`;
   box.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', () => { ui.selAction = b.dataset.act as TaskType; renderSel(); }));
   if (task) bindChips(box, mine, () => task);
@@ -320,7 +359,7 @@ export function renderCrew() {
     const help = TASK_HELP[c.task.type];
     const select = away
       ? `<select data-crew="${c.id}" disabled aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}"><option>${esc(taskShort(c.task))}</option></select>`
-      : `<select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}">${opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</select>`;
+      : `<select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}">${taskGroups(opts).map((g) => `<optgroup label="${g.label}">${g.opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</optgroup>`).join('')}</select>`;
     const more = open ? `<div class="cm-more">
         <p class="task-help">${esc(help)}</p>
         <div class="tr">${esc(c.role)}. <b>${TRAITS[c.trait].name}:</b> ${TRAITS[c.trait].desc}</div>

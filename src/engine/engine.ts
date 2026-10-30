@@ -3,6 +3,7 @@
 // resolveDay() selv når multiplayer kommer.
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, injure, leteOverlevende, setLeader } from './crew';
+import type { LogFn } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { GATES, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
 import { advancePhase, BRANCHES, mods } from './phases';
@@ -166,11 +167,56 @@ export function forceEndPhase(s: GameState): string[] {
   return endPhase(s);
 }
 
-/** Nullstiller ordre som ikke lenger er gyldige. */
-export function validateTasks(s: GameState) {
+/** Navnet på et sted eller en port, slik det står i meldinger. */
+const placeName = (id: string): string => (id in GATES ? GATES[id as GateId].name : id in SECTORS ? SECTORS[id as SectorId].short : id);
+
+/** Ordren som kort tekst i infinitiv, for meldinger. */
+export function taskText(t: Task): string {
+  switch (t.type) {
+    case 'hvile': return 'hvile';
+    case 'pleie': return 'pleie de som hviler';
+    case 'lage': return 'lage utstyr';
+    case 'trene': return `trene ${STAT_LABEL[t.stat].toLowerCase()}`;
+    case 'rydde': return `rydde ${placeName(t.target)}`;
+    case 'sanke': return `sanke ${placeName(t.target)}`;
+    case 'speide': return `speide ${placeName(t.target)}`;
+    case 'vakt': return `holde vakt ${placeName(t.target)}`;
+    case 'overlevende': return `lete etter overlevende ${placeName(t.target)}`;
+    case 'befeste': return `befeste ${placeName(t.target)}`;
+    case 'tokt': return `dra på tokt (${placeName(t.target)})`;
+  }
+}
+
+/** Hvorfor en ordre ikke lenger kan utføres. */
+function invalidReason(s: GameState, t: Task): string {
+  const sec = (id: string) => s.sectors[(id in GATES ? GATES[id as GateId].sector : id) as SectorId];
+  switch (t.type) {
+    case 'rydde': return `${placeName(t.target)} er ryddet og gjennomsøkt`;
+    case 'speide': return `${placeName(t.target)} er allerede speidet`;
+    case 'sanke': case 'overlevende': return `${placeName(t.target)} har zombier igjen`;
+    case 'vakt': return sec(t.target)?.z > 0 ? `${placeName(t.target)} har zombier igjen` : 'stedet er ikke lenger tilgjengelig';
+    case 'befeste': return sec(t.target)?.z > 0 ? `${placeName(t.target)} har zombier igjen` : `${placeName(t.target)} er fullt utbygd`;
+    case 'tokt': return 'toktet er ikke lenger tilgjengelig';
+    default: return 'ordren er ikke lenger mulig';
+  }
+}
+
+/**
+ * Nullstiller ordre som ikke lenger er gyldige, og sier fra om hvem og hvorfor. Meldingene går til `log`
+ * (som 'warn') og returneres, så kallere uten dagslogg kan vise dem selv.
+ */
+export function validateTasks(s: GameState, log?: LogFn): string[] {
   const valid = taskOptions(s);
+  const msgs: string[] = [];
   // de som er ute på tokt er låst til det
-  for (const c of s.crew) if (!isOnTokt(s, c) && !valid.some((o) => sameTask(o, c.task))) c.task = { type: 'hvile' };
+  for (const c of s.crew) {
+    if (isOnTokt(s, c) || valid.some((o) => sameTask(o, c.task))) continue;
+    const msg = `${c.name} fikk ikke ${taskText(c.task)}: ${invalidReason(s, c.task)}. Hviler i stedet.`;
+    c.task = { type: 'hvile' };
+    msgs.push(msg);
+    log?.(msg, 'warn');
+  }
+  return msgs;
 }
 
 // ---------- Dagsoppgjør ----------
@@ -349,7 +395,7 @@ export function resolveDay(s: GameState): LogLine[] {
 
   s.moral = clamp(s.moral + 2, 0, 100);
   s.day++;
-  validateTasks(s);
+  validateTasks(s, log);
   checkEnd(s);
   s.log.push({ day: s.day - 1, lines: L });
   if (s.log.length > 40) s.log.shift();

@@ -65,7 +65,29 @@ export function sectorIntel(s: GameState, id: SectorId): SectorIntel {
 }
 
 /** Gjennomsøkt-gevinst på en dag med full innsats mot en tom sektor. */
-const searchGain = (s: GameState, team: CrewMember[]) => clamp(sum(team.map((c) => searchPower(s, c))) * 4, 8, 45);
+export const searchGain = (s: GameState, team: CrewMember[]) => clamp(sum(team.map((c) => searchPower(s, c))) * 4, 8, 45);
+
+/** Kampstyrken til en Rydde-gruppe og gruppens multiplikator på drap (før trekningen 0.35–0.60 og avrunding). */
+export function ryddeKillParams(s: GameState, id: SectorId, team: CrewMember[], M: PhaseModifiers) {
+  const power = sum(team.map((c) => fightPower(s, c)));
+  const before = s.sectors[id].z;
+  const anyTag = (tag: WeaponTag) => team.some((c) => hasTag(c, tag));
+  let tagMult = 1;
+  if (before >= SPREAD_MIN_Z && anyTag('spredning')) tagMult *= SPREAD_KILL;
+  if (anyTag('gjennomslag') && (hasMutation(s, 'seige') || hasMutation(s, 'pansret'))) tagMult *= PIERCE_KILL;
+  return { power, mult: M.killMult * THREAT_KILL[SECTORS[id].threat] * tagMult };
+}
+/** Drap per kampstyrke: trekkes uniformt mellom disse i `rydde`. */
+export const KILL_ROLL_MIN = 0.35, KILL_ROLL_SPAN = 0.25;
+
+/** Sjansen for at én person blir skadet i en Rydde-kamp mot `before` zombier. */
+/** `ranged` er om personen hadde et rekkevidde-våpen da gruppa gikk ut (før slitasje). */
+export function ryddeInjuryRisk(c: CrewMember, before: number, power: number, id: SectorId, M: PhaseModifiers, ranged = isRanged(c)): number {
+  return clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[SECTORS[id].threat] * armorMult(c) * (ranged ? RANGED_INJURY : 1), 0.02, 0.45);
+}
+
+/** Det Sanke gir av en ressurs før avrunding, gitt sektorens grunnutbytte og gruppens samlede søkestyrke. */
+export const sankeAmount = (base: number, power: number): number => base * (0.5 + 0.1 * power);
 
 /** Sektorens funn tas første gang gjennomsøkt-prosenten krysser 50. */
 function checkSpecial(s: GameState, id: SectorId, before: number, log: LogFn) {
@@ -105,20 +127,16 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   const searchedBefore = sec.searched;
 
   if (sec.z > 0) {
-    const power = sum(team.map((c) => fightPower(s, c)));
+    const { power, mult } = ryddeKillParams(s, id, team, M);
     const before = sec.z;
-    const anyTag = (tag: WeaponTag) => team.some((c) => hasTag(c, tag));
-    let tagMult = 1;
-    if (before >= SPREAD_MIN_Z && anyTag('spredning')) tagMult *= SPREAD_KILL;
-    if (anyTag('gjennomslag') && (hasMutation(s, 'seige') || hasMutation(s, 'pansret'))) tagMult *= PIERCE_KILL;
     const ranged = new Set(team.filter(isRanged));
-    const kills = Math.min(sec.z, sround(s, power * (0.35 + rand(s) * 0.25) * M.killMult * THREAT_KILL[def.threat] * tagMult));
+    const kills = Math.min(sec.z, sround(s, power * (KILL_ROLL_MIN + rand(s) * KILL_ROLL_SPAN) * mult));
     for (const c of team) wear(s, c, 'vapen', log);
     sec.z -= kills; s.stats.kills += kills;
     for (let i = 0; i < kills; i++) pick(s, team).kills++;
     log(`${names(team)} ryddet ${kills} ${plural(kills)} ${def.at}.${sec.z > 0 ? ` ${sec.z} igjen.` : ' Sektoren er tom for synlige zombier.'}`);
     for (const c of team) {
-      const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c) * (ranged.has(c) ? RANGED_INJURY : 1), 0.02, 0.45);
+      const risk = ryddeInjuryRisk(c, before, power, id, M, ranged.has(c));
       if (rand(s) < risk) injure(s, c, `i ${def.short}`, log);
     }
     if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
@@ -190,7 +208,7 @@ export function sanke(s: GameState, id: SectorId, team: CrewMember[], log: LogFn
   for (const r of RES) {
     const base = def.yield[r];
     if (!base) continue;
-    const n = sround(s, base * (0.5 + 0.1 * power));
+    const n = sround(s, sankeAmount(base, power));
     if (n > 0) { s.res[r] += n; s.stats.found += n; got.push(`${n} ${RES_LABEL[r].toLowerCase()}`); }
   }
   log(`${names(team)} sanket ${def.at}: ${got.length ? got.join(', ') : 'ingenting i dag'}.`);
