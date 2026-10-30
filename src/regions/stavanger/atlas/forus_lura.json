@@ -1,0 +1,145 @@
+{
+  "id": "forus_lura",
+  "name": "Forus og Lura",
+  "at": "på Forus og Lura",
+  "ring": 3,
+  "phase": 5,
+  "density": 3,
+  "baseThreat": 3,
+  "gates": [
+    {
+      "name": "Nordporten",
+      "real": "E39 og Solasplitten ved Forus",
+      "between": ["forus_lura", "ullandhaug_hinna"],
+      "lat": 58.9055,
+      "lon": 5.6985,
+      "notes": "Motorveien kommer sørover fra Hinna og deler seg her mot Sola og Sandnes."
+    },
+    {
+      "name": "Jærbanen",
+      "real": "Sørlandsbanen ved Forus",
+      "between": ["forus_lura", "ullandhaug_hinna"],
+      "lat": 58.8915,
+      "lon": 5.7451,
+      "notes": "Toget fra Jæren og Sandnes. Sporet krysser Forus på bro før det går mot Jåttå. [Sjekk] at Forus stasjon er der sporet er."
+    }
+  ],
+  "sectors": [
+    {
+      "id": "forus_ikea",
+      "name": "Interiørbutikken", "short": "Interiørbutikken", "at": "på interiørbutikken",
+      "real": "IKEA Forus", "realAt": "på IKEA Forus",
+      "kind": "butikk", "shopType": "interiorbutikk", "threat": 4,
+      "lat": 58.8873, "lon": 5.7208,
+      "gives": "tre, tekstiler, improvisert beskyttelse, møbler å sperre med, og kjøttboller",
+      "notes": "Varehuset er bygget som en labyrint med ett utgangsspor. Det var ikke ment som en forsvarsplan."
+    },
+    {
+      "id": "forus_bygg",
+      "name": "Byggvarehuset", "short": "Byggvarehuset", "at": "på byggvarehuset",
+      "real": "Obs Bygg Forus", "realAt": "på Obs Bygg Forus",
+      "kind": "butikk", "shopType": "byggvarehus", "threat": 3,
+      "lat": 58.8908, "lon": 5.7359,
+      "gives": "tre, skrap, verktøy, spiker i bøtter",
+      "notes": "Dokumentet gjettet Maxbo eller Obs Bygg; dumpen har begge, og Bauhaus (58.8927, 5.708), Biltema og Montér Stormarked i tillegg. Obs Bygg er plukket fordi den ligger i midten av næringsparken."
+    },
+    {
+      "id": "forus_bil",
+      "name": "Bilforhandleren", "short": "Bilforhandleren", "at": "på bilforhandleren",
+      "real": "bilforhandlerne på Forus (Kverneland Bil, Toyota)", "realAt": "på bilforhandlerne på Forus",
+      "kind": "industri", "shopType": "bilforhandler", "threat": 3,
+      "lat": 58.8868, "lon": 5.7035,
+      "gives": "metall, kjøretøy med drivstoff, kjøretøydeler, dekk",
+      "notes": "Tre dusin forhandlere i dumpen, de fleste vest for Forusbeen: Volvo, Mazda, Ford, Lexus, Toyota og Tesla. Tesla har ikke noe å si på bensin."
+    },
+    {
+      "id": "forus_kontor",
+      "name": "Kontorene", "short": "Kontorene", "at": "på kontorene",
+      "real": "Equinor og Forus næringspark", "realAt": "i Forus næringspark",
+      "kind": "industri", "threat": 4,
+      "lat": 58.8928, "lon": 5.719,
+      "gives": "tech, datarom, forskning, kantiner, generatorer og kaffe i lengre tid enn noen kan forklare",
+      "notes": "Equinor-campusen, EVRY, Capgemini, Forus Lab og et par hundre andre. [Sjekk] at «Kontorene» er det riktige funksjonsnavnet; regelheftet har ingen type for kontorlandskap."
+    },
+    {
+      "id": "forus_matbutikk",
+      "name": "Matbutikken", "short": "Matbutikken", "at": "på matbutikken",
+      "real": "Kiwi Forusparken", "realAt": "på Kiwi Forusparken",
+      "kind": "butikk", "shopType": "matbutikk", "threat": 3,
+      "lat": 58.8899, "lon": 5.7372,
+      "gives": "mat, vann, hermetikk",
+      "notes": "Én av over tjue dagligvarebutikker på Forus og Lura. Kvadrat har Obs og Extra, Lura har Kiwi og Rema, og alle er stengt på søndager også nå."
+    },
+    {
+      "id": "forus_boligfelt",
+      "name": "Boligfeltet", "short": "Boligfeltet", "at": "i boligfeltet",
+      "real": "Lura", "realAt": "på Lura",
+      "kind": "bolig", "threat": 2,
+      "lat": 58.8735, "lon": 5.7375,
+      "gives": "naboer å rekruttere, mat og vann i husene, garasjer og kjellere",
+      "notes": "Lura ligger i Sandnes kommune, og innbyggerne vil ha deg til å vite det. Eneboliger og rekkehus rundt Lura kirke og skole. [Sjekk] om Lura bør deles i to (nordre og søndre) når bygningsdata er hentet."
+    },
+    {
+      "id": "forus_lurabekken",
+      "name": "Parken", "short": "Parken", "at": "i parken",
+      "real": "Lurabekken Park", "realAt": "i Lurabekken Park",
+      "kind": "natur", "threat": 1,
+      "lat": 58.8737, "lon": 5.7371,
+      "gives": "vann, åpent og oversiktlig, ender, lite å finne",
+      "notes": "Bekken og turstiene mellom Lura og Forus. Rundeskogen (58.8712, 5.7281) og Gausel naturreservat (58.9031, 5.7355) er alternativer."
+    },
+    {
+      "id": "forus_lura_bathavn",
+      "name": "Båthavna", "short": "Båthavna", "at": "i båthavna",
+      "real": "Lura Båthavn", "realAt": "i Lura Båthavn",
+      "kind": "kai", "threat": 2,
+      "lat": 58.8717, "lon": 5.7431,
+      "gives": "båter, tau, drivstoff til påhengsmotorer, fisk",
+      "notes": "Småbåthavna ved Gandsfjorden. Trones (58.8726, 5.7412) og Hana ligger ved siden av."
+    }
+  ],
+  "keyPlace": {
+    "id": "forus_vapendisken",
+    "type": "vapen_jakt",
+    "name": "Våpendisken", "short": "Våpendisken", "at": "på Våpendisken",
+    "real": "XXL Forus (Tvedtsenteret)", "realAt": "på XXL Forus",
+    "kind": "butikk", "shopType": "sportsbutikk", "threat": 4,
+    "lat": 58.8956, "lon": 5.7014,
+    "gives": "våpen og ammunisjon (jaktdisken), beskyttelse, kondis-utstyr",
+    "notes": "Dumpen har ingen shop=hunting eller shop=weapons i hele atlaset. Nærmeste er Platou Madla (shop=outdoor) og XXL (shop=sports), som en norsk sportskjede har en våpendisk i. XXL Forus står derfor som nøkkelsted og heter «Våpendisken». [Sjekk] om denne XXL-butikken faktisk har våpendisk; det er en forutsetning for spillet, ikke en dokumentert opplysning."
+  },
+  "hqCandidate": {
+    "id": "forus_kvadrat",
+    "type": "kjopesenter",
+    "name": "Kjøpesenteret på Kvadrat", "short": "Kvadrat", "at": "på Kvadrat",
+    "real": "Kvadrat, Lura", "realAt": "på Kvadrat",
+    "kind": "butikk", "shopType": "kjopesenter", "threat": 5,
+    "lat": 58.8769, "lon": 5.7218,
+    "gives": "alt, i all slags mengde, bak skodder og med skjulte verdier",
+    "notes": "Norges største kjøpesenter utenfor Oslo. Ligger i Sandnes kommune, noe som er en uttalt opplysning i begge retninger. Apotek, Elkjøp, Vinmonopol, Obs og Clas Ohlson under samme tak. Skjulte verdier: lagre, bakrom og hva Sten&Strøm lot stå på."
+  },
+  "pois": [
+    { "name": "Kvadrat", "type": "kjopesenter", "lat": 58.8769, "lon": 5.7218, "osm": "relation/5761711" },
+    { "name": "Obs Kvadrat", "type": "matbutikk", "lat": 58.8764, "lon": 5.723, "osm": "node/387620723" },
+    { "name": "Ikea Forus", "type": "kjopesenter", "lat": 58.8873, "lon": 5.7208, "osm": "way/35098185" },
+    { "name": "XXL Forus", "type": "sportsbutikk", "lat": 58.8956, "lon": 5.7014, "osm": "node/443523852" },
+    { "name": "Tvedtsenteret", "type": "kjopesenter", "lat": 58.8959, "lon": 5.7012, "osm": "way/41126424" },
+    { "name": "Platou Madla", "type": "sportsbutikk", "lat": 58.952, "lon": 5.6805, "osm": "way/106580914" },
+    { "name": "Obs Bygg Forus", "type": "byggvarehus", "lat": 58.8908, "lon": 5.7359, "osm": "node/6030392089" },
+    { "name": "Bauhaus", "type": "jernvarehandel", "lat": 58.8927, "lon": 5.708, "osm": "node/10037586163" },
+    { "name": "Kiwi Forusparken", "type": "matbutikk", "lat": 58.8899, "lon": 5.7372, "osm": "node/5997663507" },
+    { "name": "Kverneland Bil - Volvo Bilhuset", "type": "bilforhandler", "lat": 58.887, "lon": 5.705, "osm": "node/6075841952" },
+    { "name": "Toyota Sørvest, Forus", "type": "bilforhandler", "lat": 58.8863, "lon": 5.7033, "osm": "node/7640760566" },
+    { "name": "Equinor ASA", "type": "kontor", "lat": 58.8928, "lon": 5.719, "osm": "node/4964196337" },
+    { "name": "Lurabekken Park", "type": "natur", "lat": 58.8737, "lon": 5.7371, "osm": "way/655186094" },
+    { "name": "Lura Båthavn", "type": "kai", "lat": 58.8717, "lon": 5.7431, "osm": "node/1244656239" },
+    { "name": "Forus", "type": "stedsnavn", "lat": 58.8918, "lon": 5.7341, "osm": "node/308758995" },
+    { "name": "Motorveien (E39) over Forusbeen", "type": "bru", "lat": 58.8982, "lon": 5.7098, "osm": "way/68649132" },
+    { "name": "Sørlandsbanen ved Forus", "type": "bru", "lat": 58.8915, "lon": 5.7451, "osm": "way/33737825" }
+  ],
+  "sources": [
+    "OpenStreetMap, data/osm-atlas.json (tools/fetch_atlas.sh, hentet 2026-10-30), © OpenStreetMap-bidragsytere, ODbL",
+    "docs/kartlegging-stavanger.md, 1.11 Forus og Lura"
+  ],
+  "notes": "Næringsområdet mellom Stavanger, Sandnes og Sola: store handelsbokser og bilforhandlere i nord, Lura og Kvadrat i sør. Området er bbox 58.862–58.905 N og 5.69–5.775 Ø og tar med den delen av Forus som ligger i Sandnes kommune. Kjøpesenteret på Kvadrat er HQ-kandidat, og Våpendisken er nøkkelsted fordi ingen jaktbutikk finnes i dumpen (se keyPlace). Sandnes er en egen fraksjon i fase 5 (kapittel 1.12), og dette området er der grensen mellom dem og oss går. Hana og Aspervika i sørøst ligger så vidt innenfor boksen, men har ingen sektor."
+}
