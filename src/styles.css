@@ -323,6 +323,8 @@ button { cursor: pointer; }
 .tagchip { font: 700 9px/1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; background: var(--line); color: var(--muted); }
 .tagchip.n-brak { background: var(--red-soft); color: #ff8b8e; }
 .tagchip.n-stille { background: rgba(123,196,127,.16); color: var(--green); }
+.tagchip[class*="c-"], .tagchip[class*="w-"] { background: rgba(120,160,220,.16); color: #8fb4ec; }
+.tagchip.w-tung { background: rgba(180,140,90,.2); color: #d2a86a; }
 .tagchip.t { background: var(--amber-soft); color: var(--amber); }
 .choice.retreat { border-style: dashed; }
 .choice small b { color: var(--amber); font-weight: 600; }

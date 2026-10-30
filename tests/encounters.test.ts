@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  acceptQuest, canEndDay, CARDS, fightPower, guardPower, mods, PIERCE_KILL, RANGE_GUARD, rydde, endDayBlocker, injure, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
+  acceptQuest, canEndDay, CARDS, noiseOfDef, fightPower, guardPower, mods, PIERCE_KILL, RANGE_GUARD, rydde, endDayBlocker, injure, setLeader, checkEnd, describeEncounter, ENCOUNTERS, encounterOdds, housing, newCard, newGame, PHASES, RES, resolveDay, resolveEncounter,
 } from '../src/engine';
 import type { EncounterCtx, GameState, PendingEncounter, SectorId, WeaponTag } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -189,11 +189,13 @@ describe('våpenegenskaper', () => {
     expect(weapons.length).toBeGreaterThan(0);
     for (const d of weapons) {
       expect(['naerkamp', 'avstand'], d.id).toContain(d.range);
-      expect(['stille', 'normal', 'brak'], d.id).toContain(d.noise ?? 'normal');
+      expect(['stille', 'normal', 'brak'], d.id).toContain(noiseOfDef(d));
     }
-    expect(CARDS.hagle_politibil).toMatchObject({ range: 'avstand', noise: 'brak', tags: ['spredning'] });
+    expect(CARDS.hagle_politibil).toMatchObject({ range: 'avstand', tags: ['spredning'] });
+    expect(noiseOfDef(CARDS.hagle_politibil)).toBe('brak');
     expect(CARDS.spikerpistol_obs).toMatchObject({ range: 'avstand', noise: 'normal' });
-    expect(CARDS.k_ror).toMatchObject({ range: 'naerkamp', noise: 'normal' });
+    expect(CARDS.k_ror).toMatchObject({ range: 'naerkamp' });
+    expect(noiseOfDef(CARDS.k_ror)).toBe('normal');
   });
 
   /** Skader i løpet av en dag for en alenegruppe, summert over seeds. */
