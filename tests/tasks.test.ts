@@ -22,7 +22,7 @@ describe('Vakt på port', () => {
     sealed(s);
     GATE_IDS.forEach((g, i) => { s.crew[i].task = { type: 'vakt', target: g }; });
     for (let i = 0; i < 100; i++) {
-      s.day = 40; s.over = null;
+      s.day = 40; s.over = null; s.res.mat = 20; s.res.vann = 20; // sult tar livet av vaktene på 100 dager
       resolveDay(s);
       expect(totalZ(s)).toBe(0);
     }

@@ -7,7 +7,7 @@ import { SECTORS } from './data';
 import { delta, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand } from './rng';
-import { bestOf, checkOddsFor } from './skills';
+import { bestOf, checkOddsFor, ODDS_MAX } from './skills';
 import type { CrewMember, GameState, PendingEncounter, SectorId, SectorKind, StatKey, WeaponTag } from './types';
 
 export { ENCOUNTERS };
@@ -52,6 +52,8 @@ const ENC_THREAT_BASE = 0.7, ENC_THREAT_STEP = 0.3;
 const ENC_LOUD = 1.2, ENC_QUIET = 0.7;
 /** Odds-bonus når noen i gruppa har et våpen med valgets tagg. */
 export const TAG_ODDS = 0.2;
+/** Sjansen synker så mye per trusselnivå over 1. Farlige steder er farlige også for de flinke. */
+export const THREAT_ODDS = 0.08;
 /** Så mange av de sist trukne kortene holdes ute av trekningen. */
 export const ENC_COOLDOWN = 4;
 
@@ -118,7 +120,8 @@ export function encounterOdds(s: GameState, p: PendingEncounter, choiceIdx: numb
   const crew = alive(s, p);
   if (!crew.length) return 0.05;
   const odds = checkOddsFor(crew, ch.check);
-  return ch.tag && crew.some((c) => hasTag(c, ch.tag!)) ? Math.min(0.95, odds + TAG_ODDS) : odds;
+  const tagged = ch.tag && crew.some((c) => hasTag(c, ch.tag!)) ? odds + TAG_ODDS : odds;
+  return clamp(tagged - THREAT_ODDS * (p.threat - 1), 0.05, ODDS_MAX);
 }
 
 export interface EncounterView {

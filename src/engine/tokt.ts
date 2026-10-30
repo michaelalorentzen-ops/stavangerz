@@ -1,9 +1,9 @@
 // Tokt: en gruppe drar bort i flere dager. Hver dag ute gir bytte og et encounter, og så velger spilleren
 // å fortsette eller snu. Ren logikk.
-import { CARDS, newCard, rollCard } from './cards';
-import type { LogFn } from './crew';
+import { armorMult, CARDS, newCard, rollCard } from './cards';
+import { injure, type LogFn } from './crew';
 import { addToktEncounter } from './encounters';
-import { RES, RES_LABEL } from './data';
+import { PHASE_RES, RES, RES_LABEL } from './data';
 import type { PhaseModifiers } from './phases';
 import { pick, rand, sround } from './rng';
 import { QUESTS, questDef, TOKTS, toktDef } from '../regions/content';
@@ -19,6 +19,8 @@ const HAUL_KINDS = 2;
 export const HAUL_PER_THREAT = 3;
 /** Sjansen for kort per dag ute, ganget med fasens cardFind */
 export const TOKT_CARD_MULT = 2;
+/** Sjansen per person per dag ute for å bli skadet, ganger trusselnivået. Byttet de bærer kan gå tapt i flukten. */
+export const TOKT_DAY_INJURY = 0.03, TOKT_DROP = 1 / 3;
 
 const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
@@ -76,7 +78,7 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
     t.stage++;
     const found: string[] = [];
     for (let i = 0; i < HAUL_KINDS; i++) {
-      const k: ResKey = pick(s, RES), n = sround(s, rand(s) * HAUL_PER_THREAT * def.threat);
+      const k: ResKey = pick(s, PHASE_RES[s.phase]), n = sround(s, rand(s) * HAUL_PER_THREAT * def.threat);
       if (n > 0) { t.haul[k] = (t.haul[k] ?? 0) + n; found.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
     }
     if (rand(s) < M.cardFind * TOKT_CARD_MULT) {
@@ -85,6 +87,15 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
       found.push(CARDS[k.def].name);
     }
     log(`${names(group)} er på tokt (${def.name}), dag ${t.stage} av ${def.days}.${found.length ? ` Fant ${found.join(', ')}.` : ''}`, found.length ? 'find' : '');
+    // Dagene ute tærer: skader hoper seg opp, og den som blir skadet, slipper noe av byttet
+    let hurt = false;
+    for (const c of group) if (rand(s) < TOKT_DAY_INJURY * def.threat * M.injuryMult * armorMult(c)) { injure(s, c, 'på toktet', log, 'tokt'); hurt = true; }
+    if (hurt) {
+      const lost: string[] = [];
+      for (const k of RES) { const n = Math.floor((t.haul[k] ?? 0) * TOKT_DROP); if (n > 0) { t.haul[k]! -= n; lost.push(`${n} ${RES_LABEL[k].toLowerCase()}`); } }
+      if (lost.length) log(`I flukten mistet gruppa ${lost.join(', ')}.`, 'bad');
+    }
+    if (!s.crew.some((c) => t.crew.includes(c.id))) continue;
     if (added < budget && addToktEncounter(s, group, def.threat, t.id, log)) added++;
     t.awaiting = true;
   }

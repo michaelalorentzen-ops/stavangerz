@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canRecruit, GATE_IDS, housing, isSafe, newGame, resolveDay, sectorIntel, SECTORS, sum, raiseSearched, taskOptions } from '../src/engine';
+import { canRecruit, GATE_IDS, housing, isSafe, newGame, PHASES, resolveDay, sectorIntel, SECTORS, sum, raiseSearched, taskOptions } from '../src/engine';
 import type { GameState, SectorId, SectorState } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
 
@@ -35,8 +35,8 @@ describe('sektordata', () => {
     expect(s.sectors.skolen).toMatchObject({ control: 0, settled: false, searched: 0, scouted: false });
   });
 
-  it('gir 30 % mer mat i sektorbyttet', () => {
-    expect(fresh().sectors.buoy_nord.loot.mat).toBe(Math.round(SECTORS.buoy_nord.loot.mat * 1.3));
+  it('gir 30 % mer mat i sektorbyttet, ganget med fasens lootMult', () => {
+    expect(fresh().sectors.buoy_nord.loot.mat).toBe(Math.round(SECTORS.buoy_nord.loot.mat * 1.3 * PHASES[1].mods.lootMult));
   });
 });
 

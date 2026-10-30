@@ -27,6 +27,9 @@ function report(label: string, neighbors: string[]) {
   console.log(`\n${label}${tokt ? ' med tokt' : ''} (${neighbors.join(', ')}), ${n} runder`);
   console.log(`  Vunnet: ${won.length} (${pct(won.length, n)}) · Døde: ${dead.length} · Timeout: ${timeout.length} (${pct(timeout.length, n)}) · Uavgjort: ${games.filter((s) => !s.over).length}`);
   if (days.length) console.log(`  Dager til seier: median ${median(days)}, min ${Math.min(...days)}, maks ${Math.max(...days)}`);
+  const d20 = Array.from({ length: n }, (_, i) => playGame(i + 1, neighbors, { tokt, maxDays: 20 })).filter((s) => !s.over);
+  console.log(`  Lager dag 20 (median): mat ${median(d20.map((s) => s.res.mat))}, vann ${median(d20.map((s) => s.res.vann))}, medisin ${median(d20.map((s) => s.res.medisin))}, tre ${median(d20.map((s) => s.res.tre))}, skrap ${median(d20.map((s) => s.res.skrap))}`);
+  console.log(`  Spenning: ${games.filter((s) => s.stats.lost > 0).length} av ${n} mistet noen, ${games.filter((s) => s.stats.lost >= 2).length} mistet to eller flere, ${games.filter((s) => s.over === 'dead').length} mistet alle`);
   console.log(`  Sultedager per runde: median ${median(games.map((s) => s.stats.starvedDays))}, snitt ${(games.reduce((a, s) => a + s.stats.starvedDays, 0) / n).toFixed(1)}${lost.length ? `, median i tapte runder ${median(lost.map((s) => s.stats.starvedDays))}` : ''}`);
   console.log(`  Døde crew: kamp ${deaths.kamp}, natt ${deaths.natt}, tokt ${deaths.tokt} (${(games.reduce((a, s) => a + s.stats.lost, 0) / n).toFixed(2)} per runde)`);
   if (tokt) {

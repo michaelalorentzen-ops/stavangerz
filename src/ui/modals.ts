@@ -1,6 +1,6 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, INTRO, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  best, CARDS, checkOdds, continueAfterWin, describeEncounter, drawEvent, previewChoice, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, HEALTH_LABEL, INTRO, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, runChoice, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
   STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { EventDef, PendingEncounter, Stats, TraitId } from '../engine';
@@ -142,6 +142,7 @@ function showToktDecision(toktId: string, done: () => void) {
   modal(`<div class="radio">Samband · tokt · Dag ${S.day}</div><h2>${esc(def.name)}</h2>
     <div class="transcript">${esc(`Dag ${t.stage} av ${def.days}. ${last ? 'Dere er framme. Gjør oppdraget ferdig, eller snu med det dere har.' : 'Dere kan gå videre, eller snu og komme hjem i natt.'}`)}</div>
     <p class="hint">Gruppa bærer: ${carried.length ? esc(carried.join(', ')) : 'ingenting ennå'}.</p>
+    <p class="hint">Helse: ${S.crew.filter((c) => t.crew.includes(c.id)).map((c) => `${esc(c.name)} ${HEALTH_LABEL[c.hp].toLowerCase()}`).join(', ')}.</p>
     <div class="choices">
       <button class="choice" data-d="fortsett"><span class="ch-top"><span>Fortsett</span><small>${last ? 'Fullfør og få belønningen' : 'Mer bytte, mer risiko'}</small></span></button>
       <button class="choice retreat" data-d="snu"><span class="ch-top"><span>Snu</span><small>Hjem i natt med det dere bærer</small></span></button></div>`);

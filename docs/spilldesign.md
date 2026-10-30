@@ -478,6 +478,20 @@ Dette er retning, ikke spesifikasjon. Fase 1 skal ikke bygge noe av det, men må
 13. **Faseskifte:** etter at målet er nådd, velger spilleren selv når fasen avsluttes, innen en grense på antall turer (foreløpig 50, ikke låst). Mutasjonsmatrisen og poengtrekking ved faseskifte bygges i motoren og fasetabellen, men har ingen effekt før fase 2 finnes.
 14. **Tutorial:** de tre første dagene guider spilleren gjennom Rydde, Bygge og Vakt via sambandet.
 
+### Spenning og økonomi [Forslag]
+
+Fra gjennomgangen 30.10: fase 1 var spillbar, men uten fare. Disse reglene gir spenning uten å ta bort at crewet blir sterkere:
+
+- **Ingen sjekk er sikker:** sjansen stopper på 90 % (`ODDS_MAX`), og hvert trusselnivå over 1 trekker 8 prosentpoeng fra i encounters (`THREAT_ODDS`).
+- **Porten stenges ikke av noen få zombier:** med høyst 2 zombier i portens sektor kan porten befestes og voktes. Laget tar dem først, og vakt og befesting gir kontroll i portens sektor.
+- **Ingen blir friskere på tom mage:** uten nok mat og vann til dagen virker verken hvile eller pleie.
+- **Knappere økonomi:** sektorene har mindre å finne (`lootMult`), sanking gir mindre (`yieldMult`), det regner sjeldnere (`rainChance`), og maten på lageret blir dårlig litt hver dag (`stashRot`). Fyring (`heatPerCrew`) er av i fase 1 og slår inn fra fase 2.
+- **Tokt har ekte risiko:** hver dag ute kan noen bli skadet (oftere jo farligere), og da mister gruppa en tredel av byttet i flukten. Beslutningen om å fortsette eller snu viser helsen til gruppa.
+- **Dårlige valg:** omtrent en tredel av hendelsene er rent negative, og noen encounters har bare dårlige valg.
+- **Comeback:** når to eller færre er igjen, kan en nabo banke på om natta (30 %).
+- **Lage utstyr** lager aldri kort med et bestemt opphav (`craftable: false`).
+- **Boten** velger hendelsesvalg ut fra forventet verdi, slik en spiller leser forhåndsvisningen.
+
 ### Mål for balanse
 
 **[Forslag]**

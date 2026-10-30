@@ -2,20 +2,24 @@
 // state + samme ordre gir alltid samme resultat. Serveren kan kjøre
 // resolveDay() selv når multiplayer kommer.
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
-import { addNeighbor, injure, leteOverlevende, setLeader } from './crew';
+import { addNeighbor, canRecruit, injure, leteOverlevende, recruitablesNow, setLeader } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { AREA, GATES, LANDMARKS, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
-import { advancePhase, BRANCHES, mods } from './phases';
+import { advancePhase, BRANCHES, mods, PHASES } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
-  CrewMember, GameState, GateId, LogKind, LogLine, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
+  CrewMember, GameState, GateId, LogKind, LogLine, Resources, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
 } from './types';
 
 /** Vakter ved porten med et rekkevidde-våpen teller mer om natta. */
 export const RANGE_GUARD = 1.25;
+/** Så mange zombier kan stå i portens sektor uten at porten stenges for befesting og vakt. Laget tar dem først. */
+export const GATE_STRAGGLERS = 2;
+/** Med så få igjen kan overlevende banke på om natta, så runden kan reddes. */
+export const COMEBACK_CREW = 2, COMEBACK_KNOCK = 0.3;
 
 /** Samlet kampkraft for vaktene ved en port om natta. Rekkevidde-våpen teller mer. */
 export const guardPower = (s: GameState, guards: CrewMember[]): number =>
@@ -39,7 +43,8 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[]): G
   for (const id of neighborIds) addNeighbor(s, id);
   for (const id of PLAYABLE) {
     const d = SECTORS[id];
-    const loot = { ...d.loot, mat: Math.round(d.loot.mat * 1.3) };
+    const M0 = PHASES[1].mods;
+    const loot = Object.fromEntries(Object.entries({ ...d.loot, mat: d.loot.mat * 1.3 }).map(([k, v]) => [k, Math.round(v * M0.lootMult)])) as Resources;
     const home = id === 'hjem';
     s.sectors[id] = {
       z: d.z, hidden: d.hidden, searched: 0, control: home ? 60 : 0, loot, lootMax: sum(Object.values(loot)),
@@ -111,7 +116,7 @@ export function taskOptions(s: GameState): TaskOption[] {
     if (sec.z === 0 && (kind === 'bolig' || kind === 'offentlig')) opts.push({ type: 'overlevende', target: id, label: `Lete etter overlevende ${n}` });
   }
   for (const id of GATE_IDS) {
-    if (s.sectors[GATES[id].sector].z !== 0) continue;
+    if (s.sectors[GATES[id].sector].z > GATE_STRAGGLERS) continue;
     if (s.gates[id].level < 3) opts.push({ type: 'befeste', target: id, label: `Befeste ${GATES[id].name}` });
     opts.push({ type: 'vakt', target: id, label: `Holde vakt ${GATES[id].name}` });
   }
@@ -211,7 +216,7 @@ export function resolveDay(s: GameState): LogLine[] {
       rydde(s, id, ry, M, log); xp(ry, 'muskler', 1.5); xp(ry, 'nerver', 0.5);
       if (encounters < ENC_MAX_PER_DAY && rollEncounter(s, M, id, ry, noise, log)) encounters++;
     }
-    if (sa.length && s.sectors[id].z === 0) { s.sectors[id].seen = true; s.sectors[id].scouted = true; sanke(s, id, sa, log); xp(sa, 'snoking', 1); }
+    if (sa.length && s.sectors[id].z === 0) { s.sectors[id].seen = true; s.sectors[id].scouted = true; sanke(s, id, sa, M, log); xp(sa, 'snoking', 1); }
   }
 
   // 2b) Speide
@@ -228,6 +233,20 @@ export function resolveDay(s: GameState): LogLine[] {
     watch[id] = watchControl(vk);
     log(`${names(vk)} holdt vakt ${SECTORS[id].at}.`);
     xp(vk, 'nerver', 1);
+  }
+
+  // 2d) Laget ved porten tar zombiene som står i portens sektor, og holder øye med den
+  for (const id of GATE_IDS) {
+    const tm = s.crew.filter((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === id);
+    if (!tm.length) continue;
+    const sid = GATES[id].sector, sec = s.sectors[sid];
+    if (sec.z > 0) {
+      const k = Math.min(sec.z, Math.max(1, sround(s, guardPower(s, tm) * 0.35)));
+      sec.z -= k; s.stats.kills += k;
+      log(`${names(tm)} tok ${k} ${plural(k)} ${SECTORS[sid].at} før de gikk til porten.`);
+      for (const c of tm) if (rand(s) < 0.08 * M.injuryMult) injure(s, c, SECTORS[sid].at, log);
+    }
+    watch[sid] = (watch[sid] ?? 0) + watchControl(tm) / 2;
   }
 
   // 3) Befesting
@@ -261,18 +280,20 @@ export function resolveDay(s: GameState): LogLine[] {
   // 3e) Pleie: de som hviler blir friskere uten medisin
   const nursed = new Set<CrewMember>();
   const nurses = s.crew.filter((c) => c.task.type === 'pleie');
-  if (nurses.length) {
+  const hungry = s.res.mat < dailyFood(s) || s.res.vann < dailyWater(s);
+  if (nurses.length && !hungry) {
     for (const c of s.crew.filter((c) => c.task.type === 'hvile' && c.hp < 3)) { c.hp++; nursed.add(c); log(`${c.name} ble pleid av ${names(nurses)}, uten at medisinskapet ble åpnet.`); }
     for (const n of nurses) if (n.trait === 'nattevakt' && n.hp < 3) { n.hp++; log(`${n.name} pleide seg selv også. Gammel vane fra nattevakt på ${LANDMARKS.sus}.`); }
     xp(nurses, 'prat', 1);
   }
 
-  // 4) Hvile
+  // 4) Hvile. Uten nok mat og vann til dagen blir ingen friskere.
+  if (hungry && s.crew.some((c) => c.task.type === 'hvile' && c.hp < 3)) log('Ingen blir friskere på tom mage.', 'warn');
   for (const c of s.crew.filter((c) => c.task.type === 'hvile')) {
-    if (c.hp >= 3 || nursed.has(c)) continue;
+    if (hungry || c.hp >= 3 || nursed.has(c)) continue;
     const nurse = hasTrait(s, 'nattevakt');
     if (s.res.medisin > 0 && !(nurse && rand(s) < 0.5)) { s.res.medisin--; c.hp++; log(`${c.name} ble plastret med medisin.`); }
-    else if (nurse || rand(s) < 0.35) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse ? ' (og Monas strenge regime)' : ''}.`); }
+    else if (nurse || rand(s) < 0.35) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse ? ` (og ${s.crew.find((x) => x.trait === 'nattevakt')!.name}s strenge regime)` : ''}.`); }
   }
 
   // 4b) Nivåopprykk
@@ -294,7 +315,14 @@ export function resolveDay(s: GameState): LogLine[] {
     if (c.hp > 1) { c.hp--; log(`${c.name} er svak av sult (${HEALTH_LABEL[c.hp].toLowerCase()}).`, 'bad'); }
     else injure(s, c, 'av sulten, på en måte', log);
   }
-  if (rand(s) < 0.4) { const n = 3 + Math.floor(rand(s) * 4); s.res.vann += n; log(`Det regnet. Selvfølgelig. +${n} vann.`, 'fun'); }
+  if (rand(s) < M.rainChance) { const n = 3 + Math.floor(rand(s) * 4); s.res.vann += n; log(`Det regnet. Selvfølgelig. +${n} vann.`, 'fun'); }
+  // Maten på lageret blir dårlig litt etter litt
+  const rot = Math.floor(s.res.mat * M.stashRot);
+  if (rot > 0) s.res.mat -= rot;
+  // Fyring: tre til ovnen hver dag. Uten ved fryser folk, og moralen synker.
+  const heat = Math.ceil(s.crew.length * M.heatPerCrew);
+  if (s.res.tre >= heat) s.res.tre -= heat;
+  else { s.res.tre = 0; s.moral -= 3; log('Ingen ved i ovnen. Alle sitter i dobbel ullgenser og ser på hverandre.', 'warn'); }
 
   // Kontroll og forfall
   updateControl(s, M, groups, watch);
@@ -321,6 +349,16 @@ export function resolveDay(s: GameState): LogLine[] {
     sec.control -= 20;
     if (wasClear) s.moral -= 4;
     log(`Natt: ${n} ${plural(n)} kom forbi ${g.name} og står nå ${SECTORS[target].at}.${wasClear ? ' Sektoren er infisert igjen.' : ''}`, wasClear ? 'bad' : 'warn');
+  }
+
+  // 6a) Comeback: når nesten alle er borte, finner overlevende frem til dere
+  if (s.crew.length > 0 && s.crew.length <= COMEBACK_CREW && rand(s) < COMEBACK_KNOCK) {
+    const cands = recruitablesNow(s);
+    if (cands.length && canRecruit(s)) {
+      const n = pick(s, cands);
+      addNeighbor(s, n.id);
+      log(`Natt: Det banker på døra. ${n.name} (${n.age}) har sett lyset i vinduet og vil heller være med dere enn alene. «${n.quip}»`, 'good');
+    }
   }
 
   // 6b) Natt: bråk fra Rydde trekker zombier

@@ -57,6 +57,8 @@ export interface CardDef {
   tags?: WeaponTag[];
   durability: number;
   text: string;
+  /** false for kort med et bestemt opphav («fra Obs»), som ikke kan lages med Lage utstyr */
+  craftable?: false;
   /** bare unike kort: sektorene kortet kan ligge i */
   places?: SectorId[];
 }

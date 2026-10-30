@@ -1,11 +1,11 @@
 // En bot som spiller fase 1. Brukes av balansetesten og tools/sim.ts.
 // Den følger en fast prioritetsliste og tenker ikke langt frem. En god spiller skal slå den.
 import {
-  canEndDay, canEndPhase, CARDS, dailyFood, dailyWater, describeEncounter, drawEvent, endPhase, equip, fightPower, GATE_IDS, GATES,
+  canEndDay, canEndPhase, CARDS, dailyFood, dailyWater, delta, describeEncounter, drawEvent, endPhase, equip, fightPower, GATE_IDS, GATES,
   isOnTokt, isSafe, LAGE_COST, newGame, toktDecision, toktDef, PLAYABLE, resolveDay, resolveEncounter, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
   SLOTS, taskOptions, THREAT_KILL,
 } from '../src/engine';
-import type { CrewMember, GameState, ResKey, SelfSetup, Task } from '../src/engine';
+import type { ChoiceDef, CrewMember, GameState, ResKey, SelfSetup, Task } from '../src/engine';
 
 export const BOT_SELF: SelfSetup = { name: 'Bot', stats: { muskler: 3, kondis: 2, snoking: 3, nerver: 3, mekk: 2, prat: 2 }, trait: 'lokalkjent' };
 export const BOT_NEIGHBORS = ['arild', 'mona', 'toregil'];
@@ -143,6 +143,32 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
   for (const c of free) c.task = plan.get(c) ?? { type: 'hvile' };
 }
 
+/** Hva boten synes om en endring: liv og helse teller mest, så mat og vann, så resten. */
+function value(a: GameState, b: GameState): number {
+  const d = delta(a, b);
+  const res = (k: keyof GameState['res'], w: number) => (d.res[k] ?? 0) * w;
+  return res('mat', 1.5) + res('vann', 1.2) + res('medisin', 2) + res('tre', 0.6) + res('skrap', 0.6) + res('drivstoff', 0.3)
+    + d.moral * 0.3 + d.cards.length * 3 + d.joined.length * 12 - d.hurt.length * 6 - d.lost.length * 30 - d.gone.length * 4
+    - Math.max(0, d.zombies) * 2 + Math.max(0, -d.zombies) + d.scouted + d.control * 0.05 + d.searched * 0.05
+    + Object.values(d.gateWork).reduce((n, w) => n + (w ?? 0), 0) * 0.8;
+}
+
+/** Hendelsesvalget med best forventet verdi, prøvd ut på kopier slik en spiller ser forhåndsvisningen. */
+export function botEventChoice(s: GameState, choices: ChoiceDef[]): ChoiceDef {
+  let best = choices[0], bestV = -Infinity;
+  for (const ch of choices) {
+    let v = 0;
+    for (let i = 0; i < 6; i++) {
+      const copy = structuredClone(s);
+      copy.rng = (s.rng ^ Math.imul(i + 1, 0x85ebca6b)) | 0;
+      runChoice(copy, ch);
+      v += value(s, copy);
+    }
+    if (v > bestV) { bestV = v; best = ch; }
+  }
+  return best;
+}
+
 /** Løser ventende encounters: det valget med best odds, men tilbaketrekk om noen i gruppa har 1 i liv. */
 export function botEncounters(s: GameState) {
   while (s.pending.length && !s.over) {
@@ -188,7 +214,7 @@ export function playGame(seed: number, neighbors: string[] = BOT_NEIGHBORS, opts
     botTurn(s, opts);
     resolveDay(s);
     const ev = s.over ? null : drawEvent(s);
-    if (ev) runChoice(s, ev.choices.filter((c) => !c.when || c.when(s))[0]);
+    if (ev) runChoice(s, botEventChoice(s, ev.choices.filter((c) => !c.when || c.when(s))));
     // som i spillet: encounters først (de kan drepe lederen), så ny leder
     botEncounters(s);
     botTokts(s);

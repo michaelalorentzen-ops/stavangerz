@@ -211,7 +211,7 @@ export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
   const chance = Math.max(0.3, Math.min(0.9, 0.3 + (mekk / 10) * 0.1));
   if (rand(s) >= chance) { log(`${c.name} bygde noe. Det ble ikke til noe, bortsett fra en stor haug skrap.`, 'warn'); return; }
   const level = ['God', 'Rå'].includes(skillLevel(mekk)) ? 2 : 1;
-  const cands = Object.values(CARDS).filter((d) => d.family === 'makeshift' && d.level === level && d.rarity !== 'unik');
+  const cands = Object.values(CARDS).filter((d) => d.family === 'makeshift' && d.level === level && d.rarity !== 'unik' && d.craftable !== false);
   const k = newCard(s, pick(s, cands).id);
   s.stash.push(k);
   log(`${c.name} laget ${CARDS[k.def].name}.`, 'good');

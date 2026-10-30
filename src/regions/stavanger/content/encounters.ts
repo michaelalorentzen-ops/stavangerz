@@ -56,6 +56,23 @@ const retreat = (label: string): EncChoice => ({
   },
 });
 
+/** Taper opptil n av en ressurs og returnerer det som faktisk gikk tapt. */
+const drain = (s: GameState, k: keyof GameState['res'], n: number): number => { const l = Math.min(n, s.res[k]); s.res[k] -= l; return l; };
+/** Kostnaden som tekst: «−3 mat». Er lageret tomt, står det ingenting å miste. */
+const cost = (n: number, k: string) => (n > 0 ? `−${n} ${k}` : 'ingenting å miste');
+/** Slitasje på et tilfeldig utstyrt kort i gruppa, eller moralen hvis ingen har utstyr. */
+function wearOne(s: GameState, ctx: EncounterCtx, n: number): string {
+  const geared = ctx.crew.flatMap((c) => Object.values(c.gear).map((k) => ({ c, k: k! })));
+  if (!geared.length) { s.moral -= 2; return '(ingenting å slite på, −2 moral)'; }
+  const { c, k } = pick(s, geared);
+  k.dur -= n;
+  if (k.dur <= 0) {
+    for (const slot of Object.keys(c.gear) as (keyof typeof c.gear)[]) if (c.gear[slot] === k) delete c.gear[slot];
+    return `(${CARDS[k.def].name} tilhørende ${c.name} gikk i stykker)`;
+  }
+  return `(${CARDS[k.def].name} tilhørende ${c.name}, −${n} holdbarhet)`;
+}
+
 export const ENCOUNTERS: EncounterDef[] = [
   {
     id: 'trappegang', title: 'Flokken i trappegangen', places: ['butikk', 'offentlig', 'tokt'],
@@ -574,6 +591,76 @@ export const ENCOUNTERS: EncounterDef[] = [
         return 'Han blir glad. Noen ting skal være som før, også nå (-1 mat).';
       } },
       retreat('Late som ingen er der'),
+    ],
+  },
+  // ---- Dårlige valg: alle veier koster noe
+  {
+    id: 'kjellerflom', title: 'Kjelleren som fyller seg', places: ['hjem', 'bolig', 'offentlig', 'butikk'],
+    text: (_s, ctx) => `${who(ctx)} står i kjelleren ${at(ctx)} da et rør brister over dem. Vannet står til anklene, så til knærne. Dørstokken er i andre enden av rommet.`,
+    choices: [
+      { label: 'Vad ut med det dere rakk å ta', check: 'kondis', run: (s, ctx, ok) => {
+        if (!ok) { const m = drain(s, 'mat', ctx.threat + 1); return `Dere kommer ut, men posene ble igjen i vannet (${cost(m, 'mat')}).${setback(s, ctx, 'i kjelleren')}`; }
+        const m = drain(s, 'mat', 1); s.moral -= 1;
+        return `Dere kommer ut våte til skinnet. Ingen sier noe, og det er verst (${cost(m, 'mat')}, −1 moral).`;
+      } },
+      { label: 'Stopp røret med det dere har', check: 'mekk', run: (s, ctx, ok) => {
+        if (!ok) { const t = drain(s, 'tre', ctx.threat + 1); return `Røret gir etter for godt. Brettene flyter ut sammen med dere (${cost(t, 'tre')}).${setback(s, ctx, 'i kjelleren')}`; }
+        const t = drain(s, 'tre', 2); s.moral -= 1;
+        return `Vannet stopper med to planker og mye banning. Planker som sitter fast i et rør er ikke til å bruke igjen (${cost(t, 'tre')}, −1 moral).`;
+      } },
+      retreat('Svøm ut'),
+    ],
+  },
+  {
+    id: 'rekvirert', title: 'Alt er rekvirert', places: ['butikk', 'industri', 'offentlig', 'tokt'],
+    text: (_s, ctx) => `En mann i Sivilforsvaret-jakke står i døra ${at(ctx)} med en liste og en hagle. «Alt her er rekvirert», sier han. Han virker overraskende fornøyd med det. Han kan ikke vise noen papirer.`,
+    choices: [
+      { label: 'Gi ham det han vil ha', run: (s, ctx) => {
+        const m = drain(s, 'mat', ctx.threat + 1), sk = drain(s, 'skrap', 2); s.moral -= 2;
+        return `Han krysser av på lista, og dere bærer det ut selv (${cost(m, 'mat')}, ${cost(sk, 'skrap')}, −2 moral).`;
+      } },
+      { label: 'Snakk ham ned', check: 'prat', run: (s, ctx, ok) => {
+        if (!ok) { const m = drain(s, 'mat', 2 * ctx.threat + 1); return `Han hører ikke på. Han nikker bare og skriver noe ned. Dere går derfra uten både mat og argumenter (${cost(m, 'mat')}).${setback(s, ctx, 'ved sperringen')}`; }
+        const m = drain(s, 'mat', 1); s.moral -= 1;
+        return `Han lar dere beholde det meste mot en skriftlig forsikring om at dere «støtter innsatsen» (${cost(m, 'mat')}, −1 moral).`;
+      } },
+      retreat('Trekk dere ut'),
+    ],
+  },
+  {
+    id: 'gulv', title: 'Gulvet gir etter', places: ['bolig', 'offentlig', 'butikk', 'industri', 'kai'],
+    text: (_s, ctx) => `Gulvet ${at(ctx)} har råtnet langt mer enn noen har sagt. Det knaker, og i neste åndedrag har ${who(ctx)} et hull i veien. Underveis ser det ut som det står noe nede i kjelleren og ser opp.`,
+    choices: [
+      { label: 'Hopp over hullet', check: 'kondis', run: (s, ctx, ok) => {
+        if (!ok) { if (ctx.sector) s.sectors[ctx.sector].z += 1; return `Dere kommer for kort. Landingen er ikke pen, og noen i kjelleren har hørt den.${setback(s, ctx, 'i gulvet')}`; }
+        const sk = drain(s, 'skrap', ctx.threat);
+        return `Dere kommer over, men sekken ble hengende på kanten og røk nedi (${cost(sk, 'skrap')}).`;
+      } },
+      { label: 'Bygg bro av dørene', check: 'mekk', run: (s, ctx, ok) => {
+        if (!ok) { const t = drain(s, 'tre', 3); return `Døra bøyer seg, så knekker den. Alt dere hadde med seg som kunne brukes til noe mer, ryker med den (${cost(t, 'tre')}).${setback(s, ctx, 'i gulvet')}`; }
+        const t = drain(s, 'tre', 2);
+        return `Broa holder. Dørene gjør ikke det etterpå (${cost(t, 'tre')}, ${wearOne(s, ctx, 2)}).`;
+      } },
+      retreat('Gå ut samme vei'),
+    ],
+  },
+  {
+    id: 'ropet', title: 'Ropet fra tredje etasje', places: ['bolig', 'offentlig', 'butikk', 'industri', 'tokt'],
+    text: (_s, ctx) => `«Hjelp! Vi sitter fast!» Stemmen kommer fra tredje etasje ${at(ctx)}. Den gjentar seg, ord for ord, med samme tonefall. Noen har lagt igjen en opptaker. Den som la den igjen, ventet på noe.`,
+    choices: [
+      { label: 'Gå opp og sjekk', check: 'nerver', run: (s, ctx, ok) => {
+        if (ctx.sector) s.sectors[ctx.sector].z += ok ? 1 : ctx.threat + 1;
+        if (!ok) return `Opptakeren, ja, men også tre beboere som har ventet på besøk. Dere kommer ned igjen raskere enn dere gikk opp (+${ctx.threat + 1} zombier).${setback(s, ctx, 'i trappa')}`;
+        const sk = drain(s, 'skrap', 2); s.moral -= 1;
+        return `Bare opptakeren, og en som lurer på hvorfor dere kom. Dere rydder på vei ut for at ingen skal merke at dere var der (${cost(sk, 'skrap')}, +1 zombie, −1 moral).`;
+      } },
+      { label: 'Rop tilbake', check: 'prat', run: (s, ctx, ok) => {
+        if (ctx.sector) s.sectors[ctx.sector].z += ok ? 1 : 2;
+        if (!ok) return `Alt svarer. Svarene kommer fra alle kanter (+2 zombier).${setback(s, ctx, 'i trappa')}`;
+        s.moral -= 1;
+        return 'Opptakeren svarer ikke. Det gjør to andre, og dere trekker dere unna før de finner ut hvem dere er (+1 zombie, −1 moral).';
+      } },
+      retreat('Gå videre'),
     ],
   },
 ];

@@ -60,5 +60,7 @@ export function buildPower(s: GameState, c: CrewMember): number {
 export const bestOf = (crew: CrewMember[], k: StatKey): CrewMember =>
   crew.reduce((a, c) => (stat(c, k) > stat(a, k) ? c : a), crew[0]);
 /** Sjansen for å lykkes med en sjekk, etter gruppas beste på ferdigheten. */
+/** Ingen sjekk er helt sikker. Selv den beste kan bomme. */
+export const ODDS_MAX = 0.9;
 export const checkOddsFor = (crew: CrewMember[], k: StatKey, base = 0.25): number =>
-  clamp(base + (stat(bestOf(crew, k), k) / 10) * 0.12, 0.05, 0.95);
+  clamp(base + (stat(bestOf(crew, k), k) / 10) * 0.12, 0.05, ODDS_MAX);

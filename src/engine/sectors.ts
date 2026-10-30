@@ -121,8 +121,8 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
       const risk = clamp((0.04 + 0.22 * (before / (power * 1.5 + 1)) - (stat(c, 'kondis') / 10) * 0.02) * M.injuryMult * THREAT_INJURY[def.threat] * armorMult(c) * (ranged.has(c) ? RANGED_INJURY : 1), 0.02, 0.45);
       if (rand(s) < risk) injure(s, c, def.at, log);
     }
-    if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log('Tor-Egil sammenlignet det med øvelse Cold Response. Igjen.', 'fun');
-    if (team.some((c) => c.trait === 'russ') && rand(s) < 0.25) log('Sondre filmet alt til en TikTok ingen kommer til å se.', 'fun');
+    if (team.some((c) => c.trait === 'hv') && rand(s) < 0.3) log(`${team.find((c) => c.trait === 'hv')!.name} sammenlignet det med øvelse Cold Response. Igjen.`, 'fun');
+    if (team.some((c) => c.trait === 'russ') && rand(s) < 0.25) log(`${team.find((c) => c.trait === 'russ')!.name} filmet alt til en TikTok ingen kommer til å se.`, 'fun');
     raiseSearched(sec, searchGain(s, team) * 0.3);
     checkSpecial(s, id, searchedBefore, log);
     checkUnique(s, id, searchedBefore, log);
@@ -183,14 +183,14 @@ function pickUp(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
 }
 
 /** Sanke: hent dagens utbytte fra en sektor uten zombier. */
-export function sanke(s: GameState, id: SectorId, team: CrewMember[], log: LogFn) {
+export function sanke(s: GameState, id: SectorId, team: CrewMember[], M: PhaseModifiers, log: LogFn) {
   const def = SECTORS[id];
   const power = sum(team.map((c) => searchPower(s, c)));
   const got: string[] = [];
   for (const r of RES) {
     const base = def.yield[r];
     if (!base) continue;
-    const n = sround(s, base * (0.5 + 0.1 * power));
+    const n = sround(s, base * (0.5 + 0.1 * power) * M.yieldMult);
     if (n > 0) { s.res[r] += n; s.stats.found += n; got.push(`${n} ${RES_LABEL[r].toLowerCase()}`); }
   }
   log(`${names(team)} sanket ${def.at}: ${got.length ? got.join(', ') : 'ingenting i dag'}.`);
@@ -238,7 +238,7 @@ export function settle(s: GameState, log: LogFn) {
     const sec = s.sectors[id], def = SECTORS[id];
     if (def.capacity > 0 && !sec.settled && isSafe(sec)) {
       sec.settled = true;
-      log(`${def.name} er trygg. Det er plass til ${def.capacity} flere her.`, 'good');
+      log(`Det er trygt ${def.at} nå. Det er plass til ${def.capacity} flere her.`, 'good');
     }
   }
 }
