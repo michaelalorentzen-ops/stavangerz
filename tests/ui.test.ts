@@ -24,9 +24,9 @@ describe('panelet', () => {
     s.tokts.push({ id: 'bybrua', crew: ['meg'], stage: 1, haul: {}, cards: [], awaiting: true });
     expect(blockerLabel(s)).toBe('Toktet venter på deg');
     s.pending.push({ pid: 'p1', def: 'sprint', sector: 'obs', crew: ['arild'], threat: 2 });
-    expect(blockerLabel(s)).toBe('Encounter venter');
+    expect(blockerLabel(s)).toBe('Knipe venter');
     s.pending.push({ pid: 'p2', def: 'sprint', sector: 'obs', crew: ['mona'], threat: 2 });
-    expect(blockerLabel(s)).toBe('2 encounters venter');
+    expect(blockerLabel(s)).toBe('2 kniper venter');
     s.over = 'dead';
     expect(blockerLabel(s)).toBeNull();
   });

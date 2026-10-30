@@ -221,7 +221,7 @@ export const EVENTS: EventDef[] = [
     urgent: (s) => s.crew.some((c) => c.hp < 3) || s.day >= 6,
     text: (s) => {
       const hurt = s.crew.find((c) => c.hp < 3);
-      return `${hurt ? `${hurt.name} trenger plaster, smertestillende og noe som ikke er gaffateip.` : 'Noen åpner medisinskapet for å se hva dere har.'} Skapet inneholder en tom eske Paracet og en termometer uten batteri. Nærmeste apotek er på senteret ${ZONES.hundvag.at}.`;
+      return `${hurt ? `${hurt.name} trenger plaster, smertestillende og noe som ikke er gaffateip.` : 'Noen åpner medisinskapet for å se hva dere har.'} Skapet inneholder en tom eske Paracet og et termometer uten batteri. Nærmeste apotek er på senteret ${ZONES.hundvag.at}.`;
     },
     choices: [
       { label: 'Merk apoteket på kartet', run: (s) => { unlockTokt(s, 'apotek'); return `Et tokt til apoteket ${ZONES.hundvag.at} er nå mulig, gjennom ${GATES.nord.name}. Ingen har vært der siden utbruddet, så første tur bør gå greit.`; } },
@@ -243,7 +243,7 @@ export const EVENTS: EventDef[] = [
     text: () => `Storm fra sørvest og høyvann samtidig. Sjøen presser opp gjennom sluket i kjellerboden ${SECTORS.hjem.at}, der lageret står. Det er ikke uvanlig i ${AREA.city}. Det uvanlige er at det tar med seg hermetikken.`,
     choices: [
       { label: 'Bær maten opp først', run: (s) => { const v = lose(s, 'vann', 4), t = lose(s, 'tre', 2); return `Maten kommer opp tørr. Vannkannene og plankene tar sjøvann og blir stående (${lost([[v, 'vann'], [t, 'tre']])}).`; } },
-      { label: 'Redd vannkannene og plankene', run: (s) => { const m = lose(s, 'mat', 5); return `Kannene og plankene kommer opp. Hermetikken flyter ut sluket med etikettene av (${lost([[m, 'mat']])}).`; } },
+      { label: 'Redd vannkannene og plankene', run: (s) => { const m = lose(s, 'mat', 5); return `Kannene og plankene kommer opp. Hermetikken flyter ut sluket, og etikettene følger med (${lost([[m, 'mat']])}).`; } },
       { label: 'Ikke vær hero for noen bokser', run: (s) => { const m = lose(s, 'mat', 2), v = lose(s, 'vann', 2); s.moral -= 4; return `Ingen våter seg. Sjøen tar det den rekker, og alle ser på mens den gjør det (${lost([[m, 'mat'], [v, 'vann']])}, −4 moral).`; } },
     ],
   },
@@ -303,7 +303,7 @@ export const EVENTS: EventDef[] = [
   },
   {
     id: 'apotekruta', title: 'Apotekhylla',
-    when: (s) => s.day >= 3,
+    when: (s) => s.day >= 3 && !s.toktsDone.includes('apotek'), // etter toktet er hylla tømt
     text: () => `Tvers over sundet, ${ZONES.hundvag.at}, ligger Apotek 1 med lyset på. Bak glasset står en hel hylle med medisin, og en alarm som fortsatt blinker. Noen har nok tenkt det samme før dere.`,
     choices: [
       { label: 'Knus ruta og ta hyllene', check: 'nerver', run: (s, ok) => {

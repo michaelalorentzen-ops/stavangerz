@@ -24,6 +24,7 @@ function select(s: Selection) {
 }
 
 ui.refresh = () => {
+  if (!ui.S) return; // ingen aktiv runde (tittelskjermen): ingenting å tegne
   renderTop(); renderTutorial(ui.S, ui.refresh); renderGoals(); renderTabs(); renderSel(); renderCrew(); renderStash(); renderLog(); renderPlan(); renderMap(select);
   save();
 };
@@ -63,10 +64,11 @@ function start(data: { S?: GameState } = {}) {
   }
   // forhåndsvisning bak tittelskjermen, lagres ikke
   ui.previewing = true;
-  ui.S = newGame(1234, { name: 'Deg', stats: draft.stats, trait: 'lokalkjent' }, ['mona', 'arild', 'toregil']);
+  ui.S = newGame(1234, { name: 'Du', stats: draft.stats, trait: 'lokalkjent' }, ['mona', 'arild', 'toregil']);
   ui.refresh();
   ui.previewing = false;
   ui.S = null;
+  renderTutorial(null, ui.refresh); // forhåndsvisningens tutorialkort skal ikke kunne klikkes uten runde
   titleScreen();
 }
 

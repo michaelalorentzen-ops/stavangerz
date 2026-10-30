@@ -170,7 +170,8 @@ export interface GateState {
   level: number;
 }
 
-export type Flag = RegionFlag | `gone_${string}`;
+/** gone_: borte for godt (død eller gått). dead_: døde, så det skilles fra de som forlot crewet. */
+export type Flag = RegionFlag | `gone_${string}` | `dead_${string}`;
 
 export interface GameState {
   v: 3;

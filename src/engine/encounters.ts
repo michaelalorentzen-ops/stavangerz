@@ -1,10 +1,10 @@
 // Encounters: en Rydde-gruppe havner i en knipe, og valget venter til neste planlegging. Ren logikk.
 import { hasTag, noiseOf } from './cards';
 import { ENCOUNTERS } from '../regions/content';
-import type { LogFn } from './crew';
+import { names, type LogFn } from './crew';
 import { checkEnd, logChoice, validateTasks } from './engine';
 import { SECTORS } from './data';
-import { delta, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
+import { delta, plainText, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
 import type { PhaseModifiers } from './phases';
 import { clamp, pick, rand } from './rng';
 import { bestOf, checkOddsFor, ODDS_MAX } from './skills';
@@ -62,7 +62,6 @@ const defOf = (id: string): EncounterDef => {
   if (!d) throw new Error(`Ukjent encounter: ${id}`);
   return d;
 };
-const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 /** Kortene som passer stedet. De sist trukne holdes ute, med mindre ingen andre passer. */
 function poolFor(s: GameState, place: EncPlace, ctx: EncounterCtx): EncounterDef[] {
@@ -165,7 +164,7 @@ export function resolveEncounter(s: GameState, pid: string, choiceIdx: number): 
   const before = structuredClone(s);
   const ok = ch.check ? rand(s) < encounterOdds(s, p, choiceIdx) : true;
   s.pending.splice(i, 1);
-  const text = ctx.crew.length ? ch.run(s, ctx, ok) : 'Det var ingen igjen til å svare. Situasjonen løste seg selv, på den dårlige måten.';
+  const text = ctx.crew.length ? plainText(ch.run(s, ctx, ok)) : 'Det var ingen igjen til å svare. Situasjonen løste seg selv, på den dårlige måten.';
   s.moral = clamp(s.moral, 0, 100);
   const resets = validateTasks(s);
   checkEnd(s);

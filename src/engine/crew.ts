@@ -11,6 +11,13 @@ const RECRUIT_BASE = 0.15, RECRUIT_PER_PRAT = 0.05, RECRUIT_NOISE = 0.2;
 
 export type LogFn = (t: string, kind?: LogKind) => void;
 
+/** «Du», «Du og Mona», «Du, Mona og Tor-Egil»: komma mellom, «og» bare før siste. */
+export function nameList(names: string[]): string {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} og ${names[names.length - 1]}`;
+}
+/** Navnene på en gruppe crewmedlemmer som en leselig liste. */
+export const names = (cs: CrewMember[]): string => nameList(cs.map((c) => c.name));
+
 const EULOGY: ((c: CrewMember) => string)[] = [
   (c) => `Hvil i fred, ${c.name}. Vi tar vare på kaffekoppen din.`,
   (c) => `${c.name} er ikke lenger med oss. Teknisk sett er ${c.name} fortsatt med oss, bare ikke på vår side.`,
@@ -51,6 +58,8 @@ export function injure(s: GameState, c: CrewMember, why: string, log: LogFn, cau
     s.moral -= 15; s.stats.lost++; s.stats.deaths[cause]++;
     dropGear(s, c, where);
     s.crew = s.crew.filter((x) => x !== c);
+    s.flags[`gone_${c.id}`] = true; // de døde kommer aldri tilbake som rekrutter
+    s.flags[`dead_${c.id}`] = true;
     if (!s.crew.length) s.needLeader = false;
     else if (c.me) {
       s.needLeader = true;
@@ -94,7 +103,7 @@ export function leteOverlevende(s: GameState, id: SectorId, team: CrewMember[], 
   const sec = s.sectors[id], def = SECTORS[id];
   const prat = Math.max(...team.map((c) => stat(c, 'prat')));
   const chance = clamp(RECRUIT_BASE + (prat / 10) * RECRUIT_PER_PRAT, 0, 0.95);
-  const who = team.map((c) => c.name).join(' og ');
+  const who = names(team);
   if (rand(s) < chance) {
     const cands = recruitablesNow(s);
     if (!cands.length) log(`${who} ropte ${def.at}. Ingen svarte, bortsett fra en måke.`);

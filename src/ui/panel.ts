@@ -1,7 +1,7 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
   DIFFICULTY,
-  canEndPhase, dailyFood, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
+  canEndPhase, craftShortfall, LAGE_COST, nameList, dailyFood, daysLeft, LOW_DAYS, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDef, TOKTS,
 } from '../engine';
@@ -72,7 +72,9 @@ export function renderTop() {
     `<div class="r${low ? ' low' : ''}"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
   $('day').textContent = `Dag ${S.day}${S.difficulty === 'normal' ? '' : ` · ${DIFFICULTY[S.difficulty].name}`}`;
   const shown = RES.filter((k) => PHASE_RES[S.phase].includes(k) || S.res[k] > 0);
-  const detail = (k: string) => (k === 'mat' ? [`−${food}/d`, S.res.mat < food * 2] : k === 'vann' ? [`−${water}/d`, S.res.vann < water * 2] : ['', false]) as [string, boolean];
+  // forbruk per dag og hvor mange dager lageret holder; rødt under LOW_DAYS
+  const detail = (k: string) => (k === 'mat' || k === 'vann'
+    ? [`−${k === 'mat' ? food : water}/d · ${daysLeft(S, k)} d`, daysLeft(S, k) < LOW_DAYS] : ['', false]) as [string, boolean];
   $('res').innerHTML =
     shown.map((k) => cell(RES_LABEL[k], S.res[k], ...detail(k))).join('') +
     `<div class="r moral"><span class="k">Moral ${S.moral}</span><span class="bar"><i style="width:${S.moral}%;${S.moral < 30 ? 'background:var(--red)' : ''}"></i></span></div>`;
@@ -251,7 +253,7 @@ export function infBar(sec: Pick<SectorState, 'z' | 'seen'>, startZ: number): nu
 export function blockerLabel(s: GameState): string | null {
   const b = endDayBlocker(s);
   if (b === 'event') return 'Samband: ny melding';
-  if (b === 'pending') return s.pending.length > 1 ? `${s.pending.length} encounters venter` : 'Encounter venter';
+  if (b === 'pending') return s.pending.length > 1 ? `${s.pending.length} kniper venter` : 'Knipe venter';
   if (b === 'tokt') return 'Toktet venter på deg';
   if (b === 'leader') return 'Hvem tar over?';
   return null;
@@ -288,7 +290,8 @@ export function renderSel() {
     const pct = st.level >= 3 ? 100 : Math.round(((st.work - prev) / (next - prev)) * 100);
     const gopts = taskOptions(S).filter((o) => 'target' in o && o.target === id);
     const gacts = gopts.map((o) => o.type);
-    if (!gacts.includes(ui.selAction as never)) ui.selAction = gacts[0] ?? null;
+    // uten eget valg står knappen på det laget allerede er satt til
+    if (!gacts.includes(ui.selAction as never)) ui.selAction = gopts.find((o) => S.crew.some((c) => sameTask(c.task, bare(o))))?.type ?? gacts[0] ?? null;
     const gact = gopts.find((o) => o.type === ui.selAction);
     const gtask = gact ? bare(gact) : null;
     const mine = (c: CrewMember) => !!gtask && sameTask(c.task, gtask);
@@ -309,7 +312,7 @@ export function renderSel() {
   const inf = sec.z > 0;
   const sopts = taskOptions(S).filter((o) => 'target' in o && o.target === id);
   const actions = sopts.map((o) => o.type);
-  if (!actions.includes(ui.selAction as never)) ui.selAction = actions[0] ?? null;
+  if (!actions.includes(ui.selAction as never)) ui.selAction = sopts.find((o) => S.crew.some((c) => sameTask(c.task, bare(o))))?.type ?? actions[0] ?? null;
   const act = ui.selAction;
   const actLabel = ACT_LABEL as Record<string, string>;
   const picked = sopts.find((o) => o.type === act);
@@ -367,15 +370,16 @@ export const statBonus = (c: CrewMember): Partial<Stats> =>
 const hpHtml = (c: CrewMember) => `<span class="hp h${c.hp}" title="${HEALTH_LABEL[c.hp]}">${[1, 2, 3].map((i) => `<i class="${i <= c.hp ? 'on' : ''}"></i>`).join('')}</span>`;
 
 export function renderCrew() {
-  const S = game(), opts = taskOptions(S);
+  const S = game(), opts = taskOptions(S), short = craftShortfall(S);
   if (ui.openCrew && !S.crew.some((c) => c.id === ui.openCrew)) ui.openCrew = null;
   $('crew').innerHTML = S.crew.map((c) => {
     const open = ui.openCrew === c.id, away = isOnTokt(S, c);
     const xp = c.xp ?? 0, lvl = crewLevel(xp), prog = Math.round(levelProgress(xp) * 100);
     const help = TASK_HELP[c.task.type];
+    const noMats = c.task.type === 'lage' && short.has(c.id);
     const select = away
       ? `<select data-crew="${c.id}" disabled aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}"><option>${esc(taskShort(c.task))}</option></select>`
-      : `<select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}">${taskGroups(opts).map((g) => `<optgroup label="${g.label}">${g.opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.label}</option>`).join('')}</optgroup>`).join('')}</select>`;
+      : `<select data-crew="${c.id}" aria-label="Oppdrag for ${esc(c.name)}" title="${esc(help)}">${taskGroups(opts).map((g) => `<optgroup label="${g.label}">${g.opts.map((o) => `<option value="${taskKey(o)}"${sameTask(o, c.task) ? ' selected' : ''}>${o.type === 'tokt' ? o.label.replace(/^Tokt: /, '') : o.label}</option>`).join('')}</optgroup>`).join('')}</select>`;
     const more = open ? `<div class="cm-more">
         <p class="task-help">${esc(help)}</p>
         <div class="tr">${esc(c.role)}. <b>${TRAITS[c.trait].name}:</b> ${TRAITS[c.trait].desc}</div>
@@ -386,6 +390,7 @@ export function renderCrew() {
       <button class="cm-tog" data-toggle="${c.id}" aria-expanded="${open}" title="${open ? 'Fold sammen' : 'Vis ferdigheter og utstyr'}">
         <span class="nm">${esc(c.name)}</span><span class="lvl" title="Nivå ${lvl}">Nv ${lvl}</span>${hpHtml(c)}<span class="chev" aria-hidden="true">${open ? '▴' : '▾'}</span></button>
       ${select}
+      ${noMats ? `<p class="task-help low" style="grid-column:1/-1">Mangler materialer: ${LAGE_COST.skrap} skrap og ${LAGE_COST.tre} tre per forsøk.</p>` : ''}
       ${slotsHtml(c, open)}
       ${more}
     </div>`;
@@ -412,7 +417,8 @@ export function renderPlan() {
     const k = c.task.type === 'befeste' ? `bygger ${GATES[c.task.target].name}` : taskShort(c.task);
     (groups[k] ??= []).push(c.name);
   }
-  $('plan').textContent = Object.entries(groups).map(([k, v]) => `${v.join(', ')} ${k}`).join(' · ');
+  const noMats = [...craftShortfall(S)].map((id) => S.crew.find((c) => c.id === id)!.name);
+  $('plan').textContent = Object.entries(groups).map(([k, v]) => `${nameList(v)} ${k}`).join(' · ') + (noMats.length ? ` · Mangler materialer til å lage utstyr (${nameList(noMats)})` : '');
   $('end').textContent = blockerLabel(S) ?? `Avslutt dag ${S.day}`;
   // knappen åpner encounters og ledervalg selv, så den er aldri sperret av dem
   $<HTMLButtonElement>('end').disabled = false;

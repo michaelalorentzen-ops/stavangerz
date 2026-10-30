@@ -35,6 +35,8 @@ button { cursor: pointer; }
 .r .v { font: 500 18px/1.1 var(--f-mono); font-variant-numeric: tabular-nums; }
 .r .d { font: 12px/1 var(--f-mono); color: var(--faint); }
 .r.low .v { color: var(--red); }
+.r.low .d { color: var(--red); }
+.task-help.low { color: var(--red); border-color: var(--red); }
 .moral { min-width: 92px; }
 .moral .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 5px; grid-column: 1 / -1; }
 .moral .bar i { display: block; height: 100%; background: var(--amber); }

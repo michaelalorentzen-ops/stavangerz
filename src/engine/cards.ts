@@ -14,6 +14,11 @@ export const SLOT_LABEL: Record<Slot, string> = { vapen: 'Våpen', beskyttelse: 
 export const LAGE_COST = { skrap: 3, tre: 1 };
 const RARITY_WEIGHT = { vanlig: 6, sjelden: 3, episk: 1, unik: 0 };
 
+/** Kortnavn midt i en setning: liten forbokstav, bortsett fra egennavn («Kaptein Tvedts øks») og tall. */
+export function cardWord(name: string): string {
+  return /^[A-ZÆØÅ][a-zæøå]/.test(name) && !/^\S+ [A-ZÆØÅ]/.test(name) ? name[0].toLowerCase() + name.slice(1) : name;
+}
+
 export function newCard(s: GameState, defId: string): CardInst {
   const def = CARDS[defId];
   if (!def) throw new Error(`Ukjent kort: ${defId}`);
@@ -130,7 +135,7 @@ export function dropGear(s: GameState, c: CrewMember, where: SectorId | 'stash')
 export function collectDropped(s: GameState, id: SectorId, log: LogFn) {
   const sec = s.sectors[id];
   if (!sec.dropped.length) return;
-  const names = sec.dropped.map((k) => CARDS[k.def].name).join(', ');
+  const names = sec.dropped.map((k) => cardWord(CARDS[k.def].name)).join(', ');
   s.stash.push(...sec.dropped);
   sec.dropped = [];
   log(`Crewet hentet utstyr som lå igjen: ${names}.`, 'find');
@@ -215,6 +220,18 @@ export function toggleFavorite(s: GameState, uid: string): boolean {
   return true;
 }
 
+/** Hvor mange av de som er satt til Lage utstyr i dag som mangler materialer (de første får dem). */
+export function craftShortfall(s: GameState): Set<string> {
+  const short = new Set<string>();
+  let n = 0;
+  for (const c of s.crew) {
+    if (c.task.type !== 'lage') continue;
+    n++;
+    if (s.res.skrap < LAGE_COST.skrap * n || s.res.tre < LAGE_COST.tre * n) short.add(c.id);
+  }
+  return short;
+}
+
 /** Lage utstyr: koster skrap og tre, lykkes etter Mekk. `mekk` er stat(c, 'mekk'). */
 export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
   if (s.res.skrap < LAGE_COST.skrap || s.res.tre < LAGE_COST.tre) {
@@ -229,5 +246,5 @@ export function lage(s: GameState, c: CrewMember, mekk: number, log: LogFn) {
   const cands = Object.values(CARDS).filter((d) => d.family === 'makeshift' && d.level === level && d.rarity !== 'unik' && d.craftable !== false);
   const k = newCard(s, pick(s, cands).id);
   s.stash.push(k);
-  log(`${c.name} laget ${CARDS[k.def].name}.`, 'good');
+  log(`${c.name} laget ${cardWord(CARDS[k.def].name)}.`, 'good');
 }

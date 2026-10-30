@@ -1,8 +1,8 @@
 // Encounterkort. Plassholderinnhold: mekanikken er det som gjelder.
 // Belønning og straff skaleres med ctx.threat (1–5).
 import { CARDS } from './cards';
-import { newCard, rollCard } from '../../../engine/cards';
-import { injure } from '../../../engine/crew';
+import { cardWord, newCard, rollCard } from '../../../engine/cards';
+import { injure, names } from '../../../engine/crew';
 import { SECTORS } from '../../../engine/data';
 import { AREA, LANDMARKS, ZONES } from '../places';
 import type { EncChoice, EncounterCtx, EncounterDef } from '../../../engine/encounters';
@@ -15,7 +15,7 @@ const RETREAT_INJURY = 0.5, RETREAT_WEAR = 3;
 
 /** «hjemme», «i Obs Bygg» eller «i byen» (på tokt). */
 const at = (ctx: EncounterCtx) => (ctx.sector ? SECTORS[ctx.sector].at : 'i byen');
-const who = (ctx: EncounterCtx) => ctx.crew.map((c) => c.name).join(' og ');
+const who = (ctx: EncounterCtx) => names(ctx.crew);
 
 /** Gir en tilfeldig person ett skadetrinn og returnerer logglinjene som tekst. */
 function hurt(s: GameState, ctx: EncounterCtx, why: string): string {
@@ -36,7 +36,7 @@ function setback(s: GameState, ctx: EncounterCtx, why: string): string {
 function foundCard(s: GameState, ctx: EncounterCtx): string {
   const k = rollCard(s, ctx.threat);
   s.stash.push(k);
-  return ` Dere tok med ${CARDS[k.def].name}.`;
+  return ` Dere tok med ${cardWord(CARDS[k.def].name)}.`;
 }
 
 /** Tilbaketrekning: halve gangen skades en person, ellers slites et utstyrt kort. Ingen belønning. */
@@ -50,9 +50,9 @@ const retreat = (label: string): EncChoice => ({
     k.dur -= RETREAT_WEAR;
     if (k.dur <= 0) {
       for (const slot of Object.keys(c.gear) as (keyof typeof c.gear)[]) if (c.gear[slot] === k) delete c.gear[slot];
-      return `Dere kommer unna, men ${CARDS[k.def].name} tilhørende ${c.name} ble igjen på bakken i biter.`;
+      return `Dere kommer unna, men ${cardWord(CARDS[k.def].name)} tilhørende ${c.name} ble igjen på bakken i biter.`;
     }
-    return `Dere kommer unna, men ${CARDS[k.def].name} tilhørende ${c.name} tok støyten (-${RETREAT_WEAR} holdbarhet).`;
+    return `Dere kommer unna, men ${cardWord(CARDS[k.def].name)} tilhørende ${c.name} tok støyten (-${RETREAT_WEAR} holdbarhet).`;
   },
 });
 
@@ -68,9 +68,9 @@ function wearOne(s: GameState, ctx: EncounterCtx, n: number): string {
   k.dur -= n;
   if (k.dur <= 0) {
     for (const slot of Object.keys(c.gear) as (keyof typeof c.gear)[]) if (c.gear[slot] === k) delete c.gear[slot];
-    return `(${CARDS[k.def].name} tilhørende ${c.name} gikk i stykker)`;
+    return `(${cardWord(CARDS[k.def].name)} tilhørende ${c.name} gikk i stykker)`;
   }
-  return `(${CARDS[k.def].name} tilhørende ${c.name}, −${n} holdbarhet)`;
+  return `(${cardWord(CARDS[k.def].name)} tilhørende ${c.name}, −${n} holdbarhet)`;
 }
 
 export const ENCOUNTERS: EncounterDef[] = [
@@ -178,7 +178,7 @@ export const ENCOUNTERS: EncounterDef[] = [
         s.res.skrap += ctx.threat + 1;
         const k = newCard(s, pick(s, ['baufil', 'tommestokk', 'lommekniv']));
         s.stash.push(k);
-        return `Klikk. Det lå verktøy i hylla bak døra (+${ctx.threat + 1} skrap, ${CARDS[k.def].name}).`;
+        return `Klikk. Det lå verktøy i hylla bak døra (+${ctx.threat + 1} skrap, ${cardWord(CARDS[k.def].name)}).`;
       } },
       retreat('Gi opp depotet'),
     ],

@@ -1,8 +1,8 @@
 // Sektorer: Rydde, Sanke, kontroll, forfall og bosetting. Ren logikk.
 import { PLAYABLE, RES, RES_LABEL, SECTORS } from './data';
-import { armorMult, collectDropped, hasTag, isRanged, newCard, rollCard, wear } from './cards';
+import { armorMult, cardWord, collectDropped, hasTag, isRanged, newCard, rollCard, wear } from './cards';
 import { CARDS } from '../regions/content';
-import { injure } from './crew';
+import { injure, names } from './crew';
 import type { LogFn } from './crew';
 import { hasMutation } from './phases';
 import type { PhaseModifiers } from './phases';
@@ -25,7 +25,6 @@ export const watchControl = (team: CrewMember[]) =>
 
 export const lootLeft = (sec: SectorState) => sum(Object.values(sec.loot));
 const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
-const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 /**
  * Øker gjennomsøkt-prosenten utenom et vanlig søk (kamp, hendelser). De siste kjellerne sjekkes bare
@@ -99,7 +98,7 @@ function checkSpecial(s: GameState, id: SectorId, before: number, log: LogFn) {
   if (sp.card) {
     const k = newCard(s, sp.card);
     s.stash.push(k);
-    log(`Crewet fikk med seg ${CARDS[k.def].name}.`, 'find');
+    log(`Crewet fikk med seg ${cardWord(CARDS[k.def].name)}.`, 'find');
   }
   if (sp.flag) s.flags[sp.flag] = true;
   if (sp.moral) s.moral += sp.moral;
@@ -112,7 +111,7 @@ function checkUnique(s: GameState, id: SectorId, before: number, log: LogFn) {
   delete s.uniques[id];
   const k = newCard(s, def);
   s.stash.push(k);
-  log(`Gjemt bak et panel ${SECTORS[id].at} lå ${CARDS[def].name}. ${CARDS[def].text}`, 'find');
+  log(`Gjemt bak et panel ${SECTORS[id].at} lå ${cardWord(CARDS[def].name)}. ${CARDS[def].text}`, 'find');
 }
 
 /** Slitasje på verktøy for alle i teamet. */
@@ -153,7 +152,7 @@ export function rydde(s: GameState, id: SectorId, team: CrewMember[], M: PhaseMo
   if (rand(s) < M.cardFind) {
     const k = rollCard(s, def.threat);
     s.stash.push(k);
-    log(`${names(team)} fant ${CARDS[k.def].name} ${def.at}.`, 'find');
+    log(`${names(team)} fant ${cardWord(CARDS[k.def].name)} ${def.at}.`, 'find');
   }
   const gain = searchGain(s, team);
   if (sec.hidden > 0) {

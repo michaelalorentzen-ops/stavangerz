@@ -1,7 +1,7 @@
 // Tokt: en gruppe drar bort i flere dager. Hver dag ute gir bytte og et encounter, og så velger spilleren
 // å fortsette eller snu. Ren logikk.
-import { armorMult, CARDS, newCard, rollCard } from './cards';
-import { addNeighbor, canRecruit, injure, recruitablesNow, type LogFn } from './crew';
+import { armorMult, cardWord, CARDS, newCard, rollCard } from './cards';
+import { addNeighbor, canRecruit, injure, names, recruitablesNow, type LogFn } from './crew';
 import { addToktEncounter } from './encounters';
 import { NEIGHBORS, PHASE_RES, RES, RES_LABEL } from './data';
 import type { PhaseModifiers } from './phases';
@@ -22,7 +22,6 @@ export const TOKT_CARD_MULT = 2;
 /** Sjansen per person per dag ute for å bli skadet, ganger trusselnivået. Byttet de bærer kan gå tapt i flukten. */
 export const TOKT_DAY_INJURY = 0.03, TOKT_DROP = 1 / 3;
 
-const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 /** Tokt-staten for en person som er ute, ellers undefined. */
 export const toktOf = (s: GameState, crewId: string): ToktState | undefined => s.tokts.find((t) => t.crew.includes(crewId));
@@ -86,15 +85,17 @@ export function resolveTokts(s: GameState, M: PhaseModifiers, log: LogFn, budget
     const def = toktDef(t.id), group = s.crew.filter((c) => t.crew.includes(c.id));
     if (!group.length) continue;
     t.stage++;
-    const found: string[] = [];
+    const got: Partial<Record<ResKey, number>> = {};
     for (let i = 0; i < HAUL_KINDS; i++) {
       const k: ResKey = pick(s, PHASE_RES[s.phase]), n = sround(s, rand(s) * HAUL_PER_THREAT * def.threat);
-      if (n > 0) { t.haul[k] = (t.haul[k] ?? 0) + n; found.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
+      if (n > 0) { t.haul[k] = (t.haul[k] ?? 0) + n; got[k] = (got[k] ?? 0) + n; }
     }
+    // samme ressurs flere ganger slås sammen: «3 medisin», ikke «3 medisin, 1 medisin»
+    const found: string[] = RES.filter((k) => got[k]).map((k) => `${got[k]} ${RES_LABEL[k].toLowerCase()}`);
     if (rand(s) < M.cardFind * TOKT_CARD_MULT) {
       const k = rollCard(s, def.threat);
       t.cards.push(k);
-      found.push(CARDS[k.def].name);
+      found.push(cardWord(CARDS[k.def].name));
     }
     log(`${names(group)} er på tokt (${def.name}), dag ${t.stage} av ${def.days}.${found.length ? ` Fant ${found.join(', ')}.` : ''}`, found.length ? 'find' : '');
     // Dagene ute tærer: skader hoper seg opp, og den som blir skadet, slipper noe av byttet
@@ -130,7 +131,7 @@ function unload(s: GameState, t: ToktState): string {
     const n = t.haul[k] ?? 0;
     if (n > 0) { s.res[k] += n; parts.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
   }
-  for (const k of t.cards) { s.stash.push(k); parts.push(CARDS[k.def].name); }
+  for (const k of t.cards) { s.stash.push(k); parts.push(cardWord(CARDS[k.def].name)); }
   return parts.length ? parts.join(', ') : 'ingenting';
 }
 
@@ -148,11 +149,11 @@ function reward(s: GameState, def: ToktDef): string {
     const n = Math.round(base * mult);
     if (n > 0) { s.res[k] += n; parts.push(`${n} ${RES_LABEL[k].toLowerCase()}`); }
   }
-  for (const id of def.reward.cards ?? []) { s.stash.push(newCard(s, id)); parts.push(CARDS[id].name); }
+  for (const id of def.reward.cards ?? []) { s.stash.push(newCard(s, id)); parts.push(cardWord(CARDS[id].name)); }
   if (def.reward.flag) s.flags[def.reward.flag] = true;
   if (def.reward.joins) {
     const n = NEIGHBORS.find((x) => x.id === def.reward.joins);
-    if (n && !s.crew.some((c) => c.id === n.id)) {
+    if (n && !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]) {
       if (canRecruit(s)) { addNeighbor(s, n.id); parts.push(`${n.name} blir med dere hjem`); }
       else parts.push(`${n.name} ville blitt med, men dere har ikke senger`);
     }

@@ -2,7 +2,7 @@
 import {
   DIFFICULTIES, DIFFICULTY,
   best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDecision, toktDef, AREA, HEALTH_LABEL, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
-  STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
+  nameList, STAT_HINT, STAT_LABEL, STATS, sum, TRAITS,
 } from '../engine';
 import type { Difficulty, PendingEncounter, Stats, TraitId } from '../engine';
 import { blockerLabel, changesHtml, previewHtml, statPips } from './panel';
@@ -51,7 +51,7 @@ function createSelf() {
   const used = sum(Object.values(draft.stats));
   const pips = (n: number) => [1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('');
   modal(`<span class="eyebrow">Steg 1 av 2</span><h2>Hvem er du?</h2>
-    <div class="field"><label for="nm">Navn</label><input id="nm" maxlength="18" placeholder="Deg" value="${esc(draft.name)}"></div>
+    <div class="field"><label for="nm">Navn</label><input id="nm" maxlength="18" placeholder="Du" value="${esc(draft.name)}"></div>
     <div><p class="eyebrow">Fordel ${POOL} poeng · ${POOL - used} igjen</p><div class="statedit">
     ${STATS.map((k) => `<div class="se"><div class="lbl">${STAT_LABEL[k]}<small>${STAT_HINT[k]}</small></div>
       <div class="pips">${pips(draft.stats[k])}</div>
@@ -91,7 +91,7 @@ function pickNeighbors() {
   on('go', () => {
     // seeden er det eneste stedet tilfeldighet kommer utenfra
     const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) | 0;
-    ui.S = newGame(seed, { name: draft.name.trim() || 'Deg', stats: { ...draft.stats }, trait: draft.trait }, draft.picks, draft.difficulty);
+    ui.S = newGame(seed, { name: draft.name.trim() || 'Du', stats: { ...draft.stats }, trait: draft.trait }, draft.picks, draft.difficulty);
     ui.sel = { kind: 'sector', id: 'hjem' };
     queueIntro(ui.S);
     ui.refresh();
@@ -122,7 +122,7 @@ function showEncounter(p: PendingEncounter, done: () => void) {
   const S = game(), v = describeEncounter(S, p);
   const odds = (c: (typeof v.choices)[number]) => c.check
     ? `<small>${STAT_LABEL[c.check]} · ${esc(c.best ?? '')} · ${Math.round(c.odds * 100)}%${c.tag ? ` · <b>${TAG_LABEL[c.tag].toLowerCase()}${c.tagBonus ? ' +20 %' : ''}</b>` : ''}</small>` : '';
-  modal(`<div class="radio">Samband · ${esc(v.crew.join(' og '))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
+  modal(`<div class="radio">Samband · ${esc(nameList(v.crew))} · Dag ${S.day}</div><h2>${esc(v.title)}</h2>
     <div class="transcript">${esc(v.text)}</div>
     <div class="choices">${v.choices.map((c, i) => `<button class="choice${c.retreat ? ' retreat' : ''}" data-i="${i}"><span class="ch-top"><span>${esc(c.label)}</span>${odds(c)}</span>${(c.preview ? previewHtml(c.preview) : "")}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {

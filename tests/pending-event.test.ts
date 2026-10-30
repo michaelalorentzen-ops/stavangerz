@@ -63,9 +63,9 @@ describe('hendelsen ligger i tilstanden', () => {
     expect(migrate(raw)!.event).toBeNull();
   });
 
-  it('utfallet står i loggen for dagen: tittel, valget og hva som endret seg', () => {
+  it('utfallet står i loggen under samme dag som kortet vises med: tittel, valget og hva som endret seg', () => {
     const s = withEvent();
-    const e = eventDef(s.event!.id), i = firstChoice(s), day = s.log.at(-1)!.day;
+    const e = eventDef(s.event!.id), i = firstChoice(s), day = s.day;
     const r = resolveEvent(s, i);
     const last = s.log.at(-1)!, line = last.lines.at(-1)!.t;
     expect(last.day).toBe(day);

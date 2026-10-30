@@ -3,6 +3,7 @@
 import { CARDS } from '../regions/content';
 import { questDef } from '../regions/content';
 import { GATES, NEIGHBORS, RES, RES_LABEL } from './data';
+import { nameList } from './crew';
 import type { Flag, GameState, GateId, ResKey } from './types';
 
 export interface Delta {
@@ -43,9 +44,11 @@ export function delta(a: GameState, b: GameState): Delta {
   for (const k of RES) if (b.res[k] !== a.res[k]) res[k] = b.res[k] - a.res[k];
   const had = new Set(a.stash.map((k) => k.uid));
   const hurt: string[] = [], lost: string[] = [];
+  // gone_ satt i samme valg uten dead_: personen forlot crewet, og døde ikke
+  const fresh = (pre: 'gone_' | 'dead_', id: string) => b.flags[`${pre}${id}` as Flag] && !a.flags[`${pre}${id}` as Flag];
   for (const c of a.crew) {
     const now = b.crew.find((x) => x.id === c.id);
-    if (!now) lost.push(c.name);
+    if (!now) { if (!fresh('gone_', c.id) || fresh('dead_', c.id)) lost.push(c.name); }
     else if (now.hp < c.hp) hurt.push(c.name);
   }
   const clampM = (m: number) => Math.max(0, Math.min(100, m));
@@ -63,7 +66,7 @@ export function delta(a: GameState, b: GameState): Delta {
     hurt, lost, zombies: zOf(b) - zOf(a),
     wear: Math.max(0, durOf(a) - durOf(b) - lostDur(a, b)),
     joined: b.crew.filter((c) => !a.crew.some((x) => x.id === c.id)).map((c) => c.name),
-    gone: Object.keys(b.flags).filter((f) => f.startsWith('gone_') && b.flags[f as Flag] && !a.flags[f as Flag]).map((f) => NEIGHBORS.find((n) => `gone_${n.id}` === f)?.name ?? f.slice(5)),
+    gone: Object.keys(b.flags).filter((f) => f.startsWith('gone_') && b.flags[f as Flag] && !a.flags[f as Flag] && !fresh('dead_', f.slice(5))).map((f) => NEIGHBORS.find((n) => `gone_${n.id}` === f)?.name ?? f.slice(5)),
     gateWork, gateUp,
     quests: b.quests.filter((q) => !a.quests.some((x) => x.id === q.id)).map((q) => questDef(q.id).title),
     scouted: (Object.keys(b.sectors) as (keyof GameState['sectors'])[]).filter((id) => b.sectors[id].seen && !a.sectors[id].seen).length,
@@ -75,6 +78,20 @@ export function delta(a: GameState, b: GameState): Delta {
 /** Holdbarhet som forsvant fordi bæreren døde (utstyret ligger igjen), ikke fordi det ble slitt. */
 const lostDur = (a: GameState, b: GameState) =>
   a.crew.filter((c) => !b.crew.some((x) => x.id === c.id)).reduce((n, c) => n + Object.values(c.gear).reduce((m, k) => m + (k?.dur ?? 0), 0), 0);
+
+/**
+ * Fjerner regnskap fra fortellingen: «(−4 mat, −2 moral)» og «(Kjell er borte for godt)» hører hjemme i
+ * resultatchipsene, ikke i teksten. Andre deler av en parentes blir stående.
+ */
+export function plainText(t: string): string {
+  const mech = /^(?:[−+-]\d+ .+|ingenting å (?:miste|slite på)|.+ er borte for godt)$/;
+  return t
+    .replace(/ ?\(([^()]*)\)/g, (m, inner: string) => {
+      const keep = inner.split(', ').filter((p) => !mech.test(p));
+      return keep.length === inner.split(', ').length ? m : keep.length ? ` (${keep.join(', ')})` : '';
+    })
+    .replace(/([.!?])\.+/g, '$1');
+}
 
 const sgn = (n: number) => (n > 0 ? `+${n}` : `−${-n}`);
 
@@ -99,11 +116,11 @@ export function summarize(ds: Delta[]): string[] {
   if (Math.min(...z) < 0) out.push(span(z.map((n) => Math.min(0, n)), 'zombier'));
   const single = ds.length === 1;
   maybe(ds.filter((d) => d.cards.length).length, single ? `nytt utstyr: ${ds[0].cards.join(', ')}` : 'nytt utstyr', 'kan gi utstyr');
-  maybe(ds.filter((d) => d.lost.length).length, single ? `${ds[0].lost.join(' og ')} døde` : 'noen dør', 'kan koste et liv');
-  maybe(ds.filter((d) => d.hurt.length).length, single ? `${ds[0].hurt.join(' og ')} skadet` : 'skade', 'kan gi skade');
+  maybe(ds.filter((d) => d.lost.length).length, single ? `${nameList(ds[0].lost)} døde` : 'noen dør', 'kan koste et liv');
+  maybe(ds.filter((d) => d.hurt.length).length, single ? `${nameList(ds[0].hurt)} skadet` : 'skade', 'kan gi skade');
   maybe(ds.filter((d) => d.wear > 0).length, 'utstyret slites', 'kan slite utstyr');
-  maybe(ds.filter((d) => d.joined.length).length, single ? `${ds[0].joined.join(' og ')} blir med` : 'ny i crewet', 'kan gi ny i crewet');
-  maybe(ds.filter((d) => d.gone.length).length, single ? `${ds[0].gone.join(' og ')} er borte for godt` : 'noen er borte for godt', 'kan miste noen for godt');
+  maybe(ds.filter((d) => d.joined.length).length, single ? `${nameList(ds[0].joined)} blir med` : 'ny i crewet', 'kan gi ny i crewet');
+  maybe(ds.filter((d) => d.gone.length).length, single ? `${nameList(ds[0].gone)} er borte for godt` : 'noen er borte for godt', 'kan miste noen for godt');
   maybe(ds.filter((d) => d.quests.length).length, single ? `nytt oppdrag: ${ds[0].quests.join(', ')}` : 'nytt oppdrag', 'kan gi nytt oppdrag');
   for (const g of Object.keys(GATES) as GateId[]) {
     const up = ds.map((d) => d.gateUp[g] ?? 0);

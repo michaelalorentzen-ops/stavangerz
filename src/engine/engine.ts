@@ -3,9 +3,9 @@
 // resolveDay() selv når multiplayer kommer.
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, canRecruit, injure, leteOverlevende, recruitablesNow, setLeader } from './crew';
-import type { LogFn } from './crew';
+import { names, type LogFn } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
-import { AREA, GATES, LANDMARKS, GATE_STEPS, HEALTH_LABEL, PLAYABLE, SECTORS, STAT_LABEL, STATS } from './data';
+import { AREA, GATES, LANDMARKS, GATE_STEPS, HEALTH_LABEL, PLAYABLE, RES, SECTORS, STAT_LABEL, STATS } from './data';
 import { advancePhase, BRANCHES, DIFFICULTY, mods, PHASES } from './phases';
 import { clamp, pick, rand, sround, sum } from './rng';
 import { decay, floorControl, isSafe, rotFood, rydde, sanke, settle, speide, updateControl, watchControl, wearTools } from './sectors';
@@ -41,7 +41,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[], di
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
   };
-  s.crew.push({ id: 'meg', name: self.name || 'Deg', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true, xp: 0 });
+  s.crew.push({ id: 'meg', name: self.name || 'Du', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true, xp: 0 });
   give(s.crew[0], newCard(s, 'k_ror'));
   give(s.crew[0], newCard(s, 'baufil'));
   for (const id of neighborIds) addNeighbor(s, id);
@@ -98,6 +98,10 @@ export function migrate(raw: unknown): GameState | null {
 export const hasTrait = (s: GameState, t: TraitId) => s.crew.some((c) => c.trait === t);
 export const dailyFood = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.6) - (hasTrait(s, 'kokk') ? 1 : 0));
 export const dailyWater = (s: GameState) => Math.max(1, Math.ceil(s.crew.length * 0.5));
+/** Hvor mange hele dager lageret av mat eller vann holder med dagens forbruk. */
+export const daysLeft = (s: GameState, k: 'mat' | 'vann'): number => Math.floor(s.res[k] / (k === 'mat' ? dailyFood(s) : dailyWater(s)));
+/** Under så mange dager igjen er mat eller vann en varselsak. */
+export const LOW_DAYS = 3;
 
 /** Legger arbeid til en sperring og hever nivået når terskelen nås. */
 export function addGateWork(s: GameState, id: GateId, work: number): number {
@@ -121,7 +125,8 @@ export function taskOptions(s: GameState): TaskOption[] {
   for (const id of PLAYABLE) {
     const sec = s.sectors[id], n = SECTORS[id].short, kind = SECTORS[id].kind;
     if (sec.z > 0 || sec.searched < 100) opts.push({ type: 'rydde', target: id, label: `Rydde ${n}` });
-    if (sec.z === 0) opts.push({ type: 'sanke', target: id, label: `Sanke ${n}` });
+    // Sanke gir sektorens daglige utbytte; uten noe slikt er det ikke noe å sanke
+    if (sec.z === 0 && RES.some((r) => (SECTORS[id].yield[r] ?? 0) > 0)) opts.push({ type: 'sanke', target: id, label: `Sanke ${n}` });
     if (!sec.scouted) opts.push({ type: 'speide', target: id, label: `Speide ${n}` });
     if (sec.z === 0) opts.push({ type: 'vakt', target: id, label: `Holde vakt ${n}` });
     if (sec.z === 0 && (kind === 'bolig' || kind === 'offentlig')) opts.push({ type: 'overlevende', target: id, label: `Lete etter overlevende ${n}` });
@@ -157,13 +162,14 @@ export const endDayBlocker = (s: GameState): 'event' | 'pending' | 'tokt' | 'lea
  * Logger utfallet av en hendelse eller et encounter: tittel, valget, om sjekken lyktes og hva som endret seg.
  * Linja havner på den siste dagen som er logget (dagen valget kom fra), eller på dagen i dag før den første er over.
  */
-export function logChoice(s: GameState, title: string, label: string, r: { ok: boolean; changes: string[] }, checked: boolean) {
+export function logChoice(s: GameState, title: string, label: string, r: { ok: boolean; changes: string[] }, checked: boolean, day?: number) {
   const how = checked ? (r.ok ? ' (lyktes)' : ' (mislyktes)') : '';
   const what = r.changes.length ? ` ${r.changes.join(', ')}.` : '';
   const line: LogLine = { t: `${title}: ${label.replace(/[.!?…]$/, '')}${how}.${what}`, kind: checked ? (r.ok ? 'good' : 'bad') : '' };
   const last = s.log.at(-1);
-  if (last) last.lines.push(line);
-  else s.log.push({ day: s.day, lines: [line] });
+  // `day` gir valget til en bestemt dag (hendelsen hører til den nye dagen, ikke dagen som nettopp var over)
+  if (last && (day === undefined || last.day === day)) last.lines.push(line);
+  else s.log.push({ day: day ?? s.day, lines: [line] });
 }
 
 /** Er runden avgjort? Bare «won-seen» kan spille videre. */
@@ -238,23 +244,26 @@ function invalidReason(s: GameState, t: Task): string {
  * Nullstiller ordre som ikke lenger er gyldige, og sier fra om hvem og hvorfor. Meldingene går til `log`
  * (som 'warn') og returneres, så kallere uten dagslogg kan vise dem selv.
  */
-export function validateTasks(s: GameState, log?: LogFn): string[] {
+export function validateTasks(s: GameState, log?: LogFn, endOfDay = false): string[] {
   const valid = taskOptions(s);
   const msgs: string[] = [];
   // de som er ute på tokt er låst til det
   for (const c of s.crew) {
     if (isOnTokt(s, c) || valid.some((o) => sameTask(o, c.task))) continue;
-    const msg = `${c.name} fikk ikke ${taskText(c.task)}: ${invalidReason(s, c.task)}. Hviler i stedet.`;
+    // Speiding og rydding som nettopp er gjort kan ikke gjentas. Det er ikke en feil, bare ferdig.
+    const doneToday = endOfDay && (c.task.type === 'speide' || c.task.type === 'rydde');
+    const msg = doneToday && (c.task.type === 'speide' || c.task.type === 'rydde')
+      ? `${c.task.type === 'speide' ? `Speidingen av ${placeName(c.task.target)} er gjort` : `${placeName(c.task.target)} er ryddet og gjennomsøkt`}. ${c.name} hviler i morgen.`
+      : `${c.name} fikk ikke ${taskText(c.task)}: ${invalidReason(s, c.task)}. Hviler i stedet.`;
     c.task = { type: 'hvile' };
     msgs.push(msg);
-    log?.(msg, 'warn');
+    log?.(msg, doneToday ? '' : 'warn');
   }
   return msgs;
 }
 
 // ---------- Dagsoppgjør ----------
 const plural = (n: number) => `zombie${n === 1 ? '' : 'r'}`;
-const names = (cs: CrewMember[]) => cs.map((c) => c.name).join(' og ');
 
 export function resolveDay(s: GameState): LogLine[] {
   // bare «Fortsett på Buøy» kan spille videre etter at runden er avgjort. Dagen kan heller ikke løses mens
@@ -265,6 +274,7 @@ export function resolveDay(s: GameState): LogLine[] {
   const log = (t: string, kind: LogKind = '') => L.push({ t, kind });
   const team = (type: TaskType, target: string | null) => s.crew.filter((c) => c.task.type === type && targetOf(c.task) === target);
   expireQuests(s, log);
+  const daysBefore = { mat: daysLeft(s, 'mat'), vann: daysLeft(s, 'vann') };
   /** Nivået hver person startet dagen på, så nivåopprykk kan meldes */
   const levels = new Map(s.crew.map((c) => [c.id, crewLevel(c.xp ?? 0)]));
   /** Sektorer noen fra crewet var i i dag. Der blir ingen kjeller glemt. Vakt og befesting står ved portens sektor,
@@ -361,12 +371,15 @@ export function resolveDay(s: GameState): LogLine[] {
   }
 
   // 4) Hvile. Uten nok mat og vann til dagen blir ingen friskere.
-  if (hungry && s.crew.some((c) => c.task.type === 'hvile' && c.hp < 3)) log('Ingen blir friskere på tom mage.', 'warn');
+  if (hungry && s.crew.some((c) => c.task.type === 'hvile' && c.hp < 3)) {
+    const noFood = s.res.mat < dailyFood(s), noWater = s.res.vann < dailyWater(s);
+    log(noFood && noWater ? 'Ingen blir friskere uten mat og vann.' : noFood ? 'Ingen blir friskere på tom mage.' : 'Ingen blir friskere uten noe å drikke.', 'warn');
+  }
   for (const c of s.crew.filter((c) => c.task.type === 'hvile')) {
     if (hungry || c.hp >= 3 || nursed.has(c)) continue;
     const nurse = hasTrait(s, 'nattevakt');
     if (s.res.medisin > 0 && !(nurse && rand(s) < 0.5)) { s.res.medisin--; c.hp++; log(`${c.name} ble plastret med medisin.`); }
-    else if (nurse || rand(s) < REST_HEAL) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse ? ` (og ${s.crew.find((x) => x.trait === 'nattevakt')!.name}s strenge regime)` : ''}.`); }
+    else if (nurse || rand(s) < REST_HEAL) { c.hp++; log(`${c.name} kom seg etter en dag på sofaen${nurse && s.crew.find((x) => x.trait === 'nattevakt') !== c ? ` (og ${s.crew.find((x) => x.trait === 'nattevakt')!.name}s strenge regime)` : ''}.`); }
   }
 
   // 4b) Nivåopprykk
@@ -459,9 +472,15 @@ export function resolveDay(s: GameState): LogLine[] {
   settle(s, log);
   rotFood(s, M);
 
+  // Varsel når lageret krysser under tre dager, så sulten ikke kommer som en overraskelse
+  for (const k of ['mat', 'vann'] as const) {
+    const d = daysLeft(s, k);
+    if (s.crew.length && d < LOW_DAYS && daysBefore[k] >= LOW_DAYS) log(d === 0 ? `${k === 'mat' ? 'Maten' : 'Vannet'} er tomt.` : `${k === 'mat' ? 'Maten' : 'Vannet'} holder bare ${d} ${d === 1 ? 'dag' : 'dager'} til.`, 'warn');
+  }
+
   s.moral = clamp(s.moral + 2, 0, 100);
   s.day++;
-  validateTasks(s, log);
+  validateTasks(s, log, true);
   checkEnd(s);
   // 8) Dagens hendelse trekkes til slutt, etter natta, så rekkefølgen i rng er den samme hver gang.
   // Den lagres som ventende, og spilleren velger med resolveEvent() før neste dag.

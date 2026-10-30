@@ -127,7 +127,7 @@ export const DIFFICULTY: Record<Difficulty, DifficultyDef> = {
     deadline: { moral: 30, fall: 1, mutations: 2 },
   },
   brutal: {
-    name: 'Brutal', desc: 'Sterkest zombier. Går fristen ut, er runden tapt.',
+    name: 'Brutal', desc: 'Sterkeste zombier. Går fristen ut, er runden tapt.',
     mult: { zombieMult: 1.3, killMult: 0.88, injuryMult: 1.3, nightGrowth: 1.2, hiddenOutbreak: 1.3, creepChance: 1.3 },
     deadline: null,
   },

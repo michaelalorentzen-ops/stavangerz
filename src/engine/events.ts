@@ -7,7 +7,7 @@ import { checkEnd, logChoice, validateTasks } from './engine';
 import { mods } from './phases';
 import { clamp, pick, rand } from './rng';
 import { bestOf, checkOddsFor } from './skills';
-import { delta, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
+import { delta, plainText, sampleOutcomes, summarize, type ChoicePreview } from './outcome';
 import type { CrewMember, GameState, StatKey } from './types';
 
 export interface ChoiceDef {
@@ -52,7 +52,7 @@ export function previewChoice(s: GameState, ch: ChoiceDef): ChoicePreview {
 export function runChoice(s: GameState, ch: ChoiceDef): { ok: boolean; text: string; changes: string[] } {
   const before = structuredClone(s);
   const ok = ch.check ? roll(s, ch.check) : true;
-  const text = ch.run(s, ok);
+  const text = plainText(ch.run(s, ok));
   s.moral = clamp(s.moral, 0, 100);
   const resets = validateTasks(s);
   checkEnd(s);
@@ -82,6 +82,6 @@ export function resolveEvent(s: GameState, choiceIdx: number): { ok: boolean; te
   if (!ch || (ch.when && !ch.when(s))) throw new Error(`Ugyldig valg ${choiceIdx} i ${e.id}`);
   s.event = null;
   const r = runChoice(s, ch);
-  logChoice(s, e.title, ch.label, r, !!ch.check);
+  logChoice(s, e.title, ch.label, r, !!ch.check, s.day);
   return r;
 }
