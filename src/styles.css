@@ -103,12 +103,17 @@ text.lab.zsub.far:not(.below) { transform: translate(calc(var(--k, 1) * 8px), ca
 .gate text { font: 700 20px/1 var(--f-cond); letter-spacing: .12em; fill: var(--ink); text-transform: uppercase; }
 .gate .pip { fill: var(--line); }
 .gate .pip.on { fill: var(--amber); }
+/* portvarsel: pulserende ring rundt porten */
+.gate .alertring { fill: none; stroke-width: 5; pointer-events: none; animation: gatepulse 1.6s ease-in-out infinite; }
+.gate .alertring.gul { stroke: var(--amber); }
+.gate .alertring.rod { stroke: var(--red); stroke-width: 7; animation-duration: .9s; }
+@keyframes gatepulse { 50% { stroke-opacity: .2; } }
 .token circle { fill: var(--ink); stroke: var(--sea); stroke-width: 4; }
 .token.hurt circle { fill: #ffb3a8; }
 .token text { font: 700 19px/1 var(--f-cond); fill: var(--sea); text-anchor: middle; dominant-baseline: central; }
 .token.t-sanke circle { fill: var(--teal); }
 .token.t-befeste circle { fill: var(--amber); }
-@media (prefers-reduced-motion: reduce) { .s-inf .edge { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .s-inf .edge, .gate .alertring { animation: none; } }
 
 /* ---- panel ---- */
 .panel { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--line); background: var(--panel); }
@@ -476,6 +481,14 @@ text.lab.zsub.far:not(.below) { transform: translate(calc(var(--k, 1) * 8px), ca
 .chip.h2 { box-shadow: inset 3px 0 0 var(--amber); }
 .planwarn { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; margin-right: 4px; border-radius: 3px; background: var(--red); color: #fff; font: 700 12px/1.1 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; }
 .planwarn .ic { width: 14px; height: 14px; }
+.planwarn.gatewarn { text-transform: none; letter-spacing: .02em; font-size: 13px; margin-bottom: 4px; }
+.planwarn.gatewarn.gul { background: var(--amber); color: #1a1206; }
+/* portvarsel i dagsrapporten og i portkortet */
+.gatealert { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 7px 10px; border-radius: 4px; border-left: 4px solid var(--amber); background: var(--amber-soft); font-size: 14px; }
+.gatealert.rod { border-left-color: var(--red); background: var(--red-soft); }
+.gatealert .ic { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+.gatealert b { flex: none; font: 700 13px/1.4 var(--f-cond); letter-spacing: .08em; text-transform: uppercase; color: var(--amber); }
+.gatealert.rod b { color: #ff8b8e; }
 
 /* kortbilder */
 .gc-head { display: flex; gap: 9px; align-items: flex-start; }

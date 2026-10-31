@@ -4,7 +4,7 @@ import {
   canEndPhase, craftShortfall, LAGE_COST, nameList, dailyFood, daysLeft, LOW_DAYS, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDays, toktDef, TOKTS,
-  applyPlan, deletePlan, MAX_PLANS, repeatYesterday, savePlan,
+  applyPlan, deletePlan, MAX_PLANS, repeatYesterday, savePlan, gateAlerts, GATE_STRAGGLERS,
   BUILT_PHASES, bussToktText, gateQuiet, COND_LABEL, dailyFoodIn, dailyHeat, moralHighText, moralLowText, MORAL_DESERT, MORAL_HIGH, MORAL_MID, FACILITIES, FACILITY_IDS, facilityIntel, HQ_SECTOR, ISTAND_STRAGGLERS, ISTAND_WORK, istandMaterials, isLocked, POST_IDS, postEffect, postHolder, POSTS,
 } from '../engine';
 import type { ResKey, TaskOption, TaskPreview, CrewMember, FacilityId, GameState, GateId, PostId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
@@ -327,6 +327,7 @@ export function renderSel() {
     box.innerHTML = `<div class="card"><span class="badge ${st.level ? 'clr' : 'inf'}">Sperring · nivå ${st.level}/3</span><h2>${gd.name}</h2><p>${gd.desc}</p>
       <div><div class="hint">${st.level >= 3 ? 'Fullt utbygd.' : `Fram til nivå ${st.level + 1}: ${pct}%`}</div><div class="prog"><i style="width:${pct}%"></i></div></div>
       <p class="hint">${ready ? 'Mekk teller mest. Hver arbeidsdag bruker tre og skrap.' : `Rydd ${SECTORS[gd.sector].short} før dere kan bygge her.`}</p>
+      ${gateAlerts(S).filter((a) => a.gate === id).map((a) => `<p class="gatealert ${a.level === 'rød' ? 'rod' : 'gul'}">${icon('port')}<span>${esc(a.text)}</span></p>`).join('')}
       ${gateQuiet(S, id) ? `<p class="hint">${esc(SECTORS[gd.holds!].short)} er deres. Det kommer ikke noe over gjerdet om natta lenger.</p>` : ''}
       ${gacts.length > 1 ? `<div class="seg" role="group">${gacts.map((a) => `<button data-act="${a}" aria-pressed="${a === ui.selAction}">${ACT_LABEL[a]}</button>`).join('')}</div>` : ''}
       ${gtask ? `<p class="eyebrow" style="margin:0">Send til ${ACT_LABEL[gtask.type]!.toLowerCase()}</p>${crewChips(mine)}` : ''}</div>`;
@@ -536,6 +537,19 @@ export function renderCrew() {
   }));
 }
 
+/**
+ * Portvarslene over «Avslutt dag»: røde med hele teksten, gule samlet på én linje når flere porter står ubevoktet.
+ * Teksten kommer fra `gateAlerts` i motoren.
+ */
+function gateAlertHtml(S: GameState): string {
+  const all = gateAlerts(S), red = all.filter((a) => a.level === 'rød'), yellow = all.filter((a) => a.level === 'gul');
+  const line = (cls: string, text: string, title = text) => `<span class="planwarn gatewarn ${cls}" title="${esc(title)}">${icon('port')}${esc(text)}</span> `;
+  const gul = yellow.length === 1 ? line('gul', yellow[0].text)
+    : yellow.length ? line('gul', `${nameList(yellow.map((a) => GATES[a.gate].name))} står ubevoktet. Rydd sektorene ned til ${GATE_STRAGGLERS} for å kunne befeste. De som rydder der, tar også imot det som kommer om natta.`, yellow.map((a) => a.text).join('\n'))
+    : '';
+  return red.map((a) => line('rod', a.text)).join('') + gul;
+}
+
 export function renderPlan() {
   const S = game(), groups: Record<string, string[]> = {};
   for (const c of S.crew) {
@@ -544,7 +558,7 @@ export function renderPlan() {
   }
   const noMats = [...craftShortfall(S)].map((id) => S.crew.find((c) => c.id === id)!.name);
   const badly = S.crew.filter((c) => c.hp <= 1).map((c) => c.name);
-  $('plan').innerHTML = (badly.length ? `<span class="planwarn">${icon('skadet')}${esc(nameList(badly))} er hardt skadet</span> ` : '') +
+  $('plan').innerHTML = gateAlertHtml(S) + (badly.length ? `<span class="planwarn">${icon('skadet')}${esc(nameList(badly))} er hardt skadet</span> ` : '') +
     esc(Object.entries(groups).map(([k, v]) => `${nameList(v)} ${k}`).join(' · ') + (noMats.length ? ` · Mangler materialer til å lage utstyr (${nameList(noMats)})` : ''));
   $('end').textContent = blockerLabel(S) ?? `Avslutt dag ${S.day}`;
   // knappen åpner encounters og ledervalg selv, så den er aldri sperret av dem

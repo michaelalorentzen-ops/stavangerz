@@ -14,3 +14,4 @@ export * from './plans';
 export * from './events';
 export * from './outcome';
 export * from './preview';
+export * from './portvarsel';

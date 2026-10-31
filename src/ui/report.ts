@@ -1,7 +1,7 @@
 // Dagsrapporten i tall: hva dagen og natta ga og tok, som ikoner med + i grønt og − i rødt.
 // Regnes ut av tilstanden før og etter resolveDay (delta i motoren) og dagens logglinjer. Bare visning.
-import { delta, HEALTH_LABEL, RES, RES_LABEL } from '../engine';
-import type { CrewMember, GameState, LogLine, ResKey, TraitId } from '../engine';
+import { delta, gateAlerts, HEALTH_LABEL, RES, RES_LABEL } from '../engine';
+import type { CrewMember, GameState, GateAlertLevel, LogLine, ResKey, TraitId } from '../engine';
 import { avatar } from './avatar';
 import { icon } from './icons';
 import { esc } from './store';
@@ -21,6 +21,8 @@ export interface DaySummary {
   breach: number;
   /** zombier som brøt ut av glemte kjellere */
   outbreak: number;
+  /** varsler ved portene etter natta: alle røde, og gule som er nye siden i går */
+  alerts?: { level: GateAlertLevel; text: string }[];
 }
 
 const ref = (c: CrewMember): PersonRef => ({ id: c.id, name: c.name, trait: c.trait, hp: c.hp });
@@ -46,11 +48,21 @@ export function summarizeDay(before: GameState, after: GameState, lines: LogLine
     kills: Math.max(0, after.stats.kills - before.stats.kills),
     breach: nightCount(lines, /^Natt: (\d+) zombier? kom forbi/),
     outbreak: nightCount(lines, /(\d+) zombier strømmer ut/),
+    alerts: newGateAlerts(before, after),
   };
 }
 
+/**
+ * Portvarslene etter natta. Røde vises hver dag. Gule bare når porten var i orden i går, så rapporten ikke gjentar
+ * det samme hver morgen; de står uansett over «Avslutt dag» og på kartet.
+ */
+function newGateAlerts(before: GameState, after: GameState): { level: GateAlertLevel; text: string }[] {
+  const was = gateAlerts(before);
+  return gateAlerts(after).filter((a) => a.level === 'rød' || !was.some((b) => b.gate === a.gate)).map(({ level, text }) => ({ level, text }));
+}
+
 export const isQuiet = (s: DaySummary): boolean =>
-  !Object.keys(s.res).length && !s.moral && !s.cards.length && !s.hurt.length && !s.healed.length && !s.lost.length && !s.joined.length && !s.kills && !s.breach && !s.outbreak;
+  !s.alerts?.length && !Object.keys(s.res).length && !s.moral && !s.cards.length && !s.hurt.length && !s.healed.length && !s.lost.length && !s.joined.length && !s.kills && !s.breach && !s.outbreak;
 
 const sgn = (n: number) => (n > 0 ? `+${n}` : `−${-n}`);
 
@@ -79,7 +91,9 @@ export function summaryHtml(s: DaySummary): string {
     ...s.joined.map((p) => person(p, 'join', 'nyPerson', 'ny i crewet')),
     ...s.healed.map((p) => person(p, 'heal', 'hjerte', p.hp >= 3 ? 'frisk' : 'bedre')),
   ];
-  return `<div class="sumx">${stuff.length ? `<div class="sx-row">${stuff.join('')}</div>` : ''}${people.length ? `<div class="sp-row">${people.join('')}</div>` : ''}</div>`;
+  const alerts = (s.alerts ?? []).map((a) =>
+    `<div class="gatealert ${a.level === 'rød' ? 'rod' : 'gul'}">${icon('port')}<b>${a.level === 'rød' ? 'Vokser fra dere' : 'Porten står ubevoktet'}</b><span>${esc(a.text)}</span></div>`);
+  return `<div class="sumx">${alerts.join('')}${stuff.length ? `<div class="sx-row">${stuff.join('')}</div>` : ''}${people.length ? `<div class="sp-row">${people.join('')}</div>` : ''}</div>`;
 }
 
 /** Sammendragene lagres per seed og dag, så loggfanen kan vise dem igjen. Bare en bekvemmelighet. */
