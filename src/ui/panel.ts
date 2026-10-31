@@ -77,12 +77,14 @@ export function previewHtml(p: { ok: string[]; fail: string[] | null }): string 
   return `<span class="pv">${p.ok.map((l) => `<i class="${isBadPreview(l) ? 'bad' : 'good'}">${lineIcon(l)}${esc(l)}</i>`).join('')}${p.fail?.length ? `<b class="pv-l">Feiler:</b>${p.fail.map((l) => `<i class="bad">${lineIcon(l)}${esc(l)}</i>`).join('')}` : ''}</span>`;
 }
 
-/** Forhåndsvisningen før et valg, uten tall («midt imellom»): retning og risiko, med ikon for ressursen. */
+/** Forhåndsvisningen før et valg, uten tall («midt imellom»): retning og risiko, med ikon for ressursen. Med sjekk står grenene bak «Lykkes:» og «Feiler:». */
 export function vaguePreviewHtml(p: { ok: string[]; fail: string[] | null }): string {
   const v = vaguePreview(p);
   if (!v.ok.length && !v.fail?.length) return '';
   const li = (l: VagueLine, bad = l.bad) => `<i class="${bad ? 'bad' : 'good'}">${l.res ? icon(l.res) : lineIcon(l.text)}${esc(l.text)}</i>`;
-  return `<span class="pv">${v.ok.map((l) => li(l)).join('')}${v.fail?.length ? `<b class="pv-l">Feiler:</b>${v.fail.map((l) => li(l, true)).join('')}` : ''}</span>`;
+  // med sjekk får begge grenene etikett, så det er tydelig at ordene gjelder hver sin gren
+  const okLabel = v.fail && v.ok.length ? '<b class="pv-l ok">Lykkes:</b>' : '';
+  return `<span class="pv">${okLabel}${v.ok.map((l) => li(l)).join('')}${v.fail?.length ? `<b class="pv-l">Feiler:</b>${v.fail.map((l) => li(l, true)).join('')}` : ''}</span>`;
 }
 
 export function renderTop() {

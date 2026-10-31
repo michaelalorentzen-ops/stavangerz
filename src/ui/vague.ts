@@ -26,21 +26,51 @@ const RES_BY_LABEL = new Map<string, ResKey>(RES.map((k) => [RES_LABEL[k].toLowe
 const MORE_IS_WORSE = /^zombier?$/;
 
 /**
- * Én forhåndsvisningslinje uten tall. «+1 medisin» blir «kan gi medisin», «opptil −2 mat» blir «kan koste mat»,
- * «−2 til +3 moral» blir «kan gi eller koste moral». Linjer uten tall («kan gi skade», «nytt utstyr») står som før.
+ * Linjer motoren skriver uten tall når alle prøvekjøringene ga det samme (summarize i outcome.ts). De er sikre
+ * innenfor grenen, så de får et ord som sier hva som skjer. «kan …»-linjene fra motoren står som de er.
+ */
+const SURE_WORDS: Record<string, string> = {
+  'skade': 'noen blir skadet',
+  'noen dør': 'noen dør',
+  'utstyret slites': 'utstyret slites',
+  'ny i crewet': 'noen blir med',
+  'noen er borte for godt': 'noen er borte for godt',
+  'nytt utstyr': 'gir utstyr',
+  'nytt oppdrag': 'gir nytt oppdrag',
+};
+
+/** Ord for ting som ikke er en ressurs: [sikkert, usikkert]. Resten blir «gir X» og «kan gi X». */
+const GAIN_WORDS: Record<string, [string, string]> = {
+  'sektor speidet': ['speider en sektor', 'kan speide en sektor'],
+  'sektorer speidet': ['speider sektorer', 'kan speide sektorer'],
+  'gjennomsøkt': ['søker gjennom mer', 'kan søke gjennom mer'],
+};
+
+/**
+ * Én forhåndsvisningslinje uten tall. Sikre utfall sier hva som skjer: «+3 mat» og «+1–3 mat» blir «gir mat»,
+ * «−2 mat» blir «koster mat». «kan» står bare der utfallet er usikkert innenfor grenen: «opptil −2 mat» blir
+ * «kan koste mat», «−2 til +3 moral» blir «kan gi eller koste moral», og motorens egne «kan gi skade» står som før.
  */
 export function vagueLine(line: string): VagueLine {
   const t = line.trim();
   // «+3 mat», «opptil −4 mat», «+1–3 mat», «−3–1 mat», «−2 til +3 mat»
-  const m = /^(?:opptil\s+)?([+−-])\d+(?:–\d+)?(?:\s+til\s+([+−-])\d+)?\s+(.+)$/.exec(t);
-  if (!m) return { text: t, bad: /^[−-]|skade|slit|døde|dør\b|borte for godt|koste|fikk ikke/i.test(t) };
-  const [, s1, s2, label] = m;
+  const m = /^(opptil\s+)?([+−-])\d+(?:–\d+)?(?:\s+til\s+([+−-])\d+)?\s+(.+)$/.exec(t);
+  if (!m) {
+    const text = SURE_WORDS[t] ?? t;
+    return { text, bad: /^[−-]|skade|slit|døde|dør\b|borte for godt|koste|fikk ikke/i.test(text) };
+  }
+  const [, upTo, s1, s2, label] = m;
   const res = RES_BY_LABEL.get(label);
   const neg = s1 !== '+';
   const name = label.replace(/^zombie$/, 'zombier');
   if (s2 && (s2 === '+') === neg) return { text: `kan gi eller koste ${name}`, bad: true, res };
-  if (MORE_IS_WORSE.test(label)) return neg ? { text: 'kan fjerne zombier', bad: false } : { text: 'kan trekke til zombier', bad: true };
-  return neg ? { text: `kan koste ${name}`, bad: true, res } : { text: `kan gi ${name}`, bad: false, res };
+  const sure = !upTo;
+  if (MORE_IS_WORSE.test(label)) {
+    return neg ? { text: sure ? 'fjerner zombier' : 'kan fjerne zombier', bad: false } : { text: sure ? 'trekker til zombier' : 'kan trekke til zombier', bad: true };
+  }
+  if (neg) return { text: sure ? `koster ${name}` : `kan koste ${name}`, bad: true, res };
+  const words = GAIN_WORDS[label];
+  return { text: words ? words[sure ? 0 : 1] : sure ? `gir ${name}` : `kan gi ${name}`, bad: false, res };
 }
 
 /** Hele forhåndsvisningen uten tall. Like linjer slås sammen, så «+1 mat» og «+2 mat» ikke står to ganger. */
