@@ -1,6 +1,6 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
-import { AREA, GATE_IDS, GATES, HQ_SECTOR, isLocked, SECTORS, sectorIntel, toktAvailable, toktDays, TOKTS, ZONES } from '../engine';
+import { AREA, GATE_IDS, gateAlerts, GATES, HQ_SECTOR, isLocked, SECTORS, sectorIntel, toktAvailable, toktDays, TOKTS, ZONES } from '../engine';
 import type { CrewMember, SectorId } from '../engine';
 import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
@@ -201,9 +201,13 @@ export function renderMap(onSelect: (s: Selection) => void) {
     text(dyn, { ...mid, x: m.cx, y: m.cy + 22, class: `lab sub ${inf ? 'inf' : intel.safe ? 'safe' : 'clr'}` }, inf ? `${intel.estimate} Z` : intel.safe ? '✓ Trygg' : `${intel.searched} %`);
     drawTokens(tokensBy[m.id], m.cx, m.cy + 58);
   }
+  const alerts = gateAlerts(S);
   for (const id of GATE_IDS) {
     const gd = GATES[id], st = S.gates[id];
     const g = el('g', { class: `gate ${st.level ? 'on' : 'l0'}${sel.kind === 'gate' && sel.id === id ? ' sel' : ''}`, transform: `translate(${gd.x} ${gd.y})`, tabindex: 0, role: 'button', 'aria-label': gd.name }, dyn);
+    // portvarsel: en pulserende ring rundt porten, gul når den står ubevoktet, rød når sektoren vokser fra dere
+    const alert = alerts.find((a) => a.gate === id);
+    if (alert) el('rect', { class: `alertring ${alert.level === 'rød' ? 'rod' : 'gul'}`, x: -60, y: -34, width: 120, height: 68, rx: 12 }, g);
     el('rect', { class: 'box', x: -48, y: -22, width: 96, height: 44, rx: 6 }, g);
     for (let i = 0; i < 3; i++) el('rect', { class: `pip${i < st.level ? ' on' : ''}`, x: -36 + i * 26, y: 4, width: 20, height: 8, rx: 2 }, g);
     text(g, { x: 0, y: -4, 'text-anchor': 'middle' }, st.level ? `Nivå ${st.level}` : 'Åpen');

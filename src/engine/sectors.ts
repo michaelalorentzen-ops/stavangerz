@@ -250,14 +250,22 @@ export function updateControl(s: GameState, M: PhaseModifiers, groups: Partial<R
   }
 }
 
+/** Under denne kontrollen forfaller sektoren, og zombier kan sive inn. */
+export const CREEP_CONTROL = 30;
+/** Snittnivået på portene. Høyere porter slipper færre inn i sektorene. */
+export const avgGateLevel = (s: GameState): number => sum(Object.values(s.gates).map((g) => g.level)) / Object.keys(s.gates).length;
+/** Sjansen for at én zombie siver inn i en sektor i natt, med kontrollen etter dagen. 0 når kontrollen holder. */
+export const creepOdds = (M: PhaseModifiers, control: number, avgGate: number): number =>
+  control >= CREEP_CONTROL ? 0 : M.creepChance * (1 - control / CREEP_CONTROL) * (1 - avgGate / 3);
+
 /** Forfall: uten kontroll glemmer sektoren hva dere ryddet, og zombier siver inn. */
 export function decay(s: GameState, M: PhaseModifiers, log: LogFn) {
-  const avgGate = sum(Object.values(s.gates).map((g) => g.level)) / Object.keys(s.gates).length;
+  const avgGate = avgGateLevel(s);
   for (const id of activeSectors(s)) {
     const sec = s.sectors[id];
-    if (sec.control >= 30) continue;
+    if (sec.control >= CREEP_CONTROL) continue;
     sec.searched = Math.max(0, sec.searched - M.searchedDecay);
-    if (rand(s) < M.creepChance * (1 - sec.control / 30) * (1 - avgGate / 3)) {
+    if (rand(s) < creepOdds(M, sec.control, avgGate)) {
       const wasClear = sec.z === 0;
       sec.z++;
       if (wasClear) log(`Noe har sneket seg inn igjen ${SECTORS[id].at} mens ingen holdt øye med sektoren.`, 'warn');
