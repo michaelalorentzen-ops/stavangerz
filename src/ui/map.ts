@@ -98,6 +98,12 @@ export function buildStaticMap(onSelect: (s: Selection) => void) {
     el('rect', { ...b, fill: '#070d12', 'fill-opacity': 0.2 }, g);
   }
 
+  // bykartet: landet lyses opp over tåka, så fjordene skiller seg fra havet (byøyeutsnittet + resten av byen)
+  if (MAP.city) {
+    const lit = el('g', { class: 'far', fill: 'var(--land-edge)', 'fill-opacity': 0.55, 'pointer-events': 'none' }, root);
+    el('path', { d: MAP.land }, lit);
+    el('path', { d: MAP.city.land }, lit);
+  }
   // kystlinjen over tåka, så formen på byen synes i bykartet
   if (MAP.city) el('path', { d: MAP.city.coast, class: 'far', fill: 'none', stroke: 'var(--teal)', 'stroke-width': 1.2, 'stroke-opacity': 0.45, 'vector-effect': 'non-scaling-stroke' }, root);
   ticks(root, MAP.view, 0.005, 0.01, 'near');
