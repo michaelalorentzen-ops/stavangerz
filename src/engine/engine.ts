@@ -3,7 +3,7 @@
 // resolveDay() selv når multiplayer kommer.
 import { give, hasTag, lage, newCard, placeUniques } from './cards';
 import { addNeighbor, canRecruit, injure, leaveForGood, leteOverlevende, recruitablesNow, setLeader } from './crew';
-import { names, type LogFn } from './crew';
+import { nameAs, names, YOU, type LogFn } from './crew';
 import { noiseProfile, rollEncounter, ENC_MAX_PER_DAY } from './encounters';
 import { AREA, FACILITIES, GATES, HQ_SECTOR, LANDMARKS, GATE_STEPS, HEALTH_LABEL, RES, SECTOR_IDS, SECTORS, STAT_LABEL, STATS } from './data';
 import { buildLeadMult, checkHq, cookMult, FACILITY_IDS, facilityFood, facilityReady, hearRumor, istand, ISTAND_STRAGGLERS, MAX_CRAFT_LEVEL, newHq, POST_IDS, postHolder, POSTS, readyCount, reparere, RUMOR_ON_SEARCH, securityPower, trainMult, VERKSTED_LEVEL } from './hq';
@@ -17,7 +17,7 @@ import { desertText, kaiFoodText, MUTATIONS } from '../regions/content';
 import { isOnTokt, expireQuests, recallTokts, resolveTokts, toktAvailable, TOKTS } from './tokt';
 import { crewLevel, fightPower, buildPower, gainXp, stat, toSkill } from './skills';
 import type {
-  CrewMember, Difficulty, GameState, GateId, LogKind, LogLine, PostId, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
+  CrewMember, Difficulty, GameState, GateId, LogKind, LogLine, PhaseId, PostId, SectorId, SelfSetup, StatKey, Stats, Task, TaskType, TraitId,
 } from './types';
 
 /** Vakter ved porten med et rekkevidde-våpen teller mer om natta. */
@@ -82,7 +82,7 @@ export function newGame(seed: number, self: SelfSetup, neighborIds: string[], di
     gates: {} as GameState['gates'],
     stats: { kills: 0, found: 0, lost: 0, starvedDays: 0, deaths: { kamp: 0, natt: 0, tokt: 0 } },
   };
-  s.crew.push({ id: 'meg', name: self.name || 'Du', role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true, xp: 0 });
+  s.crew.push({ id: 'meg', name: self.name || YOU, role: 'Deg', trait: self.trait, stats: Object.fromEntries(STATS.map((k) => [k, toSkill(self.stats[k])])) as Stats, hp: 3, task: { type: 'hvile' }, kills: 0, gear: {}, me: true, xp: 0 });
   give(s.crew[0], newCard(s, 'k_ror'));
   give(s.crew[0], newCard(s, 'baufil'));
   for (const id of neighborIds) addNeighbor(s, id);
@@ -244,6 +244,8 @@ export const canEndPhase = (s: GameState): boolean => s.goalDay !== null && endD
  */
 export function endPhase(s: GameState): string[] {
   if (!canEndPhase(s) || s.over) return [];
+  // rekorden teller dagene til målet, ikke til fasen ble avsluttet
+  (s.goalDays ??= {})[s.phase] = s.goalDay! - s.phaseStartDay;
   if (s.phase >= BUILT_PHASES) { s.over = 'won'; return []; }
   return nextPhase(s);
 }
@@ -486,7 +488,7 @@ export function resolveDay(s: GameState): LogLine[] {
     for (const c of patients) {
       // de som ikke blir friskere av pleien, prøver med medisin eller sofaen i steg 4
       if (rand(s) >= PLEIE_HEAL) continue;
-      c.hp++; nursed.add(c); log(`${c.name} ble pleid av ${names(nurses)}, uten at medisinskapet ble åpnet.`);
+      c.hp++; nursed.add(c); log(`${c.name} ble pleid av ${names(nurses, 'obj')}, uten at medisinskapet ble åpnet.`);
     }
     for (const n of nurses) if (n.trait === 'nattevakt' && n.hp < 3) { n.hp++; log(`${n.name} pleide seg selv også. Gammel vane fra nattevakt på ${LANDMARKS.sus}.`); }
     xp(nurses, 'prat', 1);
@@ -507,7 +509,7 @@ export function resolveDay(s: GameState): LogLine[] {
   // 4b) Nivåopprykk
   for (const c of s.crew) {
     const n = crewLevel(c.xp ?? 0), was = levels.get(c.id);
-    if (was !== undefined && n > was) log(`${c.name} er nå nivå ${n}. Det merkes på alt ${c.name} gjør.`, 'good');
+    if (was !== undefined && n > was) log(`${c.name} er nå nivå ${n}. Det merkes på alt ${nameAs(c, 'mid')} gjør.`, 'good');
   }
 
   // 5) Forbruk. Kantina og kaia i HQ-et gir mat først.
@@ -621,7 +623,7 @@ export function resolveDay(s: GameState): LogLine[] {
   s.moral = clamp(s.moral + 2, 0, 100);
   s.day++;
   validateTasks(s, log, true);
-  checkEnd(s);
+  checkEnd(s, log);
   // 8) Dagens hendelse trekkes til slutt, etter natta, så rekkefølgen i rng er den samme hver gang.
   // Den lagres som ventende, og spilleren velger med resolveEvent() før neste dag.
   const ev = s.over ? null : drawEvent(s);
@@ -666,7 +668,33 @@ export function phaseProgress(s: GameState) {
   return { safe: hqSafe ? 1 : 0, total: 1, gates, rows, summary: `${SECTORS[HQ_SECTOR].short} ${hqSafe ? '✓' : '✗'} · ${ready}/1 anlegg`, done: hqSafe && ready >= 1 };
 }
 
-export function checkEnd(s: GameState) {
+/**
+ * Hva som skjer nå som fasemålet er nådd: nedtellingen og at spilleren kan gå videre selv.
+ * Brukes i loggen dagen målet nås, og i målpanelet etterpå.
+ */
+export function goalReachedText(s: GameState): string {
+  const next = s.phase < BUILT_PHASES ? `fase ${s.phase + 1} starter av seg selv` : 'fasen avsluttes av seg selv';
+  return `Dere har ${mods(s).graceDays} dager på å fylle lageret og gjøre dere klare før ${next}. Vil dere videre før det, avslutter dere fasen fra målpanelet.`;
+}
+
+/** Målet er nådd i dag: en linje i loggen, så spilleren ser det i dagsrapporten. */
+function logGoal(s: GameState, log?: LogFn) {
+  const t = `Målet for fase ${s.phase} er nådd${s.phase === 1 ? `: ${AREA.name} er sikret` : ''}. ${goalReachedText(s)}`;
+  if (log) { log(t, 'good'); return; }
+  const last = s.log.at(-1);
+  if (last && last.day === s.day) last.lines.push({ t, kind: 'good' });
+  else s.log.push({ day: s.day, lines: [{ t, kind: 'good' }] });
+}
+
+/** Dagene det tok å nå målet i en fase som er avsluttet, eller i fasen nå når målet er nådd. Rekorden teller disse. */
+export function daysToGoal(s: GameState, phase: PhaseId = s.phase): number | null {
+  const done = s.goalDays?.[phase];
+  if (done !== undefined) return done;
+  return phase === s.phase && s.goalDay !== null ? s.goalDay - s.phaseStartDay : null;
+}
+
+/** Sjekker om runden eller fasen er over. `log` er dagens logg i resolveDay(); ellers havner linjer i `state.log`. */
+export function checkEnd(s: GameState, log?: LogFn) {
   // ventende encounters der ingen i gruppa lever lenger, forsvinner
   s.pending = s.pending.filter((p) => p.crew.some((id) => s.crew.some((c) => c.id === id)));
   if (!s.crew.length) { s.pending = []; s.tokts = []; s.event = null; }
@@ -676,7 +704,7 @@ export function checkEnd(s: GameState) {
   // et tomt crew avslutter runden, også i sandkassa etter seier
   if (!s.crew.length && (s.over === null || s.over === 'won-seen')) { s.over = 'dead'; s.needLeader = false; return; }
   if (s.over) return;
-  if (s.goalDay === null && phaseProgress(s).done) s.goalDay = s.day;
+  if (s.goalDay === null && phaseProgress(s).done) { s.goalDay = s.day; logGoal(s, log); }
   // etter målet får spilleren graceDays til å farme før fasen avsluttes av seg selv
   if (s.goalDay !== null && s.day - s.goalDay >= mods(s).graceDays) forceEndPhase(s);
   else if (s.day - s.phaseStartDay >= mods(s).turnCap) {

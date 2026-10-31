@@ -1,6 +1,6 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  DIFFICULTY,
+  DIFFICULTY, goalReachedText,
   canEndPhase, craftShortfall, LAGE_COST, nameList, dailyFood, daysLeft, LOW_DAYS, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDays, toktDef, TOKTS,
@@ -44,7 +44,7 @@ export function phaseDeadline(s: GameState): { label: string; days: number; goal
   const days = Math.max(0, mods(s).turnCap - (s.day - s.phaseStartDay));
   if (s.goalDay === null) return { label: 'Frist for fasemålet', days, goalReached: false, onExpiry: deadlineText(s) };
   const left = Math.min(days, Math.max(0, mods(s).graceDays - (s.day - s.goalDay)));
-  return { label: s.phase < BUILT_PHASES ? `Fase ${s.phase + 1} om` : 'Fasen avsluttes om', days: left, goalReached: true, onExpiry: `Målet er nådd. Dere har ${mods(s).graceDays} dager på å forberede dere, så går dere videre av dere selv.` };
+  return { label: s.phase < BUILT_PHASES ? `Fase ${s.phase + 1} om` : 'Fasen avsluttes om', days: left, goalReached: true, onExpiry: goalReachedText(s) };
 }
 
 /** Hva som skjer når fristen går ut uten at målet er nådd, for gradens pris (DIFFICULTY i phases.ts). */
@@ -112,7 +112,7 @@ export function renderGoals() {
   const row = (txt: string, val: string, done: boolean) => `<div class="goal${done ? ' done' : ''}"><span>${done ? '✓ ' : ''}${txt}</span><b>${val}</b></div>`;
   const tight = dl && dl.days <= 5;
   const deadline = !dl ? '' : dl.goalReached
-    ? `<div class="goal deadline${tight ? ' tight' : ''}"><span>${dl.label} <b>${daysText(dl.days)}</b></span>
+    ? `<div class="goal deadline${tight ? ' tight' : ''}" title="${esc(dl.onExpiry)}"><span>${dl.label} <b>${daysText(dl.days)}</b></span>
         <button class="btn small" id="endphase"${canEndPhase(S) ? '' : ' disabled title="Løs det som venter først"'}>Avslutt fase ${S.phase}</button></div>`
     : `<div class="goal deadline${tight ? ' tight' : ''}" title="${esc(dl.onExpiry)}"><span>${dl.label}</span><b>${daysText(dl.days)}</b></div>`;
   // Målene er foldet sammen til én linje, så fanene under får plass. Fristen står alltid synlig.

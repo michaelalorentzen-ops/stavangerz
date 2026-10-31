@@ -283,6 +283,8 @@ button { cursor: pointer; }
   .foot { position: sticky; bottom: 0; }
   .res { margin-left: 0; width: 100%; }
   .legend { display: none; }
+  /* kreditten står over målestokken nede til høyre, så den ikke ligger over sonenavnene øverst */
+  .attr { top: auto; bottom: 44px; }
   .se { grid-template-columns: 92px 1fr auto; }
   .tabs { top: 0; }
   /* tap-mål på minst 44 px på mobil */

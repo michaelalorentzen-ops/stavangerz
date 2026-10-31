@@ -2,6 +2,7 @@
 import { CARDS } from '../regions/content';
 import { TOKTS } from '../regions/content';
 import type { LogFn } from './crew';
+import { nameAs } from './names';
 import { skillLevel } from './levels';
 import { pick, rand } from './rng';
 import type { CardDef, CardInst, CrewMember, GameState, Resources, SectorId, Slot, StatKey, Stats, WeaponClass, WeaponNoise, WeaponTag } from './types';
@@ -119,7 +120,7 @@ export function wear(_s: GameState, c: CrewMember, slot: Slot, log: LogFn) {
   k.dur--;
   if (k.dur <= 0) {
     delete c.gear[slot];
-    log(`${CARDS[k.def].name} tilhørende ${c.name} gikk i stykker. Det var en god tid.`, 'warn');
+    log(`${CARDS[k.def].name} tilhørende ${nameAs(c, 'obj')} gikk i stykker. Det var en god tid.`, 'warn');
   }
 }
 

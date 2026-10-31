@@ -2,6 +2,7 @@
 // Navn og tekster på anleggene står i regionpakken (FACILITIES i places.ts). Reglene står her.
 import { CARDS } from './cards';
 import type { LogFn } from './crew';
+import { names } from './names';
 import { FACILITIES, HQ_SECTOR, RES_LABEL } from './data';
 import { pick, rand, sum } from './rng';
 import { isSafe } from './sectors';
@@ -164,7 +165,7 @@ export function istand(s: GameState, id: FacilityId, team: CrewMember[], log: Lo
   if (used < need) work *= need ? used / need : 0;
   for (let i = 0; i < used; i++) s.res[s.res.metall > 0 ? 'metall' : 'skrap']--;
   f.work += work;
-  const who = team.map((c) => c.name).join(' og ');
+  const who = names(team);
   if (istandLeft(f) <= 0.001) {
     f.ready = true;
     log(`${who} satte ${def.short} i stand (${used} metall og skrap). ${def.effect}`, 'good');

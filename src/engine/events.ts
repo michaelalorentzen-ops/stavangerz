@@ -15,6 +15,8 @@ export interface ChoiceDef {
   check?: StatKey;
   /** grunnsjansen for sjekken i stedet for den vanlige (0,25). Lavere gir en vanskeligere sjekk, for eksempel å verve en fremmed. */
   checkBase?: number;
+  /** de som kan ta sjekken, når ikke hele crewet kan (for eksempel ikke den som skal hentes tilbake) */
+  by?: (s: GameState) => CrewMember[];
   when?: (s: GameState) => boolean;
   run: (s: GameState, ok: boolean) => string;
 }
@@ -31,8 +33,12 @@ export interface EventDef {
 
 export const best = (s: GameState, k: StatKey): CrewMember => bestOf(s.crew, k);
 export const checkOdds = (s: GameState, k: StatKey, base = 0.25): number => checkOddsFor(s.crew, k, base);
+/** De som kan ta sjekken i et hendelsesvalg: valgets egne (`by`), ellers hele crewet. */
+const choiceCrew = (s: GameState, ch: ChoiceDef): CrewMember[] => { const c = ch.by?.(s); return c?.length ? c : s.crew; };
+/** Den som tar sjekken i et hendelsesvalg: den beste i ferdigheten blant dem som kan. */
+export const choiceBest = (s: GameState, ch: ChoiceDef & { check: StatKey }): CrewMember => bestOf(choiceCrew(s, ch), ch.check);
 /** Sjansen for at et hendelsesvalg lykkes, med valgets egen grunnsjanse. 1 når valget ikke har en sjekk. */
-export const choiceOdds = (s: GameState, ch: ChoiceDef): number => (ch.check ? checkOdds(s, ch.check, ch.checkBase) : 1);
+export const choiceOdds = (s: GameState, ch: ChoiceDef): number => (ch.check ? checkOddsFor(choiceCrew(s, ch), ch.check, ch.checkBase) : 1);
 const roll = (s: GameState, ch: ChoiceDef) => rand(s) < choiceOdds(s, ch);
 /** Trekker et hendelseskort og merker det som sett. Brukes av resolveDay(), som lagrer det i `state.event`. */
 export function drawEvent(s: GameState): EventDef | null {

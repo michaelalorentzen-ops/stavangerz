@@ -1,8 +1,8 @@
 // Dialoger: tittelskjerm, oppstart, hendelseskort, dagsrapport og slutt.
 import {
   DIFFICULTIES, DIFFICULTY,
-  best, CARDS, checkOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDays, toktDecision, toktDef, AREA, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
-  nameList, STAT_HINT, STAT_LABEL, STATS, sum, TRAITS, finaleText, HQ_SECTOR, mods, MUTATIONS, phase2Intro, PHASES,
+  CARDS, choiceBest, choiceOdds, continueAfterWin, describeEncounter, eventChoices, eventDef, previewChoice, queueIntro, canEndPhase, endDayBlocker, endPhase, isFinished, RES, RES_LABEL, toktDays, toktDecision, toktDef, AREA, LANDMARKS, phase2Teaser, winBanner, NEIGHBORS, newGame, resolveDay, resolveEncounter, resolveEvent, SECTORS, SELF_TRAITS, setLeader, START_NEIGHBORS,
+  daysToGoal, goalReachedText, nameList, STAT_HINT, YOU, STAT_LABEL, STATS, sum, TRAITS, finaleText, HQ_SECTOR, mods, MUTATIONS, phase2Intro, PHASES,
 } from '../engine';
 import type { Difficulty, PendingEncounter, Stats, TraitId } from '../engine';
 import { blockerLabel, changesHtml, hpWord, statPips, vaguePreviewHtml } from './panel';
@@ -97,7 +97,7 @@ function createSelf() {
   const used = sum(Object.values(draft.stats));
   const pips = (n: number) => [1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('');
   modal(`<span class="eyebrow">Steg 1 av 2</span><h2>Hvem er du?</h2>
-    <div class="field"><label for="nm">Navn</label><input id="nm" maxlength="18" placeholder="Du" value="${esc(draft.name)}"></div>
+    <div class="field"><label for="nm">Navn</label><input id="nm" maxlength="18" placeholder="${YOU}" value="${esc(draft.name)}"></div>
     <div><p class="eyebrow">Fordel ${POOL} poeng · ${POOL - used} igjen</p><div class="statedit">
     ${STATS.map((k) => `<div class="se"><div class="lbl">${STAT_LABEL[k]}<small>${STAT_HINT[k]}</small></div>
       <div class="pips">${pips(draft.stats[k])}</div>
@@ -138,7 +138,7 @@ function pickNeighbors() {
     // seeden er det eneste stedet tilfeldighet kommer utenfra
     const seed = parseSeed(draft.seedText) ?? (Date.now() ^ Math.floor(Math.random() * 1e9)) | 0;
     rememberRun(seed, [...draft.picks]);
-    ui.S = newGame(seed, { name: draft.name.trim() || 'Du', stats: { ...draft.stats }, trait: draft.trait }, draft.picks, draft.difficulty);
+    ui.S = newGame(seed, { name: draft.name.trim() || YOU, stats: { ...draft.stats }, trait: draft.trait }, draft.picks, draft.difficulty);
     ui.sel = { kind: 'sector', id: 'hjem' };
     queueIntro(ui.S);
     ui.refresh();
@@ -152,7 +152,7 @@ function showEvent(done: () => void) {
   const choices = eventChoices(S, ev);
   modal(`<div class="radio">${ev.channel ?? 'Samband · kanal 16'} · Dag ${S.day}</div><h2>${ev.title}</h2>
     <div class="transcript">${esc(ev.text(S))}</div>
-    <div class="choices">${choices.map(({ ch: c, i }) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? oddsHtml(STAT_LABEL[c.check], best(S, c.check), checkOdds(S, c.check, c.checkBase)) : ''}</span>${vaguePreviewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
+    <div class="choices">${choices.map(({ ch: c, i }) => `<button class="choice" data-i="${i}"><span class="ch-top"><span>${c.label}</span>${c.check ? oddsHtml(STAT_LABEL[c.check], choiceBest(S, { ...c, check: c.check }), choiceOdds(S, c)) : ''}</span>${vaguePreviewHtml(previewChoice(S, c))}</button>`).join('')}</div>`);
   $('sheet').querySelectorAll<HTMLButtonElement>('[data-i]').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.i), ch = ev.choices[i];
     const r = resolveEvent(S, i);
@@ -252,11 +252,13 @@ export function phaseScreen(from: number, fromStart: number, done: () => void) {
   const S = game(), forced = S.log.at(-1)?.lines.some((l) => l.t.startsWith('Fristen gikk ut'));
   const muts = S.mutations.map((id) => MUTATIONS[id]).filter(Boolean);
   const hq = SECTORS[HQ_SECTOR];
-  const rec = forced ? null : logRun({ phase: from as 1 | 2, difficulty: S.difficulty, days: S.day - fromStart, combo: recallCombo(S.seed) });
+  // rekorden teller dagene til målet (spilldesign kap. 2), ikke dagene nedtellingen etterpå
+  const days = daysToGoal(S, from as 1 | 2) ?? S.day - fromStart;
+  const rec = forced ? null : logRun({ phase: from as 1 | 2, difficulty: S.difficulty, days, combo: recallCombo(S.seed) });
   modal(`<div class="radio">Samband · alle stasjoner · Dag ${S.day}</div>
     <span class="badge ${forced ? 'inf' : 'safe'}">Fase ${from} ${forced ? 'tvunget avsluttet' : 'fullført'}</span>
     <h2>Fase ${S.phase}: ${PHASES[S.phase].name}</h2>
-    <p>${forced ? `Fristen gikk ut før ${AREA.name} var sikret, og det kostet.` : `Fase ${from} tok ${S.day - fromStart} dager, og ${winBanner()}.`} ${phase2Teaser(S)}</p>
+    <p>${forced ? `Fristen gikk ut før ${AREA.name} var sikret, og det kostet.` : `Målet for fase ${from} tok ${days} dager, og ${winBanner()}.`} ${phase2Teaser(S)}</p>
     ${rec ? recordNote(rec) : ''}
     <div class="card"><span class="badge lock">Zombiene har mutert</span>
       ${muts.length ? `<ul class="mutlist">${muts.map((m) => `<li><b>${m.name}</b> <small>${m.code}</small><br>${esc(m.desc)}</li>`).join('')}</ul>` : '<p>Ingen nye mutasjoner. Denne gangen.</p>'}</div>
@@ -272,14 +274,28 @@ export function phaseScreen(from: number, fromStart: number, done: () => void) {
   on('go2', () => { ui.sel = { kind: 'sector', id: HQ_SECTOR }; ui.selAction = null; done(); });
 }
 
+/** Fasemålet ble nådd i dag: nedtellingen forklares, og spilleren kan gå videre med en gang. */
+function goalScreen(done: () => void) {
+  const S = game();
+  modal(`<div class="radio">Samband · alle stasjoner · Dag ${S.day}</div>
+    <span class="badge safe">Målet for fase ${S.phase} er nådd</span>
+    <h2>${S.phase === 1 ? `${AREA.name} er sikret` : `${LOCKED.short} er HQ-et`}</h2>
+    <p>${esc(goalReachedText(S))}</p>
+    <p class="hint">Rekorden teller dagene til målet: ${daysToGoal(S)} dager. Dagene som kommer, teller ikke.</p>
+    <div class="row"><button class="btn ghost" id="endnow">Avslutt fase ${S.phase} nå</button><button class="btn" id="stay">Bli og gjør dere klare</button></div>`);
+  on('endnow', () => { closeModal(); endPhaseNow(); });
+  on('stay', done);
+}
+
 export function endDay() {
-  const S = game(), day = S.day, phase = S.phase, start = S.phaseStartDay;
+  const S = game(), day = S.day, phase = S.phase, start = S.phaseStartDay, hadGoal = S.goalDay !== null;
   if (isFinished(S)) { endScreen(); return; }
   const finish = () => {
     closeModal(); ui.refresh();
     if (isFinished(S)) endScreen();
     // fristen kan tvinge en ny fase i natt
     else if (S.phase !== phase) phaseScreen(phase, start, () => { closeModal(); ui.refresh(); });
+    else if (!hadGoal && S.goalDay !== null) goalScreen(() => { closeModal(); ui.refresh(); });
   };
   if (endDayBlocker(S)) { settle(finish); return; }
   const before = structuredClone(S);
@@ -304,12 +320,13 @@ export function resumePending() {
 
 export function endScreen() {
   const S = game(), st = S.stats;
-  const rec = S.over === 'won' && S.phase <= 2 ? logRun({ phase: S.phase as 1 | 2, difficulty: S.difficulty, days: S.day - S.phaseStartDay, combo: recallCombo(S.seed) }) : null;
+  const goalDays = daysToGoal(S) ?? S.day - S.phaseStartDay;
+  const rec = S.over === 'won' && S.phase <= 2 ? logRun({ phase: S.phase as 1 | 2, difficulty: S.difficulty, days: goalDays, combo: recallCombo(S.seed) }) : null;
   const metric = (k: string, v: number) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   if (S.over === 'won') {
     modal(`<div class="radio">Samband · alle stasjoner</div><h2>${LOCKED.short} er HQ-et</h2>
       <p>${finaleText(S)}</p>
-      <div class="metrics">${metric('Dager totalt', S.day - 1)}${metric(`Dager i fase ${S.phase}`, S.day - S.phaseStartDay)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
+      <div class="metrics">${metric('Dager totalt', S.day - 1)}${metric(`Dager til målet i fase ${S.phase}`, goalDays)}${metric('Zombier ryddet', st.kills)}${metric('Crew mistet', st.lost)}</div>
       ${rec ? recordNote(rec) : ''}${seedHtml(S.seed)}
       <div class="card"><span class="badge lock">Fase 3: ${PHASES[3].name}</span><h2>Fortsettelse følger</h2>
       <p>${PHASES[3].focus} Det er ikke bygd ennå. Dere kan spille videre i sandkassa så lenge dere vil.</p></div>

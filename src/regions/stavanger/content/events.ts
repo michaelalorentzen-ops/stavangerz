@@ -9,8 +9,10 @@ import { pick, rand } from '../../../engine/rng';
 import { isSafe, raiseSearched } from '../../../engine/sectors';
 import { acceptQuest, unlockTokt } from '../../../engine/tokt';
 import { best, type EventDef } from '../../../engine/events';
+import { bestOf, checkOddsFor } from '../../../engine/skills';
+import { nameAs } from '../../../engine/crew';
 import { canRecruitStranger, STRANGER_BASE, recruitStranger, stranger, strangerIntro, strangerName } from './survivors';
-import type { CrewMember, GameState, GateId, ResKey, SectorId } from '../../../engine/types';
+import type { CrewMember, GameState, GateId, ResKey, SectorId, StatKey } from '../../../engine/types';
 
 const recruitable = (s: GameState) => NEIGHBORS.filter((n) => !s.crew.some((c) => c.id === n.id) && !s.flags[`gone_${n.id}`]);
 
@@ -18,8 +20,14 @@ const recruitable = (s: GameState) => NEIGHBORS.filter((n) => !s.crew.some((c) =
 const lose = (s: GameState, k: ResKey, n: number): number => { const l = Math.min(n, s.res[k]); s.res[k] -= l; return l; };
 /** «−4 vann, −2 tre» for det som gikk tapt. Ressurser som var tomme nevnes ikke. */
 const lost = (parts: [number, ResKey][]): string => parts.filter(([n]) => n > 0).map(([n, k]) => `−${n} ${k}`).join(', ') || 'ingenting å miste';
-/** Sjansen for at det fristende valget faktisk lønner seg, selv når sjekken går gjennom. */
-const LONG_SHOT = 0.25;
+/**
+ * Grunnsjansen (checkBase) for de fristende valgene der det gode utfallet er et langskudd. Sjekken er selve
+ * langskuddet, så ordet ved valget («dårlig sjanse») gjelder det gode utfallet, og «Lyktes» betyr at det gikk bra.
+ * Bommer den, avgjør en vanlig sjekk i samme ferdighet om det går greit eller galt (se `softMiss`).
+ */
+const LONG_SHOT_BASE = -0.25;
+/** Når langskuddet bommer: en vanlig sjekk blant `crew` avgjør om det likevel går greit. */
+const softMiss = (s: GameState, k: StatKey, crew: CrewMember[] = s.crew) => rand(s) < checkOddsFor(crew, k);
 /** Gir en tilfeldig person ett skadetrinn (eller bitt, hvis hun er nede på siste) og returnerer teksten. */
 function hurtOne(s: GameState, c: CrewMember, why: string): string {
   const lines: string[] = [];
@@ -30,6 +38,8 @@ function hurtOne(s: GameState, c: CrewMember, why: string): string {
 const others = (s: GameState) => s.crew.filter((c) => !c.me);
 /** Dagens kandidat blant de andre. Avhenger bare av dagen, så teksten og valget peker på samme person. */
 const kin = (s: GameState, shift = 0): CrewMember => { const o = others(s); return o[(s.day + shift) % o.length]; };
+/** De som kan løpe etter den som har lagt igjen lappen: alle unntatt den som drar. */
+const chasers = (s: GameState): CrewMember[] => { const n = kin(s, 1); return s.crew.filter((c) => c !== n); };
 /** Fase 1 fra en bestemt dag. Brukes av hendelsene som skal holde de sene dagene i gang. */
 const late = (s: GameState, day: number) => s.phase === 1 && s.day >= day;
 /** Antall fase 1-sektorer som er trygge. */
@@ -52,18 +62,20 @@ export const INTRO: EventDef = {
   choices: [
     { label: 'Barrikader døra med sofaen', run: (s) => { s.res.tre += 2; s.moral += 5; return 'Sofaen fra Bohus holder. Den var verdt hver krone. Dere finner også litt planker i boden.'; } },
     { label: 'Se ut av vinduet først', run: (s) => { s.sectors.hjem.seen = true; s.sectors.obs.seen = true; s.sectors.buoy_nord.seen = true; return `Du ser naboen Svein stå i hagen og tygge på en hekk. Du får god oversikt over ${SECTORS.hjem.short}, ${SECTORS.obs.short} og ${SECTORS.buoy_nord.short}.`; } },
-    { label: 'Ring Kjell i borettslaget', run: (s) => { s.moral += 10; return '«Dette må tas opp på årsmøtet», sier Kjell. Det er så normalt at alle roer seg ned. Moralen stiger.'; } },
+    // Kjell kan allerede stå i stua: da ringer ingen ham
+    { label: 'Ring Kjell i borettslaget', when: (s) => !s.crew.some((c) => c.id === 'kjell'), run: (s) => { s.moral += 10; return 'Kjell tar telefonen før første ring er ferdig. «Dette må tas opp på årsmøtet.» Det er så normalt at alle roer seg ned. Moralen stiger.'; } },
+    { label: 'Spør Kjell hva borettslaget gjør', when: (s) => s.crew.some((c) => c.id === 'kjell'), run: (s) => { s.moral += 10; return 'Kjell blar i vedtektene. «Dette må tas opp på årsmøtet.» Det er så normalt at alle i stua roer seg ned. Moralen stiger.'; } },
   ],
 };
 
 export const EVENTS: EventDef[] = [
   {
-    id: 'tesla', title: 'Naboen med Tesla',
-    text: (s) => `${strangerIntro(s, 'En overlevende i dunvest')} banker på. Teslaen har vært hjem og kontor i tre uker, og nå er batteriet nesten tomt. «Bare nok til å komme meg til ${LANDMARKS.forus}.» Det er zombier i baksetet.`,
+    id: 'tesla', title: 'Teslaen',
+    text: (s) => `${strangerIntro(s, 'tesla', 'En overlevende i dunvest')} banker på. Teslaen har vært hjem og kontor siden utbruddet, og nå er batteriet nesten tomt. «Bare nok til å komme meg til ${LANDMARKS.forus}.» Det er zombier i baksetet.`,
     choices: [
       { label: 'Si nei', run: () => `Teslaen rygger ut og kjører inn i ${SECTORS.obs.real}. Dere hører alarmen i en time (ingenting).` },
-      { label: 'Overtal sjåføren til å gi fra seg bilen', check: 'prat', run: (s, ok) => { const n = strangerName(s, 'Sjåføren'); if (ok) { s.res.drivstoff += 4; s.res.skrap += 3; s.res.mat += 2; return `${n} gir dere bilen mot at dere sier det er «en ekte fremtidsbil». Dere tapper alt brukbart og tar med niste fra hanskerommet (+4 drivstoff, +3 skrap, +2 mat).`; } s.moral -= 3; return `${n} blir fornærmet og kjører. Zombiene i baksetet vinker (−3 moral).`; } },
-      { label: 'Tilby en seng og en plass i crewet', check: 'prat', checkBase: STRANGER_BASE, when: canRecruitStranger, run: (s, ok) => recruitStranger(s, ok, (n) => `«Jeg klarer meg selv», sier ${n}, og kjører. Zombiene i baksetet ser ikke enige ut (ingenting).`) },
+      { label: 'Overtal sjåføren til å gi fra seg bilen', check: 'prat', run: (s, ok) => { const n = strangerName(s, 'tesla', 'Sjåføren'); if (ok) { s.res.drivstoff += 4; s.res.skrap += 3; s.res.mat += 2; return `${n} gir dere bilen mot at dere sier det er «en ekte fremtidsbil». Dere tapper alt brukbart og tar med niste fra hanskerommet (+4 drivstoff, +3 skrap, +2 mat).`; } s.moral -= 3; return `${n} blir fornærmet og kjører. Zombiene i baksetet vinker (−3 moral).`; } },
+      { label: 'Tilby en seng og en plass i crewet', check: 'prat', checkBase: STRANGER_BASE, when: (s) => canRecruitStranger(s, 'tesla'), run: (s, ok) => recruitStranger(s, 'tesla', ok, (n) => `«Jeg klarer meg selv», sier ${n}, og kjører. Zombiene i baksetet ser ikke enige ut (ingenting).`) },
     ],
   },
   {
@@ -120,10 +132,10 @@ export const EVENTS: EventDef[] = [
   {
     id: 'arsmote', title: 'Ekstraordinært årsmøte',
     when: (s) => s.crew.some((c) => c.trait === 'hms'),
-    text: () => 'Kjell har kalt inn til ekstraordinært årsmøte. Sak 1: Zombier. Sak 2: Hvem som har parkert på gjesteplassen.',
+    text: () => 'Kjell har kalt inn til ekstraordinært årsmøte. Det er bare dere igjen i borettslaget, men vedtektene er tydelige. Sak 1: Zombier. Sak 2: Hvem som har parkert på gjesteplassen.',
     choices: [
-      { label: 'Delta på møtet', run: (s) => { s.moral += 8; s.res.mat += 2; return 'Møtet varer i tre timer. Vedtak: zombier er ikke tillatt i fellesarealene. Alle føler seg tryggere, og kaka etter sak 2 er det eneste som blir spist opp.'; } },
-      { label: 'Send fullmakt og jobb videre', run: (s) => { s.res.skrap += 3; s.moral -= 3; return 'Kjell er skuffet, men dere finner skrap i sykkelboden mens alle andre sitter i møte.'; } },
+      { label: 'Delta på møtet', run: (s) => { s.moral += 8; s.res.mat += 2; return 'Møtet varer i tre timer. Vedtak: zombier er ikke tillatt i fellesarealene. Crewet føler seg tryggere, og kaka etter sak 2 er det eneste som blir spist opp.'; } },
+      { label: 'Send fullmakt og jobb videre', run: (s) => { s.res.skrap += 3; s.moral -= 3; return 'Kjell er skuffet, men dere finner skrap i sykkelboden mens resten av crewet sitter i møte.'; } },
     ],
   },
   {
@@ -160,11 +172,11 @@ export const EVENTS: EventDef[] = [
   {
     id: 'dronningen', title: 'Seilbåten',
     when: (s) => s.day >= 3,
-    text: (s) => `En seilbåt glir inn mot kaia ved ${SECTORS.sorspissen.real}. Ved roret står ${strangerIntro(s, 'en overlevende')} som har bodd om bord siden utbruddet. «Har dere drivstoff? Jeg har hermetikk!»`,
+    text: (s) => `En seilbåt glir inn mot kaia ved ${SECTORS.sorspissen.real}. Ved roret står ${strangerIntro(s, 'seilbat', 'en overlevende')} som har bodd om bord siden utbruddet. «Har dere drivstoff? Jeg har hermetikk!»`,
     choices: [
       { label: 'Bytt 3 drivstoff mot mat', when: (s) => s.res.drivstoff >= 3, run: (s) => { s.res.drivstoff -= 3; s.res.mat += 10; return 'Handel gjennomført. Seilbåten setter kurs mot Kvitsøy, og dere får et lykke til over rekka (−3 drivstoff, +10 mat).'; } },
       { label: 'Prut', check: 'prat', run: (s, ok) => { if (ok) { s.res.mat += 6; return 'Dere får seks hermetikkbokser, bare fordi du minner om en nevø som ble igjen på land (+6 mat).'; } return 'Seilbåten legger fra igjen. Noen mumler om «byfolk» (ingenting).'; } },
-      { label: 'Be vedkommende bli igjen på land', check: 'prat', checkBase: STRANGER_BASE, when: canRecruitStranger, run: (s, ok) => recruitStranger(s, ok, (n) => `${n} ser på dere, så på sjøen, og velger sjøen. Den har i hvert fall ikke tenner (ingenting).`) },
+      { label: 'Be vedkommende bli igjen på land', check: 'prat', checkBase: STRANGER_BASE, when: (s) => canRecruitStranger(s, 'seilbat'), run: (s, ok) => recruitStranger(s, 'seilbat', ok, (n) => `${n} ser på dere, så på sjøen, og velger sjøen. Den har i hvert fall ikke tenner (ingenting).`) },
       { label: 'Vink farvel', run: () => 'Seilbåten forsvinner mot horisonten. Dere ser aldri hvordan det går (ingenting).' },
     ],
   },
@@ -215,10 +227,10 @@ export const EVENTS: EventDef[] = [
   {
     id: 'ryktet', title: 'Rykter ved bussholdeplassen',
     when: (s) => s.day >= 3 && s.sectors.obs.control < 100,
-    text: () => `Noen har skrevet med tusj på ruta ved bussholdeplassen: «${SECTORS.obs.real}: tomt for folk, fullt av hermetikk». Skrifta ligner mistenkelig på Sveins.`,
+    text: () => `Noen har skrevet med tusj på ruta ved bussholdeplassen: «${SECTORS.obs.real}: tomt for folk, fullt av hermetikk». Det er stavet riktig, så det er i hvert fall ikke noen fra ${LANDMARKS.sandnes}.`,
     choices: [
       { label: 'Gå dit og sjekk', check: 'snoking', run: (s, ok) => { if (ok) { s.sectors.obs.seen = true; raiseSearched(s.sectors.obs, 10); s.res.mat += 3; return 'Tre bokser pasta og en uåpnet pose Grandiosa. Dere finner også ut hvor lagerinngangen er.'; } s.sectors.obs.control = Math.max(0, s.sectors.obs.control - 5); return 'Rykter er rykter. Og noen har vært der før dere.'; } },
-      { label: 'Visk ut teksten', run: (s) => { s.moral += 2; return 'Ingen trenger å lese det samme som nabolaget. Moralen hever seg litt.'; } },
+      { label: 'Visk ut teksten', run: (s) => { s.moral += 2; return 'De andre gjengene leser også ruter. Ikke denne. Moralen hever seg litt.'; } },
     ],
   },
   {
@@ -308,10 +320,10 @@ export const EVENTS: EventDef[] = [
     when: (s) => s.day >= 4 && s.res.mat >= 4,
     text: () => `En mann i fiskerlue står ved gjerdet med et rynket kart. «Lager. Full kjeller. På andre siden av ${LANDMARKS.bybrua}. Fire bokser, så er det ditt.» Han har et ansikt man ikke har lyst til å stole på, og en venn som holder øye med dere.`,
     choices: [
-      { label: 'Kjøp kartet for fire bokser mat', check: 'snoking', when: (s) => s.res.mat >= 4, run: (s, ok) => {
+      { label: 'Kjøp kartet for fire bokser mat', check: 'snoking', checkBase: LONG_SHOT_BASE, when: (s) => s.res.mat >= 4, run: (s, ok) => {
         s.res.mat -= 4;
-        if (ok && rand(s) < LONG_SHOT) { s.res.mat += 14; s.res.medisin += 3; return 'Lageret finnes. Kjelleren er full av hermetikk, og kartet var faktisk riktig, noe som aldri har hendt før (netto +10 mat, +3 medisin).'; }
-        if (ok) return 'Kartet viser til et utleveringssted som har vært tomt siden i fjor. Håndskriften er tegnet av en åtteåring (−4 mat).';
+        if (ok) { s.res.mat += 14; s.res.medisin += 3; return 'Lageret finnes. Kjelleren er full av hermetikk, og kartet var faktisk riktig, noe som aldri har hendt før (netto +10 mat, +3 medisin).'; }
+        if (softMiss(s, 'snoking')) return 'Kartet viser til et utleveringssted som har vært tomt siden i fjor. Håndskriften er tegnet av en åtteåring (−4 mat).';
         s.sectors.sorspissen.z += 3; s.moral -= 4;
         return `Kartet var bare et lokkemiddel. Vennen hans følger dere hjem, og tre andre følger vennen hans ${SECTORS.sorspissen.at} (−4 mat, +3 zombier ${SECTORS.sorspissen.at}, −4 moral).`;
       } },
@@ -328,10 +340,11 @@ export const EVENTS: EventDef[] = [
     when: (s) => s.day >= 3 && !s.toktsDone.includes('apotek'), // etter toktet er hylla tømt
     text: () => `Tvers over sundet, ${ZONES.hundvag.at}, ligger Apotek 1 med lyset på. Bak glasset står en hel hylle med medisin, og en alarm som fortsatt blinker. Noen har nok tenkt det samme før dere.`,
     choices: [
-      { label: 'Knus ruta og ta hyllene', check: 'nerver', run: (s, ok) => {
-        if (ok && rand(s) < LONG_SHOT) { s.res.medisin += 5; return 'Alarmen er bare en lampe. Hyllene er urørte: smertestillende, plaster og noe som heter Furix (+5 medisin).'; }
-        s.sectors.nordkrysset.z += ok ? 2 : 4;
-        if (ok) { s.res.medisin += 1; return `Ruta går, men hyllene er tomme bortsett fra en pakke plaster. Alarmen trekker ${SECTORS.nordkrysset.at} (+1 medisin, +2 zombier ${SECTORS.nordkrysset.at}).`; }
+      { label: 'Knus ruta og ta hyllene', check: 'nerver', checkBase: LONG_SHOT_BASE, run: (s, ok) => {
+        if (ok) { s.res.medisin += 5; return 'Alarmen er bare en lampe. Hyllene er urørte: smertestillende, plaster og noe som heter Furix (+5 medisin).'; }
+        const soft = softMiss(s, 'nerver');
+        s.sectors.nordkrysset.z += soft ? 2 : 4;
+        if (soft) { s.res.medisin += 1; return `Ruta går, men hyllene er tomme bortsett fra en pakke plaster. Alarmen trekker ${SECTORS.nordkrysset.at} (+1 medisin, +2 zombier ${SECTORS.nordkrysset.at}).`; }
         const c = pick(s, s.crew); s.moral -= 5;
         return `Glasset er tykkere enn det ser ut. Alarmen går, og flere kommer enn dere hadde regnet med. ${hurtOne(s, c, 'ved apoteket')} (+4 zombier ${SECTORS.nordkrysset.at}, −5 moral).`;
       } },
@@ -354,13 +367,15 @@ export const EVENTS: EventDef[] = [
     text: (s) => { const n = kin(s, 1); return `På kjøkkenbordet ligger en lapp fra ${n.name}: «Drar til familien i ${LANDMARKS.sandnes}. Takk for alt. Beklager.» Det må stå dårlig til når folk heller vil til ${LANDMARKS.sandnes}.`; },
     choices: [
       { label: 'La vedkommende gå', run: (s) => { const n = kin(s, 1); leaveForGood(s, n); const m = lose(s, 'mat', 3); s.moral -= 6; return `${n.name} tar med seg niste og et fornuftig sett klær. Utstyret blir igjen på lageret (${n.name} er borte for godt, ${lost([[m, 'mat']])}, −6 moral).`; } },
-      { label: 'Løp etter og snakk fornuft', check: 'kondis', run: (s, ok) => {
-        const n = kin(s, 1);
-        if (ok && rand(s) < LONG_SHOT * 1.5) { const m = lose(s, 'mat', 2); s.moral -= 2; return `${n.name} snur ved bommen og kommer med tilbake. Ingen sier noe om det på middagen (${lost([[m, 'mat']])}, −2 moral).`; }
+      // den som drar, kan ikke løpe etter seg selv
+      { label: 'Løp etter og snakk fornuft', check: 'kondis', checkBase: LONG_SHOT_BASE + 0.05, by: chasers, run: (s, ok) => {
+        const n = kin(s, 1), c = bestOf(chasers(s), 'kondis');
+        if (ok) { const m = lose(s, 'mat', 2); s.moral -= 2; return `${n.name} snur ved bommen og kommer med tilbake. Ingen sier noe om det på middagen (${lost([[m, 'mat']])}, −2 moral).`; }
+        const soft = softMiss(s, 'kondis', chasers(s));
         leaveForGood(s, n);
-        if (ok) { const m = lose(s, 'mat', 3); s.moral -= 6; return `Du tar igjen ${n.name}, men svaret er ikke til å misforstå. ${n.name} går videre (${n.name} er borte for godt, ${lost([[m, 'mat']])}, −6 moral).`; }
-        const c = best(s, 'kondis'); s.moral -= 8;
-        return `Du mister fotfestet på tangen og ${n.name} går videre uten å se seg tilbake. ${hurtOne(s, c, 'på jakt etter en som ikke ville bli funnet')} (${n.name} er borte for godt, −8 moral).`;
+        if (soft) { const m = lose(s, 'mat', 3); s.moral -= 6; return `${nameAs(c)} tar igjen ${n.name}, men svaret er ikke til å misforstå. ${n.name} går videre (${n.name} er borte for godt, ${lost([[m, 'mat']])}, −6 moral).`; }
+        s.moral -= 8;
+        return `${nameAs(c)} mister fotfestet på tangen, og ${n.name} går videre uten å se seg tilbake. ${hurtOne(s, c, 'på jakt etter en som ikke ville bli funnet')} (${n.name} er borte for godt, −8 moral).`;
       } },
     ],
   },
@@ -383,12 +398,12 @@ export const EVENTS: EventDef[] = [
   {
     id: 'sjarken', title: 'Sjarken',
     when: (s) => late(s, 25),
-    text: (s) => `En sjark legger til ved ${SECTORS.tommerodden.real}. Om bord er ${strangerIntro(s, 'en overlevende')} som har fisket alene siden utbruddet og fylt lasterommet med torsk og sei. «Kontant går ikke lenger. Diesel går.»`,
+    text: (s) => `En sjark legger til ved ${SECTORS.tommerodden.real}. Om bord er ${strangerIntro(s, 'sjark', 'en overlevende')} som har fisket alene siden utbruddet og fylt lasterommet med torsk og sei. «Kontant går ikke lenger. Diesel går.»`,
     choices: [
       { label: 'Bytt 3 drivstoff mot fisk', when: (s) => s.res.drivstoff >= 3, run: (s) => { s.res.drivstoff -= 3; s.res.mat += 10; return 'Dere får to fiskekasser og beskjed om at dere er de første kundene som ikke har prøvd å bite (−3 drivstoff, +10 mat).'; } },
       { label: 'Bytt 4 skrap mot fisk', when: (s) => s.res.skrap >= 4, run: (s) => { s.res.skrap -= 4; s.res.mat += 7; return 'Garnet trenger nye lodd. Dere trenger middag. Det er en god avtale for begge (−4 skrap, +7 mat).'; } },
       { label: 'Prut med lokalpatriotisme', check: 'prat', run: (s, ok) => { if (ok) { s.res.mat += 6; return `Dere snakker om Viking, om ${LANDMARKS.sandnes} og om hvordan det var før. Dere får en kasse sei gratis (+6 mat).`; } return 'Det viser seg at sjarken holder med Bryne. Samtalen er over (ingenting).'; } },
-      { label: 'Tilby en plass i crewet', check: 'prat', checkBase: STRANGER_BASE, when: canRecruitStranger, run: (s, ok) => recruitStranger(s, ok, (n) => `${n} ser på huset, på gjerdet og på dere. «Fisken klager aldri», og sjarken legger fra (ingenting).`) },
+      { label: 'Tilby en plass i crewet', check: 'prat', checkBase: STRANGER_BASE, when: (s) => canRecruitStranger(s, 'sjark'), run: (s, ok) => recruitStranger(s, 'sjark', ok, (n) => `${n} ser på huset, på gjerdet og på dere. «Fisken klager aldri», og sjarken legger fra (ingenting).`) },
     ],
   },
   {
@@ -530,10 +545,10 @@ export const EVENTS: EventDef[] = [
   // ---- Sjansespill: sjekken avgjør et stort utslag
   {
     id: 'naustet', title: 'Den som bor i naustet',
-    when: (s) => late(s, 30) && !!stranger(s),
-    text: (s) => { const n = stranger(s)!; return `I et naust ved ${SECTORS.tommerodden.real} har noen bodd alene i en måned. ${n.name} (${n.age}), ${n.role.toLowerCase()}, står i døra med en båtshake og stoler ikke på noen. «${n.quip}»`; },
+    when: (s) => late(s, 30) && !!stranger(s, 'naust'),
+    text: (s) => { const n = stranger(s, 'naust')!; return `I et naust ved ${SECTORS.tommerodden.real} har noen bodd alene i en måned. ${n.name} (${n.age}), ${n.role.toLowerCase()}, står i døra med en båtshake og stoler ikke på noen. «${n.quip}»`; },
     choices: [
-      { label: 'Overtal vedkommende til å bli med', check: 'prat', checkBase: STRANGER_BASE, when: (s) => canRecruit(s), run: (s, ok) => recruitStranger(s, ok, (n) => `Du sier noe feil. Du vet ikke hva. ${n} lukker døra, og bak den hører dere båtshaken bli satt på plass (ingenting).`) },
+      { label: 'Overtal vedkommende til å bli med', check: 'prat', checkBase: STRANGER_BASE, when: (s) => canRecruit(s), run: (s, ok) => recruitStranger(s, 'naust', ok, (n) => `Du sier noe feil. Du vet ikke hva. ${n} lukker døra, og bak den hører dere båtshaken bli satt på plass (ingenting).`) },
       { label: 'Bytt: fire bokser mot det som henger i naustet', when: (s) => s.res.mat >= 4, run: (s) => { s.res.mat -= 4; s.res.tre += 4; s.res.skrap += 4; return 'Du får årer, tauverk, en kasse med skruer og tørre planker fra hems. Alle er fornøyde (−4 mat, +4 tre, +4 skrap).'; } },
       { label: 'Gi mat og la vedkommende være', when: (s) => s.res.mat >= 2, run: (s) => { s.res.mat -= 2; s.moral += 5; return 'Dere setter to bokser utenfor døra og går. Neste morgen henger det en tørket sei på gjerdet deres. Det føles riktig (−2 mat, +5 moral).'; } },
       { label: 'La naustet være', run: () => 'Dere går. Båtshaken følger dere med blikket (ingenting).' },
