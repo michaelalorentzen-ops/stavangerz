@@ -80,6 +80,21 @@ button { cursor: pointer; }
 .lab.big { font: 400 54px/1 var(--f-display); fill: #ff6b6f; letter-spacing: .06em; }
 .zone { cursor: pointer; fill: transparent; stroke: var(--faint); stroke-width: 2; stroke-dasharray: 6 9; }
 .zone:hover, .zone.sel { stroke: var(--ink); stroke-dasharray: none; fill: rgba(236,230,216,.04); }
+/* Bykartet (#map.city, satt i ui/map.ts når hele byen vises): oversiktslag på, detaljer av.
+   --k = kartenheter per skjermpiksel, så etiketter og streker holder fast størrelse på skjermen. */
+#map .far { display: none; }
+#map.city .far { display: inline; }
+#map.city .near, #map.city .sector .lab, #map.city .gate, #map.city .token, #map.city .toktmark, #map.city g > .lab:not(.far) { display: none; }
+#map.city .zone { vector-effect: non-scaling-stroke; stroke-width: 1px; stroke-dasharray: 4 5; }
+#map.city .zone:hover, #map.city .zone.sel { stroke-dasharray: none; stroke-width: 1.5px; }
+.lab.zone.far { font-size: calc(var(--k, 1) * 15px); stroke-width: calc(var(--k, 1) * 4px); }
+.lab.zone.far.home { fill: var(--amber); font-size: calc(var(--k, 1) * 13px); }
+.lab.zsub.far { font-size: calc(var(--k, 1) * 10px); stroke-width: calc(var(--k, 1) * 3px); }
+.small > .lab.zone.far { font-size: calc(var(--k, 1) * 11px); }
+.small > .lab.zsub.far { font-size: calc(var(--k, 1) * 8px); }
+.small > .lab.zsub.far.below { transform: translateY(calc(var(--k, 1) * 11px)); }
+.lab.zsub.far.below { transform: translateY(calc(var(--k, 1) * 15px)); }
+text.lab.zsub.far:not(.below) { transform: translate(calc(var(--k, 1) * 8px), calc(var(--k, 1) * -6px)); }
 .gate { cursor: pointer; }
 .gate rect.box { fill: var(--panel); stroke-width: 3; }
 .gate.l0 rect.box { stroke: var(--red); }

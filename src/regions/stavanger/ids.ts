@@ -7,6 +7,7 @@ export type SectorId = 'hjem' | 'tommerodden' | 'obs' | 'nordkrysset' | 'buoy_no
 export type MapSectorId = SectorId;
 export type GateId = 'nord' | 'sor' | 'ros';
 /** Soner utenfor fase 1-området, vist i tåka */
-export type ZoneId = 'hundvag' | 'engoy' | 'solyst' | 'grasholmen' | 'bjornoy' | 'roaldsoy' | 'ormoy' | 'steinsoy' | 'sentrum' | 'bjergsted';
+export type ZoneId = 'hundvag' | 'engoy' | 'solyst' | 'grasholmen' | 'bjornoy' | 'roaldsoy' | 'ormoy' | 'steinsoy'
+  | 'sentrum' | 'bjergsted' | 'storhaug' | 'valand' | 'madla' | 'hillevag' | 'ullandhaug_hinna' | 'forus_lura';
 /** Flagg som innholdet i denne regionen setter */
 export type RegionFlag = 'gann' | 'aggregat' | 'buss' | 'katt' | 'svein';

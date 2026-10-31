@@ -11,6 +11,8 @@ import type { PanelTab, Selection } from './ui/store';
 
 $('area-name').textContent = AREA.name;
 $('area-all').textContent = AREA.surroundings[0].toUpperCase() + AREA.surroundings.slice(1);
+$('area-city').textContent = AREA.city;
+if (!MAP.city) $('v-city').hidden = true;
 $('map').parentElement!.setAttribute('aria-label', `Kart over ${AREA.name} og ${AREA.surroundings}`);
 
 function select(s: Selection) {
@@ -29,13 +31,13 @@ ui.refresh = () => {
   save();
 };
 
-function setView(view: 'focus' | 'all') {
-  $('v-focus').setAttribute('aria-pressed', String(view === 'focus'));
-  $('v-all').setAttribute('aria-pressed', String(view === 'all'));
-  animateView(view === 'focus' ? MAP.focus : MAP.view);
+function setView(view: 'focus' | 'all' | 'city') {
+  for (const v of ['focus', 'all', 'city'] as const) $(`v-${v}`).setAttribute('aria-pressed', String(view === v));
+  animateView(view === 'focus' ? MAP.focus : view === 'city' && MAP.city ? MAP.city.view : MAP.view);
 }
 $('v-focus').onclick = () => setView('focus');
 $('v-all').onclick = () => setView('all');
+$('v-city').onclick = () => setView('city');
 $('end').onclick = endDay;
 $('goals').addEventListener('click', (e) => { if ((e.target as HTMLElement).id === 'endphase') endPhaseNow(); });
 $('tabs').addEventListener('click', (e) => {

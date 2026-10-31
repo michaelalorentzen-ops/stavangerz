@@ -4,7 +4,12 @@
   "osm": {
     "_doc": "Hva som hentes fra Overpass. bbox = [sør, vest, nord, øst] i grader (Overpass-rekkefølge). out = hvor rådata lagres (relativt til repo-roten). Hent én gang og sjekk inn aldri; ikke spør Overpass fra nettleseren.",
     "bbox": [58.955, 5.69, 59.01, 5.81],
-    "out": "data/osm.json"
+    "out": "data/osm.json",
+    "outer": {
+      "_doc": "Oversiktskartet over hele byen (visningen «city» i map.json): én lett spørring med kystlinje, hovedveier og bydelsgrenser (admin_level 9), ingen bygninger. Hentes med tools/fetch_osm.sh <config> outer. bbox dekker alle atlasområdene i 'city' med margin.",
+      "bbox": [58.855, 5.555, 59.015, 5.82],
+      "out": "data/osm-outer.json"
+    }
   },
 
   "origin": {
@@ -54,8 +59,17 @@
     }
   },
 
+  "city": {
+    "_doc": "Oversiktskartet over hele byen, bygget fra osm.outer. Bare til visning: ingen sektorer eller regler. atlas = atlasoppsettet med områdegrensene (polys, bbox, admin, minus) i grader. simplify = toleranse (meter) for geometri utenfor byøyeutsnittet (view.clip). pad = margin (meter) rundt byen i visningsboksen. farArea = soner større enn dette (m²) får en egen etikett i bykartet, og soner under smallArea får en mindre etikett. 'far' på en sone (lokale meter) flytter etiketten i bykartet.",
+    "atlas": "src/regions/stavanger/atlas/atlas.config.json",
+    "simplify": 7,
+    "pad": 500,
+    "farArea": 700000,
+    "smallArea": 2500000
+  },
+
   "zones": {
-    "_doc": "Fremtidige soner utenfor fase 1-området. mainlandPoint = et punkt på fastlandet (den store landmassen). Hver sone har id og én av: 'remainder' (true = resten av fase 1-landmassen, se area), 'landAt' (landmassen som inneholder punktet), 'mainlandBox' ([minx, miny, maxx, maxy], fastlandet skåret med boksen). 'label' er valgfritt etikettpunkt. Visningsnavnene ligger i places.ts (ZONES).",
+    "_doc": "Fremtidige soner utenfor fase 1-området. mainlandPoint = et punkt på fastlandet (den store landmassen). Hver sone har id og én av: 'remainder' (true = resten av fase 1-landmassen, se area), 'landAt' (landmassen som inneholder punktet), 'mainlandBox' ([minx, miny, maxx, maxy], fastlandet skåret med boksen), 'atlas' (id-en til et område i atlasoppsettet, fastlandet over hele byen skåret med områdets grense). 'label' er valgfritt etikettpunkt. Visningsnavnene ligger i places.ts (ZONES).",
     "mainlandPoint": [1500, 3300],
     "list": [
       { "id": "hundvag", "remainder": true, "label": [1950, 1250] },
@@ -66,8 +80,14 @@
       { "id": "roaldsoy", "landAt": [3561, 1432] },
       { "id": "ormoy", "landAt": [3426, 1960] },
       { "id": "steinsoy", "landAt": [3050, 2234] },
-      { "id": "sentrum", "mainlandBox": [1700, 2900, 3600, 4200], "label": [2350, 3290] },
-      { "id": "bjergsted", "mainlandBox": [0, 1500, 1700, 4200], "label": [1290, 2900] }
+      { "id": "sentrum", "atlas": "sentrum", "label": [2350, 3290] },
+      { "id": "bjergsted", "atlas": "eiganes_bjergsted", "label": [1290, 2900], "far": [500, 3300] },
+      { "id": "storhaug", "atlas": "storhaug" },
+      { "id": "valand", "atlas": "valand" },
+      { "id": "madla", "atlas": "madla" },
+      { "id": "hillevag", "atlas": "hillevag" },
+      { "id": "ullandhaug_hinna", "atlas": "ullandhaug_hinna" },
+      { "id": "forus_lura", "atlas": "forus_lura" }
     ]
   }
 }

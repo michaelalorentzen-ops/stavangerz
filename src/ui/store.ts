@@ -15,8 +15,11 @@ export interface MapData {
   buildings: string;
   roads: { major: string; minor: string };
   sectors: (MapShape & { id: MapSectorId })[];
-  zones: (MapShape & { id: ZoneId })[];
+  /** fx/fy = etikettpunkt i oversiktskartet over hele byen, bare for store soner; small = mindre etikett der */
+  zones: (MapShape & { id: ZoneId; fx?: number; fy?: number; small?: boolean })[];
   geo: { W: number; N: number; KX: number };
+  /** Oversiktskartet over hele byen: bare land og hovedveier, ingen sektorer eller regler */
+  city?: { view: [number, number, number, number]; land: string; coast: string; roads: { major: string; minor: string } };
 }
 /** Tekstsymboler (ikke emoji) og navn for sektortypene. \uFE0E tvinger tekstvisning. */
 export const KIND_ICON: Record<SectorKind, string> = {

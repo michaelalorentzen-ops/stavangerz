@@ -10,7 +10,7 @@ Alt som er spesielt for en by, ligger i én mappe under `src/regions/`. Stavange
 | `places.ts` | Den eneste kilden for stedsnavn. Her ligger sektorer (`name`, `short`, `at`, verdier og funn), porter, soner (`ZONES`, `ZONE_INFO`), området fase 1 foregår i (`AREA`) og kjente steder som bare nevnes i tekst (`LANDMARKS`). |
 | `people.ts` | Naboene som kan bli med i crewet. |
 | `content/` | Utstyrskort, encounters, hendelser, tokt, quests og mutasjoner. Tekstene er lokale, men de slår alltid opp stedsnavn via id. |
-| `map.config.json` | Alt kartbyggingen trenger: utsnitt mot OpenStreetMap, origo, hvilke landområder som blir fase 1-området, frøpunkter for sektorene, låste sektorer og soner. |
+| `map.config.json` | Alt kartbyggingen trenger: utsnitt mot OpenStreetMap, origo, hvilke landområder som blir fase 1-området, frøpunkter for sektorene, låste sektorer og soner. `osm.outer` og `city` gir oversiktskartet over hele byen. |
 
 `src/regions/active.ts` (steder, id-er og folk) og `src/regions/content.ts` (innhold) velger hvilken region spillet bruker.
 
@@ -26,6 +26,15 @@ Endre navnet i `places.ts`. Alle tekster, logglinjer og UI-en henter navnet derf
 2. **Kopier `stavanger/`** til en ny mappe, for eksempel `src/regions/bergen/`.
 3. **`ids.ts`:** skriv inn id-ene. Sektoren `hjem` må finnes i alle regioner. Det er der crewet bor, og der Hvile, Trene, Lage og Pleie skjer.
 4. **`map.config.json`:** sett utsnittet (bbox), origo og frøpunktene for sektorene. Hvert felt har en `_doc` som forklarer det. Hent data én gang med `tools/fetch_osm.sh <config>`, og bygg kartet med `python tools/build_map.py <osm.json> src/data/map.json <config>`. Nettleseren skal aldri spørre Overpass.
+
+### Oversiktskart over hele byen [Bygget]
+
+Kartet har en tredje visning med hele byen (knappen får navnet fra `AREA.city`). Den er bare visuell: ingen sektorer, ingen regler, ingen endring i motoren.
+
+- `osm.outer` i `map.config.json` er én lett Overpass-spørring for hele byen: kystlinje, hovedveier (motorway, trunk, primary og secondary) og bydelsgrenser, ingen bygninger. Hent den med `tools/fetch_osm.sh <config> outer` (`inner` henter bare det detaljerte utsnittet, standard er begge).
+- `city` peker på atlasoppsettet. Soner med `"atlas": "<område>"` i `zones.list` blir fastlandet skåret med områdets grense (bydelsgrensene der atlaset sier `admin`). Byøyeutsnittet beholder dagens detaljer, og alt utenfor er forenklet (`simplify`).
+- `map.json` får `city` (visningsboks, land, kystlinje og hovedveier) og `fx`/`fy` på store soner, som er etikettpunktet i bykartet.
+- Fasene for fastlandssonene er fortsatt **[Åpent]**, så de har ingen `phase` i `ZONES` og vises som «Ukjent».
 5. **`places.ts`:** gi sektorene navn etter [regelheftet for stedsnavn](stedsnavn.md), type (`hjem`, `butikk`, `industri`, `bolig`, `natur`, `kai`, `offentlig`), trussel 1–5, verdier og et funn hver. Gi portene navn og sektor. Fyll ut `AREA`, `ZONES` og `LANDMARKS`.
 6. **`people.ts` og `content/`:** skriv naboer og innhold med lokal humor. Kortenes `places` er sektortyper, ikke id-er, så de fleste encounters fungerer i alle byer. Hendelser og tokt som nevner bestemte steder, må skrives om.
 7. **Bytt inn regionen** i `src/regions/active.ts` og `src/regions/content.ts`.
