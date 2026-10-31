@@ -77,14 +77,30 @@ export function previewHtml(p: { ok: string[]; fail: string[] | null }): string 
   return `<span class="pv">${p.ok.map((l) => `<i class="${isBadPreview(l) ? 'bad' : 'good'}">${lineIcon(l)}${esc(l)}</i>`).join('')}${p.fail?.length ? `<b class="pv-l">Feiler:</b>${p.fail.map((l) => `<i class="bad">${lineIcon(l)}${esc(l)}</i>`).join('')}` : ''}</span>`;
 }
 
-/** Forhåndsvisningen før et valg, uten tall («midt imellom»): retning og risiko, med ikon for ressursen. Med sjekk står grenene bak «Lykkes:» og «Feiler:». */
+/**
+ * Forhåndsvisningen før et valg, uten tall («midt imellom»): ett stort ikon per utfall, med ▲ for gevinst og ▼ for
+ * tap (ikke bare farge). Usikre utfall («kan …») får stiplet ramme og «?». Ordene står i `title` og `aria-label`.
+ * Linjer uten ikon vises som kort tekst. Med sjekk deles raden i ✓ (lykkes) og ✗ (feiler).
+ */
 export function vaguePreviewHtml(p: { ok: string[]; fail: string[] | null }): string {
   const v = vaguePreview(p);
   if (!v.ok.length && !v.fail?.length) return '';
-  const li = (l: VagueLine, bad = l.bad) => `<i class="${bad ? 'bad' : 'good'}">${l.res ? icon(l.res) : lineIcon(l.text)}${esc(l.text)}</i>`;
-  // med sjekk får begge grenene etikett, så det er tydelig at ordene gjelder hver sin gren
-  const okLabel = v.fail && v.ok.length ? '<b class="pv-l ok">Lykkes:</b>' : '';
-  return `<span class="pv">${okLabel}${v.ok.map((l) => li(l)).join('')}${v.fail?.length ? `<b class="pv-l">Feiler:</b>${v.fail.map((l) => li(l, true)).join('')}` : ''}</span>`;
+  const mark = { up: '▲', down: '▼', mix: '▲▼' };
+  const li = (l: VagueLine) => {
+    const cls = `pvi ${l.dir}${l.sure ? '' : ' maybe'}`;
+    const t = esc(l.text);
+    return l.icon
+      ? `<i class="${cls}" role="img" title="${t}" aria-label="${t}">${icon(l.icon)}<b class="dir" aria-hidden="true">${mark[l.dir]}</b>${l.sure ? '' : '<b class="q" aria-hidden="true">?</b>'}</i>`
+      : `<i class="${cls} txt" title="${t}">${t}</i>`;
+  };
+  // med sjekk vises begge grenene, også den tomme («ingenting»), så ✗ aldri står alene og ser ut som hele valget
+  const group = (ls: VagueLine[], kind: 'ok' | 'fail' | '') => {
+    if (!kind) return ls.length ? `<span class="pv-g">${ls.map(li).join('')}</span>` : '';
+    const name = kind === 'ok' ? 'Lykkes' : 'Feiler';
+    const body = ls.length ? ls.map(li).join('') : '<i class="pvi none txt">ingenting</i>';
+    return `<span class="pv-g ${kind}"><b class="pv-k" title="${name}" aria-label="${name}:">${kind === 'ok' ? '✓' : '✗'}</b>${body}</span>`;
+  };
+  return `<span class="pv pv-ic">${v.fail ? group(v.ok, 'ok') + group(v.fail, 'fail') : group(v.ok, '')}</span>`;
 }
 
 export function renderTop() {

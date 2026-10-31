@@ -3,6 +3,7 @@
 // de nøyaktige endringene som før (changesHtml).
 import { RES, RES_LABEL } from '../engine';
 import type { ResKey } from '../engine';
+import { lineIconName } from './icons';
 
 /** Sjansen i ord: «god sjanse» fra 70 %, «usikkert» fra 40 %, ellers «dårlig sjanse». */
 export function oddsWord(p: number): string {
@@ -19,7 +20,15 @@ export interface VagueLine {
   bad: boolean;
   /** ressursen linja handler om, for ikonet */
   res?: ResKey;
+  /** skjer hvis grenen skjer; false når det er «kan …» */
+  sure: boolean;
+  /** retningen: gevinst, tap, eller begge deler («kan gi eller koste moral») */
+  dir: 'up' | 'down' | 'mix';
+  /** ikonet linja vises med (navn i icons.ts), tom streng for fritekst */
+  icon: string;
 }
+
+type Words = Pick<VagueLine, 'text' | 'bad' | 'res'> & { mix?: true };
 
 const RES_BY_LABEL = new Map<string, ResKey>(RES.map((k) => [RES_LABEL[k].toLowerCase(), k]));
 /** Ting der mer er verre: flere zombier er ikke en gevinst. */
@@ -52,7 +61,16 @@ const GAIN_WORDS: Record<string, [string, string]> = {
  * «kan koste mat», «−2 til +3 moral» blir «kan gi eller koste moral», og motorens egne «kan gi skade» står som før.
  */
 export function vagueLine(line: string): VagueLine {
-  const t = line.trim();
+  const w = words(line.trim());
+  return {
+    text: w.text, bad: w.bad, ...(w.res ? { res: w.res } : {}),
+    sure: !/^kan\b/.test(w.text),
+    dir: w.mix ? 'mix' : w.bad ? 'down' : 'up',
+    icon: w.res ?? lineIconName(w.text),
+  };
+}
+
+function words(t: string): Words {
   // «+3 mat», «opptil −4 mat», «+1–3 mat», «−3–1 mat», «−2 til +3 mat»
   const m = /^(opptil\s+)?([+−-])\d+(?:–\d+)?(?:\s+til\s+([+−-])\d+)?\s+(.+)$/.exec(t);
   if (!m) {
@@ -63,7 +81,7 @@ export function vagueLine(line: string): VagueLine {
   const res = RES_BY_LABEL.get(label);
   const neg = s1 !== '+';
   const name = label.replace(/^zombie$/, 'zombier');
-  if (s2 && (s2 === '+') === neg) return { text: `kan gi eller koste ${name}`, bad: true, res };
+  if (s2 && (s2 === '+') === neg) return { text: `kan gi eller koste ${name}`, bad: true, res, mix: true };
   const sure = !upTo;
   if (MORE_IS_WORSE.test(label)) {
     return neg ? { text: sure ? 'fjerner zombier' : 'kan fjerne zombier', bad: false } : { text: sure ? 'trekker til zombier' : 'kan trekke til zombier', bad: true };
