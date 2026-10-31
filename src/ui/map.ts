@@ -1,6 +1,6 @@
 // Kartet: statiske lag (land, bygg, veier, tåke) tegnes én gang,
 // sektorer, sperringer og crew tegnes på nytt ved hver endring.
-import { GATE_IDS, GATES, HQ_SECTOR, isLocked, SECTORS, sectorIntel, toktAvailable, toktDays, TOKTS, ZONES } from '../engine';
+import { AREA, GATE_IDS, GATES, HQ_SECTOR, isLocked, SECTORS, sectorIntel, toktAvailable, toktDays, TOKTS, ZONES } from '../engine';
 import type { CrewMember, SectorId } from '../engine';
 import { $, game, KIND_ICON, MAP, ui } from './store';
 import type { Selection } from './store';
@@ -29,8 +29,27 @@ const fromLat = (lat: number) => (MAP.geo.N - lat) * 1e5;
 const fromLon = (lon: number) => (lon - MAP.geo.W) * MAP.geo.KX * 1e5;
 function dm(v: number, h: string) { const d = Math.floor(v), m = (v - d) * 60; return `${d}°${m.toFixed(1).padStart(4, '0')}′${h}`; }
 
+/** Gradnett med etiketter langs venstre og nedre kant av boksen b. */
+function ticks(parent: Element, b: readonly number[], dLat: number, dLon: number, cls: string) {
+  const [x, y, w, h] = b, ll0 = toLatLon(x, y + h), ll1 = toLatLon(x + w, y);
+  const lats: number[] = [], lons: number[] = [];
+  for (let lat = Math.ceil(ll0.lat / dLat) * dLat; lat < ll1.lat; lat += dLat) lats.push(lat);
+  for (let lon = Math.ceil(ll0.lon / dLon) * dLon; lon < ll1.lon; lon += dLon) lons.push(lon);
+  const g = el('g', { class: cls }, parent);
+  const tickStyle = 'font-family:var(--f-mono);letter-spacing:0';
+  const pad = cls.includes('far') ? 0 : 14; // etikettene i bykartet plasseres med CSS-skala (--k)
+  for (const lat of lats) text(g, { x: x + pad, y: fromLat(lat) - pad / 2, class: `lab zsub ${cls}`, style: tickStyle }, dm(lat, 'N'));
+  for (const lon of lons) text(g, { x: fromLon(lon) + pad / 2, y: y + h - pad, class: `lab zsub ${cls}`, style: tickStyle }, dm(lon, 'Ø'));
+  return { lats, lons };
+}
+
 export function buildStaticMap(onSelect: (s: Selection) => void) {
   const root = svg();
+  // B = hele kartet: bykartet hvis det finnes, ellers byøyeutsnittet
+  const B = MAP.city?.view ?? MAP.view;
+  const [bx, by, bw, bh] = B;
+  // tåka i bykartet må dekke hele skjermen også når kartets form er smalere enn vinduet
+  const mx = Math.max(bw, bh), my = 1000;
   const [x, y, w, h] = MAP.view;
   const defs = el('defs', {}, root);
   defs.innerHTML = `
@@ -43,36 +62,52 @@ export function buildStaticMap(onSelect: (s: Selection) => void) {
       <feColorMatrix values="0 0 0 0 0.04  0 0 0 0 0.07  0 0 0 0 0.10  0 0 0 -0.9 1.0"/>
     </filter>
     <radialGradient id="vign" cx="50%" cy="50%" r="70%"><stop offset="60%" stop-color="#05090d" stop-opacity="0"/><stop offset="100%" stop-color="#05090d" stop-opacity=".7"/></radialGradient>
-    <mask id="fogmask"><rect x="${x - 2000}" y="${y - 2000}" width="${w + 4000}" height="${h + 4000}" fill="#fff"/>
+    <mask id="fogmask"><rect x="${bx - mx - 100}" y="${by - my - 100}" width="${bw + 2 * mx + 200}" height="${bh + 2 * my + 200}" fill="#fff"/>
       ${MAP.sectors.map((s) => `<path d="${s.d}" fill="#000" stroke="#000" stroke-width="40"/>`).join('')}</mask>`;
-  el('rect', { x: x - 3000, y: y - 3000, width: w + 6000, height: h + 6000, fill: 'var(--sea)' }, root);
+  el('rect', { x: bx - mx, y: by - 3000, width: bw + 2 * mx, height: bh + 6000, fill: 'var(--sea)' }, root);
 
-  // sjøkartrutenett med ekte koordinater
-  const ll0 = toLatLon(x, y + h), ll1 = toLatLon(x + w, y);
-  const lats: number[] = [], lons: number[] = [];
-  for (let lat = Math.ceil(ll0.lat / 0.005) * 0.005; lat < ll1.lat; lat += 0.005) lats.push(lat);
-  for (let lon = Math.ceil(ll0.lon / 0.01) * 0.01; lon < ll1.lon; lon += 0.01) lons.push(lon);
+  // sjøkartrutenett med ekte koordinater, over hele kartet
+  const ll0 = toLatLon(bx, by + bh), ll1 = toLatLon(bx + bw, by);
   const grid = el('g', { stroke: '#132836', 'stroke-width': 2 }, root);
-  for (const lat of lats) el('line', { x1: x - 3000, x2: x + w + 3000, y1: fromLat(lat), y2: fromLat(lat) }, grid);
-  for (const lon of lons) el('line', { y1: y - 3000, y2: y + h + 3000, x1: fromLon(lon), x2: fromLon(lon) }, grid);
+  for (let lat = Math.ceil(ll0.lat / 0.005) * 0.005; lat < ll1.lat; lat += 0.005) el('line', { x1: bx - mx, x2: bx + bw + mx, y1: fromLat(lat), y2: fromLat(lat) }, grid);
+  for (let lon = Math.ceil(ll0.lon / 0.01) * 0.01; lon < ll1.lon; lon += 0.01) el('line', { y1: by - 3000, y2: by + bh + 3000, x1: fromLon(lon), x2: fromLon(lon) }, grid);
 
   const depth = el('g', { fill: 'none', stroke: 'var(--contour)' }, root);
   MAP.depth.forEach((d, i) => el('path', { d, 'stroke-width': 3 - i, 'stroke-opacity': [0.9, 0.55, 0.3][i] }, depth));
+  // resten av byen, forenklet og uten bygninger, under det detaljerte byøyeutsnittet
+  if (MAP.city) el('path', { d: MAP.city.land, fill: 'var(--land)' }, root);
   el('path', { d: MAP.land, fill: 'var(--land)', stroke: 'var(--land-edge)', 'stroke-width': 2 }, root);
   el('path', { d: MAP.buildings, fill: 'var(--bld)' }, root);
   const road = { fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
   el('path', { ...road, d: MAP.roads.minor, stroke: 'var(--road)', 'stroke-width': 3 }, root);
   el('path', { ...road, d: MAP.roads.major, stroke: 'var(--road-major)', 'stroke-width': 6 }, root);
+  if (MAP.city) {
+    // hovedveiene for hele byen vises bare i bykartet, med fast strektykkelse på skjermen
+    const cr = el('g', { class: 'far cityroads' }, root);
+    el('path', { ...road, d: MAP.city.roads.minor, stroke: 'var(--road)', 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' }, cr);
+    el('path', { ...road, d: MAP.city.roads.major, stroke: 'var(--road-major)', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' }, cr);
+  }
 
-  // tåke over alt som ikke er startområdet
-  const fogBox = { x: x - 300, y: y - 300, width: w + 600, height: h + 600, mask: 'url(#fogmask)' };
-  el('rect', { ...fogBox, filter: 'url(#fog)' }, root);
-  el('rect', { ...fogBox, fill: '#070d12', 'fill-opacity': 0.2 }, root);
+  // tåke over alt som ikke er startområdet. Byøyeutsnittet og bykartet har hver sin, fordi en
+  // enorm filterflate blir rastret grovere av nettleseren når man zoomer inn på Buøy.
+  const fogBoxes: [Record<string, string | number>, string][] = [[{ x: x - 1200, y: y - 1200, width: w + 2400, height: h + 2400 }, 'near']];
+  if (MAP.city) fogBoxes.push([{ x: bx - mx, y: by - my, width: bw + 2 * mx, height: bh + 2 * my }, 'far']);
+  for (const [b, cls] of fogBoxes) {
+    const g = el('g', { class: cls, mask: 'url(#fogmask)' }, root);
+    el('rect', { ...b, filter: 'url(#fog)' }, g);
+    el('rect', { ...b, fill: '#070d12', 'fill-opacity': 0.2 }, g);
+  }
 
-  const ticks = el('g', {}, root);
-  const tickStyle = 'font-family:var(--f-mono);letter-spacing:0';
-  for (const lat of lats) text(ticks, { x: x + 14, y: fromLat(lat) - 8, class: 'lab zsub', style: tickStyle }, dm(lat, 'N'));
-  for (const lon of lons) text(ticks, { x: fromLon(lon) + 8, y: y + h - 14, class: 'lab zsub', style: tickStyle }, dm(lon, 'Ø'));
+  // bykartet: landet lyses opp over tåka, så fjordene skiller seg fra havet (byøyeutsnittet + resten av byen)
+  if (MAP.city) {
+    const lit = el('g', { class: 'far', fill: 'var(--land-edge)', 'fill-opacity': 0.55, 'pointer-events': 'none' }, root);
+    el('path', { d: MAP.land }, lit);
+    el('path', { d: MAP.city.land }, lit);
+  }
+  // kystlinjen over tåka, så formen på byen synes i bykartet
+  if (MAP.city) el('path', { d: MAP.city.coast, class: 'far', fill: 'none', stroke: 'var(--teal)', 'stroke-width': 1.2, 'stroke-opacity': 0.45, 'vector-effect': 'non-scaling-stroke' }, root);
+  ticks(root, MAP.view, 0.005, 0.01, 'near');
+  if (MAP.city) ticks(root, MAP.city.view, 0.02, 0.05, 'far');
 
   // fremtidige soner
   const zones = el('g', {}, root);
@@ -81,18 +116,32 @@ export function buildStaticMap(onSelect: (s: Selection) => void) {
     onActivate(p, () => onSelect({ kind: 'zone', id: z.id }));
   }
   for (const z of MAP.zones) {
-    text(zones, { x: z.cx, y: z.cy, class: 'lab zone', 'text-anchor': 'middle' }, ZONES[z.id].name);
-    text(zones, { x: z.cx, y: z.cy + 30, class: 'lab zsub', 'text-anchor': 'middle' }, ZONES[z.id].phase ? `Fase ${ZONES[z.id].phase} · ukjent` : 'Ukjent');
+    const sub = ZONES[z.id].phase ? `Fase ${ZONES[z.id].phase} · ukjent` : 'Ukjent';
+    text(zones, { x: z.cx, y: z.cy, class: 'lab zone near', 'text-anchor': 'middle' }, ZONES[z.id].name);
+    text(zones, { x: z.cx, y: z.cy + 30, class: 'lab zsub near', 'text-anchor': 'middle' }, sub);
+    // i bykartet får de store sonene en etikett som holder fast størrelse på skjermen (se --k i CSS)
+    if (z.fx === undefined || z.fy === undefined) continue;
+    const far = el('g', { class: `far${z.small ? ' small' : ''}`, transform: `translate(${z.fx} ${z.fy})` }, zones);
+    text(far, { class: 'lab zone far', 'text-anchor': 'middle' }, ZONES[z.id].name);
+    text(far, { class: 'lab zsub far below', 'text-anchor': 'middle' }, sub);
+  }
+  if (MAP.city) {
+    const [fx, fy, fw, fh] = MAP.focus;
+    const g = el('g', { class: 'far', transform: `translate(${fx + fw / 2} ${fy + fh / 2})` }, zones);
+    text(g, { class: 'lab zone far home', 'text-anchor': 'middle' }, AREA.name);
   }
 
   dyn = el('g', {}, root);
-  el('rect', { x: x - 3000, y: y - 3000, width: w + 6000, height: h + 6000, fill: 'url(#vign)', 'pointer-events': 'none' }, root);
+  el('rect', { x: x - 3000, y: y - 3000, width: w + 6000, height: h + 6000, fill: 'url(#vign)', 'pointer-events': 'none', class: 'near' }, root);
   setViewBox(vb);
 }
 
 function setViewBox(b: number[]) {
   vb = b;
-  svg().setAttribute('viewBox', b.map((n) => n.toFixed(1)).join(' '));
+  const s = svg();
+  s.setAttribute('viewBox', b.map((n) => n.toFixed(1)).join(' '));
+  // bykartet: langt ute er sektoretiketter og crew for små; da vises oversiktslagene i stedet
+  s.classList.toggle('city', b[2] > MAP.view[2] * 1.6);
   updateScale();
 }
 
@@ -112,9 +161,11 @@ export function updateScale() {
   const r = svg().getBoundingClientRect();
   if (!r.width) return;
   const pxPerUnit = Math.min(r.width / vb[2], r.height / vb[3]);
-  const meters = vb[2] > 2000 ? 500 : 250;
+  // --k = kartenheter per skjermpiksel, så etikettene i bykartet kan ha fast størrelse
+  svg().style.setProperty('--k', (1 / pxPerUnit).toFixed(2));
+  const meters = vb[2] > MAP.view[2] * 1.6 ? 2000 : vb[2] > 2000 ? 500 : 250;
   // én kartenhet er omtrent 1,11 meter
-  $('scale').innerHTML = `${meters} m<div style="width:${((meters / 1.11) * pxPerUnit).toFixed(0)}px"></div>`;
+  $('scale').innerHTML = `${meters >= 1000 ? `${meters / 1000} km` : `${meters} m`}<div style="width:${((meters / 1.11) * pxPerUnit).toFixed(0)}px"></div>`;
 }
 
 export function renderMap(onSelect: (s: Selection) => void) {

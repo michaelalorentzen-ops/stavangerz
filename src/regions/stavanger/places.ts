@@ -90,11 +90,12 @@ export const ZONE_INFO: Partial<Record<ZoneId, string>> = {
   roaldsoy: 'Roaldsøy. Skole og eneboliger. Lys i vinduene om natta.',
   ormoy: 'Ormøy. Smale veier, mange hager, kort vei til sjøen.',
   steinsoy: 'Steinsøy. Ferjekaien. Den som har båt har makt.',
-  bjergsted: 'Bjergsted og fastlandet. Konserthuset spiller fortsatt Grieg på loop.',
+  bjergsted: 'Bjergsted. Konserthuset spiller fortsatt Grieg på loop.',
 };
 
 
-/** Sonene utenfor fase 1-området. Formen på kartet bygges fra map.config.json. */
+/** Sonene utenfor fase 1-området. Formen på kartet bygges fra map.config.json.
+ *  Fastlandssonene følger atlasets områder (atlas/atlas.config.json). Fasene deres er ikke vedtatt, så de har ingen phase. */
 export const ZONES: Record<ZoneId, { name: string; at: string; phase?: number }> = {
   hundvag: { name: 'Hundvåg', at: 'på Hundvåg', phase: 3 },
   engoy: { name: 'Engøy', at: 'på Engøy' },
@@ -105,7 +106,13 @@ export const ZONES: Record<ZoneId, { name: string; at: string; phase?: number }>
   ormoy: { name: 'Ormøy', at: 'på Ormøy' },
   steinsoy: { name: 'Steinsøy', at: 'på Steinsøy' },
   sentrum: { name: 'Sentrum', at: 'i sentrum' },
-  bjergsted: { name: 'Bjergsted', at: 'på Bjergsted' },
+  bjergsted: { name: 'Eiganes og Bjergsted', at: 'på Eiganes og Bjergsted' },
+  storhaug: { name: 'Storhaug', at: 'på Storhaug' },
+  valand: { name: 'Våland', at: 'på Våland' },
+  madla: { name: 'Madla', at: 'på Madla' },
+  hillevag: { name: 'Hillevåg', at: 'i Hillevåg' },
+  ullandhaug_hinna: { name: 'Ullandhaug og Hinna', at: 'på Ullandhaug og Hinna' },
+  forus_lura: { name: 'Forus og Lura', at: 'på Forus og Lura' },
 };
 
 /** Området fase 1 foregår i, og byen rundt */

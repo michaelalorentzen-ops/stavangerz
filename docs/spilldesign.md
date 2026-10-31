@@ -176,6 +176,8 @@ En person har én oppgave per dag. Oppgaver låses opp per fase **[Forslag]**. A
 
 Kartet viser ikonene for hva sektoren gir, også før den er speidet.
 
+**Oversiktskart over hele byen [Bygget]:** Kartet har tre visninger: Buøy, byøyene og hele Stavanger, fra byøyene i nord til Forus og Lura i sør og Madla og Hafrsfjord i vest. Bykartet er bare oversikt. Det viser kystlinje og hovedveier uten bygninger, og fastlandet er delt i ukjente soner i tåke etter atlasets områder: Sentrum, Storhaug, Våland, Eiganes og Bjergsted, Madla, Hillevåg, Ullandhaug og Hinna, og Forus og Lura. Det finnes ingen sektorer eller regler der ennå. Fastlandssonene står bare som «Ukjent», fordi **fasene for dem fortsatt er [Åpent]** (se `docs/kartlegging-stavanger.md`). Hundvåg står fortsatt som fase 3.
+
 **Bosetting [Låst]:** En sektor kan være bosatt eller ubebodd, og den har en kapasitet for hvor mange den kan huse. Da vet du hvor mange du har plass til etter hvert.
 
 **[Åpent]** Om en sektor kan fikses opp for å huse flere, og hva det koster.
