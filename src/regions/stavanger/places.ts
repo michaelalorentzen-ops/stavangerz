@@ -10,15 +10,15 @@ export const SECTORS: Record<SectorId, SectorDef> = {
     kind: 'hjem', threat: 1, capacity: 6, yield: { vann: 2 },
     desc: 'Rekkehuset ditt ved motorveien. Kaffetrakteren virker fortsatt. Naboen gjør ikke det.',
     z: 4, hidden: 1,
-    loot: { mat: 10, vann: 12, medisin: 0, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
+    loot: { mat: 25, vann: 18, medisin: 0, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
     special: { text: 'Naboens fryseboks: 6 kilo elgkjøttdeig og en pose isbiter fra 2019.', res: { mat: 6 } },
   },
   tommerodden: {
     name: 'Kaia', short: 'Kaia', at: 'på kaia', real: 'Tømmerodden', realAt: 'på Tømmerodden',
-    kind: 'kai', threat: 2, capacity: 2, yield: { mat: 4 },
+    kind: 'kai', threat: 2, capacity: 2, yield: { mat: 6 },
     desc: 'SOTS sikkerhetssenter og Skoleskipet Gann. Folk her har kurs i å overleve. Kurset dekket ikke dette.',
     z: 9, hidden: 3,
-    loot: { mat: 6, vann: 6, medisin: 2, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 3 },
+    loot: { mat: 15, vann: 9, medisin: 2, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 3 },
     special: { text: 'Skoleskipet Gann ligger fortøyd med fulle tanker. Noter deg det til fase 2. Dere tar med førstehjelpsskapet.', res: { medisin: 2 }, flag: 'gann' },
   },
   obs: {
@@ -26,7 +26,7 @@ export const SECTORS: Record<SectorId, SectorDef> = {
     kind: 'butikk', threat: 2, capacity: 0, yield: { skrap: 1 },
     desc: 'Ukens tilbud: alt. Gangene er fulle av spikerpistoler, presenning og zombier i arbeidsklær.',
     z: 11, hidden: 3,
-    loot: { mat: 4, vann: 4, medisin: 0, tre: 8, skrap: 12, metall: 0, strom: 0, drivstoff: 2 },
+    loot: { mat: 10, vann: 6, medisin: 0, tre: 8, skrap: 12, metall: 0, strom: 0, drivstoff: 2 },
     special: { text: 'Verktøyavdelingen er urørt. En spikerpistol havner på lageret. Ukens tilbud, tilsynelatende.', card: 'spikerpistol_obs' },
   },
   nordkrysset: {
@@ -34,15 +34,15 @@ export const SECTORS: Record<SectorId, SectorDef> = {
     kind: 'industri', threat: 2, capacity: 0, yield: { skrap: 2, drivstoff: 1 },
     desc: 'Rundkjøringene mot Hundvåg. Rushtidskø fra helvete, bokstavelig talt. Mange biler med full tank.',
     z: 14, hidden: 3,
-    loot: { mat: 6, vann: 6, medisin: 1, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 12 },
+    loot: { mat: 15, vann: 9, medisin: 1, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 12 },
     special: { text: 'En politibil står i grøfta. Bagasjerommet har en hagle og en eske patroner. Betjenten trenger dem ikke lenger.', card: 'hagle_politibil' },
   },
   buoy_nord: {
     name: 'Boligfeltet', short: 'Boligfeltet', at: 'i boligfeltet', real: 'Buøy nord', realAt: 'på Buøy nord',
-    kind: 'bolig', threat: 1, capacity: 6, yield: { mat: 1, vann: 1, tre: 1 },
+    kind: 'bolig', threat: 1, capacity: 6, yield: { mat: 2, vann: 1, tre: 1 },
     desc: 'Eneboliger, barnehage og trampoliner. Rolig nabolag. Var det.',
     z: 10, hidden: 3,
-    loot: { mat: 20, vann: 16, medisin: 1, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 2 },
+    loot: { mat: 50, vann: 24, medisin: 1, tre: 2, skrap: 2, metall: 0, strom: 0, drivstoff: 2 },
     special: { text: 'En garasje med aggregat og hele Biltema-katalogen. Befesting går raskere fra nå.', flag: 'aggregat' },
   },
   skolen: {
@@ -50,7 +50,7 @@ export const SECTORS: Record<SectorId, SectorDef> = {
     kind: 'offentlig', threat: 2, capacity: 8, yield: { mat: 1, medisin: 0.5 },
     desc: 'Det var foreldremøte i går kveld. Mange ble igjen. Kantina har frysevafler.',
     z: 16, hidden: 4,
-    loot: { mat: 26, vann: 14, medisin: 1, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
+    loot: { mat: 65, vann: 21, medisin: 1, tre: 1, skrap: 2, metall: 0, strom: 0, drivstoff: 0 },
     special: { text: 'Kantina: 300 frysevafler og en spann syltetøy. Moralen stiger merkbart.', res: { mat: 6 }, moral: 15 },
   },
   sorspissen: {
@@ -58,7 +58,7 @@ export const SECTORS: Record<SectorId, SectorDef> = {
     kind: 'industri', threat: 2, capacity: 0, yield: { skrap: 2 },
     desc: 'Rundkjøringen ved Bybrua. Herfra kommer alt som vil inn fra byen.',
     z: 12, hidden: 3,
-    loot: { mat: 8, vann: 6, medisin: 0, tre: 2, skrap: 3, metall: 0, strom: 0, drivstoff: 6 },
+    loot: { mat: 20, vann: 9, medisin: 0, tre: 2, skrap: 3, metall: 0, strom: 0, drivstoff: 6 },
     special: { text: 'En Kolumbus-buss står parkert med nøkkelen i. Rute 6, Hundvåg via sentrum. Transport til fase 2 er sikret.', flag: 'buss' },
   },
   rosenberg: {
@@ -129,6 +129,8 @@ export const LANDMARKS = {
   nordsjoen: 'Nordsjøen',
   sus: 'SUS',
   hillevag: 'Hillevåg',
+  /** industriområdet på grensa mot Sandnes, der grossistlagrene ligger */
+  forus: 'Forus',
 } as const;
 
 

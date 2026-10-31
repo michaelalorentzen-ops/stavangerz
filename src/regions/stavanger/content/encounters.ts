@@ -2,13 +2,14 @@
 // Belønning og straff skaleres med ctx.threat (1–5).
 import { CARDS } from './cards';
 import { cardWord, newCard, rollCard } from '../../../engine/cards';
-import { injure, names } from '../../../engine/crew';
+import { injure, nameAs, names, type NameForm } from '../../../engine/crew';
 import { SECTORS } from '../../../engine/data';
 import { AREA, LANDMARKS, ZONES } from '../places';
 import { manyZombies } from '../../../engine/encounters';
 import type { EncChoice, EncounterCtx, EncounterDef } from '../../../engine/encounters';
 import { pick, rand } from '../../../engine/rng';
 import { toktDef, toktSector } from './tokts';
+import { STRANGER_BASE, recruitStranger, strangerIntro, strangerName } from './survivors';
 import type { GameState } from '../../../engine/types';
 
 /** Skaden en vanlig tilbaketrekning koster. */
@@ -16,7 +17,8 @@ const RETREAT_INJURY = 0.5, RETREAT_WEAR = 3;
 
 /** «hjemme», «i Obs Bygg» eller «i byen» (på tokt). */
 const at = (ctx: EncounterCtx) => (ctx.sector ? SECTORS[ctx.sector].at : 'i byen');
-const who = (ctx: EncounterCtx) => names(ctx.crew);
+/** Gruppa som en liste, i riktig form for plassen i setningen (se NameForm). */
+const who = (ctx: EncounterCtx, form: NameForm = 'start') => names(ctx.crew, form);
 
 /** Gir en tilfeldig person ett skadetrinn og returnerer logglinjene som tekst. */
 function hurt(s: GameState, ctx: EncounterCtx, why: string): string {
@@ -51,9 +53,9 @@ const retreat = (label: string): EncChoice => ({
     k.dur -= RETREAT_WEAR;
     if (k.dur <= 0) {
       for (const slot of Object.keys(c.gear) as (keyof typeof c.gear)[]) if (c.gear[slot] === k) delete c.gear[slot];
-      return `Dere kommer unna, men ${cardWord(CARDS[k.def].name)} tilhørende ${c.name} ble igjen på bakken i biter.`;
+      return `Dere kommer unna, men ${cardWord(CARDS[k.def].name)} tilhørende ${nameAs(c, 'obj')} ble igjen på bakken i biter.`;
     }
-    return `Dere kommer unna, men ${cardWord(CARDS[k.def].name)} tilhørende ${c.name} tok støyten (-${RETREAT_WEAR} holdbarhet).`;
+    return `Dere kommer unna, men ${cardWord(CARDS[k.def].name)} tilhørende ${nameAs(c, 'obj')} tok støyten (-${RETREAT_WEAR} holdbarhet).`;
   },
 });
 
@@ -69,9 +71,9 @@ function wearOne(s: GameState, ctx: EncounterCtx, n: number): string {
   k.dur -= n;
   if (k.dur <= 0) {
     for (const slot of Object.keys(c.gear) as (keyof typeof c.gear)[]) if (c.gear[slot] === k) delete c.gear[slot];
-    return `(${cardWord(CARDS[k.def].name)} tilhørende ${c.name} gikk i stykker)`;
+    return `(${cardWord(CARDS[k.def].name)} tilhørende ${nameAs(c, 'obj')} gikk i stykker)`;
   }
-  return `(${cardWord(CARDS[k.def].name)} tilhørende ${c.name}, −${n} holdbarhet)`;
+  return `(${cardWord(CARDS[k.def].name)} tilhørende ${nameAs(c, 'obj')}, −${n} holdbarhet)`;
 }
 
 /** Kortene som bare hører hjemme på verftet (fase 2-HQet). Sektortypen er industri, men stedet er ikke hvilket som helst. */
@@ -91,13 +93,13 @@ export const ENCOUNTERS: EncounterDef[] = [
         s.res.mat += ctx.threat + 1;
         return `Det er trangt, men det går. Bak siste dør står et skap med hermetikk (+${ctx.threat + 1} mat).`;
       } },
-      { label: 'Lås døra og la dem stå', run: (s) => { s.moral -= 1; return 'Døra holder. Naboene på etasjen under får bare en dårlig natt, igjen.'; } },
+      { label: 'Lås døra og la dem stå', run: (s) => { s.moral -= 1; return 'Døra holder. De står og banker i trappegangen hele natta, og ingen får sove. Det er nesten som å bo i blokk igjen.'; } },
       retreat('Trekk dere ut'),
     ],
   },
   {
     id: 'sprint', title: `${ZONES.hundvag.name}-sprinten`, places: ['hjem', 'bolig', 'kai', 'industri', 'natur', 'tokt'], when: (_s, ctx) => manyZombies(ctx),
-    text: (_s, ctx) => `${ctx.zombies !== null && ctx.zombies < 12 ? 'Et halvt dusin' : 'Et dusin'} zombier i treningstøy får øye på ${who(ctx)} ${at(ctx)}. Ingen av dem har varmet opp, og alle løper uansett.`,
+    text: (_s, ctx) => `${ctx.zombies !== null && ctx.zombies < 12 ? 'Et halvt dusin' : 'Et dusin'} zombier i treningstøy får øye på ${who(ctx, 'obj')} ${at(ctx)}. Ingen av dem har varmet opp, og alle løper uansett.`,
     choices: [
       { label: 'Spurt til nærmeste kai', check: 'kondis', run: (s, ctx, ok) => {
         if (!ok) { s.res.mat = Math.max(0, s.res.mat - ctx.threat); return `Dere kommer unna, men mister sekker på veien (-${ctx.threat} mat).${setback(s, ctx, 'på sprinten')}`; }
@@ -154,8 +156,8 @@ export const ENCOUNTERS: EncounterDef[] = [
     ],
   },
   {
-    id: 'vaktselskap', title: 'Naboen med hagle', places: ['bolig', 'offentlig', 'tokt'],
-    text: (_s, ctx) => `Et par overlevende har barrikadert seg ${at(ctx)}. De har ikke sett dere ennå, men de har sett noe annet, og de er nervøse.`,
+    id: 'vaktselskap', title: 'Gjengen med hagle', places: ['bolig', 'offentlig', 'tokt'],
+    text: (_s, ctx) => `En liten gjeng overlevende har barrikadert seg ${at(ctx)}. De har ikke sett dere ennå, men de har sett noe annet, og de er nervøse.`,
     choices: [
       { label: 'Snakk dem ned', check: 'prat', run: (s, ctx, ok) => {
         if (!ok) { s.moral -= ctx.threat; return 'De skyter ikke, men de lukker døra. «Dette er et borettslag.» Samtalen er over.'; }
@@ -164,7 +166,7 @@ export const ENCOUNTERS: EncounterDef[] = [
       } },
       { label: 'Ta det de har med makt', check: 'muskler', run: (s, ctx, ok) => {
         s.moral -= 4;
-        if (!ok) return `De var bedre forberedt enn dere trodde.${setback(s, ctx, 'hos naboene')}`;
+        if (!ok) return `De var bedre forberedt enn dere trodde.${setback(s, ctx, 'hos gjengen')}`;
         s.res.metall += ctx.threat;
         return `Det går fort, og ingen snakker om det etterpå (+${ctx.threat} metall).${foundCard(s, ctx)}`;
       } },
@@ -230,7 +232,7 @@ export const ENCOUNTERS: EncounterDef[] = [
   },
   {
     id: 'dugnad', title: 'Dugnadslappen', places: ['hjem', 'bolig'],
-    text: (_s, ctx) => `På postkassene ${at(ctx)} henger en fersk lapp: «Vårdugnad lørdag kl. 10. Styret stiller med pølser. Fravær faktureres med 500,-.» Ved bossdunkene står en zombie med rive og venter på de andre.`,
+    text: (_s, ctx) => `På postkassene ${at(ctx)} henger fortsatt lappen fra uka før utbruddet: «Vårdugnad lørdag kl. 10. Styret stiller med pølser. Fravær faktureres med 500,-.» Ved bossdunkene står en zombie med rive og venter på de andre.`,
     choices: [
       { label: 'Stå dugnaden ut', check: 'kondis', run: (s, ctx, ok) => {
         if (!ok) return `Dugnaden tar lengre tid enn dere har kondis til. Det gjør den alltid.${setback(s, ctx, 'på dugnaden')}`;
@@ -247,17 +249,19 @@ export const ENCOUNTERS: EncounterDef[] = [
   },
   {
     id: 'finn', title: 'Pent brukt, hentes', places: ['hjem', 'bolig', 'tokt'],
-    text: (_s, ctx) => `Noen ${at(ctx)} har teipet en utskrift av en Finn-annonse på døra: «Trampoline, 4 m, pent brukt, én eier. Kun seriøse henvendelser.» Selgeren titter ut av vinduet. Bak dere i gata begynner noe å røre på seg.`,
+    text: (s, ctx) => `Noen har barrikadert seg i et hus ${at(ctx)} og teipet en Finn-annonse på døra: «Trampoline, 4 m, pent brukt, én eier. Betaling i hermetikk. Kun seriøse henvendelser.» ${strangerName(s, 'finn', 'Selgeren')} titter ut av vinduet, alene i huset siden utbruddet. Bak dere i gata begynner noe å røre på seg.`,
     choices: [
       { label: 'Prut, raskt', check: 'prat', run: (s, ctx, ok) => {
-        if (!ok) { s.moral -= ctx.threat; return '«Da får jeg vente på en annen kjøper.» Han trekker for gardinene. Det er ingen andre kjøpere, og det vet dere begge.'; }
+        const n = strangerName(s, 'finn', 'Selgeren');
+        if (!ok) { s.moral -= ctx.threat; return `«Da får jeg vente på en annen kjøper.» ${n} trekker for gardinene. Det er ingen andre kjøpere, og det vet dere begge (−${ctx.threat} moral).`; }
         s.res.mat = Math.max(0, s.res.mat - 1); s.res.metall += ctx.threat + 1; s.res.tre += 1;
-        return `Én boks makrell i tomat, og trampolinen er deres. Han hjelper til og med med å bære (-1 mat, +${ctx.threat + 1} metall, +1 tre).`;
+        return `Én boks makrell i tomat, og trampolinen er deres. ${n} hjelper til og med med å bære (-1 mat, +${ctx.threat + 1} metall, +1 tre).`;
       } },
-      { label: 'Betal det han ber om', run: (s, ctx) => {
+      { label: 'Betal det som står i annonsen', run: (s, ctx) => {
         s.res.mat = Math.max(0, s.res.mat - 2); s.res.metall += ctx.threat;
-        return `Han ville ha to bokser. Dere betaler uten å prute, og selgeren ser skuffet ut (-2 mat, +${ctx.threat} metall).`;
+        return `Annonsen sier to bokser. Dere betaler uten å prute, og ${strangerName(s, 'finn', 'selgeren')} ser skuffet ut (-2 mat, +${ctx.threat} metall).`;
       } },
+      { label: 'Tilby en seng i stedet for bokser', check: 'prat', checkBase: STRANGER_BASE, run: (s, _ctx, ok) => recruitStranger(s, 'finn', ok, (n) => `«Jeg har det fint her», sier ${n}, og trekker for gardinene. Det har ${n} ikke (ingenting).`) },
       retreat('Si at dere skal tenke på det'),
     ],
   },
@@ -314,18 +318,20 @@ export const ENCOUNTERS: EncounterDef[] = [
   },
   {
     id: 'turnus', title: 'Hjem fra turnus', places: ['hjem', 'bolig', 'tokt'],
-    text: (_s, ctx) => `En kar i oransje kjeledress og med bag fra Equinor stopper ${who(ctx)} ${at(ctx)}. Han kom i land i går etter fjorten dager på Sverdrup og lurer på hvorfor ingen svarer på Teams. Lenger nede i gata er det noen som har begynt å gå mot dere.`,
+    text: (s, ctx) => `${strangerIntro(s, 'turnus', 'En overlevende')} i oransje kjeledress og med bag fra Equinor stopper ${who(ctx, 'obj')} ${at(ctx)}. Livbåten fra Sverdrup kom i land i går, og ingen har svart på Teams siden. Det er ikke helt landet ennå. Lenger nede i gata er det noen som har begynt å gå mot dere.`,
     choices: [
       { label: 'Forklar situasjonen skånsomt', check: 'prat', run: (s, ctx, ok) => {
-        if (!ok) { s.moral -= ctx.threat; return `«Dette er sikkert noe ${LANDMARKS.sandnes} har funnet på.» Han går hjem for å sove ut, og tar bagen med seg.`; }
+        const n = strangerName(s, 'turnus', 'Riggarbeideren');
+        if (!ok) { s.moral -= ctx.threat; return `«Dette er sikkert noe ${LANDMARKS.sandnes} har funnet på.» ${n} går hjem for å sove ut, og tar bagen med seg (−${ctx.threat} moral).`; }
         s.res.mat += ctx.threat; s.res.medisin += 1; s.moral += 2;
-        return `Han tar det med fatning. Han skal til hytta i Sirdal og gir dere taxfree-posen og førstehjelpsskrinet fra riggen (+${ctx.threat} mat, +1 medisin).`;
+        return `${n} tar det med fatning, skal prøve å komme seg til hytta i Sirdal, og gir dere taxfree-posen og førstehjelpsskrinet fra riggen (+${ctx.threat} mat, +1 medisin).`;
       } },
       { label: 'Si at det er streik', run: (s) => {
         s.moral -= 2; s.res.skrap += 2;
-        return 'Han nikker. Det har han vært med på før. Han gir dere verktøyet han ikke får bruk for før neste tur, og går for å finne et åpent bakeri (+2 skrap).';
+        return `${strangerName(s, 'turnus', 'Riggarbeideren')} nikker. Det har vært streik før. Dere får verktøyet som ikke trengs før neste tur, og så går det mot sentrum for å finne et åpent bakeri (+2 skrap, −2 moral).`;
       } },
-      retreat('Gå før han spør mer'),
+      { label: 'Si sannheten og tilby en plass i crewet', check: 'prat', checkBase: STRANGER_BASE, run: (s, _ctx, ok) => recruitStranger(s, 'turnus', ok, (n) => `${n} hører på, nikker, og sier: «Jeg må nok høre med HR først.» Bagen forsvinner nedover gata (ingenting).`) },
+      retreat('Gå før det kommer flere spørsmål'),
     ],
   },
   {
@@ -417,18 +423,19 @@ export const ENCOUNTERS: EncounterDef[] = [
   },
   {
     id: 'snekke', title: 'Snekka ved brygga', places: ['kai', 'tokt'],
-    text: (_s, ctx) => `En pensjonist i Helly Hansen sitter i en snekke ved ei brygge ${at(ctx)} og drar i startsnora. «Den har alltid vært litt sta», sier han. Bak dere fylles brygga sakte opp.`,
+    text: (s, ctx) => `${strangerIntro(s, 'snekke', 'En overlevende')} i Helly Hansen sitter i en snekke ved ei brygge ${at(ctx)} og drar i startsnora. Snekka har vært hjemmet siden utbruddet. «Den har alltid vært litt sta.» Bak dere fylles brygga sakte opp.`,
     choices: [
       { label: 'Fiks påhengsmotoren', check: 'mekk', run: (s, ctx, ok) => {
         if (!ok) return `Motoren hoster én gang og dør. Det samme kan ikke sies om dem på brygga.${setback(s, ctx, 'på brygga')}`;
         s.res.drivstoff += ctx.threat; s.res.mat += 2;
-        return `Tennpluggen var full av sot. Han takker med reservekanna og to makreller fra bøtta (+${ctx.threat} drivstoff, +2 mat).`;
+        return `Tennpluggen var full av sot. ${strangerName(s, 'snekke', 'Båteieren')} takker med reservekanna og to makreller fra bøtta (+${ctx.threat} drivstoff, +2 mat).`;
       } },
-      { label: 'Ro ham ut og tilbake', check: 'kondis', run: (s, ctx, ok) => {
+      { label: 'Ro snekka ut og tilbake', check: 'kondis', run: (s, ctx, ok) => {
         if (!ok) return `Dere ror i ring. Brygga kommer nærmere, ikke lenger unna.${setback(s, ctx, 'på brygga')}`;
         s.res.mat += ctx.threat + 1; s.moral += 2;
-        return `Ute på fjorden er det stille. Han viser dere garnet sitt og deler fangsten (+${ctx.threat + 1} mat).`;
+        return `Ute på fjorden er det stille. ${strangerName(s, 'snekke', 'Båteieren')} viser dere garnet og deler fangsten (+${ctx.threat + 1} mat, +2 moral).`;
       } },
+      { label: 'Tilby en seng på land', check: 'prat', checkBase: STRANGER_BASE, run: (s, _ctx, ok) => recruitStranger(s, 'snekke', ok, (n) => `${n} ser på brygga bak dere og drar i startsnora igjen. Denne gangen starter den (ingenting).`) },
       retreat('Bli på land'),
     ],
   },
@@ -486,12 +493,12 @@ export const ENCOUNTERS: EncounterDef[] = [
   },
   {
     id: 'generalforsamling', title: 'Generalforsamlingen', places: ['bolig', 'offentlig', 'tokt'],
-    text: (_s, ctx) => `Borettslaget ${at(ctx)} holder ekstraordinær generalforsamling. Halvparten av de fremmøtte er døde, men det er fortsatt vedtaksført. Sak 4: Felles innkjøp av barrikader.`,
+    text: (_s, ctx) => `Gjengen som har tatt over et borettslag ${at(ctx)}, holder fortsatt generalforsamling hver tirsdag, med protokoll og hagle. Halvparten av de fremmøtte er døde, men ingen har turt å stryke dem fra lista, så det er fortsatt vedtaksført. Sak 4: Handel med andre gjenger.`,
     choices: [
-      { label: 'Fremm forslag om å flytte ut', check: 'prat', run: (s, ctx, ok) => {
-        if (!ok) { s.moral -= ctx.threat; return 'Forslaget kom ikke inn innen fristen. Saken utsettes til neste ordinære generalforsamling.'; }
+      { label: 'Fremm forslag om byttehandel', check: 'prat', run: (s, ctx, ok) => {
+        if (!ok) { s.moral -= ctx.threat; return `Forslaget kom ikke inn innen fristen. Saken utsettes til neste ordinære generalforsamling (−${ctx.threat} moral).`; }
         s.res.mat += ctx.threat; s.res.medisin += 1; s.moral += 2;
-        return `Forslaget vedtas mot tre stemmer, alle døde. De levende drar og lar fellesbodene stå åpne (+${ctx.threat} mat, +1 medisin).`;
+        return `Forslaget vedtas mot tre stemmer, alle døde. Gjengen åpner fellesboden og bytter mat og plaster mot rykter (+${ctx.threat} mat, +1 medisin, +2 moral).`;
       } },
       { label: 'Ta ordet med makt', check: 'muskler', tag: 'spredning', run: (s, ctx, ok) => {
         if (!ok) return `Møtelederen ber dere vente på tur. De døde tar ordet i stedet.${setback(s, ctx, 'på generalforsamlingen')}`;
@@ -586,17 +593,17 @@ export const ENCOUNTERS: EncounterDef[] = [
     ],
   },
   {
-    id: 'lane_sukker', title: 'Naboen som skal låne', places: ['hjem', 'bolig'],
-    text: (_s, ctx) => `Det banker på ${at(ctx)}. Det er naboen, og han lurer på om han kan låne litt sukker, som vanlig. Over skulderen hans ser dere at gata er mindre tom enn den var i går.`,
+    id: 'lane_sukker', title: 'De som skal låne', places: ['hjem', 'bolig'],
+    text: (_s, ctx) => `Det banker på ${at(ctx)}. To fra en annen gjeng, de som har holdt seg i blokkene på andre siden. De lurer på om de kan låne litt sukker. Ingen spør hva de skal med det. Over skuldrene deres ser dere at gata er mindre tom enn den var i går.`,
     choices: [
       { label: 'Snu på det og be om noe tilbake', check: 'prat', run: (s, ctx, ok) => {
-        if (!ok) { s.moral -= 1; s.res.mat = Math.max(0, s.res.mat - ctx.threat); return `Han låner sukker, mel og et par bokser til. Han skal levere tilbake, sier han (-${ctx.threat} mat).`; }
+        if (!ok) { s.moral -= 1; s.res.mat = Math.max(0, s.res.mat - ctx.threat); return `De låner sukker, mel og et par bokser til. De skal levere tilbake, sier de (-${ctx.threat} mat).`; }
         s.res.medisin += 1; s.res.mat += ctx.threat;
-        return `Han ser flau ut, går hjem og kommer tilbake med det han har lånt siden 2021 (+${ctx.threat} mat, +1 medisin).`;
+        return `De ser på hverandre, går og kommer tilbake med et byttelass: hermetikk og en pakke Paracet (+${ctx.threat} mat, +1 medisin).`;
       } },
-      { label: 'Gi ham sukkeret', run: (s) => {
+      { label: 'Gi dem sukkeret', run: (s) => {
         s.res.mat = Math.max(0, s.res.mat - 1); s.moral += 3;
-        return 'Han blir glad. Noen ting skal være som før, også nå (-1 mat).';
+        return 'De nikker og går. Noen ting skal være som før, også nå (-1 mat).';
       } },
       retreat('Late som ingen er der'),
     ],
@@ -621,23 +628,25 @@ export const ENCOUNTERS: EncounterDef[] = [
   },
   {
     id: 'rekvirert', title: 'Alt er rekvirert', places: ['butikk', 'industri', 'offentlig', 'tokt'],
-    text: (_s, ctx) => `En mann i Sivilforsvaret-jakke står i døra ${at(ctx)} med en liste og en hagle. «Alt her er rekvirert», sier han. Han virker overraskende fornøyd med det. Han kan ikke vise noen papirer.`,
+    text: (s, ctx) => `${strangerIntro(s, 'rekvirert', 'En overlevende')} i Sivilforsvaret-jakke står i døra ${at(ctx)} med en liste og en hagle. Noen uker alene har holdt til å utnevne seg selv. «Alt her er rekvirert.» Det sies med overraskende stor tilfredshet, og uten noen papirer.`,
     choices: [
-      { label: 'Gi ham det han vil ha', run: (s, ctx) => {
+      { label: 'Gi det som står på lista', run: (s, ctx) => {
         const m = drain(s, 'mat', ctx.threat + 1), sk = drain(s, 'skrap', 2); s.moral -= 2;
-        return `Han krysser av på lista, og dere bærer det ut selv (${cost(m, 'mat')}, ${cost(sk, 'skrap')}, −2 moral).`;
+        return `${strangerName(s, 'rekvirert', 'Sivilforsvareren')} krysser av på lista, og dere bærer det ut selv (${cost(m, 'mat')}, ${cost(sk, 'skrap')}, −2 moral).`;
       } },
-      { label: 'Snakk ham ned', check: 'prat', run: (s, ctx, ok) => {
-        if (!ok) { const m = drain(s, 'mat', 2 * ctx.threat + 1); return `Han hører ikke på. Han nikker bare og skriver noe ned. Dere går derfra uten både mat og argumenter (${cost(m, 'mat')}).${setback(s, ctx, 'ved sperringen')}`; }
+      { label: 'Snakk hagla ned', check: 'prat', run: (s, ctx, ok) => {
+        const n = strangerName(s, 'rekvirert', 'Sivilforsvareren');
+        if (!ok) { const m = drain(s, 'mat', 2 * ctx.threat + 1); return `${n} hører ikke på, nikker bare og skriver noe ned. Dere går derfra uten både mat og argumenter (${cost(m, 'mat')}).${setback(s, ctx, 'ved sperringen')}`; }
         const m = drain(s, 'mat', 1); s.moral -= 1;
-        return `Han lar dere beholde det meste mot en skriftlig forsikring om at dere «støtter innsatsen» (${cost(m, 'mat')}, −1 moral).`;
+        return `${n} lar dere beholde det meste mot en skriftlig forsikring om at dere «støtter innsatsen» (${cost(m, 'mat')}, −1 moral).`;
       } },
+      { label: 'Tilby en stilling: beredskapsansvarlig i crewet', check: 'prat', checkBase: STRANGER_BASE, run: (s, _ctx, ok) => recruitStranger(s, 'rekvirert', ok, (n) => `${n} vurderer tilbudet, men mener stillingen bør lyses ut først. Hagla senkes ikke (ingenting).`) },
       retreat('Trekk dere ut'),
     ],
   },
   {
     id: 'gulv', title: 'Gulvet gir etter', places: ['bolig', 'offentlig', 'butikk', 'industri', 'kai'],
-    text: (_s, ctx) => `Gulvet ${at(ctx)} har råtnet langt mer enn noen har sagt. Det knaker, og i neste åndedrag har ${who(ctx)} et hull i veien. Underveis ser det ut som det står noe nede i kjelleren og ser opp.`,
+    text: (_s, ctx) => `Gulvet ${at(ctx)} har råtnet langt mer enn noen har sagt. Det knaker, og i neste åndedrag har ${who(ctx, 'mid')} et hull i veien. Underveis ser det ut som det står noe nede i kjelleren og ser opp.`,
     choices: [
       { label: 'Hopp over hullet', check: 'kondis', run: (s, ctx, ok) => {
         if (!ok) { if (ctx.sector) s.sectors[ctx.sector].z += 1; return `Dere kommer for kort. Landingen er ikke pen, og noen i kjelleren har hørt den.${setback(s, ctx, 'i gulvet')}`; }

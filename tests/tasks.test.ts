@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canEndDay, canRecruit, checkEnd, GATE_IDS, housing, injure, NEIGHBORS, newGame, PLAYABLE, resolveDay as resolveDayAndDrawEvent, sameTask, sectorIntel,
-  setLeader, stat, taskKey, taskOptions, addNeighbor, TOKTS,
+  setLeader, stat, taskKey, taskOptions, addNeighbor, TOKTS, PLEIE_HEAL, PLEIE_PATIENTS,
 } from '../src/engine';
 import type { GameState, SectorId } from '../src/engine';
 import { BOT_SELF } from '../tools/bot';
@@ -143,16 +143,25 @@ describe('Trene', () => {
 });
 
 describe('Pleie', () => {
-  it('pleie heler uten medisin', () => {
-    const s = fresh();
-    s.res.medisin = 5;
-    const [a, b, c] = [s.crew[1], s.crew[2], s.crew[3]];
-    a.hp = 1; b.hp = 2;
-    c.task = { type: 'pleie' };
-    resolveDay(s);
-    expect(a.hp).toBe(2);
-    expect(b.hp).toBe(3);
-    expect(s.res.medisin).toBe(5);
+  it('pleie heler uten medisin, med sjanse, og høyst PLEIE_PATIENTS per pleier', () => {
+    expect([PLEIE_PATIENTS, PLEIE_HEAL]).toEqual([2, 0.6]);
+    let nursed = 0, max = 0;
+    for (let seed = 1; seed <= 60; seed++) {
+      // uten nattevakt, så bare pleien og sofaen virker
+      const s = newGame(seed, BOT_SELF, ['arild', 'toregil', 'kjell']);
+      s.res.medisin = 0;
+      const [a, b, c] = [s.crew[0], s.crew[1], s.crew[2]];
+      for (const x of s.crew) x.task = { type: 'hvile' };
+      a.hp = 1; b.hp = 1; c.hp = 1;
+      s.crew[3].task = { type: 'pleie' };
+      resolveDay(s);
+      const n = s.log.flatMap((d) => d.lines).filter((l) => l.t.includes('ble pleid av')).length;
+      nursed += n; max = Math.max(max, n);
+    }
+    expect(max).toBeLessThanOrEqual(PLEIE_PATIENTS);
+    // rundt 0,6 × 2 per dag
+    expect(nursed / 60).toBeGreaterThan(0.9);
+    expect(nursed / 60).toBeLessThan(1.5);
   });
 
   it('uten pleier bruker hvile fortsatt medisin', () => {

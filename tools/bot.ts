@@ -1,7 +1,7 @@
 // En bot som spiller fase 1. Brukes av balansetesten og tools/sim.ts.
 // Den følger en fast prioritetsliste og tenker ikke langt frem. En god spiller skal slå den.
 import {
-  canEndDay, canEndPhase, CARDS, dailyFood, dailyHeat, dailyWater, delta, describeEncounter, endPhase, eventChoices, eventDef, equip, fightPower, GATE_IDS, GATES,
+  canEndDay, PHASES, canEndPhase, CARDS, dailyFood, dailyHeat, dailyWater, delta, describeEncounter, endPhase, eventChoices, eventDef, equip, fightPower, GATE_IDS, GATES,
   isOnTokt, isSafe, LAGE_COST, newGame, toktDays, toktDecision, toktDef, activeSectors, resolveDay, resolveEncounter, resolveEvent, runChoice, sameTask, searchPower, buildPower, SECTORS, setLeader,
   SLOTS, taskOptions, THREAT_KILL, canRecruit, sum, FACILITY_IDS, HQ_SECTOR, istandLeft, istandMaterials, POSTS, stat,
 } from '../src/engine';
@@ -24,6 +24,8 @@ export interface BotOptions {
   fase2?: boolean;
   /** kalles når fase 2 starter og etter hver dag i fase 2, til målinger i balansetesten */
   onDay2?: (s: GameState) => void;
+  /** kalles etter hver dag i fase 1, for målinger */
+  onDay1?: (s: GameState) => void;
 }
 
 /** Toktet boten tar, og hvor mange den sender. */
@@ -211,9 +213,10 @@ export function botTurn(s: GameState, bot: BotOptions = {}) {
     if (id) set(by((c) => searchPower(s, c))[0], { type: 'sanke', target: id });
   }
 
-  // 5b) Sanke skrap og tre når det mangler materialer til en port under nivå 2
+  // 5b) Sanke skrap og tre når det mangler materialer til en port under nivået fasemålet krever
   const gatesLeft = GATE_IDS.some((g) => s.gates[g].level < 2);
-  if (gatesLeft && materials(s) < 3) {
+  const goalGatesLeft = GATE_IDS.some((g) => s.gates[g].level < PHASES[1].goalGateLevel);
+  if (goalGatesLeft && materials(s) < 3) {
     const id = activeSectors(s).filter((id) => can({ type: 'sanke', target: id }))
       .sort((a, b) => ((SECTORS[b].yield.skrap ?? 0) + (SECTORS[b].yield.tre ?? 0)) - ((SECTORS[a].yield.skrap ?? 0) + (SECTORS[a].yield.tre ?? 0)))[0];
     if (id && (SECTORS[id].yield.skrap || SECTORS[id].yield.tre)) set(by((c) => searchPower(s, c))[0], { type: 'sanke', target: id });
@@ -321,16 +324,16 @@ export const toktStats = (s: GameState) => {
 
 export function playGame(seed: number, neighbors: string[] = BOT_NEIGHBORS, opts: BotOptions = {}): GameState {
   const s = newGame(seed, BOT_SELF, neighbors, opts.difficulty);
-  const maxDays = opts.maxDays ?? 80;
+  const maxDays = opts.maxDays ?? 120;
   // Uten fase2 spiller boten bare fase 1: en frist som tvinger oss over til fase 2 (normal og hard) avslutter runden.
-  while (!s.over && s.phase === 1 && s.day < maxDays) playDay(s, opts);
+  while (!s.over && s.phase === 1 && s.day < maxDays) { playDay(s, opts); opts.onDay1?.(s); }
   if (!opts.fase2) {
     // Fase 1 er vunnet når målet ble nådd og fasen avsluttet (av boten, eller av fristen etter at målet var nådd).
     // Runden merkes som seier, slik balansen i fase 1 alltid er målt.
     if (!s.over && s.phase > 1 && s.forcedPhases === 0) s.over = 'won';
     return s;
   }
-  const maxDays2 = s.day + (opts.maxDays ?? 80);
+  const maxDays2 = s.day + (opts.maxDays ?? 120);
   opts.onDay2?.(s);
   while (!s.over && s.day < maxDays2) { playDay(s, opts); opts.onDay2?.(s); }
   return s;

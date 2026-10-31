@@ -6,8 +6,12 @@ import { COMBOS, playGame } from '../tools/bot';
 // Fase 1 skal kunne vinnes nesten alltid, men ikke for fort. Målene er fra kapittel 11 i docs/spilldesign.md.
 // Boten følger en fast prioritetsliste, så en god spiller bør gjøre det bedre enn tallene her.
 const N = 150;
-/** En tapt runde regnes som sulterunde når crewet manglet mat eller vann i minst så mange dager. */
-const STARVED_LOSS = 3;
+/**
+ * En tapt runde regnes som sulterunde når crewet manglet mat eller vann i minst denne andelen av dagene.
+ * Andel, ikke dager: tapte runder kan vare til fristen på 90 dager, og da blir dagene mange selv med lite sult.
+ */
+const STARVED_LOSS = 0.1;
+const starvedShare = (s: GameState) => s.stats.starvedDays / Math.max(1, s.day - 1);
 /** Minste antall tapte runder (alle crewene sammen) før tapstesten sier noe. Færre feiler testen. */
 const MIN_LOSSES = 10;
 
@@ -38,10 +42,10 @@ describe('balanse i fase 1', { timeout: 60_000 }, () => {
     expect(won.length / games.length).toBeLessThanOrEqual(0.97);
   });
 
-  it('en seier tar typisk mellom 20 og 40 dager', () => {
+  it('en seier tar typisk mellom 38 og 50 dager', () => {
     const days = median(won.map((s) => s.day - 1));
-    expect(days).toBeGreaterThanOrEqual(20);
-    expect(days).toBeLessThanOrEqual(40);
+    expect(days).toBeGreaterThanOrEqual(38);
+    expect(days).toBeLessThanOrEqual(50);
   });
 
   it('median sultedager per runde er 2 eller mindre', () => {
@@ -52,14 +56,14 @@ describe('balanse i fase 1', { timeout: 60_000 }, () => {
     // Tap er sjeldne, så tapte runder fra alle crewene telles sammen. Testen krever et utvalg, så den
     // kan ikke bestå uten at det finnes tapte runder å se på (seier ≤ 97 % gir minst 25 med 5 × 150 runder).
     const lost = [games, ...byCombo.map((r) => r.games)].flat().filter((g) => g.over !== 'won');
-    const starved = lost.filter((s) => s.stats.starvedDays >= STARVED_LOSS);
+    const starved = lost.filter((s) => starvedShare(s) >= STARVED_LOSS);
     const causes: Record<string, number> = {};
     for (const s of lost) causes[lossCause(s)] = (causes[lossCause(s)] ?? 0) + 1;
     const deaths = lost.reduce((a, s) => a + s.stats.lost, 0);
     const info = JSON.stringify({ lost: lost.length, starved: starved.length, causes, deaths });
     expect(lost.length, info).toBeGreaterThanOrEqual(MIN_LOSSES);
     // en typisk tapt runde har lite sult
-    expect(median(lost.map((s) => s.stats.starvedDays)), info).toBeLessThanOrEqual(STARVED_LOSS);
+    expect(median(lost.map(starvedShare)), info).toBeLessThanOrEqual(STARVED_LOSS);
     // under halvparten av de tapte rundene har langvarig sult, så noe annet (kamp, natt, porter, tid) er hovedgrunnen
     expect(starved.length, info).toBeLessThan(lost.length / 2);
   });
@@ -73,14 +77,14 @@ describe('balanse i fase 1', { timeout: 60_000 }, () => {
     for (const c of COMBOS) for (const id of c) expect(START_NEIGHBORS).toContain(id);
   });
 
-  it('boten vinner 85–97 % med hver kombinasjon, med median 20–40 dager', () => {
+  it('boten vinner 85–97 % med hver kombinasjon, med median 38–50 dager', () => {
     for (const r of byCombo) {
       const w = r.games.filter((s) => s.over === 'won');
       expect(w.length / N, r.combo.join(', ')).toBeGreaterThanOrEqual(0.85);
       expect(w.length / N, r.combo.join(', ')).toBeLessThanOrEqual(0.97);
       const days = median(w.map((s) => s.day - 1));
-      expect(days, r.combo.join(', ')).toBeGreaterThanOrEqual(20);
-      expect(days, r.combo.join(', ')).toBeLessThanOrEqual(40);
+      expect(days, r.combo.join(', ')).toBeGreaterThanOrEqual(38);
+      expect(days, r.combo.join(', ')).toBeLessThanOrEqual(50);
     }
   });
 });

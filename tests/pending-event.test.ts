@@ -78,7 +78,7 @@ describe('hendelsen ligger i tilstanden', () => {
     const s = start(5);
     queueIntro(s);
     expect(endDayBlocker(s)).toBe('event');
-    resolveEvent(s, 2);
+    resolveEvent(s, 0);
     expect(s.log).toHaveLength(1);
     resolveDay(s);
     expect(s.log[0].day).toBe(1);

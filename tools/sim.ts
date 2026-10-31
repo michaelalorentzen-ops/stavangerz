@@ -16,6 +16,7 @@ const tokt = args.includes('--tokt');
 const difficulty: Difficulty = args.includes('--brutal') ? 'brutal' : args.includes('--hard') ? 'hard' : 'normal';
 
 const median = (xs: number[]) => { const a = [...xs].sort((x, y) => x - y); return a.length ? a[a.length >> 1] : NaN; };
+const pctile = (xs: number[], q: number) => { const a = [...xs].sort((x, y) => x - y); return a.length ? a[Math.min(a.length - 1, Math.floor(a.length * q))] : NaN; };
 const pct = (k: number, of: number) => `${Math.round((k / of) * 100)} %`;
 
 function report(label: string, neighbors: string[]) {
@@ -31,8 +32,8 @@ function report(label: string, neighbors: string[]) {
   for (const s of games) for (const k of Object.keys(deaths) as (keyof typeof deaths)[]) deaths[k] += s.stats.deaths[k];
   console.log(`\n${label}${tokt ? ' med tokt' : ''} [${difficulty}] (${neighbors.join(', ')}), ${n} runder`);
   console.log(`  Vunnet: ${won.length} (${pct(won.length, n)}) · Døde: ${dead.length} · Timeout: ${timeout.length} (${pct(timeout.length, n)}) · Tvunget videre av fristen: ${forced.length} (${pct(forced.length, n)}) · Uavgjort: ${games.filter((s) => !s.over && s.phase === 1).length}`);
-  if (days.length) console.log(`  Dager til seier: median ${median(days)}, min ${Math.min(...days)}, maks ${Math.max(...days)}`);
-  const d20 = Array.from({ length: n }, (_, i) => playGame(i + 1, neighbors, { tokt, maxDays: 20 })).filter((s) => !s.over);
+  if (days.length) console.log(`  Dager til seier: median ${median(days)}, p10 ${pctile(days, 0.1)}, p90 ${pctile(days, 0.9)}, min ${Math.min(...days)}, maks ${Math.max(...days)}`);
+  const d20 = Array.from({ length: n }, (_, i) => playGame(i + 1, neighbors, { tokt, difficulty, maxDays: 20 })).filter((s) => !s.over);
   console.log(`  Lager dag 20 (median): mat ${median(d20.map((s) => s.res.mat))}, vann ${median(d20.map((s) => s.res.vann))}, medisin ${median(d20.map((s) => s.res.medisin))}, tre ${median(d20.map((s) => s.res.tre))}, skrap ${median(d20.map((s) => s.res.skrap))}`);
   console.log(`  Spenning: ${games.filter((s) => s.stats.lost > 0).length} av ${n} mistet noen, ${games.filter((s) => s.stats.lost >= 2).length} mistet to eller flere, ${games.filter((s) => s.over === 'dead').length} mistet alle`);
   console.log(`  Sultedager per runde: median ${median(games.map((s) => s.stats.starvedDays))}, snitt ${(games.reduce((a, s) => a + s.stats.starvedDays, 0) / n).toFixed(1)}${lost.length ? `, median i tapte runder ${median(lost.map((s) => s.stats.starvedDays))}` : ''}`);

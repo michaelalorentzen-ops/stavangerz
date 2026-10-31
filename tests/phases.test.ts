@@ -161,7 +161,7 @@ describe('advancePhase()', () => {
 describe('faseslutt og turgrense', () => {
   const clearAll = (s: ReturnType<typeof newGame>) => {
     for (const id of PLAYABLE) { const sec = s.sectors[id]; sec.z = 0; sec.hidden = 0; sec.searched = 100; sec.control = 100; }
-    for (const g of Object.values(s.gates)) g.level = 2;
+    for (const g of Object.values(s.gates)) g.level = PHASES[1].goalGateLevel;
   };
 
   it('goalDay settes første dag målet er nådd', () => {
@@ -206,6 +206,20 @@ describe('faseslutt og turgrense', () => {
     c.day = c.phaseStartDay + PHASES[1].mods.turnCap - 1;
     checkEnd(c);
     expect(c.over).toBeNull();
+  });
+
+  it('etter nådd mål får spilleren graceDays før fasen avsluttes av seg selv', () => {
+    const grace = PHASES[1].mods.graceDays;
+    expect(grace).toBe(10);
+    const s = newGame(1, BOT_SELF, []);
+    s.goalDay = 25;
+    s.day = 25 + grace - 1;
+    checkEnd(s);
+    expect(s.phase).toBe(1);
+    s.day = 25 + grace;
+    checkEnd(s);
+    expect(s.over).toBeNull();
+    expect(s.phase).toBe(2);
   });
 
   it('turgrensen med nådd mål avslutter fasen selv om noe venter', () => {

@@ -4,6 +4,7 @@ import { toktDef, toktSector } from '../regions/content';
 import { GATES, HEALTH_LABEL, LANDMARKS, NEIGHBORS, SECTOR_IDS, SECTORS } from './data';
 import { clamp, pick, rand } from './rng';
 import { stat } from './skills';
+import { nameAs, names, YOU } from './names';
 import type { CrewMember, DeathCause, GameState, LogKind, SectorId } from './types';
 
 /** Regelkonstanter for Lete etter overlevende (ikke vanskelighetsknotter). */
@@ -11,16 +12,11 @@ const RECRUIT_BASE = 0.15, RECRUIT_PER_PRAT = 0.05, RECRUIT_NOISE = 0.2;
 
 export type LogFn = (t: string, kind?: LogKind) => void;
 
-/** «Du», «Du og Mona», «Du, Mona og Tor-Egil»: komma mellom, «og» bare før siste. */
-export function nameList(names: string[]): string {
-  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} og ${names[names.length - 1]}`;
-}
-/** Navnene på en gruppe crewmedlemmer som en leselig liste. */
-export const names = (cs: CrewMember[]): string => nameList(cs.map((c) => c.name));
+export { nameAs, nameList, names, YOU, type NameForm } from './names';
 
 const EULOGY: ((c: CrewMember) => string)[] = [
-  (c) => `Hvil i fred, ${c.name}. Vi tar vare på kaffekoppen din.`,
-  (c) => `${c.name} er ikke lenger med oss. Teknisk sett er ${c.name} fortsatt med oss, bare ikke på vår side.`,
+  (c) => `Hvil i fred${c.name === YOU ? '' : `, ${c.name}`}. Vi tar vare på kaffekoppen din.`,
+  (c) => `${nameAs(c)} er ikke lenger med oss. Teknisk sett er ${nameAs(c, 'mid')} fortsatt med oss, bare ikke på vår side.`,
   () => `Crewet holder ett minutts stillhet. Det blir avbrutt av stønning fra ${LANDMARKS.bybrua}.`,
 ];
 

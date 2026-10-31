@@ -1,16 +1,21 @@
 // Panelet til høyre: ressurser, mål, valgt sted og crewet.
 import {
-  DIFFICULTY,
+  DIFFICULTY, goalReachedText,
   canEndPhase, craftShortfall, LAGE_COST, nameList, dailyFood, daysLeft, LOW_DAYS, NEIGHBORS, endDayBlocker, dailyWater, GATE_STEPS, AREA, GATES, HEALTH_LABEL, PHASE_RES, phaseProgress, RES, RES_LABEL, SECTORS, sectorIntel,
   housing, mods, skillLevel, STAT_LABEL, STATS, TRAITS, previewTask, taskKey, taskOptions, ZONE_INFO, ZONES, sameTask,
   CARDS, crewLevel, isOnTokt, levelProgress, MAX_LEVEL, stat, toktAvailable, toktDays, toktDef, TOKTS,
   applyPlan, deletePlan, MAX_PLANS, repeatYesterday, savePlan,
   BUILT_PHASES, bussToktText, gateQuiet, COND_LABEL, dailyFoodIn, dailyHeat, moralHighText, moralLowText, MORAL_DESERT, MORAL_HIGH, MORAL_MID, FACILITIES, FACILITY_IDS, facilityIntel, HQ_SECTOR, ISTAND_STRAGGLERS, ISTAND_WORK, istandMaterials, isLocked, POST_IDS, postEffect, postHolder, POSTS,
 } from '../engine';
-import type { TaskOption, TaskPreview, CrewMember, FacilityId, GameState, GateId, PostId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
+import type { ResKey, TaskOption, TaskPreview, CrewMember, FacilityId, GameState, GateId, PostId, SectorId, SectorState, StatKey, Stats, Task, TaskType } from '../engine';
 import { bindCards, slotsHtml, statAbbr } from './cards';
 import { $, esc, game, HOME_GATE, KIND_ICON, KIND_LABEL, MAP, PANEL_TABS, setTab, ui } from './store';
 import type { PanelTab } from './store';
+import { avatar } from './avatar';
+import { heartsHtml, icon, lineIcon } from './icons';
+import { recallDays, summaryHtml } from './report';
+import { vaguePreview } from './vague';
+import type { VagueLine } from './vague';
 
 /** Kort forklaring på hver oppgavetype. Vises under nedtrekket og som tooltip. */
 export const TASK_HELP: Record<TaskType, string> = {
@@ -31,14 +36,15 @@ export const TASK_HELP: Record<TaskType, string> = {
 };
 
 /**
- * Fristen for fasen. Før målet er nådd taper man når den går ut; etter velger spilleren selv
- * når fasen avsluttes, og ved grensen tvinges man over.
+ * Fristen for fasen. Før målet er nådd gjelder fristen turnCap; etter målet får spilleren graceDays
+ * til å farme og velger selv når fasen avsluttes, og når de har gått, tvinges man over.
  */
 export function phaseDeadline(s: GameState): { label: string; days: number; goalReached: boolean; onExpiry: string } | null {
   if (s.over !== null) return null;
   const days = Math.max(0, mods(s).turnCap - (s.day - s.phaseStartDay));
   if (s.goalDay === null) return { label: 'Frist for fasemålet', days, goalReached: false, onExpiry: deadlineText(s) };
-  return { label: s.phase < BUILT_PHASES ? `Fase ${s.phase + 1} tvinges om` : 'Fasen avsluttes om', days, goalReached: true, onExpiry: 'Målet er nådd. Fasen avsluttes selv ved fristen.' };
+  const left = Math.min(days, Math.max(0, mods(s).graceDays - (s.day - s.goalDay)));
+  return { label: s.phase < BUILT_PHASES ? `Fase ${s.phase + 1} om` : 'Fasen avsluttes om', days: left, goalReached: true, onExpiry: goalReachedText(s) };
 }
 
 /** Hva som skjer når fristen går ut uten at målet er nådd, for gradens pris (DIFFICULTY i phases.ts). */
@@ -59,7 +65,7 @@ export function isBadChange(line: string): boolean {
 /** Endringene etter et valg som chips. */
 export function changesHtml(lines: string[]): string {
   if (!lines.length) return '';
-  return `<div class="pv">${lines.map((l) => `<i class="${isBadChange(l) ? 'bad' : 'good'}">${esc(l)}</i>`).join('')}</div>`;
+  return `<div class="pv">${lines.map((l) => `<i class="${isBadChange(l) ? 'bad' : 'good'}">${lineIcon(l)}${esc(l)}</i>`).join('')}</div>`;
 }
 
 /** En forhåndsvisningslinje som varsler om noe vondt, også uten minus: «kan gi skade», «kan slite utstyr». */
@@ -68,26 +74,37 @@ export const isBadPreview = (line: string): boolean => isBadChange(line) || /opp
 /** Hva et valg kan gi: ok-linjer grønne (røde om de varsler om skade eller tap), fail-linjer røde bak «Feiler:». */
 export function previewHtml(p: { ok: string[]; fail: string[] | null }): string {
   if (!p.ok.length && !p.fail?.length) return '';
-  return `<span class="pv">${p.ok.map((l) => `<i class="${isBadPreview(l) ? 'bad' : 'good'}">${esc(l)}</i>`).join('')}${p.fail?.length ? `<b class="pv-l">Feiler:</b>${p.fail.map((l) => `<i class="bad">${esc(l)}</i>`).join('')}` : ''}</span>`;
+  return `<span class="pv">${p.ok.map((l) => `<i class="${isBadPreview(l) ? 'bad' : 'good'}">${lineIcon(l)}${esc(l)}</i>`).join('')}${p.fail?.length ? `<b class="pv-l">Feiler:</b>${p.fail.map((l) => `<i class="bad">${lineIcon(l)}${esc(l)}</i>`).join('')}` : ''}</span>`;
+}
+
+/** Forhåndsvisningen før et valg, uten tall («midt imellom»): retning og risiko, med ikon for ressursen. */
+export function vaguePreviewHtml(p: { ok: string[]; fail: string[] | null }): string {
+  const v = vaguePreview(p);
+  if (!v.ok.length && !v.fail?.length) return '';
+  const li = (l: VagueLine, bad = l.bad) => `<i class="${bad ? 'bad' : 'good'}">${l.res ? icon(l.res) : lineIcon(l.text)}${esc(l.text)}</i>`;
+  return `<span class="pv">${v.ok.map((l) => li(l)).join('')}${v.fail?.length ? `<b class="pv-l">Feiler:</b>${v.fail.map((l) => li(l, true)).join('')}` : ''}</span>`;
 }
 
 export function renderTop() {
   const S = game();
   const food = dailyFood(S), water = dailyWater(S);
-  const cell = (k: string, v: number, d = '', low = false) =>
-    `<div class="r${low ? ' low' : ''}"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
+  const cell = (k: ResKey, v: number, d = '', low = false, why = '') =>
+    `<div class="r r-${k}${low ? ' low' : ''}"${why ? ` title="${esc(why)}"` : ''}>${icon(k, 'ri')}<span class="k">${RES_LABEL[k]}${low ? ' <em class="lowtag">Lavt</em>' : ''}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
   $('day').textContent = `Dag ${S.day}${S.difficulty === 'normal' ? '' : ` · ${DIFFICULTY[S.difficulty].name}`}`;
   const shown = RES.filter((k) => PHASE_RES[S.phase].includes(k) || S.res[k] > 0);
   // forbruk per dag og hvor mange dager lageret holder; rødt under LOW_DAYS
   // ved til fyring (fra fase 2): forbruk per dag og hvor mange dager veden holder
   const heat = dailyHeat(S), heatDays = heat ? Math.floor(S.res.tre / heat) : 0;
-  const detail = (k: string) => (k === 'mat' || k === 'vann'
-    ? [`−${k === 'mat' ? food : water}/d · ${daysLeft(S, k)} d`, daysLeft(S, k) < LOW_DAYS]
-    : k === 'tre' && heat ? [`−${heat}/d ved · ${heatDays} d`, heatDays < LOW_DAYS] : ['', false]) as [string, boolean];
+  const hurt = S.crew.filter((c) => c.hp < 3).length;
+  const detail = (k: ResKey) => (k === 'mat' || k === 'vann'
+    ? [`−${k === 'mat' ? food : water}/d · ${daysLeft(S, k)} d`, daysLeft(S, k) < LOW_DAYS, daysLeft(S, k) < LOW_DAYS ? `${RES_LABEL[k]} holder bare ${daysText(daysLeft(S, k))} til.` : '']
+    : k === 'tre' && heat ? [`−${heat}/d ved · ${heatDays} d`, heatDays < LOW_DAYS, heatDays < LOW_DAYS ? `Veden holder bare ${daysText(heatDays)} til.` : '']
+    : k === 'medisin' && hurt && S.res.medisin === 0 ? [`${hurt} skadet`, true, 'Tomt for medisin, og noen er skadet.']
+    : ['', false, '']) as [string, boolean, string];
   const moralNote = S.moral < MORAL_DESERT ? moralLowText : S.moral >= MORAL_HIGH ? moralHighText : S.moral < MORAL_MID ? 'Lav moral: alle jobber dårligere.' : '';
   $('res').innerHTML =
-    shown.map((k) => cell(RES_LABEL[k], S.res[k], ...detail(k))).join('') +
-    `<div class="r moral"${moralNote ? ` title="${esc(moralNote)}"` : ''}><span class="k">Moral ${S.moral}${S.moral >= MORAL_HIGH ? ' ▲' : S.moral < MORAL_DESERT ? ' ▼' : ''}</span><span class="bar"><i style="width:${S.moral}%;${S.moral < 30 ? 'background:var(--red)' : ''}"></i></span></div>`;
+    shown.map((k) => cell(k, S.res[k], ...detail(k))).join('') +
+    `<div class="r moral${S.moral < MORAL_MID ? ' low' : ''}"${moralNote ? ` title="${esc(moralNote)}"` : ''}>${icon('moral', 'ri')}<span class="k">Moral ${S.moral}${S.moral >= MORAL_HIGH ? ' ▲' : S.moral < MORAL_DESERT ? ' ▼' : ''}</span><span class="bar"><i style="width:${S.moral}%;${S.moral < 30 ? 'background:var(--red)' : ''}"></i></span></div>`;
 }
 
 export function renderGoals() {
@@ -95,7 +112,7 @@ export function renderGoals() {
   const row = (txt: string, val: string, done: boolean) => `<div class="goal${done ? ' done' : ''}"><span>${done ? '✓ ' : ''}${txt}</span><b>${val}</b></div>`;
   const tight = dl && dl.days <= 5;
   const deadline = !dl ? '' : dl.goalReached
-    ? `<div class="goal deadline${tight ? ' tight' : ''}"><span>${dl.label} <b>${daysText(dl.days)}</b></span>
+    ? `<div class="goal deadline${tight ? ' tight' : ''}" title="${esc(dl.onExpiry)}"><span>${dl.label} <b>${daysText(dl.days)}</b></span>
         <button class="btn small" id="endphase"${canEndPhase(S) ? '' : ' disabled title="Løs det som venter først"'}>Avslutt fase ${S.phase}</button></div>`
     : `<div class="goal deadline${tight ? ' tight' : ''}" title="${esc(dl.onExpiry)}"><span>${dl.label}</span><b>${daysText(dl.days)}</b></div>`;
   // Målene er foldet sammen til én linje, så fanene under får plass. Fristen står alltid synlig.
@@ -135,9 +152,9 @@ export function showTab(t: PanelTab) {
 
 /** Loggen fra tidligere dager, nyest først. */
 export function renderLog() {
-  const S = game();
+  const S = game(), sums = recallDays(S.seed);
   $('log').innerHTML = S.log.length
-    ? [...S.log].reverse().map((d) => `<div class="logday"><p class="eyebrow">Dag ${d.day}</p><div class="logl">${d.lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag.</div>'}</div></div>`).join('')
+    ? [...S.log].reverse().map((d) => `<div class="logday"><p class="eyebrow dayhead">Dag ${d.day}</p>${sums[d.day] ? summaryHtml(sums[d.day]) : ''}<div class="logl">${d.lines.map((l) => `<div class="${l.kind}">${esc(l.t)}</div>`).join('') || '<div>En stille dag.</div>'}</div></div>`).join('')
     : '<p class="hint">Ingenting å melde ennå. Vaktloggen fylles når dagen er over.</p>';
 }
 
@@ -199,7 +216,7 @@ function crewChips(isMine: (c: CrewMember) => boolean) {
   return `<div class="chips">${game().crew.map((c) => {
     const on = isMine(c);
     const cur = c.task.type === 'hvile' ? 'hviler' : on ? '' : taskShort(c.task);
-    return `<button class="chip" data-crew="${c.id}" aria-pressed="${on}">${esc(c.name)}${cur ? `<small>${cur}</small>` : ''}</button>`;
+    return `<button class="chip${c.hp <= 1 ? ' h1' : c.hp === 2 ? ' h2' : ''}" data-crew="${c.id}" aria-pressed="${on}"${c.hp < 3 ? ` title="${esc(`${c.name}: ${hpWord(c.hp)}`)}"` : ''}>${avatar(c, 20)}${esc(c.name)}${cur ? `<small>${cur}</small>` : ''}</button>`;
   }).join('')}</div>`;
 }
 
@@ -464,7 +481,13 @@ export function statPips(st: Stats, bonus: Partial<Stats> = {}) {
 export const statBonus = (c: CrewMember): Partial<Stats> =>
   Object.fromEntries(STATS.map((k: StatKey) => [k, stat(c, k) - c.stats[k]]));
 
-const hpHtml = (c: CrewMember) => `<span class="hp h${c.hp}" title="${HEALTH_LABEL[c.hp]}">${[1, 2, 3].map((i) => `<i class="${i <= c.hp ? 'on' : ''}"></i>`).join('')}</span>`;
+/** Helsa i ord. «Ille ute» kalles «hardt skadet» i panelet, så det ikke kan misforstås. */
+export const hpWord = (hp: number): string => (hp <= 1 ? 'Hardt skadet' : HEALTH_LABEL[hp]);
+const hpHtml = (c: CrewMember) => `<span class="hp h${c.hp}" role="img" aria-label="Helse ${c.hp} av 3: ${hpWord(c.hp)}" title="${hpWord(c.hp)}">${heartsHtml(c.hp)}</span>`;
+/** Merket på crewraden: rødt og tydelig for hardt skadet, dempet for skrapt opp. */
+const hurtBadge = (c: CrewMember) => (c.hp <= 1 ? `<span class="hurtbadge h1">${icon('skadet')}Hardt skadet</span>` : c.hp === 2 ? `<span class="hurtbadge h2">${icon('skadet')}Skrapt opp</span>` : '');
+/** Oppgaver som holder personen hjemme. Bare til teksten under merket. */
+const HOME_TASKS: TaskType[] = ['hvile', 'pleie', 'trene', 'lage', 'post'];
 
 export function renderCrew() {
   const S = game(), opts = taskOptions(S), short = craftShortfall(S);
@@ -483,10 +506,13 @@ export function renderCrew() {
         <div class="lvlrow" title="${lvl >= MAX_LEVEL ? 'Høyeste nivå' : `${prog} % mot Nv ${lvl + 1}`}"><span>Nv ${lvl}</span><span class="prog"><i style="width:${prog}%"></i></span><span>${lvl >= MAX_LEVEL ? 'maks' : `Nv ${lvl + 1}`}</span></div>
         <div class="statrow">${statPips(c.stats, statBonus(c))}</div>
       </div>` : '';
-    return `<div class="cm${c.task.type !== 'hvile' ? ' busy' : ''}${open ? ' open' : ''}" data-row="${c.id}">
+    const badge = hurtBadge(c);
+    const note = c.hp > 1 ? '' : HOME_TASKS.includes(c.task.type) ? 'Blir hjemme. Medisin eller pleie hjelper.' : 'Skal ut selv om hen knapt står. Vurder Hvile.';
+    return `<div class="cm${c.task.type !== 'hvile' ? ' busy' : ''}${open ? ' open' : ''}${c.hp <= 1 ? ' hurt1' : c.hp === 2 ? ' hurt2' : ''}" data-row="${c.id}">
       <button class="cm-tog" data-toggle="${c.id}" aria-expanded="${open}" title="${open ? 'Fold sammen' : 'Vis ferdigheter og utstyr'}">
-        <span class="nm">${esc(c.name)}</span><span class="lvl" title="Nivå ${lvl}">Nv ${lvl}</span>${hpHtml(c)}<span class="chev" aria-hidden="true">${open ? '▴' : '▾'}</span></button>
+        ${avatar(c, 36)}<span class="cm-id"><span class="nm">${esc(c.name)}</span><span class="cm-sub"><span class="lvl" title="Nivå ${lvl}">Nv ${lvl}</span>${hpHtml(c)}</span></span><span class="chev" aria-hidden="true">${open ? '▴' : '▾'}</span></button>
       ${select}
+      ${badge ? `<div class="cm-hurt">${badge}${note ? `<span class="hurtnote">${note}</span>` : ''}</div>` : ''}
       ${noMats ? `<p class="task-help low" style="grid-column:1/-1">Mangler materialer: ${LAGE_COST.skrap} skrap og ${LAGE_COST.tre} tre per forsøk.</p>` : ''}
       ${slotsHtml(c, open)}
       ${more}
@@ -517,7 +543,9 @@ export function renderPlan() {
     (groups[k] ??= []).push(c.name);
   }
   const noMats = [...craftShortfall(S)].map((id) => S.crew.find((c) => c.id === id)!.name);
-  $('plan').textContent = Object.entries(groups).map(([k, v]) => `${nameList(v)} ${k}`).join(' · ') + (noMats.length ? ` · Mangler materialer til å lage utstyr (${nameList(noMats)})` : '');
+  const badly = S.crew.filter((c) => c.hp <= 1).map((c) => c.name);
+  $('plan').innerHTML = (badly.length ? `<span class="planwarn">${icon('skadet')}${esc(nameList(badly))} er hardt skadet</span> ` : '') +
+    esc(Object.entries(groups).map(([k, v]) => `${nameList(v)} ${k}`).join(' · ') + (noMats.length ? ` · Mangler materialer til å lage utstyr (${nameList(noMats)})` : ''));
   $('end').textContent = blockerLabel(S) ?? `Avslutt dag ${S.day}`;
   // knappen åpner encounters og ledervalg selv, så den er aldri sperret av dem
   $<HTMLButtonElement>('end').disabled = false;

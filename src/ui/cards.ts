@@ -2,14 +2,17 @@
 import { AREA, bestCopy, cardBonus, cardEffect, CARDS, CLASS_LABEL, noiseOfDef, WEIGHT_LABEL, equip, groupStash, isOnTokt, salvage, salvageCopy, salvageValue, SLOT_LABEL, SLOTS, STAT_LABEL, STATS, toggleFavorite, unequip } from '../engine';
 import type { CardDef, CardInst, CrewMember, Slot, StatKey } from '../engine';
 import { $, esc, game, ui } from './store';
+import { cardIconName, icon } from './icons';
 
 const RARITY_LABEL = { vanlig: 'Vanlig', sjelden: 'Sjelden', episk: 'Episk', unik: 'Unik' };
 
 /** Forkortelsen ferdighetsstolpene bruker: MUS, KON, SNO, NER, MEK, PRA. */
 export const statAbbr = (k: StatKey): string => STAT_LABEL[k].slice(0, 3).toUpperCase();
 
-/** Tekstsymboler (ikke emoji) for sporene. */
-export const SLOT_ICON: Record<Slot, string> = { vapen: '⚔\uFE0E', beskyttelse: '◈\uFE0E', verktoy: '⚒\uFE0E' };
+/** Kortbildet: ikonet for våpenklassen eller sporet på en flate i sporets farge, med nivået i hjørnet. */
+export function cardArt(d: CardDef, small = false): string {
+  return `<span class="gc-art s-${d.slot} r-${d.rarity}${small ? ' sm' : ''}" aria-hidden="true">${icon(cardIconName(d))}${small ? '' : `<span class="gc-lv">${d.level}</span>`}</span>`;
+}
 
 /** Hva kortet gir, som tekst: «+3 MUS +2 PRA · Kampkraft ×1,2». */
 export function fxText(def: CardDef): string {
@@ -64,8 +67,9 @@ export function cardHtml(k: CardInst, group: CardInst[] = [k], inStash = false, 
   const actions = inStash ? `<div class="gc-act">${give}
       <button class="btn ghost small" data-salvage="${favIds}" ${salvageCopy(group) ? '' : 'disabled'} title="Demonterer kopien med lavest holdbarhet, aldri en favoritt">Demonter +${sv} skrap</button></div>` : '';
   return `<div class="gc r-${d.rarity}" title="${RARITY_LABEL[d.rarity]} · ${d.family === 'makeshift' ? 'Makeshift' : 'Fra før'}">
+    <div class="gc-head">${cardArt(d)}<div class="gc-hd">
     <div class="gc-top"><button class="fav${anyFav ? ' on' : ''}" data-fav="${n > 1 ? 'stack:' : ''}${favIds}" aria-pressed="${anyFav}" aria-label="Favoritt" title="Favoritt">${anyFav ? '★' : '☆'}</button><b>${esc(d.name)}${n > 1 ? ` ×${n}` : ''}</b><span class="dots">${dots}</span></div>
-    <div class="gc-slot">${SLOT_ICON[d.slot]} ${SLOT_LABEL[d.slot]} · ${RARITY_LABEL[d.rarity]}</div>
+    <div class="gc-slot">${d.slot === 'vapen' && d.weaponClass ? CLASS_LABEL[d.weaponClass] : SLOT_LABEL[d.slot]} · <span class="rar">${RARITY_LABEL[d.rarity]}</span></div></div></div>
     ${fxHtml(d)}
     ${forCrew ? deltaHtml(forCrew, d) : ''}
     ${weaponBadges(d)}
@@ -85,7 +89,7 @@ export function slotsHtml(c: CrewMember, detailed = false): string {
     const d = k && CARDS[k.def];
     const tip = away ? 'Ute på tokt' : d ? `${SLOT_LABEL[slot]}: ${d.name} · ${fxText(d)} · holdbarhet ${k!.dur}/${d.durability}` : `${SLOT_LABEL[slot]}: tomt`;
     return `<button class="slot${open === slot ? ' open' : ''}${k ? ' filled' : ''}" data-slot="${slot}" data-crew="${c.id}" aria-pressed="${open === slot}" title="${esc(tip)}"${away ? ' disabled' : ''}>
-      <span class="sl"><b aria-hidden="true">${SLOT_ICON[slot]}</b><span class="sn">${d ? esc(d.name) : `<span class="empty">${SLOT_LABEL[slot]}</span>`}</span></span>${detailed && d ? fxHtml(d) : ''}${k && d ? `<span class="gc-dur"><i style="width:${Math.round((k.dur / d.durability) * 100)}%"></i></span>` : ''}</button>`;
+      <span class="sl">${d ? cardArt(d, true) : `<b aria-hidden="true">${icon(slot)}</b>`}<span class="sn">${d ? esc(d.name) : `<span class="empty">${SLOT_LABEL[slot]}</span>`}</span></span>${detailed && d ? fxHtml(d) : ''}${k && d ? `<span class="gc-dur"><i style="width:${Math.round((k.dur / d.durability) * 100)}%"></i></span>` : ''}</button>`;
   }).join('');
   return `<div class="slots${detailed ? ' detailed' : ''}">${slots}</div>${open ? pickerHtml(c, open) : ''}`;
 }

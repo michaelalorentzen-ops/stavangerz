@@ -75,7 +75,8 @@ Spillet har feilet, selv om det virker, hvis:
 **Faseskifte [Låst]:**
 - Fasemålet må nås før du kan gå videre.
 - Når målet er nådd, velger du selv når fasen avsluttes. Du kan bli værende og bygge deg sterkere først.
-- Det er en grense på antall turer per fase, **[Forslag]** 50 turer, og tallet er ikke låst. Når fasemålet er nådd, velger du selv når du går videre, og ved grensen må du over. Hva som skjer hvis målet ikke er nådd ved grensen, avhenger av vanskelighetsgraden (kapittel 6, «Vanskelighet»): på normal og hard må du videre likevel, med en pris, og på brutal er runden tapt. Spillet viser derfor «Frist for fasemålet» før målet er nådd, og «Fase 2 tvinges om» etterpå.
+- **Nedtelling etter målet [Bygget]:** når fasemålet er nådd, har du 10 dager (`graceDays`) på å farme, bygge lager og gjøre deg klar. Du kan gå videre når du vil, og når de 10 dagene har gått, går du over av deg selv. Rekorden teller dagene til målet, så den som jakter rekord, går rett videre, mens den som vil ha lager, bruker dagene.
+- **Fristen før målet** er et sikkerhetsnett, ikke tempoet: 90 dager i fase 1 (`turnCap`). Tempoet kommer av målet selv. Hva som skjer hvis målet ikke er nådd ved fristen, avhenger av vanskelighetsgraden (kapittel 6, «Vanskelighet»): på normal og hard må du videre likevel, med en pris, og på brutal er runden tapt. Spillet viser derfor «Frist for fasemålet» før målet er nådd, og «Fase 2 om» med dagene som er igjen etterpå.
 - Prisen for å nøle er tid, fordi poengsummen er antall dager. Zombiene muterer ikke mens du venter.
 
 ---
@@ -140,7 +141,7 @@ En person har én oppgave per dag. Oppgaver låses opp per fase **[Forslag]**. A
 | Lete etter overlevende | 1 | Kan gi nye folk, eller kan gi bråk |
 | Trene | 1 | Gir erfaring i én ferdighet |
 | Lage utstyr | 1 | Gjør materialer om til makeshift våpen og rustning |
-| Pleie | 1 | Helbreder raskere enn hvile. En lege- eller sykepleieroppgave |
+| Pleie | 1 | Helbreder raskere enn hvile. Hver pleier tar seg av opptil to som hviler, de dårligste først, med 60 % sjanse hver (`PLEIE_PATIENTS`, `PLEIE_HEAL`). Resten bruker medisin eller sofaen. En nattevakt i crewet gir 70 % på sofaen (`NATTEVAKT_HEAL`), ikke en garanti |
 | Tokt | 1 | Ekspedisjon over flere dager til et fjernt mål (se kapittel 8) |
 | Forske | 2 | Undersøker zombieprøver i laben (se kapittel 6) |
 | Veirydding | 2 | Gir kortere reisetid permanent på en rute |
@@ -235,7 +236,7 @@ Trusselnivået styrer:
 
 **Stedet [Forslag]:** Hvert kort sier hvor det kan skje: hvilke sektortyper (hjem, bolig, kai, butikk, industri, offentlig) og om det kan skje på tokt. Det blir ingen heis i rekkehuset. De fire sist trukne kortene trekkes ikke igjen før andre har vært innom.
 
-**Innsatsen vises [Forslag]:** Hvert valg viser før du velger hva det kan gi når det lykkes, og hva det kan koste når det går galt, for eksempel «+1 medisin» eller «opptil −2 mat · kan gi skade». Etterpå vises hva som faktisk endret seg. Det samme gjelder hendelser som måkene. Alt som teller for fasemålet skal vises, også portarbeid, nye i crewet, oppdrag, speidede sektorer, kontroll og gjennomsøkt.
+**Innsatsen vises [Bygget]:** Før du velger, viser hvert valg hvilken ferdighet som sjekkes, hvem som prøver, sjansen i ord («god sjanse» fra 70 %, «usikkert» fra 40 %, ellers «dårlig sjanse») og hva det kan gi eller koste, uten tall: «kan gi medisin», «kan koste mat · kan gi skade». Retningen og risikoen ser du, de nøyaktige tallene ikke. Etterpå vises nøyaktig hva som endret seg, for eksempel «+1 medisin» eller «−2 mat». Det samme gjelder hendelser som måkene. Alt som teller for fasemålet skal vises, også portarbeid, nye i crewet, oppdrag, speidede sektorer, kontroll og gjennomsøkt. Motoren regner fortsatt ut de eksakte tallene (boten bruker dem); bare visningen gjør dem om til ord.
 
 ---
 
@@ -288,8 +289,8 @@ Trusselnivået styrer:
 | Grad | Zombiene og økonomien | Når fristen går ut uten at fasemålet er nådd |
 |---|---|---|
 | Normal (standard) | som fasetabellen | Du må videre likevel, med en pris: sektorer som ikke er trygge faller (halvparten av startzombiene kommer tilbake, kontrollen er borte), moralen synker 15, og zombiene får 1 ekstra mutasjonspoeng ved faseskiftet. |
-| Hard | +5 % antall, −10 % drap, +20 % skaderisiko, raskere nattepress (×1,4), kjellerutbrudd og zombier som siver inn ×2,2. Økonomi: −15 % loot, sanking og regn, 1,5 × råte på lageret | Som normal, men prisen er høyere: hele startantallet kommer tilbake, moralen synker 30, og 2 ekstra mutasjonspoeng. |
-| Brutal | +10 % antall, −13 % drap, +30 % skaderisiko, nattepress ×1,6, kjellerutbrudd og zombier som siver inn ×2,8. Økonomi: −25 % loot og regn, −20 % sanking, dobbel råte | Runden er tapt (`over = 'timeout'`). |
+| Hard | +5 % antall, −10 % drap, +20 % skaderisiko, raskere nattepress (×1,3), kjellerutbrudd ×2 og zombier som siver inn ×1,8. Økonomi: −15 % loot, sanking og regn, 1,5 × råte på lageret | Som normal, men prisen er høyere: hele startantallet kommer tilbake, moralen synker 30, og 2 ekstra mutasjonspoeng. |
+| Brutal | +10 % antall, −13 % drap, +30 % skaderisiko, nattepress ×1,35, kjellerutbrudd ×2,4 og zombier som siver inn ×2,3. Økonomi: −25 % loot og regn, −20 % sanking, dobbel råte | Runden er tapt (`over = 'timeout'`). |
 
 **Hvorfor økonomien og kjellerne (runde 6):** Før var hard bare zombieknotter, og boten vant 92 % på hard mot 96 % på normal. Antall zombier og drap slår hardest ut i fase 2 (verftet er stort), så hard og brutal holder dem moderate og legger presset der fase 1 kjennes: glemte kjellere, zombier som siver inn, raskere nattepress og mindre å leve av (`lootMult`, `yieldMult`, `rainChance`, `stashRot`). Mål for fase 1 med standardcrewet: hard 75–85 % seier, brutal 55–70 %. `tests/balance.test.ts` har et eget, raskt tilfelle for hard (100 runder, standardcrewet, 70–88 %).
 
@@ -298,6 +299,8 @@ Trusselnivået styrer:
 | Normal | 96 % → 94 % (median 27 dager) | 91 % → 89 % (median 27 → 30 dager) |
 | Hard | 92 % → 78 % | 61 % → 41 % |
 | Brutal | 87 % → 59 % | 25 % → 15 % |
+
+Med nedtellingen og portnivå 3 i målet (30.10) ble fase 1 lengre (se «Lengre fase 1» i kapittel 11). 300 runder: normal 87–95 % per kombinasjon (median 43–47 dager, p10 36–40, p90 52–56), hard 80 % og brutal 63 % (median 46 og 48). Under 0,5 sultedager per runde på normal. Fase 2 på normal: 88 %, median 33 dager i fasen.
 
 Runder som fristen tvang over i fase 2, taper der nesten alltid, så fase 2-tallet på hard er lavt også fordi flere kommer dit tvunget.
 
@@ -520,7 +523,7 @@ Det er et valg: en god arbeider i en post er en arbeider mindre ute.
 ### Slik er det bygd
 
 - **Sektorer per fase:** `SectorDef.opensInPhase`. Verftet (`rosenberg`) er en vanlig sektor i tilstanden fra start, men låst til fase 2. Alle regler løkker over `activeSectors(s)`. Fase 1-målet gjelder bare fase 1-sektorene. Når en fase starter (`nextPhase`), åpnes fasens sektorer med zombier ganget med fasens `zombieMult` (med vanskelighet og mutasjoner), og overgangen logges. Gamle lagringer får verftet og HQ-et lagt til, og en vunnet fase 1 fra før fase 2 fantes blir et nådd mål, så fase 2 kan startes.
-- **Verftet:** trussel 5, 100 zombier og 28 gjemte (×1,45 i fase 2 = rundt 145 og 41), 8 senger, mye metall, skrap og drivstoff, litt mat (20 før `lootMult`). Sanke gir metall, skrap og drivstoff. Funnet ved 50 %: stål og diesel i lagerhallen, og bedriftshelsetjenestens skap (6 medisin).
+- **Verftet:** trussel 5, 100 zombier og 28 gjemte (×1,7 i fase 2 = rundt 170 og 48), 8 senger, mye metall, skrap og drivstoff, litt mat (20 før `lootMult`). Sanke gir metall, skrap og drivstoff. Funnet ved 50 %: stål og diesel i lagerhallen, og bedriftshelsetjenestens skap (6 medisin).
 - **Anleggene** (`src/engine/hq.ts`, tekster i `places.ts`): tilstanden trekkes fra seeden med en egen tallrekke (god 30 %, middels 40 %, ødelagt 30 %), så fase 1 er helt lik som før. Speiding av verftet gir alltid ett rykte, og gjennomsøking gir et rykte med 50 % sjanse. Et rykte stemmer i 75 % av tilfellene; med en sveiser i crewet stemmer det alltid. Når verftet er trygt i fase 2, er HQ-et tatt, og den sanne tilstanden vises.
 - **Sette i stand** (`istand`): arbeid etter buildPower til 50 (god), 80 (middels) eller 120 (ødelagt), 1 metall eller skrap per 3 arbeid. Tåler høyst 2 streifere på verftet (`ISTAND_STRAGGLERS`, som `GATE_STRAGGLERS` for porter): gruppa tar dem først, med samme regel og skaderisiko som laget ved porten. Før stengte ett mislykket encounter (+1 zombie) istandsettingen.
 - **Rosenberg-gjerdet etter HQ-et:** porten har `holds: 'rosenberg'`. Når HQ-et er tatt, er verftet deres, og gjerdet slipper ikke inn noe om natta lenger (`gateQuiet`). Porten kan fortsatt befestes og voktes, men det trengs ikke. Panelet sier det.
@@ -575,7 +578,7 @@ Dette er retning, ikke spesifikasjon. Fase 1 skal ikke bygge noe av det, men må
 
 **Omfang [Låst]:** Bare Buøy. Hundvåg kommer når vi er fornøyde med Buøy.
 
-**Mål for fase 1 [Forslag]:** Sikre Buøy. Målet er nådd når alle Buøy-sektorer er trygge og alle portene er på nivå 2 eller mer. Etter det velger du selv når fasen avsluttes, innen grensen på antall turer.
+**Mål for fase 1 [Bygget]:** Sikre Buøy. Målet er nådd når alle Buøy-sektorer er trygge og alle portene er på nivå 3 (`goalGateLevel` i fasetabellen). Nivå 3 er det store løftet (`GATE_STEPS`: 6, 16 og 90 arbeid), så tre og skrap blir en ekte flaskehals: bygge eller sanke. Etter målet har du 10 dager før fasen avsluttes av seg selv.
 
 ### Endringer fra dagens prototype
 
@@ -591,7 +594,7 @@ Dette er retning, ikke spesifikasjon. Fase 1 skal ikke bygge noe av det, men må
 10. **Ferdigheter** går fra 1–5 til 1–100 internt, vist som stolpe og nivå, med erfaring.
 11. **Trusselnivå per sektor** og **encounters** med uttrekk, valgt ved neste planlegging.
 12. **Første quest og første tokt** innenfor Buøy, for eksempel å hente noe på Rosenberg-gjerdet eller ute ved Sørspissen.
-13. **Faseskifte:** etter at målet er nådd, velger spilleren selv når fasen avsluttes, innen en grense på antall turer (foreløpig 50, ikke låst). Mutasjonsmatrisen og poengtrekking ved faseskifte bygges i motoren og fasetabellen, men har ingen effekt før fase 2 finnes.
+13. **Faseskifte:** etter at målet er nådd, velger spilleren selv når fasen avsluttes, innen 10 dager. Mutasjonsmatrisen og poengtrekking ved faseskifte bygges i motoren og fasetabellen, men har ingen effekt før fase 2 finnes.
 14. **Tutorial:** de tre første dagene guider spilleren gjennom Rydde, Bygge og Vakt via sambandet.
 
 ### Spenning og økonomi [Forslag]
@@ -604,6 +607,7 @@ Fra gjennomgangen 30.10: fase 1 var spillbar, men uten fare. Disse reglene gir s
 - **Knappere økonomi:** sektorene har mindre å finne (`lootMult`), sanking gir mindre (`yieldMult`), det regner sjeldnere (`rainChance`), og maten på lageret blir dårlig litt hver dag (`stashRot`). Fyring (`heatPerCrew`) er av i fase 1 og slår inn fra fase 2.
 - **Tokt har ekte risiko:** hver dag ute kan noen bli skadet (oftere jo farligere), og da mister gruppa en tredel av byttet i flukten. Beslutningen om å fortsette eller snu viser helsen til gruppa.
 - **Dårlige valg:** omtrent en tredel av hendelsene er rent negative, og noen encounters har bare dårlige valg.
+- **Vanskelige sjekker:** et valg i en hendelse eller et encounter kan ha sin egen grunnsjanse (`checkBase`, ellers 0,25), og å verve en fremmed bruker −0,25 (`STRANGER_BASE`), så bare den beste praten har en reell sjanse.
 - **Tokt er turer til strategiske steder** som gir det du ikke får hjemme. Du kan vinne fase 1 uten dem, men de gjør overlevelsen lettere.
   - **Apoteket på Hundvåg** åpnes av hendelsen «Medisinskapet er tomt», som kommer ved første skade, eller senest dag 6. Første tur er trygg: ingen knipe og ingen skader. Senere tur gir mindre, fordi stedet er delvis tømt.
   - **Køen på Bybrua** åpnes av et rykte på radioen fra dag 8. Den gir drivstoff, metall og bildeler, viktig for transport i fase 2.
@@ -614,12 +618,26 @@ Fra gjennomgangen 30.10: fase 1 var spillbar, men uten fare. Disse reglene gir s
 - **Lage utstyr** lager aldri kort med et bestemt opphav (`craftable: false`).
 - **Boten** velger hendelsesvalg ut fra forventet verdi, slik en spiller leser forhåndsvisningen.
 
+### Lengre fase 1 (30.10) [Bygget]
+
+Fra spilltesten: fase 1 skal ta rundt 50 dager, og det som var frustrerende, skal bort.
+
+- **Portens sektor holder også vakt:** de som er ute i sektoren porten ligger i (Rydde, Sanke, Vakt der), tar imot det som kommer gjennom porten om natta, med halv kampkraft (`SECTOR_GUARD`). Før gikk zombiene rett forbi fem personer som nettopp hadde ryddet sektoren.
+- **Mer mat i starten:** alle fase 1-sektorene har 2,5 ganger så mye mat og 1,5 ganger så mye vann å finne. Flere i crewet skal gjøre ting raskere, ikke gjøre maten til problemet. Den som går tom, sliter sent i fasen.
+- **Kaia gir jevn mat:** sanking gir 6 mat (før 4), og Boligfeltet gir 2 (før 1). Det er den fornybare maten i en lang fase.
+- **Helbredelse koster noe:** Pleie og nattevakt var garanterte, så medisinen ble aldri brukt. Se Pleie i kapittel 3.
+- **Verftet i fase 2** har `zombieMult` 1,7 (før 1,45), fordi crewet nå kommer inn i fase 2 med mer på lageret.
+- **[Bygget] Grossistlageret på Forus:** et tokt etter mat, låst til radioryktet «Lageret på Forus» kommer (fra dag 30, eller fra dag 18 når fem av Buøy-sektorene er trygge). Toktet går gjennom Bybrusperringen, tar 3 dager og har trussel 4, så skader underveis er sannsynlige. Fullført gir det 30 mat og 10 vann i tillegg til byttet underveis, og halvparten neste gang.
+- **[Bygget] Flere hendelser sent i fasen:** 19 nye hendelser, de fleste med krav om dag 12–40 eller om crewets størrelse, så en lang runde ikke går tom. Omtrent en tredel er gode, en tredel vonde og en tredel sjansespill der sjekken avgjør et stort utslag.
+- **[Bygget] Utenfor finnes bare crewet, andre overlevende og zombier.** En som er alene, kan verves med en svært vanskelig Prat-sjekk og blir en ekte nabo med ferdigheter og egenskap (bare når det finnes en ledig seng). En gruppe kan dere handle med, true eller la være, men den blir aldri med.
+
 ### Mål for balanse
 
-**[Forslag]**
-- En god spiller når målet i fase 1 på 20–30 dager.
-- Boten vinner minst 85 %.
+**[Forslag]** Fra 30.10: fase 1 skal ta rundt 50 dager i snitt. En god runde kan ta 25, en dårlig 75, og etter målet kommer 10 dager til farming.
+- Boten vinner 85–97 % med hver kombinasjon (siktet mot 88–95 %).
+- Botens median er 38–50 dager til målet. Boten spiller jevnt, så spredningen hos ekte spillere blir større enn hos boten, og snittet havner nærmere 50.
 - Mat skal ikke være den vanligste dødsårsaken.
+- **[Åpent]** Flaks i hendelsene. Hendelser kommer aldri to ganger i samme runde. Boten ser i snitt 27 av dem i fase 1, og den siste kommer rundt dag 42, så en treg runde går de siste ukene uten hendelser. Skal flaks og ferdighet balansere over 50–75 dager, trengs flere hendelser, og et større sprik mellom de gode og de vonde. Første steg er bygget: se «Flere hendelser sent i fasen» over.
 
 Balansetesten i `tests/balance.test.ts` oppdateres til de nye reglene.
 

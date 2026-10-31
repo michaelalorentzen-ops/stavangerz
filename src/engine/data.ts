@@ -91,7 +91,7 @@ export const PHASE_RES: Record<PhaseId, ResKey[]> = {
 
 export const HEALTH_LABEL = ['Bitt', 'Ille ute', 'Skrapt opp', 'Frisk'];
 
-export const GATE_STEPS = [0, 6, 14, 24];
+export const GATE_STEPS = [0, 6, 16, 90];
 
 
 // Stedene og folkene kommer fra regionpakken.

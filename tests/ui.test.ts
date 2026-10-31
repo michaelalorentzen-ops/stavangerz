@@ -2,10 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { CARDS, mods, newGame } from '../src/engine';
 import type { TaskType } from '../src/engine';
 import { fxText } from '../src/ui/cards';
-import { blockerLabel, changesHtml, infBar, isBadChange, phaseDeadline, previewHtml, statPips, TASK_HELP } from '../src/ui/panel';
+import { blockerLabel, changesHtml, infBar, isBadChange, phaseDeadline, previewHtml, statPips, TASK_HELP, vaguePreviewHtml } from '../src/ui/panel';
+import { oddsWord, vagueLine, vaguePreview } from '../src/ui/vague';
+import { summarizeDay, summaryHtml } from '../src/ui/report';
+import { avatar } from '../src/ui/avatar';
 import { BOT_SELF } from '../tools/bot';
 
 const fresh = () => newGame(42, BOT_SELF, ['arild', 'mona', 'toregil']);
+/** Fjerner ikonene, så testene kan sammenligne teksten i chipsene. */
+const noIc = (h: string) => h.replace(/<svg[\s\S]*?<\/svg>/g, '');
 
 describe('panelet', () => {
   it('infeksjonsstolpen røper ikke det sanne tallet for usette sektorer', () => {
@@ -39,12 +44,13 @@ describe('panelet', () => {
     expect(t('brutal')).toContain('er runden tapt');
   });
 
-  it('fristen sier «Frist for fasemålet» før målet er nådd, og hvilken fase som tvinges fram etter', () => {
+  it('fristen sier «Frist for fasemålet» før målet er nådd, og nedtellingen til neste fase etter', () => {
     const s = fresh(), cap = mods(s).turnCap;
     s.day = 11;
     expect(phaseDeadline(s)).toMatchObject({ label: 'Frist for fasemålet', days: cap - 10, goalReached: false });
     s.goalDay = 9;
-    expect(phaseDeadline(s)).toMatchObject({ label: 'Fase 2 tvinges om', days: cap - 10, goalReached: true });
+    // graceDays fra målet ble nådd: 10 − (11 − 9)
+    expect(phaseDeadline(s)).toMatchObject({ label: 'Fase 2 om', days: mods(s).graceDays - 2, goalReached: true });
     s.day = s.phaseStartDay + cap + 3;
     expect(phaseDeadline(s)?.days).toBe(0);
     s.over = 'won';
@@ -63,13 +69,13 @@ describe('panelet', () => {
     expect(isBadChange('Mona døde')).toBe(true);
     expect(isBadChange('utstyret slites')).toBe(true);
     expect(isBadChange('+3 mat')).toBe(false);
-    expect(changesHtml(['+3 mat', '−1 moral'])).toBe('<div class="pv"><i class="good">+3 mat</i><i class="bad">−1 moral</i></div>');
+    expect(noIc(changesHtml(['+3 mat', '−1 moral']))).toBe('<div class="pv"><i class="good">+3 mat</i><i class="bad">−1 moral</i></div>');
     expect(changesHtml([])).toBe('');
   });
 
   it('forhåndsvisningen viser «Feiler:» bare når det finnes en feil-gren', () => {
     expect(previewHtml({ ok: ['+3 mat'], fail: null })).not.toContain('Feiler');
-    const both = previewHtml({ ok: ['+3 mat'], fail: ['opptil −4 mat', 'kan gi skade'] });
+    const both = noIc(previewHtml({ ok: ['+3 mat'], fail: ['opptil −4 mat', 'kan gi skade'] }));
     expect(both).toContain('<i class="good">+3 mat</i>');
     expect(both).toContain('Feiler:</b><i class="bad">opptil −4 mat</i><i class="bad">kan gi skade</i>');
     // en ok-linje som varsler om skade er ikke grønn
@@ -88,5 +94,62 @@ describe('panelet', () => {
     const html = statPips(st, { muskler: 6 });
     expect(html).toContain('class="plus" style="width:6%"');
     expect(html).toContain('40 + 6');
+  });
+});
+
+describe('midt imellom: forhåndsvisning uten tall', () => {
+  it('sjansen står i ord', () => {
+    expect(oddsWord(0.85)).toBe('god sjanse');
+    expect(oddsWord(0.7)).toBe('god sjanse');
+    expect(oddsWord(0.55)).toBe('usikkert');
+    expect(oddsWord(0.4)).toBe('usikkert');
+    expect(oddsWord(0.39)).toBe('dårlig sjanse');
+  });
+
+  it('linjene får retning, men ikke tall', () => {
+    expect(vagueLine('+1 medisin')).toEqual({ text: 'kan gi medisin', bad: false, res: 'medisin' });
+    expect(vagueLine('opptil −2 mat')).toEqual({ text: 'kan koste mat', bad: true, res: 'mat' });
+    expect(vagueLine('+1–3 skrap')).toMatchObject({ text: 'kan gi skrap', bad: false });
+    expect(vagueLine('−2 til +3 moral')).toMatchObject({ text: 'kan gi eller koste moral', bad: true });
+    expect(vagueLine('+2 zombier')).toMatchObject({ text: 'kan trekke til zombier', bad: true });
+    expect(vagueLine('kan gi skade')).toMatchObject({ text: 'kan gi skade', bad: true });
+    expect(vagueLine('kan slite utstyr')).toMatchObject({ bad: true });
+    expect(vagueLine('nytt utstyr')).toMatchObject({ text: 'nytt utstyr', bad: false });
+  });
+
+  it('ingen tall slipper gjennom, og like linjer slås sammen', () => {
+    const v = vaguePreview({ ok: ['+1 mat', '+2 mat', '+4 kontroll'], fail: ['opptil −4 mat', 'kan gi skade'] });
+    expect(v.ok.map((l) => l.text)).toEqual(['kan gi mat', 'kan gi kontroll']);
+    expect(v.fail!.map((l) => l.text)).toEqual(['kan koste mat', 'kan gi skade']);
+    const html = vaguePreviewHtml({ ok: ['+3 mat', '−1 moral'], fail: ['opptil −4 vann'] });
+    expect(noIc(html)).not.toMatch(/\d/);
+    expect(html).toContain('ic-mat');
+  });
+});
+
+describe('dagsrapporten i ikoner', () => {
+  it('regner ut gevinst, tap og folk fra tilstanden før og etter', () => {
+    const a = fresh(), b = structuredClone(a);
+    b.res.mat -= 3; b.res.vann += 2; b.stats.kills += 4;
+    b.crew[1].hp = 1;
+    b.crew = b.crew.filter((c) => c.id !== a.crew[2].id);
+    const lines = [{ t: 'Natt: 2 zombier kom forbi porten og står nå et sted.', kind: 'bad' as const }];
+    const s = summarizeDay(a, b, lines);
+    expect(s.res).toEqual({ mat: -3, vann: 2 });
+    expect(s.kills).toBe(4);
+    expect(s.breach).toBe(2);
+    expect(s.hurt.map((p) => p.id)).toEqual([a.crew[1].id]);
+    expect(s.lost.map((p) => p.id)).toEqual([a.crew[2].id]);
+    const html = summaryHtml(s);
+    expect(html).toContain('class="sx down"');
+    expect(html).toContain('−3');
+    expect(html).toContain('hardt skadet');
+    expect(summaryHtml(summarizeDay(a, structuredClone(a), []))).toBe('');
+  });
+
+  it('portrettene er faste for samme person', () => {
+    expect(avatar({ id: 'mona', name: 'Mona' })).toBe(avatar({ id: 'mona', name: 'Mona' }));
+    expect(avatar({ id: 'mona', name: 'Mona' })).not.toBe(avatar({ id: 'arild', name: 'Arild' }));
+    expect(avatar({ id: 'mona', name: 'Mona', hp: 1 })).toContain('av-h1');
   });
 });

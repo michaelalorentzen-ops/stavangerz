@@ -215,12 +215,14 @@ export interface GameState {
   knownMutations: string[];
   /** hvor sannsynlig hver gren er for neste mutasjon, trukket ved start */
   branchWeights: Record<Branch, number>;
-  /** dagen målet for fasen først ble nådd */
   /** vanskelighetsgrad, valgt ved start */
   difficulty: Difficulty;
   /** antall ganger fristen tvang spilleren videre uten at målet var nådd */
   forcedPhases: number;
+  /** dagen målet for fasen først ble nådd */
   goalDay: number | null;
+  /** dagene det tok å nå målet i hver fase som er avsluttet med målet nådd (rekorden teller disse) */
+  goalDays?: Partial<Record<PhaseId, number>>;
   /** dagen fasen startet, turgrensen telles herfra */
   phaseStartDay: number;
   moral: number;
