@@ -106,24 +106,80 @@ describe('midt imellom: forhåndsvisning uten tall', () => {
     expect(oddsWord(0.39)).toBe('dårlig sjanse');
   });
 
-  it('linjene får retning, men ikke tall', () => {
-    expect(vagueLine('+1 medisin')).toEqual({ text: 'kan gi medisin', bad: false, res: 'medisin' });
-    expect(vagueLine('opptil −2 mat')).toEqual({ text: 'kan koste mat', bad: true, res: 'mat' });
-    expect(vagueLine('+1–3 skrap')).toMatchObject({ text: 'kan gi skrap', bad: false });
-    expect(vagueLine('−2 til +3 moral')).toMatchObject({ text: 'kan gi eller koste moral', bad: true });
-    expect(vagueLine('+2 zombier')).toMatchObject({ text: 'kan trekke til zombier', bad: true });
+  it('sikre utfall sier hva som skjer, uten «kan»', () => {
+    expect(vagueLine('+1 medisin')).toEqual({ text: 'gir medisin', bad: false, res: 'medisin', sure: true, dir: 'up', icon: 'medisin' });
+    expect(vagueLine('+1–3 skrap')).toMatchObject({ text: 'gir skrap', bad: false });
+    expect(vagueLine('−2 mat')).toEqual({ text: 'koster mat', bad: true, res: 'mat', sure: true, dir: 'down', icon: 'mat' });
+    expect(vagueLine('−1–3 vann')).toMatchObject({ text: 'koster vann', bad: true });
+    expect(vagueLine('+2 zombier')).toMatchObject({ text: 'trekker til zombier', bad: true });
+    expect(vagueLine('+1 zombie')).toMatchObject({ text: 'trekker til zombier', bad: true });
+    expect(vagueLine('−3 zombier')).toMatchObject({ text: 'fjerner zombier', bad: false });
+    expect(vagueLine('+4 kontroll')).toMatchObject({ text: 'gir kontroll', bad: false });
+    expect(vagueLine('+1 sektor speidet')).toMatchObject({ text: 'speider en sektor', bad: false });
+    expect(vagueLine('skade')).toMatchObject({ text: 'noen blir skadet', bad: true });
+    expect(vagueLine('noen dør')).toMatchObject({ text: 'noen dør', bad: true });
+    expect(vagueLine('ny i crewet')).toMatchObject({ text: 'noen blir med', bad: false });
+    expect(vagueLine('nytt utstyr')).toMatchObject({ text: 'gir utstyr', bad: false });
+    expect(vagueLine('utstyret slites')).toMatchObject({ bad: true });
+  });
+
+  it('«kan» står bare der utfallet er usikkert innenfor grenen', () => {
+    expect(vagueLine('opptil −2 mat')).toEqual({ text: 'kan koste mat', bad: true, res: 'mat', sure: false, dir: 'down', icon: 'mat' });
+    expect(vagueLine('opptil +3 skrap')).toMatchObject({ text: 'kan gi skrap', bad: false });
+    expect(vagueLine('opptil +2 zombier')).toMatchObject({ text: 'kan trekke til zombier', bad: true });
+    expect(vagueLine('opptil −2 zombier')).toMatchObject({ text: 'kan fjerne zombier', bad: false });
+    expect(vagueLine('−2 til +3 moral')).toMatchObject({ text: 'kan gi eller koste moral', bad: true, sure: false, dir: 'mix', icon: 'moral' });
     expect(vagueLine('kan gi skade')).toMatchObject({ text: 'kan gi skade', bad: true });
+    expect(vagueLine('kan koste et liv')).toMatchObject({ text: 'kan koste et liv', bad: true });
     expect(vagueLine('kan slite utstyr')).toMatchObject({ bad: true });
-    expect(vagueLine('nytt utstyr')).toMatchObject({ text: 'nytt utstyr', bad: false });
   });
 
   it('ingen tall slipper gjennom, og like linjer slås sammen', () => {
     const v = vaguePreview({ ok: ['+1 mat', '+2 mat', '+4 kontroll'], fail: ['opptil −4 mat', 'kan gi skade'] });
-    expect(v.ok.map((l) => l.text)).toEqual(['kan gi mat', 'kan gi kontroll']);
+    expect(v.ok.map((l) => l.text)).toEqual(['gir mat', 'gir kontroll']);
     expect(v.fail!.map((l) => l.text)).toEqual(['kan koste mat', 'kan gi skade']);
     const html = vaguePreviewHtml({ ok: ['+3 mat', '−1 moral'], fail: ['opptil −4 vann'] });
     expect(noIc(html)).not.toMatch(/\d/);
     expect(html).toContain('ic-mat');
+  });
+
+  it('alt som kan dukke opp har et ikon', () => {
+    const lines = ['+1 mat', '+2 moral', 'skade', 'kan gi skade', 'noen dør', 'kan koste et liv', '+2 zombier', '−1 zombier', 'nytt utstyr',
+      'kan gi utstyr', 'utstyret slites', 'ny i crewet', 'kan gi ny i crewet', 'noen er borte for godt', '+1 sektor speidet', '+2 gjennomsøkt',
+      '+3 kontroll', 'nytt oppdrag'];
+    for (const l of lines) expect(vagueLine(l).icon, l).not.toBe('');
+    expect(vagueLine('kan gi skade')).toMatchObject({ icon: 'skadet', sure: false, dir: 'down' });
+    expect(vagueLine('+1 sektor speidet')).toMatchObject({ icon: 'speid', sure: true, dir: 'up' });
+  });
+
+  it('kortet viser ikoner med retning, ordene bare i title og aria-label', () => {
+    const html = vaguePreviewHtml({ ok: ['+3 mat', 'opptil −2 vann'], fail: null });
+    expect(html).toContain('aria-label="gir mat"');
+    expect(html).toContain('title="kan koste vann"');
+    expect(html).toContain('▲');
+    expect(html).toContain('▼');
+    // ordene står ikke som synlig tekst, bare i attributter
+    expect(html.replace(/<[^>]*>/g, '')).not.toMatch(/gir|kan|mat|vann/);
+    // det usikre er stiplet og har «?», det sikre ikke
+    expect(html).toMatch(/class="pvi up"[^>]*aria-label="gir mat"/);
+    expect(html).toMatch(/class="pvi down maybe"[^>]*aria-label="kan koste vann"/);
+    expect(html).not.toContain('pv-k');
+  });
+
+  it('med sjekk deles raden i lykkes og feiler', () => {
+    const html = vaguePreviewHtml({ ok: ['+3 mat'], fail: ['−1 moral'] });
+    expect(html).toMatch(/pv-g ok.*✓.*gir mat.*pv-g fail.*✗.*koster moral/s);
+    expect(html).toContain('aria-label="Lykkes:"');
+    expect(html).toContain('aria-label="Feiler:"');
+    // en tom gren står som «ingenting», så ✗ aldri står alene
+    const empty = vaguePreviewHtml({ ok: [], fail: ['−4 mat'] });
+    expect(empty).toMatch(/pv-g ok.*✓.*ingenting.*pv-g fail.*✗.*koster mat/s);
+  });
+
+  it('fritekst uten ikon vises som kort tekst', () => {
+    const html = vaguePreviewHtml({ ok: ['noe helt annet'], fail: null });
+    expect(html).toContain('class="pvi up txt"');
+    expect(html.replace(/<[^>]*>/g, '')).toContain('noe helt annet');
   });
 });
 

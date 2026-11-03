@@ -41,6 +41,7 @@ const P: Record<string, string> = {
   advarsel: '<path d="M12 3.5L21.5 20h-19z"/><path d="M12 10v4.5M12 17.2h.01"/>',
   oppdrag: '<path d="M6 3.5h9l3.5 3.5v13.5H6z"/><path d="M9 11h6.5M9 14.5h6.5M9 8h3"/>',
   kontroll: '<path d="M5 21V4"/><path d="M5 4.5h12l-2.5 3.5 2.5 3.5H5"/>',
+  speid: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
   sok: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/>',
 };
 
@@ -65,10 +66,10 @@ export function heartsHtml(hp: number, max = 3): string {
   return Array.from({ length: max }, (_, i) => icon(i < hp ? 'hjerte' : 'hjerteTomt', i < hp ? 'on' : 'off')).join('');
 }
 
-/** Ikonet til en endrings- eller forhåndsvisningslinje: ressursen den nevner, ellers hva den handler om. Tom streng uten treff. */
-export function lineIcon(line: string): string {
+/** Navnet på ikonet til en endrings- eller forhåndsvisningslinje: ressursen den nevner, ellers hva den handler om. Tom streng uten treff. */
+export function lineIconName(line: string): string {
   const t = line.toLowerCase();
-  for (const k of RES) if (new RegExp(`(^|\\s)${RES_LABEL[k].toLowerCase()}($|[\\s,.])`).test(t)) return icon(k);
+  for (const k of RES) if (new RegExp(`(^|\\s)${RES_LABEL[k].toLowerCase()}($|[\\s,.])`).test(t)) return k;
   const rules: [RegExp, string][] = [
     [/døde|dør\b|liv\b/, 'dod'],
     [/borte for godt/, 'borte'],
@@ -80,8 +81,14 @@ export function lineIcon(line: string): string {
     [/portarbeid|nivå /, 'port'],
     [/oppdrag/, 'oppdrag'],
     [/kontroll/, 'kontroll'],
-    [/speidet|gjennomsøkt/, 'sok'],
+    [/speid/, 'speid'],
+    [/gjennomsøkt|søker? gjennom/, 'sok'],
   ];
-  const hit = rules.find(([re]) => re.test(t));
-  return hit ? icon(hit[1]) : '';
+  return rules.find(([re]) => re.test(t))?.[1] ?? '';
+}
+
+/** Ikonet til en endrings- eller forhåndsvisningslinje som inline-SVG. Tom streng uten treff. */
+export function lineIcon(line: string): string {
+  const name = lineIconName(line);
+  return name ? icon(name) : '';
 }
