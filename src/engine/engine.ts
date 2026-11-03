@@ -47,6 +47,26 @@ export const guardPower = (s: GameState, guards: CrewMember[]): number =>
 
 export const GATE_IDS = Object.keys(GATES) as GateId[];
 
+// ---------- Natta ved porten ----------
+// Formlene står bare her. Natteløkka i resolveDay() og portvarselet (portvarsel.ts) bruker begge disse.
+
+/** Sjansen for at noe prøver seg ved porten i natt. Vokser med dagene i fasen (`pd`), synker med nivået på porten. */
+export const nightChance = (s: GameState, id: GateId, M: PhaseModifiers, pd: number): number =>
+  clamp(GATES[id].base + M.nightBase - s.gates[id].level * M.nightLevelReduction + pd * M.nightGrowth, 0.02, 0.9);
+/** Spennet i trekket for hvor mange som kommer: større utover i fasen. */
+export const breachSpan = (M: PhaseModifiers, pd: number): number => 1 + pd / M.breachDays;
+/** Hvor mange som kommer gjennom, gitt et trekk `u` i [0, 1). Minst én. */
+export const breachSize = (u: number, span: number, level: number): number => Math.max(1, 1 + Math.floor(u * span) - level);
+/** Hvor mange vaktene, de som står i portens sektor (halv styrke) og sikkerhetssjefen tar i natt, før avrunding. */
+export const nightDefense = (s: GameState, guards: CrewMember[], near: CrewMember[], chief: number): number =>
+  (guardPower(s, guards) + SECTOR_GUARD * guardPower(s, near) + chief) * 0.35;
+/** Fordelingen av `breachSize` over et jevnt trekk: hver mulig størrelse med sin sannsynlighet. */
+export function breachOdds(span: number, level: number): { n: number; p: number }[] {
+  const out: { n: number; p: number }[] = [];
+  for (let j = 0; j < Math.ceil(span); j++) out.push({ n: Math.max(1, 1 + j - level), p: (Math.min(j + 1, span) - j) / span });
+  return out;
+}
+
 /**
  * Porten slipper ikke lenger inn noe om natta: den holder igjen HQ-sektoren, og HQ-et er tatt.
  * Verftet er deres, så det som står bak Rosenberg-gjerdet er deres eget.
@@ -551,9 +571,8 @@ export function resolveDay(s: GameState): LogLine[] {
     const g = GATES[id], st = s.gates[id];
     xp(team('vakt', id), 'nerver', 1);
     if (gateQuiet(s, id)) continue;
-    const chance = clamp(g.base + M.nightBase - st.level * M.nightLevelReduction + pd * M.nightGrowth, 0.02, 0.9);
-    if (rand(s) >= chance) continue;
-    let n = Math.max(1, 1 + Math.floor(rand(s) * (1 + pd / M.breachDays)) - st.level);
+    if (rand(s) >= nightChance(s, id, M, pd)) continue;
+    let n = breachSize(rand(s), breachSpan(M, pd), st.level);
     const guards = s.crew.filter((c) => (c.task.type === 'befeste' || c.task.type === 'vakt') && c.task.target === id);
     if (st.level >= 3 && guards.length) continue;
     // de som jobber i portens sektor, står der zombiene kommer inn, og tar imot med halv styrke
@@ -561,7 +580,7 @@ export function resolveDay(s: GameState): LogLine[] {
     // sikkerhetssjefen i HQ-et styrker vakta ved alle porter, også der ingen står
     const chief = securityPower(s);
     if (guards.length || near.length || chief > 0) {
-      const k = Math.min(n, sround(s, (guardPower(s, guards) + SECTOR_GUARD * guardPower(s, near) + chief) * 0.35));
+      const k = Math.min(n, sround(s, nightDefense(s, guards, near, chief)));
       n -= k; s.stats.kills += k;
       const who = guards.length ? `${names(guards)} holdt vakt` : near.length ? `${names(near)} var ${SECTORS[g.sector].at} og tok imot` : `Vaktordningen til ${postHolder(s, 'sikkerhet')!.name} holdt`;
       if (!n) { log(`Natt: ${k} ${plural(k)} prøvde seg ved ${g.name}. ${who}.`, 'good'); continue; }
