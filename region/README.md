@@ -1,4 +1,4 @@
-# Regionspillet v0.2 (QA)
+# Regionspillet v0.3 (QA)
 
 Dette er regionspillet: hele Stavanger-regionen med 663 soner. Det er en egen kodebase ved siden av Buøy-spillet i rotmappen.
 - **Start:** du kan starte hvor du vil, også steder som er nesten umulige å holde.
@@ -6,7 +6,12 @@ Dette er regionspillet: hele Stavanger-regionen med 663 soner. Det er en egen ko
 - **Samfunnet:** befolkningen får arbeid, og du styrer med lover i unntakstilstand. Håp og uro, lojalitet i crewet og mytteri følger av valgene.
 - **Forskning og forsvar:** et forskningstre med spesialisering etter HQ-type, perimeter i fire trinn og zombier som muterer.
 - **Grupper:** Gjengen krever beskyttelse, og Fellesskapet smiler til det forråder dere.
-- **Hendelser:** 111 hendelser og kjeder som husker valgene dine.
+- **Hendelser:** 115 hendelser og kjeder som husker valgene dine.
+- **Nytt i v0.3:**
+  - seks unike steder: cruiseskipet, Utstein, Ullandhaugtårnet, flyet på Sola, Domkirken og Arenaen
+  - eget mørkt 3D-kart med tåke og zombiebevegelser
+  - plass til bilder fra Codex
+  - rettelser etter QA-runde 1 og 2
 
 ```bash
 cd region
@@ -16,7 +21,7 @@ pnpm region:bot 150 3 8   # boten spiller fra mange startområder, JSON-oppsumme
 pnpm region:events        # prøver alle hendelser og alle valg
 ```
 
-- **Design, tall, bot-runde og hva QA bør se etter:** [docs/24_V02_DESIGN.md](docs/24_V02_DESIGN.md). Grunnreglene står i [docs/23_REGIONSPILL.md](docs/23_REGIONSPILL.md).
+- **Design, tall, bot-runde og hva QA bør se etter:** [docs/26_V03.md](docs/26_V03.md) og [docs/24_V02_DESIGN.md](docs/24_V02_DESIGN.md). Bildebestillingen til Codex står i [docs/25_ART_BRIEF.md](docs/25_ART_BRIEF.md). Grunnreglene står i [docs/23_REGIONSPILL.md](docs/23_REGIONSPILL.md).
 - **Balansetall:** `packages/gameplay/src/region/systems.ts` og `rules.ts`.
 - **Soneeditoren** (`pnpm zones`) virker ikke fra repoet. Cellene og Python-verktøyene ligger bare lokalt, og spillet trenger dem ikke. Det leser `apps/game-client/public/world/region-v1.json`.
 

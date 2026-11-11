@@ -7,10 +7,11 @@ import {
   ACTIONS, BRANCHES, HQ_BRANCH, LAW_GROUPS, LAWS, MILESTONES, MODULE_COST, MUTATIONS, NETWORK_COST, PHASES, SAVE_KEY_REGION, TECHS, TRAIT_NAMES, UPGRADE_COST, VALUE, WEAPONS, WORK_IDS, WORK_NAMES,
   areaNet, assaultOdds, assigned, autoWork, bestTier, controlled, craftRecipes, dailyFlows, dateText, discontentTarget, endDay, goalMet, hopeTarget, hqModules, indexWorld, lawAvailable, lawWait, living,
   moduleName, newRegionGame, passLaw, phaseDef, previewOrder, reach, repealLaw, resolveEvent, resourceName, searchHoursTotal, season, setWork, shelter, specialBranch, startDanger,
-  startResearch, techBlocked, techCost, totalPeople, trade, tradeValue, upgradeName, upgradesFor, workforce,
+  startResearch, techBlocked, techCost, totalPeople, trade, tradeValue, upgradeName, upgradesFor, workforce, WONDERS, wonderZone, nextWonderLevel, wonderEffects,
   type ActionId, type Branch, type Flows, type RegionOrder, type RegionReport, type RegionState, type RegionWorld, type WorkId,
 } from '../../../packages/gameplay/src/region/index';
 import { CONTENT, takeoverEffort } from '../../../packages/world-data/src/content';
+import { attachBuildings, COLORS, gameStyle, MAP_ATTRIBUTION, markerElement } from './region-map-style';
 import './region.css';
 
 const WORLD_URL = '/world/region-v1.json';
@@ -22,13 +23,29 @@ const number = (n: number) => Math.round(n).toLocaleString('nb-NO');
 const decimal = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits: 1 });
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${decimal(Math.abs(Math.round(n * 10) / 10))}`;
 
-type Modal = null | 'report' | 'trade' | 'goals' | 'menu' | 'stock' | 'society' | 'research' | 'chronicle';
+type Modal = null | 'report' | 'trade' | 'goals' | 'menu' | 'stock' | 'society' | 'research' | 'chronicle' | 'wonders';
 
 function load(): RegionState | null {
   try { const raw = localStorage.getItem(SAVE_KEY_REGION); const s = raw ? JSON.parse(raw) as RegionState : null; return s?.schema === 'region-2' ? s : null; } catch { return null; }
 }
 function persist(state: RegionState | null) {
   try { if (state) localStorage.setItem(SAVE_KEY_REGION, JSON.stringify(state)); else localStorage.removeItem(SAVE_KEY_REGION); } catch { /* private mode */ }
+}
+
+// ------------------------------------------------------------------ art
+// Pictures live in public/art and are listed in public/art/manifest.json (pnpm art:manifest).
+// Anything not listed is simply not shown, so the game works before and while the art arrives.
+let artList: Promise<Set<string>> | null = null;
+const artIndex = () => (artList ??= fetch('/art/manifest.json').then(r => r.ok ? r.json() : []).then((l: string[]) => new Set(l)).catch(() => new Set<string>()));
+export const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/æ/g, 'ae').replace(/ø/g, 'o').replace(/å/g, 'a').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function Art({ path, className, alt = '' }: { path: string; className?: string; alt?: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    artIndex().then(set => { if (!live) return; const hit = ['webp', 'jpg', 'png'].map(e => `${path}.${e}`).find(p => set.has(p)); setSrc(hit ? `/art/${hit}` : null); });
+    return () => { live = false; };
+  }, [path]);
+  return src ? <img className={className ?? 'rz-art'} src={src} alt={alt} /> : null;
 }
 
 export default function RegionGame() {
@@ -63,6 +80,7 @@ function StartScreen({ world, saved, onStart }: { world: RegionWorld; saved: Reg
   const hqNear = [choice, ...(index.adjacent.get(choice) ?? []).map(a => a.to)].flatMap(id => (index.poisByZone.get(id) ?? []).filter(p => p.role === 'hq')).map(p => `${p.name} (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
   return <main className="rz-shell rz-start">
     <section className="rz-start-intro">
+      <Art path="intro/hero" className="rz-art rz-art-hero" />
       <p className="rz-kicker">STAVANGER Z / ETTER DAG NULL</p>
       <h1>Hele regionen.<br />Ett døgn av gangen.</h1>
       <p>Du leder en liten gruppe gjennom en zombieapokalypse i Stavanger-regionen. Det finnes ingen regjering lenger, bare deg, folkene dine og de valgene du tar.</p>
@@ -81,7 +99,7 @@ function StartScreen({ world, saved, onStart }: { world: RegionWorld; saved: Reg
       {zone && d && <div className="rz-start-pick">
         <p className="rz-kicker">{l2?.name}</p>
         <h2>{zone.name}</h2>
-        <p><b style={{ color: DANGER_COLOR[d.level] }}>{d.level}</b> · om lag {number(d.zombies)} døde i sonen og {number(d.around)} rundt.</p>
+        <p><b style={{ color: DANGER_COLOR[d.level] }}>Å bli: {d.level}</b> · om lag {number(d.zombies)} døde i sonen og {number(d.around)} rundt.{d.escape ? <> Beste fluktvei: <b>{index.byId.get(d.escape.zoneId)?.name}</b> (om lag {number(d.escape.zombies)} døde).</> : null}</p>
         <p className="rz-small">{d.level === 'Nesten umulig' ? 'Dere kommer ikke til å klare å holde dette stedet. Planlegg flukten fra første dag.' : d.level === 'Svært krevende' ? 'Mange døde. Det kan være lurt å flytte leiren før dere tar over noe.' : d.level === 'Krevende' ? 'Det går, men det koster.' : 'Et godt sted å begynne.'}
           {' '}{CONTENT.zoneTypes.find(t => t[0] === zone.type)?.[1] ?? ''}.{hqNear.length ? ` HQ i nærheten: ${hqNear.slice(0, 3).join(', ')}.` : ''}</p>
         <div className="rz-start-go">
@@ -107,12 +125,13 @@ function StartMap({ world, dangers, selected, onSelect }: { world: RegionWorld; 
     import('maplibre-gl').then(lib => {
       if (cancelled || !ref.current) return;
       lib.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
-      map = new lib.Map({ container: ref.current, center: [5.72, 58.96], zoom: 10.2, minZoom: 9, maxZoom: 16, dragRotate: false, attributionControl: false, style: baseStyle() });
-      map.addControl(new lib.AttributionControl({ compact: true, customAttribution: world.sources.join(' · ') }));
+      map = new lib.Map({ container: ref.current, center: [5.72, 58.96], zoom: 10.2, minZoom: 9, maxZoom: 16, dragRotate: false, attributionControl: false, style: gameStyle() });
+      map.addControl(new lib.AttributionControl({ compact: true, customAttribution: MAP_ATTRIBUTION }));
       map.on('load', () => {
         const l3 = world.zones.filter(z => z.level === 3 && z.geometry).map(z => ({ type: 'Feature' as const, id: z.id, properties: { id: z.id, c: DANGER_COLOR[dangers[z.id]?.level ?? 'Rolig'] }, geometry: z.geometry as GeoJSON.Geometry }));
         map!.addSource('l3', { type: 'geojson', data: { type: 'FeatureCollection', features: l3 }, promoteId: 'id' });
-        map!.addLayer({ id: 'fill', type: 'fill', source: 'l3', paint: { 'fill-color': ['get', 'c'], 'fill-opacity': .5 } });
+        attachBuildings(map!);
+        map!.addLayer({ id: 'fill', type: 'fill', source: 'l3', paint: { 'fill-color': ['get', 'c'], 'fill-opacity': .42 } });
         map!.addLayer({ id: 'line', type: 'line', source: 'l3', paint: { 'line-color': '#0c1416', 'line-width': .5 } });
         map!.addLayer({ id: 'sel', type: 'line', source: 'l3', filter: ['==', ['get', 'id'], ''], paint: { 'line-color': '#ffe08a', 'line-width': 3 } });
         map!.on('click', 'fill', (e: MapLayerMouseEvent) => { const id = e.features?.[0]?.properties?.id as string | undefined; if (id) onSelect(id); });
@@ -134,11 +153,6 @@ function StartMap({ world, dangers, selected, onSelect }: { world: RegionWorld; 
   return <div className="rz-start-canvas"><div ref={ref} className="rz-map-canvas" />
     <div className="rz-legend">{Object.entries(DANGER_COLOR).map(([k, c]) => <span key={k}><i style={{ background: c }} />{k}</span>)}<span>Klikk en sone for å starte der</span></div></div>;
 }
-const baseStyle = () => ({
-  version: 8 as const, sources: { topo: { type: 'raster' as const, tileSize: 256, maxzoom: 18, attribution: '© Kartverket', tiles: ['https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png'] } },
-  layers: [{ id: 'bg', type: 'background' as const, paint: { 'background-color': '#0f1a1c' } },
-    { id: 'topo', type: 'raster' as const, source: 'topo', paint: { 'raster-opacity': .55, 'raster-saturation': -.85, 'raster-brightness-max': .55, 'raster-contrast': .1 } }],
-});
 
 // ------------------------------------------------------------------ intro
 
@@ -155,6 +169,7 @@ function Intro({ world, state, onDone }: { world: RegionWorld; state: RegionStat
   ];
   const p = pages[page];
   return <div className="rz-shell rz-overlay rz-intro"><section className="rz-dialog" role="dialog" aria-label="Introduksjon">
+    <Art path={`intro/${page + 1}`} className="rz-art rz-art-wide" />
     <p className="rz-kicker">{p.kicker}</p><h2>{p.title}</h2><p className="rz-intro-text">{p.text}</p>
     <div className="rz-intro-nav"><span className="rz-small">{page + 1} / {pages.length}</span>
       <button onClick={onDone}>Hopp over</button>
@@ -182,7 +197,8 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
   const apply = (fn: () => RegionState) => { try { setState(fn()); setMessage(''); } catch (e) { setMessage((e as Error).message); } };
 
   const addOrder = (action: ActionId, target?: string) => {
-    const order: RegionOrder = { id: `o${state.day}-${orders.length}-${Date.now() % 100000}`, action, zoneId: selected, survivorIds: crew, target };
+    // The id seeds the dice for this order, so it must not depend on the clock: same clicks, same day.
+    const order: RegionOrder = { id: `o${state.day}-${action}-${selected}-${crew.join('.')}${target ? `-${target}` : ''}`, action, zoneId: selected, survivorIds: crew, target };
     const p = previewOrder(state, world, order);
     if (!p.valid) { setMessage(p.errors.join(' ')); return; }
     setOrders([...orders, order]); setCrew([]); setMessage('');
@@ -216,6 +232,7 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
         <button onClick={() => setModal('society')} data-testid="open-society">Samfunn</button>
         <button onClick={() => setModal('research')} data-testid="open-research">Forskning{state.research.current ? ' ●' : ''}</button>
         <button onClick={() => setModal('trade')}>Grupper {state.factions.filter(f => f.known && !f.defeated).length}</button>
+        <button onClick={() => setModal('wonders')} data-testid="open-wonders">Unike steder{Object.keys(state.wonders ?? {}).length ? ` ${Object.keys(state.wonders ?? {}).length}` : ''}</button>
         <button onClick={() => setModal('stock')}>Lager</button>
         <button onClick={() => setModal('chronicle')}>Krønike</button>
         <button onClick={() => { setReport(state.reports.at(-1) ?? null); setModal('report'); }} disabled={!state.reports.length}>Rapport</button>
@@ -226,6 +243,7 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
       <h2>Crew <small>velg folk, så en handling</small></h2>
       {people.map(p => <button key={p.id} className={`rz-person ${crew.includes(p.id) ? 'on' : ''} ${busy.has(p.id) || away(p.id) ? 'busy' : ''}`} disabled={busy.has(p.id) || away(p.id)}
         aria-pressed={crew.includes(p.id)} onClick={() => setCrew(crew.includes(p.id) ? crew.filter(x => x !== p.id) : [...crew, p.id])}>
+        <Art path={`crew/${slug(p.name)}`} className="rz-portrait" />
         <strong>{p.name}{p.bitten !== undefined && <em className="rz-bitten"> bitt</em>}{away(p.id) && <em> borte til dag {p.awayUntil}</em>}</strong>
         <span>{p.role} · {WEAPONS[p.weapon].label}{p.traits?.length ? ` · ${p.traits.map(t => TRAIT_NAMES[t]).join(', ')}` : ''}</span>
         <i className="rz-bar"><b style={{ width: `${Math.max(0, p.health)}%` }} /></i>
@@ -244,18 +262,20 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
       {zone && <ZonePanel world={world} state={state} flows={flows} zoneId={selected} crew={crew} hops={hops.get(selected)} onOrder={addOrder} />}
     </aside>
     {state.event && <div className="rz-overlay"><section className="rz-dialog rz-event" role="dialog" aria-label={state.event.title}>
+      <Art path={`events/${state.event.id}`} className="rz-art rz-art-wide" />
       <p className="rz-kicker">{state.event.kicker ?? `HENDELSE · DAG ${state.day}`}</p><h2>{state.event.title}</h2><p>{state.event.text}</p>
       {!!state.event.voices?.length && <ul className="rz-voices">{state.event.voices.map(v => <li key={v}>{v}</li>)}</ul>}
       {state.event.choices.map(c => <button key={c.id} disabled={!!c.disabled} onClick={() => apply(() => resolveEvent(state, world, c.id).state)}><strong>{c.label}</strong><small>{c.disabled ?? c.detail}</small></button>)}
     </section></div>}
     {showPhase && !state.gameOver && <div className="rz-overlay"><section className="rz-dialog rz-phase-dialog" role="dialog" aria-label="Ny fase">
+      <Art path={`phases/${state.phase}`} className="rz-art rz-art-wide" />
       <p className="rz-kicker">DAG {state.day} · FASE {state.phase}</p><h2>{phase.name}</h2><p>{phase.intro}</p>
       {phase.unlocks.length > 0 && <p><b>Nytt:</b> {phase.unlocks.join(', ')}.</p>}
       {state.mutations.filter(m => m.day === state.phaseDay).map(m => <p key={m.id} className="rz-errors">{m.known ? `Mutasjon: ${MUTATIONS.find(x => x.id === m.id)?.name}. ${MUTATIONS.find(x => x.id === m.id)?.text}` : 'Zombiene har forandret seg. Forsk på zombiestudier for å finne ut hvordan.'}</p>)}
       <p><b>Mål:</b> {phase.goals.map(g => g.text).join(' ')}</p>
       <button className="rz-primary" onClick={() => setPhaseShown(state.phase)}>Videre</button>
     </section></div>}
-    {state.gameOver && <div className="rz-overlay"><section className="rz-dialog"><p className="rz-kicker">{state.gameOver.won ? 'SEIER' : 'SLUTT'}</p><h2>{state.gameOver.won ? 'Dere klarte det' : `Slutt etter ${state.gameOver.day} dager`}</h2><p>{state.gameOver.reason}</p>
+    {state.gameOver && <div className="rz-overlay"><section className="rz-dialog"><Art path={`end/${state.gameOver.won ? 'win' : 'lose'}`} className="rz-art rz-art-wide" /><p className="rz-kicker">{state.gameOver.won ? 'SEIER' : 'SLUTT'}</p><h2>{state.gameOver.won ? 'Dere klarte det' : `Slutt etter ${state.gameOver.day} dager`}</h2><p>{state.gameOver.reason}</p>
       <p>Fase {state.phase}, {controlled(state).length} soner, {totalPeople(state)} mennesker, {state.research.done.length} oppfinnelser, {state.counters.killed ?? 0} zombier drept.</p>
       <button className="rz-primary" onClick={() => { persist(null); onQuit(); }}>Ny gjennomspilling</button></section></div>}
     {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}><section className="rz-dialog rz-wide-dialog">
@@ -265,6 +285,7 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
       {modal === 'goals' && <GoalsView world={world} state={state} />}
       {modal === 'society' && <SocietyView world={world} state={state} flows={flows} apply={apply} message={message} />}
       {modal === 'research' && <ResearchView state={state} apply={apply} message={message} />}
+      {modal === 'wonders' && <WondersView world={world} state={state} onZone={id => { setSelected(id); setModal(null); }} />}
       {modal === 'chronicle' && <><h2>Krønike</h2><ol className="rz-chronicle">{[...state.memory].reverse().map((m, i) => <li key={i}><b>Dag {m.day}</b> {m.text}</li>)}</ol></>}
       {modal === 'stock' && <><h2>Lager</h2><div className="rz-stock-grid">{[...CONTENT.resources.filter(r => r.layer !== 'capacity').map(r => r.id), 'samples'].map(id => <span key={id}><b>{number(state.stock[id] ?? 0)}</b>{resourceName(id)}</span>)}</div></>}
       {modal === 'menu' && <><h2>Meny</h2>
@@ -333,6 +354,9 @@ function ZonePanel({ world, state, flows, zoneId, crew, hops, onOrder }: { world
     }
     if (links.length) for (const a of ['hold', 'block', 'blow', 'repair'] as ActionId[]) actions.push({ action: a, targets: links.filter(l => a !== 'repair' || state.chokepoints[l.id] === 'blown').map(l => ({ id: l.id, name: `${l.name} (${chokeLabel(state.chokepoints[l.id])})` })) });
   }
+  const here = Object.entries(state.wonders ?? {}).filter(([, w]) => w.zoneId === zoneId);
+  const buildable = here.map(([id]) => ({ id, def: WONDERS.find(d => d.id === id)!, next: nextWonderLevel(state, id) })).filter(x => x.next);
+  if (buildable.length) actions.unshift({ action: 'wonder', targets: buildable.map(x => ({ id: x.id, name: `${x.def.name}: ${x.next!.name} (${costLabel(x.next!.cost)})` })) });
   const barricaded = (index.adjacent.get(zoneId) ?? []).filter(a => state.barricades[a.connId] > 0);
   return <div className="rz-zone">
     <p className="rz-kicker">{l1?.name} · {l2?.name}</p>
@@ -341,6 +365,8 @@ function ZonePanel({ world, state, flows, zoneId, crew, hops, onOrder }: { world
       <span>{CONTENT.zoneTypes.find(t => t[0] === zone.type)?.[1] ?? 'Ukjent type'}</span>
       {zoneId === state.homeZoneId && <span>★ Leiren</span>}
       {hops !== undefined ? <span>{hops ? `${hops} steg unna` : 'Her er dere'}</span> : <span>Utenfor rekkevidde</span>}</p>
+    {here.map(([id, w]) => { const def = WONDERS.find(d => d.id === id)!; return <div key={id} className="rz-wonder-card"><Art path={`wonders/${id}`} className="rz-art rz-art-wide" /><b>✦ {def.name}</b><small>{def.levels[w.level].name}: {def.levels[w.level].text}</small></div>; })}
+    {state.hq?.zoneId === zoneId && <Art path={`hq/${state.hq.type}`} className="rz-art rz-art-wide" />}
     {owned && flow && <div className="rz-net">
       <div><b className={flow.net >= 0 ? 'rz-good' : 'rz-errors'}>{signed(flow.net)}</b><span>mat/dag i sonen</span></div>
       {l2 && <div><b className={areaNet(state, world, flows, l2.id) >= 0 ? 'rz-good' : 'rz-errors'}>{signed(areaNet(state, world, flows, l2.id))}</b><span>{l2.name}</span></div>}
@@ -454,6 +480,34 @@ function lawEffectText(e: (typeof LAWS)[number]['effect']) {
   return out.join(' · ');
 }
 
+// ------------------------------------------------------------------ wonders
+
+function WondersView({ world, state, onZone }: { world: RegionWorld; state: RegionState; onZone: (id: string) => void }) {
+  const fx = wonderEffects(state);
+  const effectText = (e: (typeof WONDERS)[number]['levels'][number]['effect']) => [
+    e.shelter && `plass til ${e.shelter}`, e.hope && `håp +${e.hope}`, e.defense && `forsvar +${e.defense}`, e.food && `mat +${e.food}/dag`, e.medicine && `medisin +${e.medicine}/dag`,
+    e.research && `forskning +${Math.round(e.research * 100)} %`, e.trade && `handel +${Math.round(e.trade * 100)} %`, e.spoil && `svinn −${Math.round(e.spoil * 100)} %`,
+    e.workers && `${e.workers} nye arbeidsfolk`, e.contact && 'kontakt med alle grupper', e.warn && 'varsel om horder',
+  ].filter(Boolean).join(' · ');
+  return <><h2>Unike steder</h2>
+    <p className="rz-small">Steder som bare finnes én gang. Noen blir deres når dere tar sonen, andre ved flaks eller riktige valg. De er alltid en fordel, men verdien avhenger av hvor dere står. Sammenlagt nå: {effectText(fx) || 'ingenting ennå'}.</p>
+    <div className="rz-wonders">{WONDERS.map(d => {
+      const w = state.wonders?.[d.id];
+      const zone = w?.zoneId ?? wonderZone(world, d);
+      const next = w ? d.levels[w.level + 1] : undefined;
+      return <section key={d.id} className={`rz-wonder ${w ? 'on' : ''}`}>
+        <Art path={`wonders/${d.id}`} className="rz-art rz-art-wide" />
+        <h3>✦ {d.name}{w ? <small> · {d.levels[w.level].name}</small> : null}</h3>
+        <p className="rz-small">{d.about}</p>
+        {w ? <>
+          <ol className="rz-levels">{d.levels.map((l, i) => <li key={l.name} className={i <= w.level ? 'done' : i === w.level + 1 ? 'next' : ''}><b>{l.name}</b> {effectText(l.effect)}{i === w.level + 1 ? <small> · {costLabel(l.cost)}, {l.hours} timer{w.progress ? `, ${Math.round(w.progress)} gjort` : ''}</small> : null}</li>)}</ol>
+          {next ? <p className="rz-small">Velg sonen og bruk «Bygg ut det unike stedet». Byggelaget hjelper når arbeidet er i gang.</p> : <p className="rz-good">Ferdig utbygd.</p>}
+        </> : <p className="rz-quiet">{d.requires}</p>}
+        {zone && <button className="rz-link" onClick={() => onZone(zone)}>Vis på kartet</button>}
+      </section>;
+    })}</div></>;
+}
+
 // ------------------------------------------------------------------ research
 
 function ResearchView({ state, apply, message }: { state: RegionState; apply: (fn: () => RegionState) => void; message: string }) {
@@ -533,6 +587,8 @@ function TradeView({ state, world, onTrade, message }: { state: RegionState; wor
 function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onOverlay }: { world: RegionWorld; state: RegionState; flows: Flows; overlay: 'zombies' | 'food'; selected: string; hops: Map<string, number>; onSelect: (id: string) => void; onOverlay: (o: 'zombies' | 'food') => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LibreMap | null>(null);
+  const markersRef = useRef<{ remove: () => void }[]>([]);
+  const libRef = useRef<typeof import('maplibre-gl') | null>(null);
   const [ready, setReady] = useState(false);
   const [hover, setHover] = useState<{ x: number; y: number; text: string } | null>(null);
   const stateRef = useRef(state);
@@ -543,13 +599,17 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
   useEffect(() => {
     let map: LibreMap | null = null;
     let cancelled = false;
+    let frame = 0;
     import('maplibre-gl').then(lib => {
       if (cancelled || !ref.current) return;
+      libRef.current = lib;
       lib.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
       const home = index.byId.get(state.homeZoneId)?.at ?? [5.73, 58.97];
-      map = new lib.Map({ container: ref.current, center: home, zoom: 14, minZoom: 9, maxZoom: 18, dragRotate: false, pitchWithRotate: false, attributionControl: false, style: baseStyle() });
-      map.addControl(new lib.AttributionControl({ compact: true, customAttribution: world.sources.join(' · ') }));
+      map = new lib.Map({ container: ref.current, center: home, zoom: 14, pitch: 35, minZoom: 9, maxZoom: 17.5, maxPitch: 60, dragRotate: true, attributionControl: false, style: gameStyle() });
+      map.addControl(new lib.AttributionControl({ compact: true, customAttribution: MAP_ATTRIBUTION }));
+      map.addControl(new lib.NavigationControl({ visualizePitch: true, showZoom: false }), 'bottom-right');
       map.on('load', () => {
+        attachBuildings(map!);
         const l3 = world.zones.filter(z => z.level === 3 && z.geometry).map(z => ({ type: 'Feature' as const, id: z.id, properties: { id: z.id }, geometry: z.geometry as GeoJSON.Geometry }));
         const outlines = (level: number) => world.zones.filter(z => z.level === level && z.geometry).map(z => ({ type: 'Feature' as const, properties: { id: z.id }, geometry: z.geometry as GeoJSON.Geometry }));
         map!.addSource('l3', { type: 'geojson', data: { type: 'FeatureCollection', features: l3 }, promoteId: 'id' });
@@ -557,21 +617,33 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
         map!.addSource('l1', { type: 'geojson', data: { type: 'FeatureCollection', features: outlines(1) } });
         const links = world.links.map(l => ({ type: 'Feature' as const, properties: { id: l.id, kind: l.kind }, geometry: { type: 'LineString' as const, coordinates: [index.byId.get(l.a)!.at!, index.byId.get(l.b)!.at!] } }));
         map!.addSource('links', { type: 'geojson', data: { type: 'FeatureCollection', features: links }, promoteId: 'id' });
-        map!.addSource('marks', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map!.addSource('heat', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map!.addSource('moves', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        // What you do not know lies in fog. What is yours glows.
         map!.addLayer({ id: 'l3-fill', type: 'fill', source: 'l3', paint: {
           'fill-color': ['case', ['==', ['feature-state', 'mode'], 'food'],
-            ['case', ['==', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled'], ['interpolate', ['linear'], ['coalesce', ['feature-state', 'net'], 0], -3, '#c0533f', 0, '#8f8a5a', 6, '#4f9a6b'], '#1d2a2c'],
-            ['match', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled', '#4f9a6b', 'faction', '#8a6fc4', 'enemy', '#c24a8a', 'scouted',
-              ['interpolate', ['linear'], ['coalesce', ['feature-state', 'z'], 0], 0, '#7f8f5a', 20, '#b39046', 80, '#b4553f', 300, '#7c2230'], '#1d2a2c']],
-          'fill-opacity': ['case', ['boolean', ['feature-state', 'reach'], false], .62, .38] } });
-        map!.addLayer({ id: 'l3-line', type: 'line', source: 'l3', paint: { 'line-color': '#0c1416', 'line-width': .6, 'line-opacity': .7 } });
-        map!.addLayer({ id: 'l2-line', type: 'line', source: 'l2', paint: { 'line-color': '#d9d2b0', 'line-width': 1.2, 'line-opacity': .45 } });
-        map!.addLayer({ id: 'l1-line', type: 'line', source: 'l1', paint: { 'line-color': '#f2e2a0', 'line-width': 2.6, 'line-opacity': .6 } });
+            ['case', ['==', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled'], ['interpolate', ['linear'], ['coalesce', ['feature-state', 'net'], 0], -3, '#c0533f', 0, '#8f8a5a', 6, '#4f9a6b'], '#05090b'],
+            ['match', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled', COLORS.owned, 'faction', COLORS.faction, 'enemy', COLORS.enemy, 'scouted',
+              ['interpolate', ['linear'], ['coalesce', ['feature-state', 'z'], 0], 0, '#8a9a64', 25, '#b08a3e', 100, '#a2412f', 300, '#5e1a24'], '#04080a']],
+          'fill-opacity': ['match', ['coalesce', ['feature-state', 's'], 'unknown'], 'unknown', ['case', ['boolean', ['feature-state', 'reach'], false], .5, .72], 'controlled', .16, 'scouted', .22, .3] } });
+        map!.addLayer({ id: 'heat', type: 'heatmap', source: 'heat', maxzoom: 16, paint: {
+          'heatmap-weight': ['interpolate', ['linear'], ['get', 'n'], 0, 0, 300, 1],
+          'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 9, .6, 15, 1.4],
+          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 9, 12, 13, 40, 16, 90],
+          'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', .2, 'rgba(120,20,20,.25)', .5, 'rgba(200,50,30,.45)', 1, 'rgba(255,120,60,.6)'],
+          'heatmap-opacity': .9 } });
+        map!.addLayer({ id: 'l3-line', type: 'line', source: 'l3', paint: { 'line-color': '#0a1214', 'line-width': .6, 'line-opacity': .8 } });
+        map!.addLayer({ id: 'l3-glow', type: 'line', source: 'l3', paint: {
+          'line-color': ['match', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled', COLORS.owned, 'enemy', COLORS.enemy, 'faction', COLORS.faction, 'rgba(0,0,0,0)'],
+          'line-width': ['match', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled', 2.4, 'enemy', 2, 'faction', 1.6, 0], 'line-blur': 2, 'line-opacity': .85 } });
+        map!.addLayer({ id: 'l2-line', type: 'line', source: 'l2', paint: { 'line-color': '#d9d2b0', 'line-width': 1, 'line-opacity': .3 } });
+        map!.addLayer({ id: 'l1-line', type: 'line', source: 'l1', paint: { 'line-color': '#f2e2a0', 'line-width': 2, 'line-opacity': .4, 'line-dasharray': [4, 2] } });
         map!.addLayer({ id: 'links', type: 'line', source: 'links', paint: {
           'line-color': ['match', ['coalesce', ['feature-state', 'c'], 'open'], 'blown', '#e05a4a', 'flooded', '#4a8ee0', 'blocked', '#e0a64a', 'held', '#6fd08a', '#e8e1c4'],
           'line-width': 3, 'line-dasharray': [2, 1.5] } });
-        map!.addLayer({ id: 'l3-selected', type: 'line', source: 'l3', filter: ['==', ['get', 'id'], ''], paint: { 'line-color': '#ffe08a', 'line-width': 3 } });
-        map!.addLayer({ id: 'marks', type: 'circle', source: 'marks', paint: { 'circle-radius': ['get', 'r'], 'circle-color': ['get', 'c'], 'circle-stroke-color': '#0c1416', 'circle-stroke-width': 1.5 } });
+        map!.addLayer({ id: 'moves', type: 'line', source: 'moves', paint: {
+          'line-color': COLORS.zombie, 'line-width': ['interpolate', ['linear'], ['get', 'n'], 1, 1.5, 30, 6], 'line-opacity': .8, 'line-dasharray': [0, 2, 2] }, layout: { 'line-cap': 'round' } });
+        map!.addLayer({ id: 'l3-selected', type: 'line', source: 'l3', filter: ['==', ['get', 'id'], ''], paint: { 'line-color': COLORS.home, 'line-width': 3 } });
         map!.on('click', 'l3-fill', (e: MapLayerMouseEvent) => { const id = e.features?.[0]?.properties?.id as string | undefined; if (id) onSelect(id); });
         map!.on('mousemove', 'l3-fill', (e: MapLayerMouseEvent) => {
           const id = e.features?.[0]?.properties?.id as string | undefined;
@@ -583,30 +655,47 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
           map!.getCanvas().style.cursor = 'pointer';
         });
         map!.on('mouseleave', 'l3-fill', () => { setHover(null); map!.getCanvas().style.cursor = ''; });
+        // The night's movements crawl along their lines.
+        const dash = [[0, 4, 3], [.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, .5], [3, 4, 0]];
+        let step = 0, last = 0;
+        const animate = (t: number) => {
+          if (t - last > 90 && map?.getLayer('moves')) { map.setPaintProperty('moves', 'line-dasharray', dash[step++ % dash.length]); last = t; }
+          frame = requestAnimationFrame(animate);
+        };
+        frame = requestAnimationFrame(animate);
         mapRef.current = map;
         setReady(true);
       });
     });
-    return () => { cancelled = true; map?.remove(); mapRef.current = null; };
+    return () => { cancelled = true; cancelAnimationFrame(frame); markersRef.current.forEach(m => m.remove()); map?.remove(); mapRef.current = null; };
     // The map is created once; state is pushed through feature-state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [world]);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready) return;
+    const lib = libRef.current;
+    if (!map || !ready || !lib) return;
     for (const zone of index.l3) {
       const z = state.zones[zone.id];
       const f = state.factions.find(x => x.zoneId === zone.id && !x.defeated);
-      const s = f ? (f.hostile ? 'enemy' : 'faction') : z.status;
+      const s = f && f.known ? (f.hostile ? 'enemy' : 'faction') : z.status;
       map.setFeatureState({ source: 'l3', id: zone.id }, { s, z: z.intel ? (z.intel.min + z.intel.max) / 2 : 0, reach: hops.has(zone.id), net: flows.zones[zone.id]?.net ?? 0, mode: overlay });
     }
     for (const l of world.links) map.setFeatureState({ source: 'links', id: l.id }, { c: state.chokepoints[l.id] });
-    const marks = [
-      { at: index.byId.get(state.homeZoneId)!.at!, r: 8, c: '#ffe08a' },
-      ...state.factions.filter(f => f.known && !f.defeated).map(f => ({ at: index.byId.get(f.zoneId)!.at!, r: 6, c: f.hostile ? '#e05a8a' : '#b9a0f0' })),
-      ...world.pois.filter(p => p.role === 'hq' && state.zones[p.zoneId]?.status !== 'unknown').map(p => ({ at: p.at, r: 4, c: '#f2c14e' })),
-    ];
-    (map.getSource('marks') as GeoJSONSource).setData({ type: 'FeatureCollection', features: marks.map(m => ({ type: 'Feature', properties: { r: m.r, c: m.c }, geometry: { type: 'Point', coordinates: m.at } })) });
+    // Heat only where you have looked.
+    const heat = index.l3.filter(z => state.zones[z.id].intel && state.zones[z.id].status !== 'controlled' && z.at).map(z => ({ type: 'Feature' as const, properties: { n: (state.zones[z.id].intel!.min + state.zones[z.id].intel!.max) / 2 }, geometry: { type: 'Point' as const, coordinates: z.at! } }));
+    (map.getSource('heat') as GeoJSONSource).setData({ type: 'FeatureCollection', features: heat });
+    map.setPaintProperty('heat', 'heatmap-opacity', overlay === 'food' ? 0 : .9);
+    const moves = (state.reports.at(-1)?.moves ?? []).filter(m => index.byId.get(m.from)?.at && index.byId.get(m.to)?.at).map(m => ({ type: 'Feature' as const, properties: { n: m.n }, geometry: { type: 'LineString' as const, coordinates: [index.byId.get(m.from)!.at!, index.byId.get(m.to)!.at!] } }));
+    (map.getSource('moves') as GeoJSONSource).setData({ type: 'FeatureCollection', features: moves });
+    // Markers: home, HQ candidates you have seen, wonders, groups you know.
+    markersRef.current.forEach(m => m.remove());
+    const add = (at: [number, number] | undefined, kind: Parameters<typeof markerElement>[0], title: string) => { if (at) markersRef.current.push(new lib.Marker({ element: markerElement(kind, title) }).setLngLat(at).addTo(map)); };
+    markersRef.current = [];
+    for (const p of world.pois.filter(p => p.role === 'hq' && state.zones[p.zoneId]?.status !== 'unknown' && !state.factions.some(f => f.zoneId === p.zoneId && !f.defeated))) add(p.at, 'hq', `${p.name}: mulig HQ (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
+    for (const d of WONDERS) { const zid = state.wonders?.[d.id]?.zoneId ?? (d.found === 'claim' ? wonderZone(world, d) : undefined); if (zid && (state.wonders?.[d.id] || state.zones[zid]?.status !== 'unknown')) add(index.byId.get(zid)?.at, 'wonder', `${d.name}${state.wonders?.[d.id] ? ' (deres)' : ''}`); }
+    for (const f of state.factions.filter(f => f.known && !f.defeated)) add(index.byId.get(f.zoneId)?.at, f.hostile ? 'enemy' : 'faction', f.name);
+    add(index.byId.get(state.homeZoneId)?.at, 'home', 'Leiren');
   }, [state, ready, hops, world, index, flows, overlay]);
   useEffect(() => {
     const map = mapRef.current;
@@ -617,12 +706,12 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
     <div ref={ref} className="rz-map-canvas" />
     {hover && <div className="rz-tip" style={{ left: hover.x + 14, top: hover.y + 10 }}>{hover.text}</div>}
     <div className="rz-legend">{overlay === 'zombies'
-      ? <><span><i style={{ background: '#4f9a6b' }} />Deres</span><span><i style={{ background: '#b39046' }} />Speidet, få</span><span><i style={{ background: '#b4553f' }} />Mange zombier</span><span><i style={{ background: '#8a6fc4' }} />Annen gruppe</span><span><i style={{ background: '#c24a8a' }} />Fiender</span><span><i style={{ background: '#1d2a2c' }} />Ukjent</span></>
+      ? <><span><i style={{ background: COLORS.owned }} />Deres</span><span><i style={{ background: '#b08a3e' }} />Speidet</span><span><i style={{ background: COLORS.zombie }} />Zombier og nattens bevegelser</span><span><i style={{ background: COLORS.faction }} />Gruppe</span><span><i style={{ background: COLORS.enemy }} />Fiender</span><span><i style={{ background: '#04080a', border: '1px solid #333' }} />Ukjent</span></>
       : <><span><i style={{ background: '#4f9a6b' }} />Gir mat</span><span><i style={{ background: '#8f8a5a' }} />Går i null</span><span><i style={{ background: '#c0533f' }} />Koster mat</span></>}</div>
     <div className="rz-map-tools">
       <button className={overlay === 'zombies' ? 'on' : ''} onClick={() => onOverlay('zombies')}>Zombier</button>
       <button className={overlay === 'food' ? 'on' : ''} onClick={() => onOverlay('food')}>Netto mat</button>
-      <button onClick={() => { const at = index.byId.get(state.homeZoneId)?.at; if (at) mapRef.current?.flyTo({ center: at, zoom: 14 }); onSelect(state.homeZoneId); }}>Til leiren</button>
+      <button onClick={() => { const at = index.byId.get(state.homeZoneId)?.at; if (at) mapRef.current?.flyTo({ center: at, zoom: 14.5, pitch: 40 }); onSelect(state.homeZoneId); }}>Til leiren</button>
     </div>
   </section>;
 }

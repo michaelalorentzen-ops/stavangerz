@@ -34,6 +34,7 @@ export const PHASES: PhaseDef[] = [
 // ------------------------------------------------------------------ laws
 
 export interface LawEffect {
+  accidents?: number; sickMult?: number;
   hope?: number; discontent?: number; foodMult?: number; dependentFood?: number; workMult?: number; childWork?: number; childResearch?: number;
   crime?: number; refugees?: number; lawCooldown?: number; guardMult?: number; researchMult?: number; healthPerDay?: number; fatigue?: number;
 }
@@ -42,12 +43,12 @@ export const LAW_GROUPS: Record<string, string> = {
   rations: 'Rasjonering', work: 'Arbeid', children: 'Barna', punish: 'Straff', bitten: 'De bitte', dead: 'De døde', gates: 'Porten', order: 'Ro og orden', gov: 'Styreform',
 };
 export const LAWS: LawDef[] = [
-  { id: 'rationReduced', group: 'rations', phase: 2, name: 'Reduserte rasjoner', text: 'Alle får tre firedeler. Folk blir svakere og surere, men maten varer lenger.', effect: { foodMult: .75, hope: -5, discontent: 6, healthPerDay: -.4 } },
+  { id: 'rationReduced', group: 'rations', phase: 2, name: 'Reduserte rasjoner', text: 'Alle får tre firedeler. Folk blir svakere og surere, men maten varer lenger.', effect: { foodMult: .75, hope: -5, discontent: 6, healthPerDay: -.4, sickMult: 1.3 } },
   { id: 'rationWorkers', group: 'rations', phase: 2, name: 'Arbeidere først', text: 'De som jobber, får full rasjon. Barn og eldre får mindre.', effect: { dependentFood: .6, hope: -4, discontent: 3 }, tags: ['harsh'] },
-  { id: 'rationHalf', group: 'rations', phase: 2, name: 'Halve rasjoner', text: 'Nødtiltak. Alle får halvparten. Ingen holder ut dette lenge.', effect: { foodMult: .5, hope: -12, discontent: 12, healthPerDay: -1.5 }, tags: ['harsh'] },
-  { id: 'longShifts', group: 'work', phase: 2, name: 'Lange skift', text: 'Tolv timer om dagen. Mer blir gjort, og flere gjør feil.', effect: { workMult: 1.3, discontent: 8, fatigue: 6 }, tags: ['harsh'] },
+  { id: 'rationHalf', group: 'rations', phase: 2, name: 'Halve rasjoner', text: 'Nødtiltak. Alle får halvparten. Ingen holder ut dette lenge.', effect: { foodMult: .5, hope: -12, discontent: 12, healthPerDay: -1.5, sickMult: 1.8 }, tags: ['harsh'] },
+  { id: 'longShifts', group: 'work', phase: 2, name: 'Lange skift', text: 'Tolv timer om dagen. Mer blir gjort, og flere gjør feil.', effect: { workMult: 1.3, discontent: 8, fatigue: 6, hope: -3, accidents: .006, sickMult: 1.5 }, tags: ['harsh'] },
   { id: 'restDay', group: 'work', phase: 2, name: 'Fast hviledag', text: 'Søndag er fri. Litt mindre blir gjort.', effect: { workMult: .9, hope: 4, discontent: -3 } },
-  { id: 'childLabour', group: 'children', phase: 2, name: 'Barnearbeid', text: 'Barn fra tolv år jobber på jordet og ved garnene.', effect: { childWork: .5, hope: -8, discontent: 2 }, tags: ['harsh', 'children'] },
+  { id: 'childLabour', group: 'children', phase: 2, name: 'Barnearbeid', text: 'Barn fra tolv år jobber på jordet og ved garnene.', effect: { childWork: .5, hope: -10, discontent: 4, sickMult: 1.15 }, tags: ['harsh', 'children'] },
   { id: 'childSchool', group: 'children', phase: 2, name: 'Skole for barna', text: 'Barna lærer. Noen av dem hjelper til med forskningen.', effect: { childResearch: .25, hope: 5 }, needsTech: 'school' },
   { id: 'punishLabour', group: 'punish', phase: 2, name: 'Straffearbeid', text: 'Den som stjeler, jobber det inn igjen.', effect: { crime: .8, discontent: -1 } },
   { id: 'punishExile', group: 'punish', phase: 2, name: 'Forvisning', text: 'Den som bryter loven, sendes ut porten.', effect: { crime: .6, hope: -2 }, tags: ['harsh'] },

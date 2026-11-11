@@ -17,6 +17,7 @@ import { POP, REACTIONS, TIERS } from './systems';
 import { lawMods, societyDay, totalPeople, trimWork } from './society';
 import { checkPhase, checkVictory, mods, mutation, researchDay, researchRate, rot, tech } from './progress';
 import { dailyFlows } from './economy';
+import { discoverWonders, nextWonderLevel, WONDERS, wonderEffects, workOnWonder } from './wonders';
 
 // ------------------------------------------------------------------ world index
 
@@ -172,7 +173,7 @@ export function newRegionGame(world: RegionWorld, startZoneId: string, seed = 20
   return state;
 }
 
-export interface StartDanger { score: number; level: 'Rolig' | 'Middels' | 'Krevende' | 'Svært krevende' | 'Nesten umulig'; zombies: number; around: number }
+export interface StartDanger { score: number; level: 'Rolig' | 'Middels' | 'Krevende' | 'Svært krevende' | 'Nesten umulig'; zombies: number; around: number; escape?: { zoneId: string; zombies: number } }
 /** How hard a start is, from how many lived there and around it. No seed: the same for everyone. */
 export function startDanger(world: RegionWorld, zoneId: string): StartDanger {
   const index = indexWorld(world);
@@ -182,7 +183,8 @@ export function startDanger(world: RegionWorld, zoneId: string): StartDanger {
   const around = (index.adjacent.get(zoneId) ?? []).reduce((n, a) => n + residents(index.byId.get(a.to)!) * R.zombieShare, 0);
   const score = zombies + around * .06;
   const level = score < 8 ? 'Rolig' : score < 20 ? 'Middels' : score < 45 ? 'Krevende' : score < 90 ? 'Svært krevende' : 'Nesten umulig';
-  return { score, level, zombies: Math.round(zombies), around: Math.round(around) };
+  const calm = (index.adjacent.get(zoneId) ?? []).map(a => ({ zoneId: a.to, zombies: Math.round(residents(index.byId.get(a.to)!) * R.zombieShare) })).sort((a, b) => a.zombies - b.zombies)[0];
+  return { score, level, zombies: Math.round(zombies), around: Math.round(around), escape: calm };
 }
 
 function intelFor(zombies: number, scouting: number, rng: () => number) {
@@ -313,8 +315,10 @@ export function previewOrder(state: RegionState, world: RegionWorld, order: Omit
   if (crew.some(s => s.health < 25 && !['rest', 'heal'].includes(order.action))) errors.push('Noen er for skadet til å jobbe. La dem hvile.');
   if (!zone || !z) return { valid: false, errors: ['Ukjent sone.'], hours: 0, costs, risk, text };
   const faction = state.factions.find(f => f.zoneId === order.zoneId && !f.defeated);
+  const wonderHere = Object.entries(state.wonders ?? {}).some(([id, w]) => w.zoneId === order.zoneId && WONDERS.find(d => d.id === id)?.found === 'event');
+  if (hops === undefined && order.action === 'wonder' && wonderHere) { /* a ship or a plane is yours wherever it is */ }
   if (faction && !['scout', 'assault'].includes(order.action)) errors.push('En annen gruppe holder denne sonen. Handle med dem, speid eller angrip.');
-  if (hops === undefined && !['rest', 'heal', 'craft', 'module', 'research'].includes(order.action)) errors.push('Sonen er utenfor rekkevidde. Ta over soner nærmere først.');
+  if (hops === undefined && !['rest', 'heal', 'craft', 'module', 'research'].includes(order.action) && !(order.action === 'wonder' && wonderHere)) errors.push('Sonen er utenfor rekkevidde. Ta over soner nærmere først.');
   const travel = (hops ?? 0) * R.hopHours * 2;
   const hours = Math.max(0, crew.reduce((n, s) => n + (R.workHours - travel) * efficiency(state, s), 0) * lawMods(state).workMult);
   const isControlled = z.status === 'controlled';
@@ -454,6 +458,18 @@ export function previewOrder(state: RegionState, world: RegionWorld, order: Omit
       const known = z.intel ? z.intel.max : z.zombies;
       risk = known > 20 ? 'Høy' : known > 6 ? 'Middels' : 'Lav';
       text = load > carry ? `Dere kan bære om lag ${Math.round(carry / load * 100)} % av lageret. Resten blir igjen.` : 'Dere får med alt.';
+      break;
+    }
+    case 'wonder': {
+      const w = state.wonders?.[order.target ?? ''];
+      const next = nextWonderLevel(state, order.target ?? '');
+      const def = WONDERS.find(d => d.id === order.target);
+      if (!w || !def) { errors.push('Dere har ikke dette stedet.'); break; }
+      if (w.zoneId !== order.zoneId) errors.push('Arbeidet gjøres der stedet er.');
+      if (def.found === 'claim' && !isControlled) errors.push('Sonen må være deres.');
+      if (!next) { errors.push('Stedet er ferdig utbygd.'); break; }
+      costs = w.progress ? {} : next.cost;
+      text = `«${next.name}»: ${Math.round(w.progress)} av ${next.hours} timer. ${next.text}`;
       break;
     }
     case 'assault': {
@@ -668,11 +684,13 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
         lines.push({ tone: 'good', title: recipe.name, text: `${times} ganger.` });
         break;
       }
+      case 'wonder': workOnWonder(state, order.target!, hours, lines, cost => pay(state.stock, cost)); moveShip(state, world); break;
       case 'research': crewResearch += crew.reduce((n, s) => n + (s.skills.craft + s.skills.medical) / 2 * 1.2, 0) * hours / Math.max(1, crew.length * R.workHours); break;
       case 'relocate': relocate(state, world, order.zoneId, rng, lines); break;
       case 'assault': assault(state, world, order.zoneId, crew, rng, lines); break;
     }
   }
+  discoverWonders(state, world, lines);
   for (const s of present(state)) if (!worked.has(s.id)) { s.fatigue = Math.max(0, s.fatigue - 25); s.health = Math.min(100, s.health + 2); }
   // Held links lapse unless someone stands there again tomorrow.
   for (const [id, st] of Object.entries(state.chokepoints)) if (st === 'held' && !heldToday.has(id)) { state.chokepoints[id] = 'open'; delete state.barricades[id]; }
@@ -684,7 +702,7 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
   noise[state.homeZoneId] = (noise[state.homeZoneId] ?? 0) + (Math.ceil(living(state).length / 3) + Math.ceil(totalPeople(state) / 12) + (state.hq?.modules.includes('heavyWorkshop') ? 2 : 0)) * (tech(state, 'decoys') ? .6 : 1);
 
   // Zombie migration, then night.
-  const migrated = migrate(state, world, noise, lines);
+  const { moved: migrated, moves } = migrate(state, world, noise, lines);
   killed += nightDefence(state, world, guards, work.guardPower, lines, rngFor('night'));
   killed += rot(state);
 
@@ -747,13 +765,26 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
     state.counters.mutinyDay = state.day;
   }
   if (!state.gameOver) {
-    const ev = pickEvent(state, world, random(state.seed, state.day, 'event'));
+    const ev = pickEvent(state, world, random(state.seed, state.day, `event:${state.startZoneId}`));
     if (ev) { state.event = ev; lines.push({ tone: 'warn', title: ev.title, text: 'En hendelse krever et valg.' }); }
   }
-  const report: RegionReport = { day: state.day, lines, food: { produced: Math.round(foodMade), eaten: Math.round(eaten), spoiled: Math.round(spoiled) }, water: { produced: Math.round(flows.water.produced), drunk: Math.round(drunk) }, zombiesMoved: migrated, killed };
+  const report: RegionReport = { day: state.day, lines, food: { produced: Math.round(foodMade), eaten: Math.round(eaten), spoiled: Math.round(spoiled) }, water: { produced: Math.round(flows.water.produced), drunk: Math.round(drunk) }, zombiesMoved: migrated, killed, moves };
   state.reports = [...state.reports.slice(-29), report];
   state.counters.killed = (state.counters.killed ?? 0) + killed;
   return { state, report };
+}
+
+/** When the cruise ship is towed, it moves to the yard if you hold one, or to your safest coastal zone. */
+function moveShip(state: RegionState, world: RegionWorld) {
+  const ship = state.wonders?.cruise;
+  if (!ship || ship.level < 2 || ship.zoneId === state.flags.shipDock) return;
+  const index = indexWorld(world);
+  const owned = controlled(state).filter(id => index.coastal.has(id));
+  const yard = owned.find(id => (index.poisByZone.get(id) ?? []).some(p => p.hqType === 'shipyard'));
+  const dock = yard ?? owned.sort((a, b) => state.zones[a].zombies - state.zones[b].zombies)[0];
+  if (!dock) return;
+  ship.zoneId = dock;
+  state.flags.shipDock = dock;
 }
 
 function stockText(stock: Stock) { return Object.entries(stock).map(([id, n]) => `${n} ${resourceName(id).toLowerCase()}`).join(', '); }
@@ -882,6 +913,7 @@ function workDay(state: RegionState, world: RegionWorld, rng: () => number, line
     if (state.hq?.building) { const h = Math.min(buildHours, MODULE_COST[state.hq.building.id].hours - state.hq.building.hours); state.hq.building.hours += h; buildHours -= h; finishModule(state, lines); }
     for (const [id, z] of Object.entries(state.zones)) if (z.building && buildHours > 0) { const h = Math.min(buildHours, UPGRADE_COST[z.building.id].hours - z.building.hours); z.building.hours += h; buildHours -= h; finishZoneBuilding(state, world, id, lines); }
     for (const key of Object.keys(state.counters)) if ((key.startsWith('network:') || key.startsWith('repair:')) && buildHours > 0) { const h = Math.min(buildHours, 10); state.counters[key] += h; buildHours -= h; }
+    for (const [id, w] of Object.entries(state.wonders ?? {})) if (w.progress > 0 && buildHours > 0) { const next = nextWonderLevel(state, id); if (!next) continue; const h = Math.min(buildHours, next.hours - w.progress); buildHours -= h; workOnWonder(state, id, h, lines, () => undefined); moveShip(state, world); }
     finishNetworks(state, world, lines); finishRepairs(state, world, lines);
     for (const [id, d] of Object.entries(state.barricades)) {
       if (buildHours <= 0) break;
@@ -937,6 +969,7 @@ function assault(state: RegionState, world: RegionWorld, zoneId: string, crew: R
     } else state.morale += 8;
     state.population.adults += Math.round(survivors * (peaceful ? .5 : .3));
     state.memory.push({ day: state.day, text: `Dere tok ${f.name} med makt.` });
+    discoverWonders(state, world, lines);
     lines.push({ tone: 'good', title: `${f.name} er slått`, text: `Basen og lageret er deres. ${Math.round(survivors * (peaceful ? .5 : .3))} av dem ble med dere.${peaceful ? ' De andre gruppene har hørt om det.' : ''}`, zoneId });
   } else {
     hurt(state, crew, 30, rng, lines, f.name);
@@ -1040,7 +1073,10 @@ function migrate(state: RegionState, world: RegionWorld, noise: Record<string, n
   for (const f of state.factions) if (!f.defeated) state.zones[f.zoneId].zombies = 0;
   const intoOwned = result.movements.filter(mv => state.zones[mv.toId].status === 'controlled').reduce((n, mv) => n + mv.count, 0);
   if (intoOwned) lines.push({ tone: 'warn', title: `${intoOwned} zombier kom inn i områdene deres`, text: 'Lyd trekker dem til. Sperr grensene eller hold vakt.' });
-  return result.report.moved;
+  const seen = (id: string) => state.zones[id]?.status !== 'unknown';
+  const moves = result.movements.filter(mv => mv.count > 0 && (seen(mv.fromId) || seen(mv.toId))).sort((a, b) => b.count - a.count).slice(0, 40)
+    .map(mv => ({ from: mv.fromId, to: mv.toId, n: mv.count }));
+  return { moved: result.report.moved, moves };
 }
 
 function nightDefence(state: RegionState, world: RegionWorld, guards: Record<string, number>, guardPool: number, lines: ReportLine[], rng: () => number) {
@@ -1059,6 +1095,7 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     if (tech(state, 'spikes')) defense += borders.length * 2;
     defense += borders.filter(a => (state.barricadeTier[a.connId] ?? 1) >= 4).length * 4;
     if (id === state.homeZoneId) defense += homeCombat;
+    for (const [wid, w] of Object.entries(state.wonders ?? {})) if (w.zoneId === id) defense += WONDERS.find(d => d.id === wid)?.levels[w.level]?.effect.defense ?? 0;
     if (state.hq?.zoneId === id) for (const m of state.hq.modules) defense += MODULE_COST[m]?.defense ?? 0;
     const fromPool = Math.min(pool, Math.max(0, z.zombies - defense));
     pool -= fromPool; defense += fromPool;
@@ -1097,7 +1134,7 @@ function meetFactions(state: RegionState, world: RegionWorld, zoneId: string, li
   }
 }
 function updateFactions(state: RegionState, world: RegionWorld, lines: ReportLine[]) {
-  const radio = (state.stock.radio ?? 0) >= 1 || state.hq?.modules.includes('radioRoom') || Object.values(state.networks).some(n => n.includes('comms')) || tech(state, 'crystalRadio');
+  const radio = wonderEffects(state).contact || (state.stock.radio ?? 0) >= 1 || state.hq?.modules.includes('radioRoom') || Object.values(state.networks).some(n => n.includes('comms')) || tech(state, 'crystalRadio');
   for (const f of state.factions) {
     if (f.defeated) continue;
     if (!f.known && !f.hostile && radio && state.day % 5 === 0) { f.known = true; lines.push({ tone: 'good', title: `Radiokontakt med ${f.name}`, text: f.about }); }
@@ -1110,7 +1147,7 @@ function updateFactions(state: RegionState, world: RegionWorld, lines: ReportLin
   void world;
 }
 export function tradeValue(state: RegionState, faction: RegionFaction, give: Stock, take: Stock) {
-  const mall = state.hq?.type === 'mall' ? 1.15 : 1;
+  const mall = (state.hq?.type === 'mall' ? 1.15 : 1) * (1 + wonderEffects(state).trade);
   const worthGive = Object.entries(give).reduce((n, [id, k]) => n + k * (VALUE[id] ?? 1) * (faction.wants.includes(id) ? 1.3 : .7), 0) * (1 + faction.relation / 200) * mall;
   const worthTake = Object.entries(take).reduce((n, [id, k]) => n + k * (VALUE[id] ?? 1) * (faction.offers.includes(id) ? 1.1 : 1.6), 0);
   return { worthGive: Math.round(worthGive * 10) / 10, worthTake: Math.round(worthTake * 10) / 10, fair: worthGive >= worthTake && worthTake > 0 };

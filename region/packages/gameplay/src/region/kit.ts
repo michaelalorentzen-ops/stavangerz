@@ -107,6 +107,39 @@ export function borderZones(s: RegionState, w: RegionWorld) {
   const owned = new Set(controlled(s));
   return [...new Set([...owned].flatMap(id => (index.adjacent.get(id) ?? []).map(a => a.to)).filter(id => !owned.has(id) && !s.zones[id].owner))];
 }
+/**
+ * Move zombies so none appear from nowhere. Positive: a herd gathers from the zones around the target, nearest first.
+ * Negative: they drift off into the neighbouring zones you do not hold. Returns how many actually moved.
+ */
+export function moveZombies(s: RegionState, w: RegionWorld, target: string, n: number) {
+  const index = indexWorld(w);
+  const z = s.zones[target];
+  if (!z || !n) return 0;
+  const want = Math.round(Math.abs(n));
+  if (n < 0) {
+    const out = Math.min(z.zombies, want);
+    const to = (index.adjacent.get(target) ?? []).map(a => a.to).filter(id => s.zones[id]?.status !== 'controlled' && !s.zones[id]?.owner);
+    z.zombies -= out;
+    if (to.length) to.forEach((id, i) => { s.zones[id].zombies += Math.floor(out / to.length) + (i < out % to.length ? 1 : 0); });
+    else z.zombies += out;
+    return out;
+  }
+  const seen = new Set([target]);
+  let ring = [target], got = 0;
+  for (let hop = 0; hop < 6 && got < want; hop++) {
+    const next: string[] = [];
+    for (const id of ring) for (const a of index.adjacent.get(id) ?? []) if (!seen.has(a.to)) { seen.add(a.to); next.push(a.to); }
+    for (const id of next) {
+      const src = s.zones[id];
+      if (!src || src.status === 'controlled' || src.owner || got >= want) continue;
+      const take = Math.min(Math.floor(src.zombies * .6), want - got);
+      src.zombies -= take; got += take;
+    }
+    ring = next;
+  }
+  z.zombies += got;
+  return got;
+}
 export const zoneName = (w: RegionWorld, id?: string | number) => (id !== undefined && indexWorld(w).byId.get(String(id))?.name) || 'området';
 /** Zones with a place of a given kind (hqType, siteType or facilityType), e.g. 'hospital', 'mall', 'school'. */
 export const zonesWith = (w: RegionWorld, kind: string) => [...new Set(w.pois.filter(p => p.hqType === kind || p.siteType === kind || p.facilityType === kind).map(p => p.zoneId))];

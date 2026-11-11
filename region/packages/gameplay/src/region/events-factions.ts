@@ -5,7 +5,7 @@
 import type { RegionFaction, RegionState } from './types';
 import { indexWorld, living } from './engine';
 import {
-  addPeople, amount, event, give, hasTech, hope, killPerson, need, pay, pickCrew, remember, schedule, setFlag, takeShare, totalPeople, unrest, zoneName,
+  addPeople, amount, event, moveZombies, hurtPerson, give, hasTech, hope, killPerson, need, pay, pickCrew, remember, schedule, setFlag, takeShare, totalPeople, unrest, zoneName,
   type EventDef,
 } from './kit';
 
@@ -24,10 +24,10 @@ function homeStrength(s: RegionState) {
 export const EVENTS_FACTIONS: EventDef[] = [
   // ------------------------------------------------------------------ the gang
   {
-    id: 'gangTribute', weight: 4, phase: [2, 5], when: s => !!gang(s) && s.day - Number(s.flags.gangLast ?? -99) >= 12,
+    id: 'gangTribute', weight: 1, chainOnly: true, when: s => !!gang(s),
     make: (s, w) => {
       const g = gang(s)!;
-      const demand = { food: Math.max(15, Math.round(wealth(s) * .12)), ammo: Math.max(10, Math.round(amount(s, 'ammo') * .2)) };
+      const demand = { food: Math.max(10, Math.round(wealth(s) * .1)), ammo: Math.max(5, Math.round(amount(s, 'ammo') * .15)) };
       const paidBefore = Number(s.flags.gangPaid ?? 0);
       return event(paidBefore ? 'Gjengen er tilbake' : 'Beskyttelse', `${paidBefore ? `For ${paidBefore === 1 ? 'andre' : 'n-te'} gang` : 'En pickup med fire bevæpnede'} stopper ved sperringen i ${zoneName(w, s.homeZoneId)}. ${g.name.split(' (')[0]} vil ha ${demand.food} mat og ${demand.ammo} patroner. «Så ingenting skjer med dere. Det er jo farlige tider.»`, [
         { id: 'pay', label: 'Betal', detail: `${demand.food} mat og ${demand.ammo} patroner. De kommer igjen, og de vil ha mer.`, disabled: need(s, demand) },
@@ -40,7 +40,7 @@ export const EVENTS_FACTIONS: EventDef[] = [
       g.known = true;
       setFlag(s, 'gangLast', s.day);
       const d = s.event!.data!;
-      if (c === 'pay') { pay(s, { food: Number(d.food), ammo: Number(d.ammo) }); setFlag(s, 'gangPaid', Number(s.flags.gangPaid ?? 0) + 1); unrest(s, 4); hope(s, -2); g.strength = (g.strength ?? 30) + 2; }
+      if (c === 'pay') { pay(s, { food: Number(d.food), ammo: Number(d.ammo) }); setFlag(s, 'gangPaid', Number(s.flags.gangPaid ?? 0) + 1); unrest(s, 4); hope(s, -2); g.strength = (g.strength ?? 30) + 2; schedule(s, 12, 'gangTribute'); }
       if (c === 'refuse') schedule(s, 3 + Math.floor(rng() * 3), 'gangRaid');
       if (c === 'ambush') {
         if (homeStrength(s) + rng() * 15 > 18) { g.strength = Math.max(5, (g.strength ?? 30) - 8); give(s, 'ammo', 20); give(s, 'fuel', 15); lines.push({ tone: 'good', title: 'Fire færre', text: 'Pickupen står igjen ved porten, med diesel på tanken.' }); }
@@ -55,7 +55,8 @@ export const EVENTS_FACTIONS: EventDef[] = [
     id: 'gangRaid', weight: 1, chainOnly: true, when: s => !!gang(s),
     make: (s, w) => {
       const g = gang(s)!;
-      const theirs = Math.round((g.strength ?? 30) * 1.2);
+      // They send what they think it takes: more as the region gets meaner.
+      const theirs = Math.round((g.strength ?? 30) * [0, .6, .75, 1, 1.2, 1.3][Math.min(5, s.phase)]);
       const ours = Math.round(homeStrength(s));
       return event('Angrep ved daggry', `Billykter i ${zoneName(w, s.homeZoneId)}. ${g.name.split(' (')[0]} kommer med om lag ${Math.round(theirs / 3)} mann. Dere har en styrke på ${ours} mot deres ${theirs}.`, [
         { id: 'fight', label: 'Forsvar leiren', detail: 'Alle til murene. Det blir døde på begge sider.' },
@@ -66,11 +67,12 @@ export const EVENTS_FACTIONS: EventDef[] = [
     resolve: (s, _w, c, rng, lines) => {
       const g = gang(s)!;
       const { theirs, ours } = s.event!.data! as { theirs: number; ours: number };
+      schedule(s, 12, 'gangTribute');
       if (c === 'hide') { for (const id of ['food', 'ammo', 'fuel', 'medicine']) takeShare(s, id, .35); hope(s, -6); unrest(s, 6); return; }
       if (c === 'deal') { pay(s, { food: 40, ammo: 20 }); unrest(s, 5); setFlag(s, 'gangLast', s.day); return; }
       const win = ours * (.7 + rng() * .6) > theirs * (.7 + rng() * .6);
       const dead = win ? Math.floor(rng() * 2) : 1 + Math.floor(rng() * 3);
-      for (let i = 0; i < dead; i++) { if (s.population.adults > 0 && rng() < .6) s.population.adults -= 1; else { const p = pickCrew(s, rng); if (p) killPerson(s, p, lines, 'Falt i forsvaret av leiren.'); } }
+      for (let i = 0; i < dead; i++) { if (s.population.adults > 0 && rng() < .8) s.population.adults -= 1; else { const p = pickCrew(s, rng); if (p && rng() < .5) killPerson(s, p, lines, 'Falt i forsvaret av leiren.'); else if (p) hurtPerson(s, p, 30, lines, 'Skutt i forsvaret av leiren.'); } }
       if (win) { g.strength = Math.max(5, (g.strength ?? 30) * .6); give(s, 'ammo', 30); hope(s, 8); lines.push({ tone: 'good', title: 'Angrepet er slått tilbake', text: `De lot våpen og døde ligge igjen.${dead ? ` Dere mistet ${dead}.` : ''}` }); remember(s, 'Dere slo tilbake Gjengen.'); }
       else { for (const id of ['food', 'ammo', 'fuel', 'medicine']) takeShare(s, id, .5); hope(s, -10); unrest(s, 8); lines.push({ tone: 'bad', title: 'Leiren ble plyndret', text: `De tok halve lageret. Dere mistet ${dead}.` }); }
       setFlag(s, 'gangLast', s.day);
@@ -201,7 +203,7 @@ export const EVENTS_FACTIONS: EventDef[] = [
         }
       }
       // Opening the gate lets the dead in too.
-      if (inside) s.zones[s.homeZoneId].zombies += 6 + Math.floor(rng() * 8);
+      if (inside) moveZombies(s, w, s.homeZoneId, 6 + Math.floor(rng() * 8));
       remember(s, `${f.name} forrådte dere.`);
       void w;
     },

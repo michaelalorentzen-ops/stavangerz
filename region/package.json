@@ -16,7 +16,10 @@
     "zones": "python -W ignore tools/zone-editor/server.py",
     "region:bot": "tsx scripts/region-bot.ts",
     "region:world": "python -W ignore tools/zone-editor/zonegame.py",
-    "region:events": "tsx scripts/region-events.ts"
+    "region:events": "tsx scripts/region-events.ts",
+    "art:shotlist": "tsx scripts/art-shotlist.ts",
+    "art:manifest": "node scripts/art-manifest.mjs",
+    "region:basemap": "python -W ignore tools/zone-editor/zonebasemap.py"
   },
   "dependencies": {
     "maplibre-gl": "6.16.0",

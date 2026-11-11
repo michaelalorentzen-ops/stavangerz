@@ -5,6 +5,7 @@
 import type { EventChoice, RegionFaction, RegionLink, RegionState, RegionSurvivor, RegionWorld, ReportLine, Stock } from './types';
 import { LAWS } from './systems';
 import {
+  moveZombies,
   addPeople, amount, borderZones, chance, coastalOwned, crewById, event, flag, give, hasLaw, hasTech, hope, hurtPerson, killPerson,
   loyalty, need, ownedZones, pay, pickCrew, pickOne, remember, removePeople, schedule, setFlag, takeShare, unrest, zoneName, zonesWith,
   type EventDef,
@@ -35,7 +36,10 @@ const placesOf = (s: RegionState, w: RegionWorld, kind: string) => zonesWith(w, 
 const placeName = (w: RegionWorld, zone: string, kind: string, fallback: string) =>
   w.pois.find(p => p.zoneId === zone && (p.hqType === kind || p.siteType === kind || p.facilityType === kind))?.name ?? fallback;
 const nearSet = (s: RegionState, w: RegionWorld) => new Set([...ownedZones(s), ...borderZones(s, w)]);
-const addZombies = (s: RegionState, zone: string, n: number) => { const z = s.zones[zone]; if (z) z.zombies = Math.max(0, Math.round(z.zombies + n)); };
+/** Zombies move, they are not made: herds gather from around, and scattered ones drift to the neighbours. */
+let worldRef: RegionWorld | undefined;
+export const bindWorld = (w: RegionWorld) => { worldRef = w; };
+const addZombies = (s: RegionState, zone: string, n: number) => { if (worldRef) moveZombies(s, worldRef, zone, n); };
 const addLoot = (s: RegionState, zone: string, loot: Stock) => {
   const z = s.zones[zone];
   if (!z) return;
@@ -480,7 +484,9 @@ export const EVENTS_WORLD: EventDef[] = [
     id: 'siege', weight: 2, phase: [3, 5],
     when: (s, w) => !!s.hq && borderZones(s, w).length > 0,
     make: (s, w, rng) => {
-      const zone = pickOne(rng, borderZones(s, w));
+      const around = borderZones(s, w);
+      if (!around.length) return null;
+      const zone = pickOne(rng, around);
       const size = Math.min(400, Math.round(150 + rng() * 150 + s.day * .5));
       return event('Beleiret', `Om lag ${size} zombier har samlet seg i ${zoneName(w, zone)}, rett utenfor sperringen. De går ikke videre. De står. Om natta hører dere dem lene seg mot gjerdet. Ingen kommer seg ut for å sanke, fiske eller hente vann.`, [
         { id: 'wait', label: 'Vent dem ut', detail: '20 mat og 20 vann går med. De går kanskje av seg selv.', tags: ['harsh'] },
@@ -506,8 +512,9 @@ export const EVENTS_WORLD: EventDef[] = [
     make: (s, w, _rng, d) => {
       const zone = str(d, 'zone');
       const left = s.zones[zone]?.zombies ?? 0;
-      if (left < 40) return null;
       const round = num(d, 'round');
+      if (left < Math.max(25, num(d, 'size') * .3)) return event('Beleiringen er over', `De fleste har trukket videre fra ${zoneName(w, zone)}. Om lag ${left} står igjen og glaner. Folk går ut og puster for første gang på ${round * 3} dager.`, [
+        { id: 'over', label: 'Endelig', detail: 'Håpet stiger.' }], { zoneId: zone, data: { zone, size: left, round, over: 1 } });
       return event('Beleiringen fortsetter', `Dag ${round * 3 + 1}. De er der fortsatt, om lag ${left}, i ${zoneName(w, zone)}. Folk krangler om vannet, og barna har sluttet å spørre når de får gå ut. ${round >= 2 ? 'Gjerdet på østsida har begynt å gi etter.' : ''}`, [
         { id: 'wait', label: 'Vent litt til', detail: '20 mat og 20 vann. Kanskje går de nå.', tags: ['harsh'] },
         { id: 'sally', label: 'Gjør utfall', detail: '30 ammunisjon. De tre beste går ut.', disabled: need(s, { ammo: 30 }) ?? noCrew(s, 2), tags: ['reckless'] },
@@ -517,6 +524,7 @@ export const EVENTS_WORLD: EventDef[] = [
     resolve: (s, w, c, rng, lines) => {
       const d = data(s);
       const zone = str(d, 'zone'), size = num(d, 'size'), round = num(d, 'round');
+      if (c === 'over') { hope(s, 6); unrest(s, -3); return; }
       if (c !== 'wait') { siegeAct(s, w, c, rng, lines, zone, size); return; }
       give(s, 'food', -20); give(s, 'water', -20); hope(s, -4); unrest(s, 4);
       if (chance(rng, .55)) {

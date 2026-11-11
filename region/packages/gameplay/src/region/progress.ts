@@ -3,6 +3,7 @@ import type { RegionState, RegionWorld, ReportLine } from './types';
 import { controlled, indexWorld, living, random } from './engine';
 import { HQ_BRANCH, MUTATIONS, PHASES, SPECIAL_DISCOUNT, TECHS, type TechDef } from './systems';
 import { lawMods, totalPeople } from './society';
+import { wonderEffects } from './wonders';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 export const tech = (state: RegionState, id: string) => state.research.done.includes(id);
@@ -55,7 +56,7 @@ export function startResearch(state0: RegionState, id: string): RegionState {
 export function researchRate(state: RegionState, crewPoints: number) {
   const mods = state.hq?.modules ?? [];
   const base = (state.work.research ?? 0) + state.population.children * lawMods(state).childResearch + crewPoints;
-  return base * lawMods(state).researchMult * (mods.includes('classroom') ? 1.2 : 1) * (mods.includes('lab') ? 1.3 : 1);
+  return base * lawMods(state).researchMult * (mods.includes('classroom') ? 1.2 : 1) * (mods.includes('lab') ? 1.3 : 1) * (1 + wonderEffects(state).research);
 }
 export function researchDay(state: RegionState, points: number, lines: ReportLine[]) {
   const id = state.research.current;
@@ -129,6 +130,8 @@ export function checkPhase(state: RegionState, world: RegionWorld, lines: Report
   lines.push({ tone: 'good', title: `Fase ${next.id}: ${next.name}`, text: next.intro });
   state.memory.push({ day: state.day, text: `Fase ${next.id}: ${next.name}.` });
   if (state.phase >= 3) mutate(state, lines);
+  // Wealth draws raiders: from the HQ phase the gang comes for its share.
+  if (state.phase === 2 && state.factions.some(f => f.id === 'gang' && !f.defeated)) state.scheduled.push({ day: state.day + 14 + (state.seed % 7), id: 'gangTribute' });
 }
 
 /** Zombies that are not killed slowly rot away late in the game. Logged as deaths, not hidden. */

@@ -1,7 +1,7 @@
 /** Playtest numbers for the region game. Hypotheses to balance, kept out of the engine and the UI. */
 import type { ActionId, RegionSurvivor, Weapon } from './types';
 
-export const REGION_RULES_VERSION = 'region-0.2';
+export const REGION_RULES_VERSION = 'region-0.3';
 export const SAVE_KEY_REGION = 'stavanger-z.region.v2';
 
 export const R = {
@@ -71,6 +71,7 @@ export const ACTIONS: Record<ActionId, { label: string; help: string; noise: num
   relocate: { label: 'Flytt leiren hit', help: 'Hele gruppen flytter. Det dere ikke kan bære, blir igjen. Bare før dere har et HQ.', noise: 2 },
   assault: { label: 'Angrip gruppen', help: 'Tokt mot en annen gruppes base. Vinner dere, er basen og lageret deres.', noise: 6 },
   repair: { label: 'Reparer brua', help: 'Bygg opp en sprengt bru igjen.', noise: 2 },
+  wonder: { label: 'Bygg ut det unike stedet', help: 'Arbeid på neste nivå. Byggelaget hjelper til når arbeidet er i gang.', noise: 1 },
 };
 
 /** Costs and hours for L3 upgrades from the catalog. */

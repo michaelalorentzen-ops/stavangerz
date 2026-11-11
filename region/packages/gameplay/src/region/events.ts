@@ -7,14 +7,15 @@ import { living, random, recruit } from './engine';
 import { R } from './rules';
 import { REACTIONS, TRAIT_NAMES } from './systems';
 import {
-  addPeople, amount, borderZones, chance, coastalOwned, crewById, event, farmOwned, give, hasLaw, hasModule, hasTech, hope, killPerson,
+  addPeople, amount, borderZones, moveZombies, chance, coastalOwned, crewById, event, farmOwned, give, hasLaw, hasModule, hasTech, hope, killPerson,
   leaves, loyalty, need, pay, pickCrew, pickOne, remember, schedule, seasonName, setFlag, totalPeople, unrest, zoneName,
   type EventDef,
 } from './kit';
 import { indexWorld } from './engine';
 import { EVENTS_PEOPLE } from './events-people';
-import { EVENTS_WORLD } from './events-world';
+import { EVENTS_WORLD, bindWorld } from './events-world';
 import { EVENTS_FACTIONS } from './events-factions';
+import { EVENTS_WONDERS } from './events-wonders';
 
 const CORE: EventDef[] = [
   {
@@ -137,10 +138,11 @@ const CORE: EventDef[] = [
         { id: 'brace', label: 'Forbered dere', detail: 'Sperringene forsterkes for 6 byggemateriale.', disabled: need(s, { building: 6 }) },
         { id: 'ignore', label: 'Gjør ingenting', detail: 'Håp at de går forbi.', tags: ['reckless'] }], { zoneId: target, data: { target, size } });
     },
-    resolve: (s, _w, c) => {
+    resolve: (s, _w, c, _rng, lines) => {
       const target = String(s.event!.data!.target), size = Number(s.event!.data!.size);
-      if (c === 'lure') { give(s, 'fuel', hasTech(s, 'decoys') ? -2 : -6); s.zones[target].zombies += Math.round(size * .2); return; }
-      s.zones[target].zombies += size;
+      if (c === 'lure') { give(s, 'fuel', hasTech(s, 'decoys') ? -2 : -6); moveZombies(s, _w, target, Math.round(size * .2)); return; }
+      const came = moveZombies(s, _w, target, size);
+      if (came < size * .5) lines.push({ tone: 'info', title: 'Horden var mindre enn fryktet', text: `Om lag ${came} kom. Det er ikke så mange døde igjen i nærheten.` });
       if (c === 'brace') { give(s, 'building', -6); for (const id of Object.keys(s.barricades)) s.barricades[id] += 6; }
     },
   },
@@ -165,9 +167,11 @@ const CORE: EventDef[] = [
     },
   },
   {
-    id: 'tunnelFlood', weight: 3, when: (s, w) => w.links.some(l => l.kind === 'tunnel' && l.lengthM > 2500 && s.chokepoints[l.id] !== 'flooded' && s.chokepoints[l.id] !== 'blown'),
+    id: 'tunnelFlood', weight: 3, when: (s, w) => w.links.some(l => l.kind === 'tunnel' && l.lengthM > 2500 && s.chokepoints[l.id] !== 'flooded' && s.chokepoints[l.id] !== 'blown' && [l.a, l.b].some(id => s.zones[id]?.status === 'controlled' || borderZones(s, w).includes(id))),
     make: (s, w, rng) => {
-      const options = w.links.filter(l => l.kind === 'tunnel' && l.lengthM > 2500 && !['flooded', 'blown'].includes(s.chokepoints[l.id]));
+      const near = new Set([...borderZones(s, w), ...Object.keys(s.zones).filter(id => s.zones[id].status === 'controlled')]);
+      const options = w.links.filter(l => l.kind === 'tunnel' && l.lengthM > 2500 && !['flooded', 'blown'].includes(s.chokepoints[l.id]) && (near.has(l.a) || near.has(l.b)));
+      if (!options.length) return null;
       const link = pickOne(rng, options);
       const index = indexWorld(w);
       const powered = [link.a, link.b].some(id => (s.networks[index.byId.get(id)?.parentId ?? ''] ?? []).includes('power'));
@@ -265,8 +269,8 @@ const CORE: EventDef[] = [
       if (!calm) return null;
       const coast = index.coastal.has(s.homeZoneId);
       return event('Den første natta', `Det er om lag ${here} døde i gatene rundt dere i ${zoneName(w, s.homeZoneId)}. Dere kan ikke rydde dette med fire personer. ${zoneName(w, calm)} ser roligere ut, men dere må gjennom.`, [
-        { id: 'run', label: `Bryt ut mot ${zoneName(w, calm)}`, detail: 'Dere tar med det dere kan bære. Noen kan bli skadet.', tags: ['reckless'] },
-        { id: 'hole', label: 'Barrikader dere inne', detail: 'Bruk alt byggemateriale på dører og trapper. Dere blir, og håper de går videre.' },
+        { id: 'run', label: `Bryt ut mot ${zoneName(w, calm)}`, detail: `Om lag ${s.zones[calm].zombies} døde der. Dere får med det meste. Noen kan bli skadet.` },
+        { id: 'hole', label: 'Barrikader dere inne', detail: 'Bruk alt byggemateriale på dører og trapper. Bråket trekker til flere. Et rolig sted holder, et tett sted blir en beleiring.' },
         ...(coast ? [{ id: 'boat', label: 'Ta en båt fra kaia', detail: 'Stille ut på fjorden og i land et roligere sted. Mye må bli igjen.' }] : []),
       ], { kicker: 'DAG 0', data: { calm } });
     },
@@ -280,13 +284,16 @@ const CORE: EventDef[] = [
         remember(s, `Dere flyktet til ${zoneName(w, to)} den første natta.`);
       };
       if (c === 'run') {
-        move(String(s.event!.data!.calm), .7);
-        for (const p of living(s)) if (rng() < .45) { p.health -= 10 + Math.floor(rng() * 20); lines.push({ tone: 'bad', title: `${p.name} ble skadet på flukten`, text: 'Gatene var ikke tomme.' }); }
+        move(String(s.event!.data!.calm), .85);
+        hope(s, 4);
+        for (const p of living(s)) if (rng() < .3) { p.health -= 8 + Math.floor(rng() * 15); lines.push({ tone: 'bad', title: `${p.name} ble skadet på flukten`, text: 'Gatene var ikke tomme.' }); }
       }
       if (c === 'hole') {
         const z = s.zones[s.homeZoneId];
         give(s, 'building', -amount(s, 'building'));
-        z.zombies = Math.round(z.zombies * .6);
+        // Hammering and shouting draws the neighbours' dead too. In a quiet place it works; in a dense one it is a siege.
+        z.zombies = Math.round(z.zombies * .9);
+        moveZombies(s, w, s.homeZoneId, Math.round(z.zombies * .15));
         for (const a of index.adjacent.get(s.homeZoneId) ?? []) if (a.kind === 'land') { s.barricades[a.connId] = 10; s.barricadeTier[a.connId] = 1; }
       }
       if (c === 'boat') {
@@ -345,7 +352,7 @@ const CORE: EventDef[] = [
   },
 ];
 
-const EVENTS: EventDef[] = [...CORE, ...EVENTS_PEOPLE, ...EVENTS_WORLD, ...EVENTS_FACTIONS];
+const EVENTS: EventDef[] = [...CORE, ...EVENTS_PEOPLE, ...EVENTS_WORLD, ...EVENTS_FACTIONS, ...EVENTS_WONDERS];
 export const EVENT_IDS = EVENTS.map(e => e.id);
 
 function eligible(def: EventDef, state: RegionState, world: RegionWorld) {
@@ -355,6 +362,7 @@ function eligible(def: EventDef, state: RegionState, world: RegionWorld) {
   try { return def.when(state, world); } catch { return false; }
 }
 function build(def: EventDef, state: RegionState, world: RegionWorld, rng: () => number, data?: Record<string, string | number>): PendingEvent | undefined {
+  bindWorld(world);
   let made: Omit<PendingEvent, 'id'> | null = null;
   try { made = def.make(state, world, rng, data); } catch { made = null; }
   if (!made || !made.choices.length) return undefined;
@@ -409,6 +417,7 @@ export function resolveEvent(state0: RegionState, world: RegionWorld, choiceId: 
   if (choice.disabled) throw new Error(choice.disabled);
   const def = EVENTS.find(e => e.id === ev.id)!;
   const lines: ReportLine[] = [];
+  bindWorld(world);
   def.resolve(state, world, choiceId, random(state.seed, state.day, `choice:${ev.id}`), lines);
   // The crew remembers what kind of leader you are.
   for (const p of living(state)) for (const trait of p.traits ?? []) for (const tag of choice.tags ?? []) {

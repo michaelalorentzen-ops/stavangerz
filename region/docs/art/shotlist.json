@@ -1,0 +1,1143 @@
+[
+ {
+  "file": "intro/hero",
+  "size": "1920x1080",
+  "priority": 1,
+  "title": "Startskjerm",
+  "motif": "Stavanger sett fra Vålandstårnet i skumringen etter utbruddet: Vågen, trehusene i Gamle Stavanger, Domkirken, et cruiseskip ved kaia, røyk over Hillevåg, regn. Ingen mennesker i forgrunnen, noen små skikkelser i gatene som ikke burde gå sånn."
+ },
+ {
+  "file": "intro/1",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Intro 1",
+  "motif": "Natt til 1. april: et lager på Forus med blålys, en nyhetssending på en mobilskjerm, regn på frontruta."
+ },
+ {
+  "file": "intro/2",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Intro 2",
+  "motif": "Trappeoppgang i en blokk: fire mennesker med lommelykter, en jaktrifle, en sykepleieruniform, en verktøykasse. Utenfor vinduet: skikkelser i gata."
+ },
+ {
+  "file": "intro/3",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Intro 3",
+  "motif": "Et taktisk kart over Stavanger på et kjøkkenbord, med tusj, kaffekopp og radio. Hender som planlegger."
+ },
+ {
+  "file": "intro/4",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Intro 4",
+  "motif": "Daggry over en tom gate med barrikade av bildekk og paller. Første dag."
+ },
+ {
+  "file": "phases/1",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Fase 1: Utbruddet",
+  "motif": "Strømmen er borte, telefonene er døde, og ropene fra gata har stilnet. Det som gjelder nå, er å finne et sted dere kan holde."
+ },
+ {
+  "file": "phases/2",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Fase 2: Hovedkvarteret",
+  "motif": "Dere har et sted. Nå kommer folk. Noen ber om hjelp, noen vil ha det dere har. Unntakstilstanden er deres å forvalte."
+ },
+ {
+  "file": "phases/3",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Fase 3: Ekspansjon",
+  "motif": "Hyllene i nabolaget er tomme. Det dere spiser fra nå, må dere dyrke, fiske eller bytte til dere. Og zombiene har forandret seg."
+ },
+ {
+  "file": "phases/4",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Fase 4: Bydelen",
+  "motif": "Dere styrer mer enn et nabolag. Det gjør dere til et mål, for zombier og for alle som heller vil ta enn å dyrke."
+ },
+ {
+  "file": "phases/5",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Fase 5: Fraksjonene",
+  "motif": "De døde begynner å råtne bort. Det som står igjen, er de levende og hva de vil med hverandre."
+ },
+ {
+  "file": "end/win",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "Seier",
+  "motif": "Et samfunn som har klart seg: drivhus, båter i havna, barn som leker innenfor et stålgjerde, røyk fra pipene, kveldssol over Byfjorden."
+ },
+ {
+  "file": "end/lose",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "Slutt",
+  "motif": "En forlatt leir i regnet: velta barrikade, slukket bål, en jakke på bakken. Ingen mennesker."
+ },
+ {
+  "file": "crew/ingrid",
+  "size": "512x512",
+  "priority": 1,
+  "title": "Ingrid, Speider",
+  "motif": "Portrett, brystbilde. Speider. Lokalkjent og rask. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/marius",
+  "size": "512x512",
+  "priority": 1,
+  "title": "Marius, Jeger",
+  "motif": "Portrett, brystbilde. Jeger. Rolig under press, men rifla høres langt. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/leila",
+  "size": "512x512",
+  "priority": 1,
+  "title": "Leila, Sykepleier",
+  "motif": "Portrett, brystbilde. Sykepleier. Holder folk på beina. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/tor",
+  "size": "512x512",
+  "priority": 1,
+  "title": "Tor, Mekaniker",
+  "motif": "Portrett, brystbilde. Mekaniker. Får ting til å holde en natt til. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/sunniva",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Sunniva, Bonde",
+  "motif": "Portrett, brystbilde. Bonde. Vet hva som gror her. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/kenneth",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Kenneth, Elektriker",
+  "motif": "Portrett, brystbilde. Elektriker. Kan få strøm i et hus igjen. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/amina",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Amina, Lege",
+  "motif": "Portrett, brystbilde. Lege. Jobbet på SUS til siste dag. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/ola",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Ola, Fisker",
+  "motif": "Portrett, brystbilde. Fisker. Har egen båt et sted i Vågen. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/hanne",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Hanne, Politi",
+  "motif": "Portrett, brystbilde. Politi. Har fortsatt tjenestevåpenet. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/erik",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Erik, Snekker",
+  "motif": "Portrett, brystbilde. Snekker. Bygger raskere enn han snakker. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/mia",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Mia, Student",
+  "motif": "Portrett, brystbilde. Student. Lærer fort og klatrer overalt. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/rune",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Rune, Soldat",
+  "motif": "Portrett, brystbilde. Soldat. Kom seg ut fra Madlaleiren. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/grete",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Grete, Pensjonist",
+  "motif": "Portrett, brystbilde. Pensjonist. Husker hvordan man sylter og salter. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "crew/jonas",
+  "size": "512x512",
+  "priority": 2,
+  "title": "Jonas, Mekaniker",
+  "motif": "Portrett, brystbilde. Mekaniker. Har kjørt traktor siden han var tolv. Norsk, vanlige klær slitt etter uker i apokalypsen."
+ },
+ {
+  "file": "hq/military",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Militærbase",
+  "motif": "Militærbase i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Treningsleir."
+ },
+ {
+  "file": "hq/airport",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Flyplass",
+  "motif": "Flyplass i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Utkikk."
+ },
+ {
+  "file": "hq/mall",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Kjøpesenter",
+  "motif": "Kjøpesenter i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Takhage."
+ },
+ {
+  "file": "hq/hospital",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Sykehus",
+  "motif": "Sykehus i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Laboratorium."
+ },
+ {
+  "file": "hq/shipyard",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Industri og verft",
+  "motif": "Industri og verft i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Tungverksted."
+ },
+ {
+  "file": "hq/school",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Skole og campus",
+  "motif": "Skole og campus i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Opplæring."
+ },
+ {
+  "file": "hq/coastFarm",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Kystgård",
+  "motif": "Kystgård i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Saltkokeri."
+ },
+ {
+  "file": "hq/refuge",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Kirke og tilflukt",
+  "motif": "Kirke og tilflukt i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Tilflukt."
+ },
+ {
+  "file": "hq/prison",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Fengsel",
+  "motif": "Fengsel i Stavanger-regionen gjort om til hovedkvarter: sperringer, vakter, lys i vinduene. Unik modul: Sluse."
+ },
+ {
+  "file": "hq/camp",
+  "size": "1600x700",
+  "priority": 2,
+  "title": "HQ: Leir",
+  "motif": "En enkel leir i et nabolag: presenninger, bålfat, paller, en gammel campingbil."
+ },
+ {
+  "file": "wonders/cruise",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Cruiseskipet i Vågen",
+  "motif": "Et cruiseskip med plass til fire tusen ligger fortøyd ved Strandkaien. Noen dekk er fulle av døde, andre er låst innenfra. Flytende by: Et samfunn på åtte dekk, med skole, marked og en kaptein som vil bli hørt."
+ },
+ {
+  "file": "wonders/utstein",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Utstein kloster",
+  "motif": "Norges best bevarte middelalderkloster, på en holme med én vei inn. Murene har stått i 750 år. Tilflukt: Et sted folk drar for å komme seg. Håpet har en adresse."
+ },
+ {
+  "file": "wonders/tower",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Ullandhaugtårnet",
+  "motif": "Telemasten på toppen av Ullandhaug ser hele Jæren. Med strøm kan den nå hver radio i regionen. Regionalt samband: Faste frekvenser, koder og avtaler. Handel og hjelp går raskere."
+ },
+ {
+  "file": "wonders/plane",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Hercules-flyet på Sola",
+  "motif": "Et transportfly står på oppstillingsplassen ved flystasjonen. Tankene er tomme og ett hjul er punktert. Luftbro: Fast flyging til Bergen og Kristiansand. Folk og medisin kommer inn."
+ },
+ {
+  "file": "wonders/cathedral",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Domkirken",
+  "motif": "Norges eldste katedral. Klokkene har ikke ringt siden natt til 1. april. Katedralskolen: Skolen fra 1100-tallet åpner igjen."
+ },
+ {
+  "file": "wonders/arena",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Arenaen i Jåttåvågen",
+  "motif": "Fotballarenaen og hallene rundt har tak, toaletter og plass til tusenvis. Det var en evakueringsplass. Det gikk ikke bra. Markedsplassen: Hver lørdag kommer folk fra hele regionen for å bytte."
+ },
+ {
+  "file": "mutations/runners",
+  "size": "512x512",
+  "priority": 3,
+  "title": "Mutasjon: Løpere",
+  "motif": "Zombiene beveger seg raskere mellom soner. Klinisk, nesten vitenskapelig illustrasjon, som fra en feltrapport."
+ },
+ {
+  "file": "mutations/hearing",
+  "size": "512x512",
+  "priority": 3,
+  "title": "Mutasjon: Skarp hørsel",
+  "motif": "Lyd trekker dem lenger og sterkere. Klinisk, nesten vitenskapelig illustrasjon, som fra en feltrapport."
+ },
+ {
+  "file": "mutations/tough",
+  "size": "512x512",
+  "priority": 3,
+  "title": "Mutasjon: Seig hud",
+  "motif": "De tåler mer. Dere dreper færre per dag. Klinisk, nesten vitenskapelig illustrasjon, som fra en feltrapport."
+ },
+ {
+  "file": "mutations/climbers",
+  "size": "512x512",
+  "priority": 3,
+  "title": "Mutasjon: Klatrere",
+  "motif": "Sperringer slites raskere ned. Klinisk, nesten vitenskapelig illustrasjon, som fra en feltrapport."
+ },
+ {
+  "file": "mutations/herd",
+  "size": "512x512",
+  "priority": 3,
+  "title": "Mutasjon: Flokkdyr",
+  "motif": "Hordene blir større. Klinisk, nesten vitenskapelig illustrasjon, som fra en feltrapport."
+ },
+ {
+  "file": "mutations/diggers",
+  "size": "512x512",
+  "priority": 3,
+  "title": "Mutasjon: Gravere",
+  "motif": "Noen kommer seg forbi forsvaret om natta. Klinisk, nesten vitenskapelig illustrasjon, som fra en feltrapport."
+ },
+ {
+  "file": "events/refugees",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Folk ved sperringen",
+  "motif": "4 mennesker står ved sperringen: 3 voksne, 1 barn. De har gått fra Gausel og har ingenting med seg."
+ },
+ {
+  "file": "events/kindergarten",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Barnehagen i bomberommet",
+  "motif": "Under en barnehage i 04 · Ankerplassen nord finner dere et tilfluktsrom. Tre voksne og tjue barn har sittet der siden første dag. Maten er slutt. En av de voksne er elektriker, en er sykepleier. Barna er mellom to og seks år."
+ },
+ {
+  "file": "events/kindergartenEcho",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Sykepleieren",
+  "motif": "Sykepleieren fra barnehagen i 09 · Skoleområdet har ikke sagt et ord på seks dager. I natt var hun borte. Hun tok med seg medisin og mat, og gikk tilbake for å finne barna."
+ },
+ {
+  "file": "events/kindergartenReturn",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Tilbake til bomberommet",
+  "motif": "Maten dere la igjen i 09 · Skoleområdet er spist opp. De tre voksne har holdt barna i live, men de klarer ikke en uke til."
+ },
+ {
+  "file": "events/cache",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Et skjult lager",
+  "motif": "Noen har tegnet et kart på en vegg. Det viser et lager med utstyr. Det kan være en felle."
+ },
+ {
+  "file": "events/storm",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Storm fra havet",
+  "motif": "Sørvesten river i alt som er løst. Sperringene ved sjøen og båtene er utsatt. Måkene har gjemt seg, og det sier sitt."
+ },
+ {
+  "file": "events/horde",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "En horde på vandring",
+  "motif": "Om lag 52 zombier driver mot 11 · Pyntesund / Buøykaien, rett ved grensen deres."
+ },
+ {
+  "file": "events/sickness",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Tor er syk",
+  "motif": "Feber og frysninger. Det kommer trolig fra vannet. Uten behandling kan det bli alvorlig."
+ },
+ {
+  "file": "events/tunnelFlood",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Hundvågtunnelen tar inn vann",
+  "motif": "Uten strøm går pumpene i de undersjøiske tunnelene tom for diesel. Snart står tunnelen under vann for godt."
+ },
+ {
+  "file": "events/harvest",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Kornet står modent",
+  "motif": "Jordene dere eier gir mer enn ventet. Men det må tas inn før regnet. Og det kommer alltid regn."
+ },
+ {
+  "file": "events/goodFishing",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Makrellen er her",
+  "motif": "Fjorden koker av fisk. Én dag med båten kan gi mye."
+ },
+ {
+  "file": "events/car",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "En bil med full tank",
+  "motif": "Noen har parkert en bil med full tank og verktøy i bagasjerommet ved grensen."
+ },
+ {
+  "file": "events/fire",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Brann i lageret",
+  "motif": "En glo fra kokeplassen har tent på kartonger. Det brenner."
+ },
+ {
+  "file": "events/rats",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Rotter i maten",
+  "motif": "Lageret er fullt av spor. Uten et skikkelig lager forsvinner maten."
+ },
+ {
+  "file": "events/radio",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Stemmer på radioen",
+  "motif": "En gammel radio knitrer. Noen kaller seg Domkirkesamfunnet (Domkirken og Kongsgård) og leter etter andre."
+ },
+ {
+  "file": "events/winter",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Kulda biter",
+  "motif": "Det er minusgrader om natta, og vinden står rett inn fra havet. Uten varme blir folk syke."
+ },
+ {
+  "file": "events/quiet",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "En stille kveld",
+  "motif": "Ingen lyder fra gata, bare regnet. Noen finner en gitar og kan to sanger. Begge er av Vamp."
+ },
+ {
+  "file": "events/escape",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Den første natta",
+  "motif": "Det er om lag 0 døde i gatene rundt dere i 09 · Skoleområdet. Dere kan ikke rydde dette med fire personer. 10 · Skipsbyggergata sør ser roligere ut, men dere må gjennom."
+ },
+ {
+  "file": "events/mutiny",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Mytteri brygger",
+  "motif": "Folk samles i små grupper og tier når du kommer. Uroen er 8 av 100. Når den når 100, er det ikke du som leder lenger."
+ },
+ {
+  "file": "events/desertion",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Ingrid vil gå",
+  "motif": "Ingrid har pakket sekken. «Jeg kjenner ikke igjen denne gruppa lenger. Jeg tar med meg det jeg trenger og går.»"
+ },
+ {
+  "file": "events/storeTheft",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Lageret er lettere",
+  "motif": "Om morgenen mangler 17 mat fra lageret. Låsen er hel, og ingen har sett noe. Noen har nøkkel, eller noen har små nok hender til å komme gjennom luftelukene. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/storeTheftTruth",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Tyven",
+  "motif": "Det har forsvunnet mer siden sist. I natt fulgte en av vaktene sporene i mjølet. Det var Anne Lise, som kom fra Hillevåg med 3 barn og ingen mann. Den minste har vært syk i to uker og spiser ikke det de andre spiser. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/campKilling",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Et drap i leiren",
+  "motif": "Svein ble funnet bak latrinene i morges. Odd Arne har ikke prøvd å skjule noe. De kranglet om en soveplass nær ovnen. To vitner sier at det var Svein som slo først, og med en jernstang. Svein har en bror i leiren. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/killingFeud",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Broren",
+  "motif": "Broren til den døde har ikke sagt et ord på ei uke. I kveld sto han utenfor teltet til drapsmannen med en kniv i lomma. Vakten stoppet ham, denne gangen. «Dere ga meg ingen rettferdighet. Da tar jeg den selv.»"
+ },
+ {
+  "file": "events/killingReturn",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Han er tilbake",
+  "motif": "Han står ved sperringen. Han er tynn og har en sekk med 15 mat han har funnet i en hytte. «Jeg vet hva jeg gjorde. Jeg ber ikke om tilgivelse. Jeg ber om å få jobbe.»"
+ },
+ {
+  "file": "events/guardAccusation",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "En anklage mot vakten",
+  "motif": "En kvinne som kom inn i forrige måned, ber om å få snakke med deg alene. Hun sier at Odd Arne begikk overgrep mot henne i vaktbua for fire netter siden. Odd Arne benekter alt. Han sier hun lyver fordi han nektet henne ekstra rasjon. Ingen andre var der. Odd Arne har stått i porten hver natt siden første uke, og folk stoler på ham. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/guardAccusationTruth",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Undersøkelsen",
+  "motif": "Dere har spurt alle dere kunne. Ingen så noe, ingen hørte noe. vakten sier han er uskyldig og vil tilbake i porten. Kvinnen står ved det hun sa. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/guardAccusationAgain",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Det samme navnet",
+  "motif": "En ung kvinne som sover i brakka ved porten, har fortalt søsteren sin om vakten. Det er det samme navnet som forrige gang. Kvinnen som kom til deg først, har pakket og gått. Hun la igjen en lapp: «Jeg sa det til deg.» Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/bittenChild",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Barnet er bitt",
+  "motif": "En gutt på seks lekte for nær gjerdet. Bittet er på underarmen. Nå sitter moren med ham i redskapsboden og holder døra igjen. «Ingen tar ham. Han har bare feber.»"
+ },
+ {
+  "file": "events/bittenChildNight",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Boden",
+  "motif": "Om morgenen er det stille i boden. Gutten har vendt. Forelderen holdt ham til det siste, og har et bitt i hånda. Døra er fortsatt låst innenfra."
+ },
+ {
+  "file": "events/bittenChildParent",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Den som ble igjen",
+  "motif": "Forelderen til gutten som ble bitt, har ikke jobbet siden. I dag sto forelderen ved porten med en sekk og sa at det ikke er noe her lenger."
+ },
+ {
+  "file": "events/farmBarn",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Låven",
+  "motif": "Familien på gården i området har klart seg alene siden starten: to voksne, et barn og en bestemor. Nå er jorda deres. Om natta hører vaktene noe i låven. Familien sier det er sauene. Det er ikke sauene. Det er sønnen og kona hans, lenket fast i båsene."
+ },
+ {
+  "file": "events/farmBarnBreak",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Låvedøra står åpen",
+  "motif": "En lenke var rustet gjennom. I natt kom de ut av låven i 09 · Skoleområdet, og flere har fulgt lyden. Bestemoren var i fjøset da det skjedde."
+ },
+ {
+  "file": "events/hoarder",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Under gulvplankene",
+  "motif": "Tormod er syttifire og drev en kolonial på Hundvåg i førti år. Han har sovet på samme madrass siden han kom. Under den, og under gulvet, har han 39 mat og 5 medisin. «Jeg handlet da dere andre sto i kø for å kjøpe pizza. Det er mitt.» Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/hoarderTrade",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Kø utenfor brakka",
+  "motif": "Om kvelden står folk i kø hos Den gamle. Han bytter medisin mot rasjoner, tobakk og tjenester. Han tar godt betalt, men han ga også smertestillende til en gutt med brukket arm uten å ta en krone. Folk har begynt å kalle ham Rema."
+ },
+ {
+  "file": "events/insulin",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Insulin",
+  "motif": "En jente på ni har diabetes type 1. Moren har holdt insulinet kaldt i bekken bak leiren. Det er tre penner igjen, og bekken er ikke kald nok lenger. Uten insulin har hun en uke, kanskje to."
+ },
+ {
+  "file": "events/insulinAgain",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Igjen",
+  "motif": "Insulinet er nesten brukt opp igjen. Moren har talt pennene hver kveld. Hun vet hva tallene betyr, og nå vet du det også."
+ },
+ {
+  "file": "events/insulinEnd",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Jenta",
+  "motif": "Jenta sovnet i går kveld og våknet ikke. Moren sitter fortsatt ved sengen. Hun har ikke sagt et vondt ord til noen, og det er nesten verre."
+ },
+ {
+  "file": "events/preacher",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Predikanten",
+  "motif": "Stian var kateket på Eiganes før alt dette. Nå samler han folk ved bålet hver kveld. Han kaller de døde «de hjemsøkte» og sier at det finnes en vei gjennom dette for dem som tror. Førti stoler er for få. Folk står i regnet for å høre."
+ },
+ {
+  "file": "events/preacherFlock",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Flokken",
+  "motif": "Predikanten har nå 3 faste følgere. De bærer et hvitt bånd rundt armen. I dag kom han med krav: en tiendedel av maten til «de trofaste», og at bitte skal føres til ham for bønn i stedet for til karantene."
+ },
+ {
+  "file": "events/preacherSplit",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Den nye menigheten",
+  "motif": "Predikanten har kunngjort at de trofaste skal bryte ut og grunnlegge en egen menighet på en gård utenfor grensen. 3 voksne og barna deres vil følge ham. De vil ha sin del av lageret."
+ },
+ {
+  "file": "events/birth",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Fødselen",
+  "motif": "Gunn har hatt rier siden i natt, og det går ikke som det skal. Dere har noen som har sett dette før."
+ },
+ {
+  "file": "events/birthName",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Et navn",
+  "motif": "Moren og barnet har det bra. Hun spør om lederen vil gi barnet et navn. Halve leiren har meninger, og de fleste av dem er fotballag."
+ },
+ {
+  "file": "events/wedding",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Bryllup",
+  "motif": "Trond og Marit vil gifte seg. De ber ikke om mye: et måltid for alle, litt musikk og en kveld uten vakthold rundt bålet."
+ },
+ {
+  "file": "events/weddingBill",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Etter gildet",
+  "motif": "Festen var fin. Nå er det lageret som snakker. Noen har regnet ut hvor mange dager med mat som gikk opp i røyk over grillen, og tallet står skrevet med kritt på lagerdøra."
+ },
+ {
+  "file": "events/still",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Brenneriet",
+  "motif": "Bak naustet har Odd Arne bygd et brennevinsapparat av en melkespann og en bilradiator. Det går med poteter og sukker fra lageret. Resultatet smaker som det lukter, og det lukter som Forus en varm dag. Folk er lykkeligere om kvelden enn de har vært på lenge."
+ },
+ {
+  "file": "events/stillBrawl",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Slagsmål ved bålet",
+  "motif": "Fredag kveld ble det slagsmål ved bålet. Ett brukket kjevebein, en vakt med kutt i hånda, og en mann som sov i porten i stedet for å stå der. Alle hadde vært hos Brenneren."
+ },
+ {
+  "file": "events/stillMarket",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Svartebørsen",
+  "motif": "Vaktene har oppdaget at 24 patroner mangler. De har gått ut porten i bytte mot sukker, tobakk og flere melkespann. Kjøperne er noen fra Sandnes, som vanlig. Selgeren er Brenneren. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/coward",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Posten var tom",
+  "motif": "Da de kom over sperringa i natt, forlot Leila posten sin og løp. To andre måtte holde åpningen alene til det ble lyst. Ingen døde. Alle vet hvem som løp. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/cowardAgain",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Den andre sjansen",
+  "motif": "Da sperringa ved vannposten falt i går, var det Ingrid som sto igjen og holdt mens barna ble båret inn. Ingen spør lenger hvem som løp sist."
+ },
+ {
+  "file": "events/challenger",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Et spørsmål på kveldsmøtet",
+  "motif": "På kveldsmøtet reiste Tor seg og spurte, høyt nok til at alle hørte det, hvorfor lageret er låst for dem som jobber og åpent for dem som bestemmer. Det ble stille. Så klappet noen. Så klappet flere."
+ },
+ {
+  "file": "events/challengerRally",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Utfordreren",
+  "motif": "Spørsmålet fra kveldsmøtet ble ikke borte. Ingrid har fått mange venner siden. I dag kom Ingrid med 3 voksne bak seg og et krav: ledelsen skal deles, eller så skal den byttes ut."
+ },
+ {
+  "file": "events/challengerCoup",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Natt ved lageret",
+  "motif": "Ingrid har bestemt seg. Nå står Ingrid og 2 væpnede ved lageret. Resten av leiren står i dørene og ser på. Ingen vet hvem de står sammen med før det smeller."
+ },
+ {
+  "file": "events/challengerCamp",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Den andre leiren",
+  "motif": "De som gikk sender bud: den nye leiren har fisk og vil ha ammunisjon. Prisen er grei. Tonen er det ikke."
+ },
+ {
+  "file": "events/dysentery",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Blodgang",
+  "motif": "2 er syke med magesyke og blod i avføringen. Det startet i teltene nærmest latrinene. Vannet er ikke kokt. Det har aldri vært kokt. De gamle og de minste tåler minst."
+ },
+ {
+  "file": "events/dysenteryBreach",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Gjennom vinduet",
+  "motif": "Solveig klatret inn gjennom et vindu i gymsalen i natt for å være hos datteren sin, som er syk. Vakten så det og lot henne gå. Nå ber han deg avgjøre det."
+ },
+ {
+  "file": "events/dysenterySpread",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Det sprer seg",
+  "motif": "Nå er det 12 syke. Latrinene renner over, og folk har sluttet å vaske hendene fordi det ikke er vann å vaske dem i. De gamle ligger stille."
+ },
+ {
+  "file": "events/rationRevolt",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Folk ved lagerdøra",
+  "motif": "1 voksne står ved lagerdøra. De har fått nok av reduserte rasjoner. «Vi jobber, vi sulter, og dere teller.» Noen har med seg spader. Vaktene ser på deg. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/rationRevoltAfter",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Røyk fra lageret",
+  "motif": "Noen tente på bakveggen av lageret i natt. Vaktene fikk slukket, men en del av maten er brent eller ødelagt av vann. Ingen har sett noe. Alle vet noe."
+ },
+ {
+  "file": "events/eldersLeave",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "De gamle",
+  "motif": "Anne Lise er åttito og har bodd i Våland hele livet. På kveldsmøtet ber hun om ordet. Hun og -1 andre har snakket sammen. «Vi har levd livene våre. Barna har ikke begynt på sine. Vi går i morgen tidlig, mens vi ennå kan gå selv. Vi ber bare om at noen følger oss til svingen.»"
+ },
+ {
+  "file": "events/eldersNews",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Esken under sengen",
+  "motif": "Barna fant en eske under sengen til Hun. Strikkede votter, én for hvert barn i leiren, og en lapp med navnene deres."
+ },
+ {
+  "file": "events/spy",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Den hjelpsomme",
+  "motif": "Trond kom for tre uker siden. Han er blid, jobber hardt og har meldt seg til lagervakt hver uke. En av barna sier at han sitter med en radio bak naustet om natta. Han sier selv at han prøver å nå søsteren sin."
+ },
+ {
+  "file": "events/spyCaught",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "spyCaught",
+  "motif": ""
+ },
+ {
+  "file": "events/spyRaid",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "spyRaid",
+  "motif": ""
+ },
+ {
+  "file": "events/gateShooting",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Skuddet ved porten",
+  "motif": "Rett før midnatt skjøt Marius en mann ved porten i 09 · Skoleområdet. Han hadde ikke våpen. Han hadde en gutt på sju med seg, og gutten sitter nå i vaktbua og sier ingenting. Marius sier mannen ikke stoppet da det ble ropt. Det regnet og var mørkt, og ingen andre hørte ropet. Dere har ingen straffelov. Hva du enn bestemmer, er det din dom alene."
+ },
+ {
+  "file": "events/gateShootingKin",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Familien ved porten",
+  "motif": "Fem mennesker står ved porten med hvite filler på stokker. Det er søsteren til mannen som ble skutt, og folk fra gården de bodde på. De vil ha gutten. Og de vil ha bot."
+ },
+ {
+  "file": "events/sickBoat",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "En båt med syke",
+  "motif": "En gammel sjark legger seg utenfor området. Om bord er 8 mennesker fra Hjelmeland. Flere har høy feber og hoster. «Vi er ikke bitt», roper en kvinne fra rekka. «Det er vannet. Vi har drukket av bekken i ti dager.»"
+ },
+ {
+  "file": "events/sickBoatQuarantine",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Karantenen er over",
+  "motif": "Fem dager er gått. -1 av dem på båten fra er døde og senket i fjorden, pakket i seil. De 1 som er igjen, har ikke hatt feber på to døgn."
+ },
+ {
+  "file": "events/sickBoatReturn",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Sjarken er tilbake",
+  "motif": "Båten fra er tilbake utenfor 09 · Skoleområdet. Nå er de tre båter, og mennene i baugen har gevær. De som overlevde feberen, har ikke glemt hvem som snudde dem. «Vi tar det vi trenger. Dere kan gi det, eller vi kan hente det.»"
+ },
+ {
+  "file": "events/sanctuaryBroadcast",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Fristaden",
+  "motif": "Hver hele time, på samme frekvens: «Dette er Fristaden Kvitsøy. Vi har mat, strøm og en mur av hav. Ingen døde kommer over sjøen. Alle er velkomne. Kom til kaia i Ystabøhamn.» 1 av folket deres har begynt å pakke."
+ },
+ {
+  "file": "events/sanctuaryNews",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Sannheten om Fristaden",
+  "motif": "En mann i våte klær kommer til sperringen. Han var en av de 0 som dro til Kvitsøy. «De tok alt vi hadde på kaia. Så jobber du. De som prøver å stikke av, blir hentet.» Han rodde i to netter for å komme hit."
+ },
+ {
+  "file": "events/sanctuaryRescue",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Natt over Kvitsøy",
+  "motif": "Vaktene på Fristaden er seks, kanskje åtte. De sover i det gamle fyrvokterhuset. I fiskebruket ligger om lag tjue arbeidere på madrasser. Sjøen er rolig, og det regner, som det pleier. Det skjuler lyden av årene."
+ },
+ {
+  "file": "events/quarantineZone",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Karantenesonen",
+  "motif": "Rundt NATO Joint Warfare Center står nye gjerder og skilt: KARANTENESONE. ADGANG FORBUDT. DET SKYTES UTEN VARSEL. Da dere kom nærmere enn to hundre meter, smalt et skudd i asfalten foran dere. Bak gjerdet står folk i kø foran et hvitt telt. Mange av dem er sivile."
+ },
+ {
+  "file": "events/quarantineResistance",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "En lapp ved sperringen",
+  "motif": "En lapp er festet til sperringen med en strips. Den er skrevet med blyant: «Vi er tjue vernepliktige i . Kommandanten skyter alle som hoster. I forrige uke var det en gutt på ni. Vi trenger våpen, og et sted å gå etterpå. Heng et hvitt laken ut om dere er med.»"
+ },
+ {
+  "file": "events/quarantineFall",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Karantenesonen faller",
+  "motif": "Skytingen i stilnet i natt. I morgentåka kommer de ut gjennom hullene i gjerdet: pasientene fra teltene, vaktene og alle de andre. Om lag 126, på vei mot 11 · Pyntesund / Buøykaien. Bak dem står våpenlageret ubevoktet."
+ },
+ {
+  "file": "events/fjordCouple",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Paret på kystgården",
+  "motif": "På gården på Hogstad 3 bor et eldre par som om ingenting har hendt. Sauene går på beite, og det ryker fra pipa. Mannen står i døra med hagla. Kona forteller at kjelleren er full av poteter, spekeskinke og sild i lake, og at de klarer seg fint, takk. De har vært gjennom verre vintre."
+ },
+ {
+  "file": "events/coupleReturn",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Kona fra kystgården",
+  "motif": "Kona fra 09 · Skoleområdet står ved sperringen i oljehyre. Mannen falt i fjøset for fire dager siden og får ikke beveget venstre side. «Jeg klarer ikke gården alene. Og jeg klarer ikke ham alene.»"
+ },
+ {
+  "file": "events/siege",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Beleiret",
+  "motif": "Om lag 287 zombier har samlet seg i 10 · Skipsbyggergata sør, rett utenfor sperringen. De går ikke videre. De står. Om natta hører dere dem lene seg mot gjerdet. Ingen kommer seg ut for å sanke, fiske eller hente vann."
+ },
+ {
+  "file": "events/siegeDay",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Beleiringen er over",
+  "motif": "De fleste har trukket videre fra 09 · Skoleområdet. Om lag 0 står igjen og glaner. Folk går ut og puster for første gang på 0 dager."
+ },
+ {
+  "file": "events/herdCrossing",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Hordene på brua",
+  "motif": "Speiderne så dem i skumringen: en tett strøm av døde på vei over Pyntesund bru, fra Engøy mot 11 · Pyntesund / Buøykaien. Om lag 270. Med denne farten er de over i morgen tidlig."
+ },
+ {
+  "file": "events/darkHospital",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Den mørke fløyen",
+  "motif": "SUS-leiren holder den nye delen av sykehuset. Den gamle fløyen har de gitt opp. I tredje etasje banker noen på en kodelåst dør. En kirurg og tre sykepleiere har sperret seg inne på medisinlageret. Mellom dem og trappa ligger to sengeposter med smittede, som ble låst inne den første natta."
+ },
+ {
+  "file": "events/hospitalRescue",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Personalet er ute",
+  "motif": "Speiderne kom seg gjennom sengepostene i 09 · Skoleområdet med lommelykter og tape over ermene. Kirurgen og tre sykepleiere er med, og så mye medisin de kunne bære."
+ },
+ {
+  "file": "events/mallHolders",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Senteret",
+  "motif": "En gruppe har gjort Herbarium Shopping Stavanger om til en festning. Gjennom glasset ser dere paller med hermetikk, ris og pasta, stablet til taket i det gamle varemottaket. Vaktene på taket har armbrøster. Det er mer mat der inne enn dere har sett på et år."
+ },
+ {
+  "file": "events/mallRaid",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Oppdaget",
+  "motif": "Alarmen på gikk på batteri. Speiderne kom seg ut, men en armbrøstpil traff, og de der inne så hvem dere var."
+ },
+ {
+  "file": "events/cathedralPriest",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Presten i Domkirken",
+  "motif": "I Domkirken har tjue mennesker søkt ly. De ledes av en prest med én regel: ingen vold innenfor murene, heller ikke mot de døde. «De var noens barn», sier han. De har sunget for å holde motet oppe og spist det siste av nattverdsbrødet. Nå spør han om de kan komme til dere."
+ },
+ {
+  "file": "events/priestConflict",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Presten og loven",
+  "motif": "Flokken fra Domkirken nekter å ta vakter der det skal drepes. De døde er fortsatt noens barn, sier presten. Resten av leiren har begynt å telle hvem som står på muren, og hvem som ikke gjør det."
+ },
+ {
+  "file": "events/supplyShip",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Forsyningsskipet",
+  "motif": "Et oransje forsyningsskip glir inn mot området med lanternene tent. «Havbris», fra et felt langt ute i Nordsjøen. Tankene er halvfulle av marin diesel. Om bord er ti mann og to ingeniører som har holdt alt i gang i ukevis, mens radioen ble stillere og stillere. De har ikke mer mat. De ber om kai, mat og trygghet, i den rekkefølgen."
+ },
+ {
+  "file": "events/shipEngineers",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Ingeniørene har en plan",
+  "motif": "Ingeniørene fra «Havbris» har tegnet på baksiden av et sjøkart. Skipsgeneratoren kan gi strøm til hele leiren, om dere legger en kabel i land. Eller de kan fylle tankene og seile mot Shetland for å se om noen lever der. «Vi drar ikke uten lov», sier den ene. Den andre sier ingenting."
+ },
+ {
+  "file": "events/tunnelCars",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Bilene i Talgjetunnelen",
+  "motif": "Talgjetunnelen er full av biler som stoppet den første dagen. Bagasjerom med kofferter, matposer og fulle tanker. Men lyktene viser også at bilene ikke er tomme. Om lag 69 døde står tett mellom dem i mørket, og venter på lyd."
+ },
+ {
+  "file": "events/tunnelDeep",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Tankbilen",
+  "motif": "Midt i står en tankbil, nesten full av diesel. Men en pumpe lager lyd, og lyd i en tunnel går langt. Det som fortsatt står i mørket lenger inne, vil høre det."
+ },
+ {
+  "file": "events/radioHour",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Stemmen klokka sju",
+  "motif": "Hver kveld klokka sju kommer den samme stemmen på kanal 16: en kvinne som sier at hun er i 05 · Båtmannsveien, at hun har mat å dele og at hun er alene. Samme ord. Samme pauser. I går lo hun på samme sted som forrige gang."
+ },
+ {
+  "file": "events/radioHourFound",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Et opptak",
+  "motif": "Stemmen kommer fra en båndspiller koblet til en radio på et kjøkkenbord i 09 · Skoleområdet. Kvinnen har vært borte lenge. Ved siden av ligger et kart med et kryss: en kjeller i 05 · Båtmannsveien, «til den som kommer»."
+ },
+ {
+  "file": "events/lyseHydro",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Lysene i Lysebotn",
+  "motif": "En fisker fra Forsand sier at lysene fortsatt brenner i Lysebotn. Kraftstasjonen inne i fjellet går av seg selv, sier han, så lenge ingen rører den. Er det sant, finnes det strøm, turbindeler og kanskje folk som kan noe. Det er en lang tur inn Lysefjorden, under Preikestolen, der ingen turister lenger tar bilder."
+ },
+ {
+  "file": "events/lyseReturn",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Fjorden tok en",
+  "motif": "Bare båten kom tilbake fra Lysebotn. Ved kaia under fjellet var det for mange av dem. "
+ },
+ {
+  "file": "events/trawler",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Tråleren",
+  "motif": "En tråler driver inn mot området med motoren død og ingen om bord. Lasterommet er fullt av sild på is som snart er smeltet. Måkene har allerede funnet den, og de er ikke flere enn at dere kan slå dem."
+ },
+ {
+  "file": "events/trawlerSalted",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Tønner med sild",
+  "motif": "To dager med salt i hendene og sild til albuene. Tjue tønner står i skyggen. Det lukter som en julimarked på Torget, før alt."
+ },
+ {
+  "file": "events/solaCamp",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Leiren på Sola",
+  "motif": "I avgangshallen på Sola bor nesten seksti mennesker mellom bagasjebåndene. Bakkemannskapet holder drivstofflageret og slipper dem ikke inn der. Lederen deres, en tidligere flygeleder, har gått hele veien for å komme med et tilbud. «Mat for en uke. Eller hender. Vi kan bære, grave og bygge. Bare gi oss noe å spise.»"
+ },
+ {
+  "file": "events/solaCampThanks",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Takk fra Sola",
+  "motif": "Flygelederen er tilbake, med en trillebår full av jetdrivstoff på kanner som noen i bakkemannskapet ga henne. Hun har også med seg fem barn. «De er foreldreløse. Hos oss har de ingenting. Hos dere har de en sjanse.»"
+ },
+ {
+  "file": "events/solaLabourEnd",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "To uker er gått",
+  "motif": "Arbeiderne fra Sola har gravd grøfter, båret sandsekker og reist gjerder i regnet uten å klage mer enn vanlig. Avtalen er ute. De fleste vil bli."
+ },
+ {
+  "file": "events/solaCampFall",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Røyk over Sola",
+  "motif": "Røyken fra Sola har stått hele dagen. Om kvelden kommer sju mennesker gående. De er alt som er igjen av leiren i avgangshallen. Flygelederen er ikke blant dem."
+ },
+ {
+  "file": "events/gangTribute",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Beskyttelse",
+  "motif": "En pickup med fire bevæpnede stopper ved sperringen i 09 · Skoleområdet. Gjengen vil ha 19 mat og 5 patroner. «Så ingenting skjer med dere. Det er jo farlige tider.»"
+ },
+ {
+  "file": "events/gangRaid",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Angrep ved daggry",
+  "motif": "Billykter i 09 · Skoleområdet. Gjengen kommer med om lag 12 mann. Dere har en styrke på 39 mot deres 37."
+ },
+ {
+  "file": "events/gangDefector",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "En fra Gjengen",
+  "motif": "En ung mann fra Gjengen står med hendene over hodet ved sperringen. Han vil bytte: tegninger av basen deres mot en plass hos dere. Han har et tatovert tall på hånden og tørt blod under neglene."
+ },
+ {
+  "file": "events/fellowshipGift",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Gaver fra Fellesskapet",
+  "motif": "To kvinner i rene, hvite jakker kommer gående med en tralle: mat, medisin og hjemmebakt brød. De er fra Fellesskapet (Godalen videregående skole). «Vi tror på å hjelpe hverandre. Kanskje vi kan bli venner?»"
+ },
+ {
+  "file": "events/fellowshipEnvoy",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "En utsending",
+  "motif": "Fellesskapet spør om én av dem kan bo hos dere. «Tobias er sykepleier og snekker. Han hjelper der det trengs, og holder kontakten mellom oss.» Tobias smiler mye. Ingrid ser lenge på ham."
+ },
+ {
+  "file": "events/fellowshipAsk",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Felles forsvar",
+  "motif": "Fellesskapet foreslår felles forsvar mot Gjengen og hordene. Deres folk tar nattevakt ved porten deres, og dere deler våpenlager. «Sammen er vi sterkere.»"
+ },
+ {
+  "file": "events/fellowshipStrike",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Natten de kom",
+  "motif": "Fellesskapet angriper i mørket. De vet nøyaktig hvor vaktene står."
+ },
+ {
+  "file": "events/fellowshipRescue",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Barna er i live",
+  "motif": "En flyktning fra Fellesskapet sier at barna er i kjelleren i Ramsvik. De skal «oppdras riktig». Toktet er farlig, men det er nå eller aldri."
+ },
+ {
+  "file": "events/fellowshipAlliance",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "De mente det",
+  "motif": "Fellesskapet var akkurat det de sa de var. De tilbyr en fast avtale: mat og medisin hver uke mot hjelp til forsvar."
+ },
+ {
+  "file": "events/allyDelivery",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "allyDelivery",
+  "motif": ""
+ },
+ {
+  "file": "events/groupDemand",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "groupDemand",
+  "motif": ""
+ },
+ {
+  "file": "events/cruiseShip",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Skipet ved Strandkaien",
+  "motif": "Fra Kongsgård ser dere det: et cruiseskip, tolv dekk høyt, fortøyd ved Strandkaien. Landgangen er heist. På dekk 9 vifter noen med et laken. På dekk 4 står vinduene fulle av ansikter som ikke vifter."
+ },
+ {
+  "file": "events/cruiseSignal",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Svar fra dekk 9",
+  "motif": "Om natta blinker en lommelykt tilbake. Morse, stavet feil. «KAPT HER. 9 IGJEN. LANDGANG I MORGEN 06.» Ved daggry senkes landgangen et stykke. Det kommer noe gående ned den."
+ },
+ {
+  "file": "events/planeFound",
+  "size": "1600x700",
+  "priority": 1,
+  "title": "Flyet på oppstillingsplassen",
+  "motif": "Ved flystasjonen i Skvadronvegen står et grått transportfly. Tankene er tomme, og ett hjul er punktert. Ellers ser det helt. Ingen av dere kan fly. Men noen der ute kan."
+ },
+ {
+  "file": "events/airlift",
+  "size": "1600x700",
+  "priority": 3,
+  "title": "Flyet venter",
+  "motif": "Flyet står fortsatt på bakken. Gjør det luftdyktig under Unike steder for å fly."
+ }
+]

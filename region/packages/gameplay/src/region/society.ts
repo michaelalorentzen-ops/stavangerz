@@ -6,13 +6,14 @@ import type { RegionState, RegionSurvivor, RegionWorld, ReportLine, WorkId } fro
 import { controlled, indexWorld, living, season } from './engine';
 const seasonFarm = (state: RegionState) => season(state.day).farm;
 import { LAW_COOLDOWN, LAWS, POP, REACTIONS, type LawEffect } from './systems';
+import { wonderEffects } from './wonders';
 
 export const WORK_IDS: WorkId[] = ['farm', 'fish', 'scavenge', 'clear', 'guard', 'build', 'research'];
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
 /** The combined effect of all laws in force. */
 export function lawMods(state: RegionState): Required<LawEffect> {
-  const m: Required<LawEffect> = { hope: 0, discontent: 0, foodMult: 1, dependentFood: 1, workMult: 1, childWork: 0, childResearch: 0, crime: 1, refugees: 1,
+  const m: Required<LawEffect> = { accidents: 0, sickMult: 1, hope: 0, discontent: 0, foodMult: 1, dependentFood: 1, workMult: 1, childWork: 0, childResearch: 0, crime: 1, refugees: 1,
     lawCooldown: LAW_COOLDOWN, guardMult: 1, researchMult: 1, healthPerDay: 0, fatigue: 0 };
   const cards = state.research.done.includes('rationCards');
   for (const id of state.laws) {
@@ -25,7 +26,7 @@ export function lawMods(state: RegionState): Required<LawEffect> {
     m.foodMult *= e.foodMult ?? 1; m.dependentFood *= e.dependentFood ?? 1; m.workMult *= e.workMult ?? 1;
     m.childWork += e.childWork ?? 0; m.childResearch += e.childResearch ?? 0; m.crime *= e.crime ?? 1;
     m.refugees *= e.refugees ?? 1; m.guardMult *= e.guardMult ?? 1; m.researchMult *= e.researchMult ?? 1;
-    m.healthPerDay += e.healthPerDay ?? 0; m.fatigue += e.fatigue ?? 0;
+    m.healthPerDay += e.healthPerDay ?? 0; m.fatigue += e.fatigue ?? 0; m.accidents += e.accidents ?? 0; m.sickMult *= e.sickMult ?? 1;
     if (e.lawCooldown !== undefined) m.lawCooldown = e.lawCooldown;
   }
   if (state.research.done.includes('charter')) m.discontent -= 8;
@@ -121,6 +122,7 @@ export function shelter(state: RegionState, world: RegionWorld) {
   if (state.hq) room += 8;
   if (state.hq?.modules.includes('housing')) room += POP.shelter.housing;
   if (state.hq?.modules.includes('refuge')) room += POP.shelter.refuge;
+  room += wonderEffects(state).shelter;
   for (const id of controlled(state)) room += Math.min(POP.shelter.perZoneMax, (index.byId.get(id)?.measures?.homes ?? 0) * POP.shelter.perZoneHomes);
   return Math.round(room);
 }
@@ -135,22 +137,29 @@ export function hopeTarget(state: RegionState, world: RegionWorld) {
   const people = totalPeople(state);
   const crowd = Math.max(0, people - shelter(state, world));
   const food = state.stock.food ?? 0;
-  return Math.max(5, Math.min(92, 45 + (power ? 8 : 0) + (mods.includes('kitchen') ? 5 : 0) + (mods.includes('refuge') ? 6 : 0) + (state.hq?.type === 'refuge' ? 4 : 0)
+  // Even a good camp in a dead world is not a happy place: hope settles at 80 at most, and wears later on.
+  return Math.max(5, Math.min(80 - Math.max(0, state.phase - 3) * 4, 45 + (power ? 8 : 0) + (mods.includes('kitchen') ? 5 : 0) + (mods.includes('refuge') ? 6 : 0) + (state.hq?.type === 'refuge' ? 4 : 0)
     + (state.hq ? 5 : 0) + Math.min(10, controlled(state).length * .8) + Math.min(6, state.milestones.length)
     - hurt * 3 - recentDeaths * 3 - crowd * .6 - (food < people * 3 ? 12 : 0) - Math.min(10, state.population.sick * .5)
-    + lawMods(state).hope));
+    + lawMods(state).hope + wonderEffects(state).hope));
 }
 export function discontentTarget(state: RegionState, world: RegionWorld) {
   const people = totalPeople(state);
   const crowd = Math.max(0, people - shelter(state, world));
   const hungry = state.counters.hungerStreak ?? 0;
-  return Math.max(0, Math.min(100, 8 + lawMods(state).discontent + Math.max(0, people - 20) * .12 + crowd * .5 + hungry * 6
+  return Math.max(0, Math.min(100, 8 + state.phase * 2 + lawMods(state).discontent + Math.max(0, people - 20) * .2 + crowd * .5 + hungry * 6
     + (state.morale < 30 ? 10 : 0) + (state.population.sick > people * .15 ? 6 : 0)));
 }
 
 /** End-of-day drift and the slow consequences of how people live. */
 export function societyDay(state: RegionState, world: RegionWorld, lines: ReportLine[], rng: () => number) {
   const mods = lawMods(state);
+  // Hard laws have a body count: tired workers and working children get hurt.
+  const accidents = Math.floor(workforce(state) * mods.accidents + rng());
+  if (accidents && state.population.adults > accidents) { state.population.adults -= accidents; lines.push({ tone: 'bad', title: accidents === 1 ? 'En arbeidsulykke' : `${accidents} arbeidsulykker`, text: 'Slitne folk gjør feil. Noen kom ikke hjem fra skiftet.' }); }
+  if (mods.childWork && state.population.children > 3 && rng() < state.population.children * .003) { state.population.children -= 1; state.morale -= 3; lines.push({ tone: 'bad', title: 'Et barn døde i arbeid', text: 'Under garna, i grøfta, ved maskinen. Foreldrene stiller ikke på jobb i dag.' }); }
+  // Children grow up. In a world like this they grow up fast.
+  if (state.population.children > 0 && rng() < state.population.children * .004) { state.population.children -= 1; state.population.adults += 1; }
   // Health: hard rations and long shifts wear people down.
   for (const s of living(state)) {
     s.health = Math.min(100, s.health + mods.healthPerDay);
@@ -161,7 +170,7 @@ export function societyDay(state: RegionState, world: RegionWorld, lines: Report
   if (people) {
     const crowd = Math.max(0, totalPeople(state) - shelter(state, world)) / Math.max(1, totalPeople(state));
     const water = Object.values(state.networks).some(n => n.includes('water'));
-    const rate = POP.sickPerDay * (1 + crowd * 4) * (state.research.done.includes('hygiene') ? .5 : 1) * (water ? .6 : 1);
+    const rate = POP.sickPerDay * mods.sickMult * (1 + crowd * 4) * (state.research.done.includes('hygiene') ? .5 : 1) * (water ? .6 : 1);
     const newSick = Math.floor(people * rate + rng());
     state.population.sick = Math.min(people, state.population.sick + newSick);
     const healed = Math.min(state.population.sick, Math.ceil(state.population.sick * (state.hq?.modules.includes('medbay') ? .25 : .12)));

@@ -70,7 +70,7 @@ export interface RegionHq { zoneId: string; type: string; modules: string[]; bui
 
 export type ActionId = 'scout' | 'clear' | 'search' | 'claim' | 'fortify' | 'build' | 'establishHq' | 'module' | 'network'
   | 'guard' | 'hold' | 'block' | 'blow' | 'farm' | 'fish' | 'rest' | 'heal' | 'craft'
-  | 'research' | 'relocate' | 'assault' | 'repair';
+  | 'research' | 'relocate' | 'assault' | 'repair' | 'wonder';
 export interface RegionOrder { id: string; action: ActionId; zoneId: string; survivorIds: string[]; target?: string }
 
 /** The population that is not the named crew: counted, not named. */
@@ -82,6 +82,8 @@ export interface RegionReport {
   day: number; lines: ReportLine[];
   food: { produced: number; eaten: number; spoiled?: number }; water: { produced: number; drunk: number };
   zombiesMoved: number; killed: number;
+  /** The night's biggest movements you could see: into, out of or between zones you know. */
+  moves?: { from: string; to: string; n: number }[];
 }
 export interface EventChoice { id: string; label: string; detail: string; disabled?: string; tags?: Stance[] }
 export interface PendingEvent {
@@ -112,6 +114,8 @@ export interface RegionState {
   barricadeTier: Record<string, number>;
   chokepoints: Record<string, ChokepointState>;
   hq?: RegionHq;
+  /** Unique places you hold: level 0 is found, higher levels are built. */
+  wonders?: Record<string, { level: number; zoneId: string; progress: number }>;
   /** Networks built per L2 zone. */
   networks: Record<string, string[]>;
   factions: RegionFaction[];

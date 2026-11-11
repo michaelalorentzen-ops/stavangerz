@@ -10,6 +10,7 @@ import { dailyFlows } from './economy';
 
 export function botChooseEvent(state: RegionState): string {
   const choices = state.event!.choices.filter(c => !c.disabled);
+  if (state.event!.id === 'escape') return (choices.find(c => c.id === 'boat') ?? choices.find(c => c.id === 'run') ?? choices[0]).id;
   // A careful newcomer: avoids the cruel and the reckless when there is another way, but does not always pay.
   const score = (c: typeof choices[number]) => {
     const tags = c.tags ?? [];
@@ -157,6 +158,8 @@ export function botPlanDay(state: RegionState, world: RegionWorld): RegionOrder[
     if (crew.length >= 3 && assaultOdds(state, crew, f).chance > .7) tryOrder('assault', f.zoneId, crew);
   }
 
+  // Wonders: keep building them out when the materials are there.
+  for (const [id, w] of Object.entries(state.wonders ?? {})) { if (tryOrder('wonder', w.zoneId, pick(2, 'craft'), id)) break; }
   // Upgrades when there is material.
   for (const id of owned) {
     const options = upgradesFor(state, world, id).map(u => u.id);

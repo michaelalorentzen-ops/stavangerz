@@ -9,6 +9,7 @@ import { CONTENT } from '../../../world-data/src/content';
 import { POP } from './systems';
 import { lawMods } from './society';
 import { tech } from './progress';
+import { wonderEffects } from './wonders';
 
 export interface ZoneFlow { food: number; water: number; other: Record<string, number>; upkeep: number; net: number }
 export interface Flows {
@@ -107,6 +108,14 @@ export function dailyFlows(state: RegionState, world: RegionWorld): Flows {
   if (tech(state, 'herbal') && farmers >= 2 && capacities.length) addOther(capacities[0][0], 'medicine', Math.min(4, farmers / 4));
   if (tech(state, 'biogas') && farmers >= 3 && capacities.length) addOther(capacities[0][0], 'fuel', Math.min(6, farmers / 2));
 
+  // Wonders that grow, heal or fuel.
+  for (const [, w] of Object.entries(state.wonders ?? {})) void w;
+  const we = wonderEffects(state);
+  const wz = Object.values(state.wonders ?? {})[0]?.zoneId ?? state.homeZoneId;
+  if (we.food) { if (owned.includes(wz)) flow(wz).food += we.food; else hq.food = (hq.food ?? 0) + we.food; }
+  if (we.medicine) other.medicine = (other.medicine ?? 0) + we.medicine;
+  if (we.fuel) other.fuel = (other.fuel ?? 0) + we.fuel;
+
   // Who eats.
   const p = people(state);
   const dependents = (p.children * POP.food.child + p.elderly * POP.food.elderly) * law.dependentFood;
@@ -118,7 +127,8 @@ export function dailyFlows(state: RegionState, world: RegionWorld): Flows {
   // Salting, cellars and depots help, but fresh food never keeps forever; only cold storage really stops the rot.
   const cold = tech(state, 'coldStore') && power;
   const keep = Math.max(cold ? .12 : .35, (tech(state, 'saltDry') ? .6 : 1) * (tech(state, 'rootCellar') ? .7 : 1) * (state.hq?.modules.includes('depot') ? .7 : 1) * (cold ? .2 : 1));
-  const spoiled = Math.max(0, stockFood - 40) * rate * keep;
+  // The bigger the pile, the harder to keep it dry, cool and away from rats.
+  const spoiled = Math.max(0, stockFood - 40) * rate * keep * (1 - we.spoil) * (1 + Math.max(0, stockFood - 200) / 400);
   const fuelUsed = (winter ? (p.crew + p.adults + p.children + p.elderly) * .12 * (tech(state, 'woodGas') ? .6 : 1) : 0)
     + (power && state.hq && !(state.networks[indexWorld(world).byId.get(state.hq.zoneId)?.parentId ?? ''] ?? []).includes('power') ? 2 : 0);
 
