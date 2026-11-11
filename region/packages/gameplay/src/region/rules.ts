@@ -1,8 +1,8 @@
 /** Playtest numbers for the region game. Hypotheses to balance, kept out of the engine and the UI. */
 import type { ActionId, RegionSurvivor, Weapon } from './types';
 
-export const REGION_RULES_VERSION = 'region-0.1';
-export const SAVE_KEY_REGION = 'stavanger-z.region.v1';
+export const REGION_RULES_VERSION = 'region-0.2';
+export const SAVE_KEY_REGION = 'stavanger-z.region.v2';
 
 export const R = {
   workHours: 8,
@@ -34,6 +34,11 @@ export const R = {
   recruitChancePerSearchHour: .006,
   eventEveryDays: 7, minorEventChance: .08,
   boatReachKm: 3,
+  ferryReachKm: 8,
+  /** Share of its dead the start zone keeps on day 0. Dense centres stay deadly. */
+  startZombieShare: .3,
+  crewCap: 12,
+  samplesPerKills: 12,
 };
 
 export const WEAPONS: Record<Weapon, { kills: number; ammo: number; noise: number; label: string }> = {
@@ -62,6 +67,10 @@ export const ACTIONS: Record<ActionId, { label: string; help: string; noise: num
   rest: { label: 'Hvil', help: 'Mindre utmattelse og litt bedre helse.', noise: 0 },
   heal: { label: 'Behandle', help: 'Bruk medisin på skadde. Medisinsk kompetanse hjelper mye.', noise: 0 },
   craft: { label: 'Lag', help: 'Lag noe i HQ-et med riktige moduler.', noise: 1 },
+  research: { label: 'Forsk', help: 'Arbeid med forskningsprosjektet i HQ. Håndverk og medisin teller.', noise: 0 },
+  relocate: { label: 'Flytt leiren hit', help: 'Hele gruppen flytter. Det dere ikke kan bære, blir igjen. Bare før dere har et HQ.', noise: 2 },
+  assault: { label: 'Angrip gruppen', help: 'Tokt mot en annen gruppes base. Vinner dere, er basen og lageret deres.', noise: 6 },
+  repair: { label: 'Reparer brua', help: 'Bygg opp en sprengt bru igjen.', noise: 2 },
 };
 
 /** Costs and hours for L3 upgrades from the catalog. */
@@ -132,22 +141,22 @@ export const LOOT_PER_SITE: Record<string, Record<string, number>> = {
 };
 
 export const START_CREW: Omit<RegionSurvivor, 'joinedDay'>[] = [
-  { id: 'ingrid', name: 'Ingrid', role: 'Speider', about: 'Lokalkjent og rask.', skills: { combat: 3, scouting: 6, craft: 1, medical: 1 }, weapon: 'pistol', health: 100, fatigue: 0, alive: true },
-  { id: 'marius', name: 'Marius', role: 'Jeger', about: 'Rolig under press, men rifla høres langt.', skills: { combat: 6, scouting: 2, craft: 1, medical: 1 }, weapon: 'rifle', health: 100, fatigue: 0, alive: true },
-  { id: 'leila', name: 'Leila', role: 'Sykepleier', about: 'Holder folk på beina.', skills: { combat: 1, scouting: 2, craft: 1, medical: 6 }, weapon: 'melee', health: 100, fatigue: 0, alive: true },
-  { id: 'tor', name: 'Tor', role: 'Mekaniker', about: 'Får ting til å holde en natt til.', skills: { combat: 3, scouting: 1, craft: 6, medical: 1 }, weapon: 'melee', health: 100, fatigue: 0, alive: true },
+  { id: 'ingrid', name: 'Ingrid', role: 'Speider', about: 'Lokalkjent og rask.', traits: ['suspicious'], loyalty: 70, skills: { combat: 3, scouting: 6, craft: 1, medical: 1 }, weapon: 'pistol', health: 100, fatigue: 0, alive: true },
+  { id: 'marius', name: 'Marius', role: 'Jeger', about: 'Rolig under press, men rifla høres langt.', traits: ['hard'], loyalty: 65, skills: { combat: 6, scouting: 2, craft: 1, medical: 1 }, weapon: 'rifle', health: 100, fatigue: 0, alive: true },
+  { id: 'leila', name: 'Leila', role: 'Sykepleier', about: 'Holder folk på beina.', traits: ['kind', 'parent'], loyalty: 70, skills: { combat: 1, scouting: 2, craft: 1, medical: 6 }, weapon: 'melee', health: 100, fatigue: 0, alive: true },
+  { id: 'tor', name: 'Tor', role: 'Mekaniker', about: 'Får ting til å holde en natt til.', traits: ['loner'], loyalty: 60, skills: { combat: 3, scouting: 1, craft: 6, medical: 1 }, weapon: 'melee', health: 100, fatigue: 0, alive: true },
 ];
 export const RECRUIT_POOL: Omit<RegionSurvivor, 'joinedDay' | 'id'>[] = [
-  { name: 'Sunniva', role: 'Bonde', about: 'Vet hva som gror her.', skills: { combat: 2, scouting: 2, craft: 3, medical: 1 }, weapon: 'melee', health: 85, fatigue: 0, alive: true },
-  { name: 'Kenneth', role: 'Elektriker', about: 'Kan få strøm i et hus igjen.', skills: { combat: 2, scouting: 1, craft: 5, medical: 1 }, weapon: 'melee', health: 90, fatigue: 0, alive: true },
-  { name: 'Amina', role: 'Lege', about: 'Jobbet på SUS til siste dag.', skills: { combat: 1, scouting: 2, craft: 1, medical: 7 }, weapon: 'melee', health: 80, fatigue: 0, alive: true },
-  { name: 'Ola', role: 'Fisker', about: 'Har egen båt et sted i Vågen.', skills: { combat: 3, scouting: 3, craft: 3, medical: 1 }, weapon: 'shotgun', health: 95, fatigue: 0, alive: true },
-  { name: 'Hanne', role: 'Politi', about: 'Har fortsatt tjenestevåpenet.', skills: { combat: 6, scouting: 3, craft: 1, medical: 2 }, weapon: 'pistol', health: 90, fatigue: 0, alive: true },
-  { name: 'Erik', role: 'Snekker', about: 'Bygger raskere enn han snakker.', skills: { combat: 3, scouting: 1, craft: 6, medical: 1 }, weapon: 'melee', health: 95, fatigue: 0, alive: true },
-  { name: 'Mia', role: 'Student', about: 'Lærer fort og klatrer overalt.', skills: { combat: 2, scouting: 5, craft: 2, medical: 2 }, weapon: 'melee', health: 100, fatigue: 0, alive: true },
-  { name: 'Rune', role: 'Soldat', about: 'Kom seg ut fra Madlaleiren.', skills: { combat: 7, scouting: 3, craft: 2, medical: 2 }, weapon: 'rifle', health: 75, fatigue: 0, alive: true },
-  { name: 'Grete', role: 'Pensjonist', about: 'Husker hvordan man sylter og salter.', skills: { combat: 0, scouting: 1, craft: 3, medical: 3 }, weapon: 'melee', health: 70, fatigue: 0, alive: true },
-  { name: 'Jonas', role: 'Mekaniker', about: 'Har kjørt traktor siden han var tolv.', skills: { combat: 3, scouting: 2, craft: 5, medical: 1 }, weapon: 'melee', health: 95, fatigue: 0, alive: true },
+  { name: 'Sunniva', role: 'Bonde', about: 'Vet hva som gror her.', traits: ['parent'], loyalty: 55, skills: { combat: 2, scouting: 2, craft: 3, medical: 1 }, weapon: 'melee', health: 85, fatigue: 0, alive: true },
+  { name: 'Kenneth', role: 'Elektriker', about: 'Kan få strøm i et hus igjen.', traits: ['hard'], loyalty: 55, skills: { combat: 2, scouting: 1, craft: 5, medical: 1 }, weapon: 'melee', health: 90, fatigue: 0, alive: true },
+  { name: 'Amina', role: 'Lege', about: 'Jobbet på SUS til siste dag.', traits: ['kind'], loyalty: 55, skills: { combat: 1, scouting: 2, craft: 1, medical: 7 }, weapon: 'melee', health: 80, fatigue: 0, alive: true },
+  { name: 'Ola', role: 'Fisker', about: 'Har egen båt et sted i Vågen.', traits: ['devout'], loyalty: 55, skills: { combat: 3, scouting: 3, craft: 3, medical: 1 }, weapon: 'shotgun', health: 95, fatigue: 0, alive: true },
+  { name: 'Hanne', role: 'Politi', about: 'Har fortsatt tjenestevåpenet.', traits: ['suspicious', 'hard'], loyalty: 55, skills: { combat: 6, scouting: 3, craft: 1, medical: 2 }, weapon: 'pistol', health: 90, fatigue: 0, alive: true },
+  { name: 'Erik', role: 'Snekker', about: 'Bygger raskere enn han snakker.', traits: ['parent'], loyalty: 55, skills: { combat: 3, scouting: 1, craft: 6, medical: 1 }, weapon: 'melee', health: 95, fatigue: 0, alive: true },
+  { name: 'Mia', role: 'Student', about: 'Lærer fort og klatrer overalt.', traits: ['kind'], loyalty: 55, skills: { combat: 2, scouting: 5, craft: 2, medical: 2 }, weapon: 'melee', health: 100, fatigue: 0, alive: true },
+  { name: 'Rune', role: 'Soldat', about: 'Kom seg ut fra Madlaleiren.', traits: ['hard'], loyalty: 55, skills: { combat: 7, scouting: 3, craft: 2, medical: 2 }, weapon: 'rifle', health: 75, fatigue: 0, alive: true },
+  { name: 'Grete', role: 'Pensjonist', about: 'Husker hvordan man sylter og salter.', traits: ['devout', 'kind'], loyalty: 55, skills: { combat: 0, scouting: 1, craft: 3, medical: 3 }, weapon: 'melee', health: 70, fatigue: 0, alive: true },
+  { name: 'Jonas', role: 'Mekaniker', about: 'Har kjørt traktor siden han var tolv.', traits: ['loner'], loyalty: 55, skills: { combat: 3, scouting: 2, craft: 5, medical: 1 }, weapon: 'melee', health: 95, fatigue: 0, alive: true },
 ];
 
 /** NPC groups, placed at the first HQ candidate of the listed type that is not too close to the player's start. */
@@ -159,7 +168,10 @@ export const FACTIONS = [
   { id: 'traders', name: 'Handelslaget', hqType: 'mall', about: 'Butikkansatte som gjorde senteret til marked.', offers: ['food', 'salt', 'batteries', 'electronics'], wants: ['ammo', 'medicine', 'fuel'] },
   { id: 'farmers', name: 'Øybøndene', hqType: 'coastFarm', about: 'Bønder og fiskere som klarer seg selv.', offers: ['food', 'salt', 'boat'], wants: ['fuel', 'ammo', 'parts', 'medicine'] },
   { id: 'church', name: 'Domkirkesamfunnet', hqType: 'refuge', about: 'Folk som søkte ly og ble.', offers: ['food'], wants: ['food', 'medicine', 'building'] },
-];
+  // Two that are dangerous. The gang says what it wants. The fellowship smiles.
+  { id: 'gang', name: 'Gjengen', hqType: 'mall', about: 'Bevæpnede menn som tar det de vil ha. De kaller det beskyttelse.', offers: ['ammo', 'fuel'], wants: ['food', 'medicine'], hostile: true, minHops: 6 },
+  { id: 'fellowship', name: 'Fellesskapet', hqType: 'school', about: 'Smilende folk med rene klær og mye mat. De sier alle er velkomne.', offers: ['food', 'medicine'], wants: ['ammo', 'fuel', 'parts'], masked: true, minHops: 5 },
+] as { id: string; name: string; hqType: string; about: string; offers: string[]; wants: string[]; hostile?: boolean; masked?: boolean; minHops?: number }[];
 
 export const SEASONS = [
   { months: [11, 0, 1], name: 'Vinter', farm: .1 },
@@ -169,7 +181,7 @@ export const SEASONS = [
 ];
 
 export const MILESTONES: { id: string; title: string; text: string }[] = [
-  { id: 'claimStart', title: 'Et trygt sted', text: 'Overta startsonen.' },
+  { id: 'claimStart', title: 'Et trygt sted', text: 'Ta over en sone.' },
   { id: 'hq', title: 'Hovedkvarter', text: 'Etabler et HQ i en sone dere eier.' },
   { id: 'food', title: 'Mat som kommer igjen', text: 'Produser mat: dyrk, fisk eller bygg drivhus.' },
   { id: 'fiveZones', title: 'Et lite rike', text: 'Eie fem soner.' },

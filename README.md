@@ -4,7 +4,7 @@ Et turbasert zombie-overlevelsesspill i nettleseren, på et ekte (men stilisert)
 
 Du starter på Buøy en tirsdag morgen. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, klarer øya sektor for sektor, let etter utstyr og bygg sperringer før natta tar dere.
 
-**Status:** fase 1 (Buøy) er spillbar. Regionspillet v0.1 for hele Stavanger-regionen ligger i [region/](region/README.md). Fase 2–5 er planlagt. Spillreglene står i [docs/spilldesign.md](docs/spilldesign.md).
+**Status:** fase 1 (Buøy) er spillbar. Regionspillet (v0.2) for hele Stavanger-regionen ligger i [region/](region/README.md). Fase 2–5 er planlagt. Spillreglene står i [docs/spilldesign.md](docs/spilldesign.md).
 
 ## Spill det
 

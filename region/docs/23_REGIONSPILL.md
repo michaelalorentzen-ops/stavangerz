@@ -1,6 +1,6 @@
 # Regionspillet: første spillbare versjon
 
-Status 11.11.2026: spillbar versjon `region-0.1` på forsiden. Den første Buøy-prototypen ligger på `/fase1` med egne lagringer.
+Status 11.11.2026: `region-0.1`. Versjon 0.2 bygger videre med faser, lover, forskning og mye mer. Se [24_V02_DESIGN.md](24_V02_DESIGN.md). Den første Buøy-prototypen ligger på `/fase1` med egne lagringer.
 
 ## Start
 

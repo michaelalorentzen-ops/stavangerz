@@ -15,7 +15,8 @@
     "demo:simulation": "tsx scripts/demo-simulation.ts",
     "zones": "python -W ignore tools/zone-editor/server.py",
     "region:bot": "tsx scripts/region-bot.ts",
-    "region:world": "python -W ignore tools/zone-editor/zonegame.py"
+    "region:world": "python -W ignore tools/zone-editor/zonegame.py",
+    "region:events": "tsx scripts/region-events.ts"
   },
   "dependencies": {
     "maplibre-gl": "6.16.0",

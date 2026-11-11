@@ -21,10 +21,23 @@ export interface RegionWorld {
 
 export type Stock = Record<string, number>;
 export type Weapon = 'melee' | 'pistol' | 'shotgun' | 'rifle';
+/** Traits colour how a person reacts to the leader's choices. */
+export type Trait = 'kind' | 'hard' | 'devout' | 'suspicious' | 'parent' | 'loner';
+/** What a choice says about the leader. People with matching traits like or resent it. */
+export type Stance = 'cruel' | 'merciful' | 'harsh' | 'charity' | 'children' | 'faith' | 'betrayal' | 'reckless';
 export interface RegionSurvivor {
   id: string; name: string; role: string; about: string;
   skills: { combat: number; scouting: number; craft: number; medical: number };
   weapon: Weapon; health: number; fatigue: number; alive: boolean; joinedDay: number;
+  traits?: Trait[];
+  /** 0–100. Below 20 they may leave or turn on you. */
+  loyalty?: number;
+  /** Bitten: the day they turn unless treated. */
+  bitten?: number;
+  /** Away on a multi-day errand until this day. */
+  awayUntil?: number;
+  /** Walked out on the group (not dead). */
+  left?: boolean;
 }
 export type ZoneStatus = 'unknown' | 'scouted' | 'controlled';
 export interface RegionZoneState {
@@ -44,37 +57,73 @@ export interface RegionFaction {
   id: string; name: string; zoneId: string; about: string;
   offers: string[]; wants: string[]; stock: Stock;
   relation: number; known: boolean; tradedDay?: number;
+  /** Fighting strength, for raids both ways. */
+  strength?: number;
+  /** Open enemies demand and raid; masked ones smile until they strike. */
+  hostile?: boolean;
+  /** Hidden: what they really want. Revealed by intelligence, scouting or too late. */
+  intent?: 'honest' | 'betray';
+  revealed?: boolean;
+  defeated?: boolean;
 }
 export interface RegionHq { zoneId: string; type: string; modules: string[]; building?: { id: string; hours: number } }
 
 export type ActionId = 'scout' | 'clear' | 'search' | 'claim' | 'fortify' | 'build' | 'establishHq' | 'module' | 'network'
-  | 'guard' | 'hold' | 'block' | 'blow' | 'farm' | 'fish' | 'rest' | 'heal' | 'craft';
+  | 'guard' | 'hold' | 'block' | 'blow' | 'farm' | 'fish' | 'rest' | 'heal' | 'craft'
+  | 'research' | 'relocate' | 'assault' | 'repair';
 export interface RegionOrder { id: string; action: ActionId; zoneId: string; survivorIds: string[]; target?: string }
+
+/** The population that is not the named crew: counted, not named. */
+export interface Population { adults: number; children: number; elderly: number; sick: number }
+export type WorkId = 'farm' | 'fish' | 'scavenge' | 'clear' | 'guard' | 'build' | 'research';
 
 export interface ReportLine { tone: 'info' | 'good' | 'warn' | 'bad'; title: string; text: string; zoneId?: string }
 export interface RegionReport {
   day: number; lines: ReportLine[];
-  food: { produced: number; eaten: number }; water: { produced: number; drunk: number };
+  food: { produced: number; eaten: number; spoiled?: number }; water: { produced: number; drunk: number };
   zombiesMoved: number; killed: number;
 }
-export interface EventChoice { id: string; label: string; detail: string; disabled?: string }
-export interface PendingEvent { id: string; title: string; text: string; zoneId?: string; factionId?: string; choices: EventChoice[]; data?: Record<string, string | number> }
+export interface EventChoice { id: string; label: string; detail: string; disabled?: string; tags?: Stance[] }
+export interface PendingEvent {
+  id: string; title: string; text: string; zoneId?: string; factionId?: string; choices: EventChoice[];
+  data?: Record<string, string | number>;
+  /** Shown above the choices: who in the crew objects or agrees. */
+  voices?: string[];
+  kicker?: string;
+}
 
 export interface RegionState {
-  schema: 'region-1'; rulesVersion: string; worldVersion: string; seed: number; day: number;
+  schema: 'region-2'; rulesVersion: string; worldVersion: string; seed: number; day: number;
   startZoneId: string; homeZoneId: string;
-  survivors: RegionSurvivor[]; stock: Stock; morale: number;
+  survivors: RegionSurvivor[]; stock: Stock;
+  /** Hope: the long fuel. At 0 the group falls apart. */
+  morale: number;
+  /** Discontent: the short fuse. At 100 someone takes the leadership from you. */
+  discontent: number;
+  population: Population;
+  work: Record<WorkId, number>;
+  laws: string[]; lawDay: number;
+  research: { done: string[]; current?: string; progress: number };
+  phase: number; phaseDay: number;
+  mutations: { id: string; day: number; known: boolean }[];
   zones: Record<string, RegionZoneState>;
-  /** Barricades on land borders and links, by connection id: durability left. */
+  /** Barricades on land borders and links, by connection id: durability left, and tier. */
   barricades: Record<string, number>;
+  barricadeTier: Record<string, number>;
   chokepoints: Record<string, ChokepointState>;
   hq?: RegionHq;
   /** Networks built per L2 zone. */
   networks: Record<string, string[]>;
   factions: RegionFaction[];
   event?: PendingEvent;
+  /** Chains: events that will come back on a given day. */
+  scheduled: { day: number; id: string; data?: Record<string, string | number> }[];
+  /** Small facts that events remember. */
+  flags: Record<string, string | number>;
+  /** Big choices, in a sentence each, for the chronicle. */
+  memory: { day: number; text: string }[];
   milestones: string[];
   reports: RegionReport[];
   counters: Record<string, number>;
-  gameOver?: { day: number; reason: string };
+  gameOver?: { day: number; reason: string; won?: boolean };
 }

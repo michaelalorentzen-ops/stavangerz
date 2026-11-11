@@ -1,17 +1,24 @@
-# Regionspillet v0.1 (QA)
+# Regionspillet v0.2 (QA)
 
-Dette er regionspillet: hele Stavanger-regionen med 663 soner, fritt valg blant 17 startområder, zombier som vandrer mot lyd, ukentlige hendelser, handel med sju grupper, HQ, oppgraderinger og bruer og tunneler. Det er en egen kodebase ved siden av Buøy-spillet i rotmappen, og de deler ikke kode ennå.
+Dette er regionspillet: hele Stavanger-regionen med 663 soner. Det er en egen kodebase ved siden av Buøy-spillet i rotmappen.
+- **Start:** du kan starte hvor du vil, også steder som er nesten umulige å holde.
+- **Faser:** fem faser med egne mål.
+- **Samfunnet:** befolkningen får arbeid, og du styrer med lover i unntakstilstand. Håp og uro, lojalitet i crewet og mytteri følger av valgene.
+- **Forskning og forsvar:** et forskningstre med spesialisering etter HQ-type, perimeter i fire trinn og zombier som muterer.
+- **Grupper:** Gjengen krever beskyttelse, og Fellesskapet smiler til det forråder dere.
+- **Hendelser:** 111 hendelser og kjeder som husker valgene dine.
 
 ```bash
 cd region
 pnpm install
-pnpm dev            # http://127.0.0.1:3000
-pnpm region:bot 90 3   # boten spiller fra alle startområder, JSON-oppsummering til slutt
+pnpm dev                  # http://127.0.0.1:3000
+pnpm region:bot 150 3 8   # boten spiller fra mange startområder, JSON-oppsummering til slutt
+pnpm region:events        # prøver alle hendelser og alle valg
 ```
 
-- Regler, QA-kroker og hva som bør vurderes: [docs/23_REGIONSPILL.md](docs/23_REGIONSPILL.md).
-- Balansetall: `packages/gameplay/src/region/rules.ts`.
-- Soneeditoren (`pnpm zones`) virker ikke fra repoet: cellene (260 MB) og Python-verktøyene ligger bare lokalt. Spillet trenger dem ikke, det leser `apps/game-client/public/world/region-v1.json`.
+- **Design, tall, bot-runde og hva QA bør se etter:** [docs/24_V02_DESIGN.md](docs/24_V02_DESIGN.md). Grunnreglene står i [docs/23_REGIONSPILL.md](docs/23_REGIONSPILL.md).
+- **Balansetall:** `packages/gameplay/src/region/systems.ts` og `rules.ts`.
+- **Soneeditoren** (`pnpm zones`) virker ikke fra repoet. Cellene og Python-verktøyene ligger bare lokalt, og spillet trenger dem ikke. Det leser `apps/game-client/public/world/region-v1.json`.
 
 ---
 
