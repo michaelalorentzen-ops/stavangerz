@@ -1,0 +1,13 @@
+{
+  "routeEstimatesMetres": {
+    "startToMeny": 1308.6301052964943,
+    "startToClipperCorridor": 653.0674587526776,
+    "corridorAvoiding05": null
+  },
+  "zone05AreaApproxM2": 2963.7475745339684,
+  "zone07AreaApproxM2": 254193.7342737808,
+  "proposal07AreasApproxM2": [
+    110546.9239234999,
+    143646.81035028322
+  ]
+}

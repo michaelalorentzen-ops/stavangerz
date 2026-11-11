@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soneeditor</title>
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside id="panel">
+  <header>
+    <div class="title-row">
+      <h1>Soner</h1>
+      <span id="save-status" class="status">Laster</span>
+      <a id="to-game" href="http://127.0.0.1:3000/" target="_blank" rel="noreferrer" title="Åpne spillet (Stavanger Z.cmd starter begge)">Spillet ↗</a>
+    </div>
+    <div id="modes" class="segmented" role="tablist" aria-label="Modus">
+      <button data-mode="edit" class="on" title="Mal celler inn i soner (G)">Grenser</button>
+      <button data-mode="content" title="Definer hva hver sone er (I)">Innhold</button>
+    </div>
+    <div class="row">
+      <div id="levels" class="segmented" role="tablist" aria-label="Nivå">
+        <button data-level="3" title="Mal celler inn i L3-soner (3)">L3</button>
+        <button data-level="2" title="Klikk L3-soner inn i L2-soner (2)">L2</button>
+        <button data-level="1" title="Klikk L2-soner inn i L1-soner (1)">L1</button>
+      </div>
+      <button id="undo" class="icon" title="Angre (Ctrl+Z)" aria-label="Angre">↶</button>
+      <button id="redo" class="icon" title="Gjør om (Ctrl+Y)" aria-label="Gjør om">↷</button>
+    </div>
+    <div class="row">
+      <input id="search" type="search" placeholder="Finn sone" aria-label="Finn sone">
+      <button id="new-zone" title="Ny sone på dette nivået (N)">+ Ny</button>
+    </div>
+  </header>
+
+  <div id="zone-list" role="listbox" aria-label="Soner"></div>
+
+  <section id="active-card" hidden>
+    <div class="row">
+      <span id="active-swatch" class="swatch"></span>
+      <input id="active-name" aria-label="Navn på aktiv sone">
+      <button id="active-lock" class="icon" title="Lås sonen (L)" aria-label="Lås">🔓</button>
+    </div>
+    <div id="active-stats" class="stats"></div>
+    <div class="row wrap">
+      <button id="active-focus" title="Vis på kartet (F)">Vis</button>
+      <button id="active-merge">Slå sammen</button>
+      <button id="active-propose" hidden>Foreslå inndeling</button>
+      <button id="active-delete" class="danger">Slett</button>
+    </div>
+  </section>
+
+  <section id="warnings">
+    <button id="warnings-toggle" class="section-head" aria-expanded="true">
+      <span>Å se på</span><span id="warning-count" class="badge">0</span>
+    </button>
+    <div id="warning-list"></div>
+  </section>
+</aside>
+
+<main id="stage">
+  <div id="map"></div>
+  <div id="labels" aria-hidden="true"></div>
+  <svg id="lasso" aria-hidden="true"><polygon points="" /></svg>
+  <div id="tooltip" hidden></div>
+  <aside id="sheet" hidden aria-label="Soneinnhold"></aside>
+
+  <div id="tools">
+    <button id="tool-cut" title="Smart kutt: del en stor celle (K)">✂ Smart kutt</button>
+    <button id="tool-layers" aria-expanded="false">Kartlag</button>
+    <button id="tool-areas" aria-expanded="false">Områder</button>
+    <button id="tool-game" title="Skriv spillverdenen og åpne spillet">Til spillet</button>
+    <button id="tool-export" class="primary">Eksporter</button>
+  </div>
+
+  <div id="layers-pop" class="popover" hidden>
+    <label><input type="checkbox" id="layer-basemap" checked> Bakgrunnskart (Kartverket)</label>
+    <label><input type="checkbox" id="layer-buildings" checked> Bygg</label>
+    <label><input type="checkbox" id="layer-cells" checked> Celler</label>
+    <label><input type="checkbox" id="layer-labels" checked> Sonenavn</label>
+    <label class="range">Fyllstyrke <input type="range" id="layer-opacity" min="10" max="90" value="45"></label>
+  </div>
+
+  <div id="areas-pop" class="popover" hidden>
+    <div id="area-list"></div>
+    <button id="area-add" class="primary wide">+ Legg til område</button>
+    <p class="hint">Dra en ramme på kartet. Data hentes automatisk, og sonene lages som et første forslag.</p>
+  </div>
+
+  <div id="cut-bar" class="bar" hidden>
+    <span id="cut-message"></span>
+    <button id="cut-apply" class="primary" disabled>Del (Enter)</button>
+    <button id="cut-cancel">Avbryt (Esc)</button>
+  </div>
+
+  <div id="pick-bar" class="bar" hidden>
+    <span id="pick-message"></span>
+    <button id="pick-cancel">Avbryt (Esc)</button>
+  </div>
+
+  <div id="job-bar" class="bar" hidden><span id="job-message"></span></div>
+
+  <div id="content-keys" aria-label="Snarveier i Innhold">
+    <span><kbd>Klikk</kbd> velg sone eller sted</span>
+    <span><kbd>↑</kbd> <kbd>↓</kbd> forrige og neste sone</span>
+    <span><kbd>P</kbd> nytt sted</span>
+    <span><kbd>G</kbd> tilbake til Grenser</span>
+  </div>
+  <div id="keys" aria-label="Snarveier">
+    <span><kbd>Klikk</kbd> flytt kvartal</span>
+    <span><kbd>Shift</kbd>+dra tomter</span>
+    <span><kbd>Ctrl</kbd>+dra område</span>
+    <span><kbd>Alt</kbd>+klikk velg sone</span>
+    <span><kbd>K</kbd> kutt</span>
+    <span><kbd>Ctrl+Z</kbd> angre</span>
+  </div>
+  <div id="toast" role="status" hidden></div>
+</main>
+
+<dialog id="dialog">
+  <form method="dialog">
+    <h2 id="dialog-title"></h2>
+    <div id="dialog-body"></div>
+    <menu>
+      <button value="cancel">Avbryt</button>
+      <button id="dialog-ok" value="ok" class="primary">OK</button>
+    </menu>
+  </form>
+</dialog>
+<script type="module" src="app.js"></script>
+</body>
+</html>
