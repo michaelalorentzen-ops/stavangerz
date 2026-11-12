@@ -1,5 +1,6 @@
 /** The region game: the whole Stavanger region from the zone editor, one day per turn. */
 import type { ZoneMeasures } from '../../../world-data/src/model';
+import type { CrewMission, CrewPosition } from './location';
 
 export interface RegionZone {
   id: string; name: string; level: 1 | 2 | 3; parentId?: string;
@@ -98,6 +99,10 @@ export interface RegionState {
   schema: 'region-2'; rulesVersion: string; worldVersion: string; seed: number; day: number;
   startZoneId: string; homeZoneId: string;
   survivors: RegionSurvivor[]; stock: Stock;
+  /** Canonical v0.4 geography; optional only to read old region-2 saves. */
+  crewPositions?: Record<string, CrewPosition>;
+  /** Persisted multi-day assignments; the engine, not the UI, advances them. */
+  crewMissions?: Record<string, CrewMission>;
   /** Hope: the long fuel. At 0 the group falls apart. */
   morale: number;
   /** Discontent: the short fuse. At 100 someone takes the leadership from you. */
