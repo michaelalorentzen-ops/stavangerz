@@ -5,9 +5,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LibreMap, GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import {
   ACTIONS, BRANCHES, HQ_BRANCH, LAW_GROUPS, LAWS, MILESTONES, MODULE_COST, MUTATIONS, NETWORK_COST, PHASES, SAVE_KEY_REGION, TECHS, TRAIT_NAMES, UPGRADE_COST, VALUE, WEAPONS, WORK_IDS, WORK_NAMES,
-  areaNet, assaultOdds, assigned, autoWork, bestTier, controlled, craftRecipes, dailyFlows, dateText, discontentTarget, endDay, goalMet, hopeTarget, hqModules, indexWorld, lawAvailable, lawWait, living,
+  areaNet, assaultOdds, assigned, autoWork, bestTier, controlled, craftRecipes, dailyFlows, dateText, discontentTarget, goalMet, hopeTarget, hqModules, indexWorld, lawAvailable, lawWait, living,
   moduleName, newRegionGame, passLaw, phaseDef, previewOrder, reach, repealLaw, resolveEvent, resourceName, searchHoursTotal, season, setWork, shelter, specialBranch, startDanger,
-  startResearch, techBlocked, techCost, totalPeople, trade, tradeValue, upgradeName, upgradesFor, workforce, WONDERS, wonderZone, nextWonderLevel, wonderEffects,
+  startRegionDay, resumeRegionDay, startResearch, techBlocked, techCost, totalPeople, trade, tradeValue, upgradeName, upgradesFor, workforce, WONDERS, wonderZone, nextWonderLevel, wonderEffects,
   type ActionId, type Branch, type Flows, type RegionOrder, type RegionReport, type RegionState, type RegionWorld, type WorkId,
 } from '../../../packages/gameplay/src/region/index';
 import { CONTENT, takeoverEffort } from '../../../packages/world-data/src/content';
@@ -17,6 +17,9 @@ import './region.css';
 const WORLD_URL = '/world/region-v1.json';
 const ZONE_EDITOR_URL = 'http://127.0.0.1:5178/';
 const CORE = ['medicine', 'fuel', 'ammo', 'building'];
+// HYPOTESE, M1-prototype: choose an existing named survivor as the physical
+// avatar. Later character creation / succession is a separate product system.
+const PLAYER_AVATAR_FLAG = 'playerAvatarId';
 const STATUS_LABEL = { unknown: 'Ukjent', scouted: 'Speidet', controlled: 'Deres' } as const;
 const DANGER_COLOR: Record<string, string> = { Rolig: '#5f9a5f', Middels: '#a8a24a', Krevende: '#c48a3a', 'Svært krevende': '#b8563c', 'Nesten umulig': '#7c2230' };
 const number = (n: number) => Math.round(n).toLocaleString('nb-NO');
@@ -24,6 +27,7 @@ const decimal = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${decimal(Math.abs(Math.round(n * 10) / 10))}`;
 
 type Modal = null | 'report' | 'trade' | 'goals' | 'menu' | 'stock' | 'society' | 'research' | 'chronicle' | 'wonders';
+type DayReplaySession = { before: RegionState; report: RegionReport; pendingEvent: boolean };
 
 function load(): RegionState | null {
   try { const raw = localStorage.getItem(SAVE_KEY_REGION); const s = raw ? JSON.parse(raw) as RegionState : null; return s?.schema === 'region-2' ? s : null; } catch { return null; }
@@ -179,7 +183,13 @@ function Intro({ world, state, onDone }: { world: RegionWorld; state: RegionStat
 
 // ------------------------------------------------------------------ play
 
-function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: RegionState; setState: (s: RegionState) => void; onQuit: () => void }) {
+function Play({ world, state: committedState, setState, onQuit }: { world: RegionWorld; state: RegionState; setState: (s: RegionState) => void; onQuit: () => void }) {
+  const [replay, setReplay] = useState<DayReplaySession | null>(null);
+  const [replayStep, setReplayStep] = useState(-1);
+  const [reportAfterEvent, setReportAfterEvent] = useState<RegionReport | null>(null);
+  // Save the authoritative result immediately, but do not render any of its
+  // information until the journal reaches that point in the day.
+  const state = replay?.before ?? committedState;
   const index = indexWorld(world);
   const [selected, setSelected] = useState(state.homeZoneId);
   const [crew, setCrew] = useState<string[]>([]);
@@ -191,8 +201,80 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
   const [phaseShown, setPhaseShown] = useState(state.phase);
   const hops = useMemo(() => reach(state, world), [state, world]);
   const flows = useMemo(() => dailyFlows(state, world), [state, world]);
+  const mapState = useMemo(() => {
+    if (!replay || replayStep < 0) return state;
+    const zones = { ...replay.before.zones };
+    for (const stage of replay.report.replay?.slice(0, replayStep + 1) ?? []) {
+      for (const change of stage.zoneChanges) {
+        const zone = zones[change.zoneId];
+        if (zone) zones[change.zoneId] = { ...zone, status: change.after };
+      }
+    }
+    return { ...replay.before, zones };
+  }, [replay, replayStep, state]);
+  // -1 = operations running (07→22), 0 = night running (22→07),
+  // 1 = night settled at 07, 2 = new-day journal settled.
+  // Show night movements during the night window only, not beforehand.
+  const replayMoves = replay ? (replayStep === 0 ? replay.report.replay?.[1]?.moves ?? [] : []) : undefined;
+  const closeReplay = () => {
+    if (!replay) return;
+    setReplay(null);
+    setReplayStep(-1);
+    setReport(replay.report);
+    // An unresolved event takes precedence over the report, including on Skip.
+    if (replay.pendingEvent) { setReportAfterEvent(replay.report); setModal(null); }
+    else setModal('report');
+  };
+  useEffect(() => {
+    if (!replay) return;
+    const delay = [-1, 0, 1, 2].includes(replayStep)
+      ? replayStep === -1 ? 1100 : replayStep === 0 ? 850 : replayStep === 1 ? 450 : 350
+      : 350;
+    const timer = window.setTimeout(() => {
+      if (replayStep < 2) setReplayStep(replayStep + 1);
+      else closeReplay();
+    }, delay);
+    return () => window.clearTimeout(timer);
+    // closeReplay operates on the same immutable session as replay.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replay, replayStep]);
+  useEffect(() => {
+    if (!replay) return;
+    // The translucent shield blocks pointer actions; trap keyboard focus too,
+    // so players cannot issue a second order against an older visible state.
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        document.querySelector<HTMLButtonElement>('[data-testid="skip-replay"]')?.focus();
+      } else if (!event.metaKey && !event.ctrlKey && !event.altKey && !(event.target instanceof Node && document.querySelector('.rz-replay-card')?.contains(event.target))) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+    window.addEventListener('keydown', trap, true);
+    return () => window.removeEventListener('keydown', trap, true);
+  }, [replay]);
+  useEffect(() => {
+    if (!reportAfterEvent || replay || committedState.event) return;
+    setReport(reportAfterEvent);
+    setReportAfterEvent(null);
+    setModal('report');
+  }, [reportAfterEvent, replay, committedState.event]);
+  useEffect(() => {
+    if (!modal) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setModal(null); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [modal]);
   const busy = new Set(orders.flatMap(o => o.survivorIds));
   const people = living(state);
+  const configuredAvatarId = typeof state.flags[PLAYER_AVATAR_FLAG] === 'string' ? state.flags[PLAYER_AVATAR_FLAG] as string : undefined;
+  const activeAvatar = people.find(person => person.id === configuredAvatarId);
+  const previousAvatar = state.survivors.find(person => person.id === configuredAvatarId);
+  const pendingNightDecision = committedState.turnCheckpoint?.decision;
+  const pendingNightAvatar = committedState.survivors.find(person => person.id === pendingNightDecision?.avatarId);
+  const avatarNeedsSelection = !activeAvatar && !state.turnCheckpoint && !state.gameOver && people.length > 0;
   const zone = index.byId.get(selected);
   const apply = (fn: () => RegionState) => { try { setState(fn()); setMessage(''); } catch (e) { setMessage((e as Error).message); } };
 
@@ -203,10 +285,41 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
     if (!p.valid) { setMessage(p.errors.join(' ')); return; }
     setOrders([...orders, order]); setCrew([]); setMessage('');
   };
+  const showCompletedDay = (before: RegionState, result: { state: RegionState; report: RegionReport }, skipReplay = false) => {
+      setState(result.state); setOrders([]); setCrew([]); setReport(result.report);
+      const stages = result.report.replay;
+      if (!skipReplay && stages?.length === 3 && stages[0].phase === 'operations' && stages[1].phase === 'night' && stages[2].phase === 'new-day'
+        && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setReplay({ before, report: result.report, pendingEvent: !!result.state.event });
+        setReplayStep(-1);
+        setModal(null);
+      } else if (result.state.event) {
+        setReportAfterEvent(result.report);
+        setModal(null);
+      } else setModal('report');
+  };
   const finishDay = () => {
+    if (replay || committedState.event || committedState.turnCheckpoint || !activeAvatar || avatarNeedsSelection) return;
     try {
-      const result = endDay(state, world, orders);
-      setState(result.state); setOrders([]); setCrew([]); setReport(result.report); setModal('report');
+      const result = startRegionDay(state, world, orders, { avatarId: activeAvatar.id });
+      if (result.status === 'paused') {
+        // The authoritative partial turn is saved before asking the player.
+        // It must be resumed, never simulated again with the old daily orders.
+        setState(result.state); setOrders([]); setCrew([]); setReport(null); setModal(null);
+        return;
+      }
+      showCompletedDay(state, result);
+    } catch (e) { setMessage((e as Error).message); }
+  };
+  const answerNightDecision = (choice: 'hold' | 'fire') => {
+    if (!pendingNightDecision || replay) return;
+    try {
+      const result = resumeRegionDay(committedState, world, choice);
+      // The checkpoint is already post-operations. Without a persisted dawn
+      // snapshot, animating the whole day from it would leak/falsify history.
+      // Show the actual complete report directly for this first vertical slice.
+      showCompletedDay(committedState, result, true);
+      setMessage('');
     } catch (e) { setMessage((e as Error).message); }
   };
   // For automated testers: the current state, world, plan and forecast, read-only.
@@ -254,10 +367,10 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
       {!orders.length && <p className="rz-small">Ingen oppdrag. Crew uten oppdrag hviler og forsvarer leiren.</p>}
       {orders.map(o => <div key={o.id} className="rz-order"><span><b>{ACTIONS[o.action].label}</b> {index.byId.get(o.zoneId)?.name}{o.target ? ` · ${targetName(world, o)}` : ''}<small>{o.survivorIds.map(id => state.survivors.find(p => p.id === id)?.name).join(', ')}</small></span>
         <button aria-label="Fjern oppdrag" onClick={() => setOrders(orders.filter(x => x.id !== o.id))}>×</button></div>)}
-      <button className="rz-primary rz-end" data-testid="end-day" disabled={!!state.event || !!state.gameOver} onClick={finishDay}>Avslutt dag {state.day} →</button>
+      <button className="rz-primary rz-end" data-testid="end-day" disabled={!!state.event || !!state.gameOver || !!replay || !!state.turnCheckpoint || !activeAvatar} onClick={finishDay}>Avslutt dag {state.day} →</button>
       {message && <p className="rz-message" role="alert">{message}</p>}
     </aside>
-    <RegionMap world={world} state={state} flows={flows} overlay={overlay} selected={selected} hops={hops} onSelect={setSelected} onOverlay={setOverlay} />
+    <RegionMap world={world} state={mapState} flows={flows} overlay={replay ? 'zombies' : overlay} selected={selected} hops={hops} replayMoves={replayMoves} onSelect={setSelected} onOverlay={setOverlay} />
     <aside className="rz-right" aria-label="Valgt sone">
       {zone && <ZonePanel world={world} state={state} flows={flows} zoneId={selected} crew={crew} hops={hops.get(selected)} onOrder={addOrder} />}
     </aside>
@@ -266,6 +379,27 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
       <p className="rz-kicker">{state.event.kicker ?? `HENDELSE · DAG ${state.day}`}</p><h2>{state.event.title}</h2><p>{state.event.text}</p>
       {!!state.event.voices?.length && <ul className="rz-voices">{state.event.voices.map(v => <li key={v}>{v}</li>)}</ul>}
       {state.event.choices.map(c => <button key={c.id} disabled={!!c.disabled} onClick={() => apply(() => resolveEvent(state, world, c.id).state)}><strong>{c.label}</strong><small>{c.disabled ?? c.detail}</small></button>)}
+    </section></div>}
+    {avatarNeedsSelection && <div className="rz-overlay"><section className="rz-dialog rz-avatar-choice" role="dialog" aria-modal="true" aria-label="Velg hovedperson">
+      <p className="rz-kicker">DIN HISTORIE · FASE {state.phase}</p>
+      <h2>{previousAvatar ? 'Hvem skal føre historien videre?' : 'Hvem spiller du som?'}</h2>
+      <p>{previousAvatar
+        ? `${previousAvatar.name} er ikke lenger tilgjengelig. Velg eksplisitt hvem av de overlevende du følger videre. Et fullstendig etterfølgersystem kommer senere.`
+        : 'Velg den du selv styrer ute i Stavanger. Personen kan bli skadet eller dø, og du tar valg når vedkommende er til stede. Samfunnets leder kan senere være en annen.'}</p>
+      <div className="rz-avatar-options">{people.map(person => <button key={person.id} onClick={() => apply(() => ({ ...committedState, flags: { ...committedState.flags, [PLAYER_AVATAR_FLAG]: person.id } }))}>
+        <Art path={`crew/${slug(person.name)}`} className="rz-portrait" />
+        <span><strong>{person.name}</strong><small>{person.role} · Helse {Math.round(person.health)} · Kamp {person.skills.combat} · Speiding {person.skills.scouting}</small></span>
+      </button>)}</div>
+      <p className="rz-small">Dette er et midlertidig valg mellom de fire navngitte overlevende i v0.4-prototypen.</p>
+    </section></div>}
+    {pendingNightDecision && !replay && <div className="rz-overlay"><section className="rz-dialog rz-event rz-night-decision" role="dialog" aria-modal="true" aria-label="Nattangrep ved HQ">
+      <p className="rz-kicker">KRITISK · DAG {state.day} · NATT 22:00–07:00</p>
+      <h2>Zombier ved hovedkvarteret</h2>
+      <p>{state.zones[pendingNightDecision.zoneId]?.zombies ?? 0} zombier presser på. {pendingNightAvatar?.name ?? 'Hovedpersonen'} er fysisk til stede og må avgjøre innsatsen før nattforsvaret kan avgjøres.</p>
+      <button onClick={() => answerNightDecision('hold')}><strong>Hold stillingen</strong><small>Bruk vanlig vakthold og spar ammunisjonen.</small></button>
+      <button disabled={(state.stock.ammo ?? 0) < pendingNightDecision.ammoRequired} onClick={() => answerNightDecision('fire')}><strong>Gi dekkild</strong><small>{(state.stock.ammo ?? 0) < pendingNightDecision.ammoRequired ? 'Ikke nok ammunisjon.' : `Bruk ${pendingNightDecision.ammoRequired} patroner for ekstra forsvar.`}</small></button>
+      {message && <p className="rz-message" role="alert">{message}</p>}
+      <p className="rz-small">Døgnet er satt på pause og lagret. Valget må tas før neste dag kan begynne.</p>
     </section></div>}
     {showPhase && !state.gameOver && <div className="rz-overlay"><section className="rz-dialog rz-phase-dialog" role="dialog" aria-label="Ny fase">
       <Art path={`phases/${state.phase}`} className="rz-art rz-art-wide" />
@@ -278,9 +412,9 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
     {state.gameOver && <div className="rz-overlay"><section className="rz-dialog"><Art path={`end/${state.gameOver.won ? 'win' : 'lose'}`} className="rz-art rz-art-wide" /><p className="rz-kicker">{state.gameOver.won ? 'SEIER' : 'SLUTT'}</p><h2>{state.gameOver.won ? 'Dere klarte det' : `Slutt etter ${state.gameOver.day} dager`}</h2><p>{state.gameOver.reason}</p>
       <p>Fase {state.phase}, {controlled(state).length} soner, {totalPeople(state)} mennesker, {state.research.done.length} oppfinnelser, {state.counters.killed ?? 0} zombier drept.</p>
       <button className="rz-primary" onClick={() => { persist(null); onQuit(); }}>Ny gjennomspilling</button></section></div>}
-    {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}><section className="rz-dialog rz-wide-dialog">
-      <button className="rz-close" aria-label="Lukk" onClick={() => setModal(null)}>×</button>
-      {modal === 'report' && report && <ReportView report={report} onZone={id => { setSelected(id); setModal(null); }} />}
+    {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}><section className="rz-dialog rz-wide-dialog" role="dialog" aria-modal="true" aria-label={modal === 'report' ? `Dagsrapport for dag ${report?.day ?? state.day}` : undefined}>
+      <button className="rz-close" aria-label="Lukk" autoFocus onClick={() => setModal(null)}>×</button>
+      {modal === 'report' && report && <ReportView report={report} state={state} flows={flows} onZone={id => { setSelected(id); setModal(null); }} />}
       {modal === 'trade' && <TradeView state={state} world={world} onTrade={(id, give, take) => { try { const r = trade(state, id, give, take); setState(r.state); setMessage(r.message); } catch (e) { setMessage((e as Error).message); } }} message={message} />}
       {modal === 'goals' && <GoalsView world={world} state={state} />}
       {modal === 'society' && <SocietyView world={world} state={state} flows={flows} apply={apply} message={message} />}
@@ -294,7 +428,44 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
         <button onClick={() => { if (confirm('Avslutte og starte på nytt? Lagringen slettes.')) { persist(null); onQuit(); } }}>Ny gjennomspilling</button>
         <a className="rz-link" href={ZONE_EDITOR_URL} target="_blank" rel="noreferrer">Åpne soneeditoren ↗</a></>}
     </section></div>}
+    {replay && <DayReplay session={replay} step={replayStep} onSkip={closeReplay} />}
   </main>;
+}
+
+/** A presentation of settled journal entries, not a minute-based simulation. */
+function DayReplay({ session, step, onSkip }: { session: DayReplaySession; step: number; onSkip: () => void }) {
+  const [clock, setClock] = useState('07:00');
+  useEffect(() => {
+    if (step >= 1) { setClock('07:00'); return; }
+    const start = performance.now();
+    const night = step === 0;
+    const duration = night ? 850 : 1100;
+    const beginMinutes = night ? 22 * 60 : 7 * 60;
+    const spanMinutes = (night ? 9 : 15) * 60;
+    const timer = window.setInterval(() => {
+      const ratio = Math.min(1, (performance.now() - start) / duration);
+      const minutes = (beginMinutes + Math.floor(spanMinutes * ratio)) % (24 * 60);
+      setClock(`${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
+    }, 60);
+    return () => window.clearInterval(timer);
+  }, [step]);
+  const journal = session.report.replay ?? [];
+  const settled = step >= 0 ? journal[Math.min(step, journal.length - 1)] : null;
+  const label = step < 0 ? 'DAGENS OPERASJONER' : step === 0 ? 'NATTEN FALLER' : step === 1 ? 'MORGENEN GRYR' : 'NY DAG';
+  const headline = step < 0 ? 'Oppdragene gjennomføres' : step === 0 ? 'Operasjonene er avgjort' : step === 1 ? 'Nattevakten har rapportert' : 'Døgnet er oppsummert';
+  const lines = settled?.lines.slice().sort((a, b) => reportPriority(b, session.before.phase) - reportPriority(a, session.before.phase)).slice(0, 3) ?? [];
+  const resources = settled?.mainResourcesAfter ?? { food: session.before.stock.food ?? 0, water: session.before.stock.water ?? 0 };
+  return <div className="rz-replay-shield" role="dialog" aria-modal="true" aria-label="Døgnet spilles av">
+    <section className="rz-replay-card" aria-live="off">
+      <div className="rz-replay-head"><div><p className="rz-kicker">DAG {session.before.day} · {label}</p><h2>{headline}</h2></div><time className="rz-replay-clock">{clock}</time></div>
+      <div className="rz-replay-track" aria-hidden="true"><span key={step} style={{ animationDuration: `${step < 0 ? 1100 : step === 0 ? 850 : step === 1 ? 450 : 350}ms` }} /></div>
+      <div className="rz-replay-feed">
+        {lines.length ? lines.map((line, i) => <p key={`${step}-${i}`} className={`rz-replay-line rz-replay-${line.tone}`}>{line.title}</p>) : <p className="rz-replay-empty">{step < 0 ? 'Laget er ute. Utfallet vises etter operasjonene.' : 'Ingen større hendelser i denne delen av døgnet.'}</p>}
+        {!!settled?.zoneChanges.length && <p className="rz-replay-zones">{settled.zoneChanges.length} {settled.zoneChanges.length === 1 ? 'sone endret status' : 'soner endret status'} på kartet</p>}
+      </div>
+      <div className="rz-replay-bottom"><span>Mat <b>{number(resources.food)}</b> · Vann <b>{number(resources.water)}</b></span><button className="rz-primary" onClick={onSkip} data-testid="skip-replay">Hopp over avspilling →</button></div>
+    </section>
+  </div>;
 }
 
 function Meter({ label, value, target, good }: { label: string; value: number; target: number; good?: boolean }) {
@@ -546,10 +717,64 @@ function GoalsView({ world, state }: { world: RegionWorld; state: RegionState })
     <p className="rz-small">Seier i fase 5: 30 dager på rad med mat nok, håp over 50 og uro under 50, en kur fra vaksineforsøket, eller alle gruppene i regionen som venner.</p></>;
 }
 
-function ReportView({ report, onZone }: { report: RegionReport; onZone: (id: string) => void }) {
-  return <><p className="rz-kicker">RAPPORT · DAG {report.day}</p><h2>Natten er over</h2>
-    <p className="rz-small">Mat: +{report.food.produced} / −{report.food.eaten}{report.food.spoiled ? ` / ${report.food.spoiled} råtnet` : ''} · Vann: +{report.water.produced} / −{report.water.drunk} · {report.killed} zombier drept · {report.zombiesMoved} zombier flyttet seg i regionen</p>
-    <ul className="rz-report">{report.lines.map((l, i) => <li key={i} className={`rz-${l.tone}`}><b>{l.title}</b> {l.text}{l.zoneId && <button className="rz-link" onClick={() => onZone(l.zoneId!)}>Vis</button>}</li>)}</ul></>;
+/** Visual priority is derived from events the engine actually reported, never inferred outcomes. */
+function reportPriority(line: RegionReport['lines'][number], phase: number): number {
+  const title = line.title.toLocaleLowerCase('nb-NO');
+  let score = { bad: 400, warn: 260, good: 110, info: 25 }[line.tone];
+  if (/død|døde|tapt|mistet|brøt sammen|snudde i natt|kom ikke hjem/.test(title)) score += 180;
+  if (/angrep|sult|tørst|bitt|fiender|kom inn|mislyktes/.test(title)) score += 120;
+  if (/fase|milepæl|hq etablert|er deres|er slått/.test(title)) score += 100;
+  if (/ble med|nye i leiren|er ferdig|kontakt med/.test(title)) score += 65;
+  if (/speidet|^søk i |zombier drept|ryddelaget/.test(title)) score += phase <= 2 ? 65 : -25;
+  return score;
+}
+
+function resourceOutlook(days: number | null, net: number) {
+  if (net >= 0) return { text: 'Dekker forbruket per dag', risk: 'stable' } as const;
+  if (days === null || !Number.isFinite(days)) return { text: 'Fallende lager', risk: 'watch' } as const;
+  if (days < 3) return { text: `Kritisk · ca. ${decimal(Math.max(0, days))} døgn igjen`, risk: 'critical' } as const;
+  if (days < 7) return { text: `Lav beholdning · ca. ${decimal(days)} døgn igjen`, risk: 'watch' } as const;
+  return { text: `Ca. ${decimal(days)} døgn igjen`, risk: 'stable' } as const;
+}
+
+function ReportView({ report, state, flows, onZone }: { report: RegionReport; state: RegionState; flows: Flows; onZone: (id: string) => void }) {
+  const ranked = report.lines.map((line, index) => ({ line, index, priority: reportPriority(line, state.phase) }))
+    .sort((a, b) => b.priority - a.priority || a.index - b.index);
+  const main = ranked[0]?.line;
+  const secondary = ranked.slice(1);
+  const food = resourceOutlook(flows.food.daysLeft, flows.food.net);
+  const water = resourceOutlook(flows.water.daysLeft, flows.water.net);
+
+  return <div className="rz-daily-report">
+    <section className={`rz-report-hero rz-report-hero-${main?.tone ?? 'info'}`} aria-label="Dagens viktigste hendelse">
+      <p className="rz-kicker">DAGSRAPPORT · DAG {report.day} · VIKTIGST</p>
+      <h2>{main?.title ?? 'Dagen er over'}</h2>
+      <p>{main?.text ?? 'Ingen spesielle hendelser er rapportert.'}</p>
+      {main?.zoneId && <button className="rz-link rz-report-zone" onClick={() => onZone(main.zoneId!)}>Vis sone på kartet →</button>}
+    </section>
+
+    <section aria-label="Mat og vann" className="rz-report-resources">
+      <div className={`rz-report-resource rz-report-resource-${food.risk}`}>
+        <div className="rz-report-resource-top"><span>Mat · lager nå</span><b>{number(state.stock.food ?? 0)}</b></div>
+        <strong>{food.text}</strong>
+        <small>Dag {report.day}: +{number(report.food.produced)} produsert · −{number(report.food.eaten)} spist{report.food.spoiled ? ` · −${number(report.food.spoiled)} svinn` : ''}</small>
+      </div>
+      <div className={`rz-report-resource rz-report-resource-${water.risk}`}>
+        <div className="rz-report-resource-top"><span>Vann · lager nå</span><b>{number(state.stock.water ?? 0)}</b></div>
+        <strong>{water.text}</strong>
+        <small>Dag {report.day}: +{number(report.water.produced)} hentet · −{number(report.water.drunk)} drukket</small>
+      </div>
+    </section>
+    <p className="rz-report-footnote">Lager og prognose er fra nåværende spillstatus. Dagstallene viser registrert produksjon og forbruk, ikke full lagerendring.</p>
+    <div className="rz-report-activity" aria-label="Zombier denne dagen"><span><b>{number(report.killed)}</b> zombier drept</span><span><b>{number(report.zombiesMoved)}</b> zombier flyttet seg</span></div>
+    {secondary.length > 0 && <section aria-label="Øvrige hendelser" className="rz-report-secondary">
+      <h3>Øvrige hendelser <small>{secondary.length}</small></h3>
+      <ul className="rz-report">{secondary.map(({ line, index }) => <li key={index} className={`rz-${line.tone}`}>
+        <div><b>{line.title}</b><p>{line.text}</p></div>
+        {line.zoneId && <button className="rz-link" aria-label={`Vis sone for ${line.title}`} onClick={() => onZone(line.zoneId!)}>Vis sone →</button>}
+      </li>)}</ul>
+    </section>}
+  </div>;
 }
 
 function TradeView({ state, world, onTrade, message }: { state: RegionState; world: RegionWorld; onTrade: (id: string, give: Record<string, number>, take: Record<string, number>) => void; message: string }) {
@@ -584,7 +809,7 @@ function TradeView({ state, world, onTrade, message }: { state: RegionState; wor
 
 // ------------------------------------------------------------------ map
 
-function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onOverlay }: { world: RegionWorld; state: RegionState; flows: Flows; overlay: 'zombies' | 'food'; selected: string; hops: Map<string, number>; onSelect: (id: string) => void; onOverlay: (o: 'zombies' | 'food') => void }) {
+function RegionMap({ world, state, flows, overlay, selected, hops, replayMoves, onSelect, onOverlay }: { world: RegionWorld; state: RegionState; flows: Flows; overlay: 'zombies' | 'food'; selected: string; hops: Map<string, number>; replayMoves?: { from: string; to: string; n: number }[]; onSelect: (id: string) => void; onOverlay: (o: 'zombies' | 'food') => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LibreMap | null>(null);
   const markersRef = useRef<{ remove: () => void }[]>([]);
@@ -621,6 +846,7 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
         map!.addSource('moves', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         // What you do not know lies in fog. What is yours glows.
         map!.addLayer({ id: 'l3-fill', type: 'fill', source: 'l3', paint: {
+          'fill-color-transition': { duration: 500, delay: 0 },
           'fill-color': ['case', ['==', ['feature-state', 'mode'], 'food'],
             ['case', ['==', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled'], ['interpolate', ['linear'], ['coalesce', ['feature-state', 'net'], 0], -3, '#c0533f', 0, '#8f8a5a', 6, '#4f9a6b'], '#05090b'],
             ['match', ['coalesce', ['feature-state', 's'], 'unknown'], 'controlled', COLORS.owned, 'faction', COLORS.faction, 'enemy', COLORS.enemy, 'scouted',
@@ -678,7 +904,9 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
     for (const zone of index.l3) {
       const z = state.zones[zone.id];
       const f = state.factions.find(x => x.zoneId === zone.id && !x.defeated);
-      const s = f && f.known ? (f.hostile ? 'enemy' : 'faction') : z.status;
+      // Journal-controlled territory must not stay tinted as an old enemy
+      // just because the replay deliberately retains its previous faction data.
+      const s = z.status === 'controlled' ? 'controlled' : f && f.known ? (f.hostile ? 'enemy' : 'faction') : z.status;
       map.setFeatureState({ source: 'l3', id: zone.id }, { s, z: z.intel ? (z.intel.min + z.intel.max) / 2 : 0, reach: hops.has(zone.id), net: flows.zones[zone.id]?.net ?? 0, mode: overlay });
     }
     for (const l of world.links) map.setFeatureState({ source: 'links', id: l.id }, { c: state.chokepoints[l.id] });
@@ -686,7 +914,7 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
     const heat = index.l3.filter(z => state.zones[z.id].intel && state.zones[z.id].status !== 'controlled' && z.at).map(z => ({ type: 'Feature' as const, properties: { n: (state.zones[z.id].intel!.min + state.zones[z.id].intel!.max) / 2 }, geometry: { type: 'Point' as const, coordinates: z.at! } }));
     (map.getSource('heat') as GeoJSONSource).setData({ type: 'FeatureCollection', features: heat });
     map.setPaintProperty('heat', 'heatmap-opacity', overlay === 'food' ? 0 : .9);
-    const moves = (state.reports.at(-1)?.moves ?? []).filter(m => index.byId.get(m.from)?.at && index.byId.get(m.to)?.at).map(m => ({ type: 'Feature' as const, properties: { n: m.n }, geometry: { type: 'LineString' as const, coordinates: [index.byId.get(m.from)!.at!, index.byId.get(m.to)!.at!] } }));
+    const moves = (replayMoves ?? state.reports.at(-1)?.moves ?? []).filter(m => index.byId.get(m.from)?.at && index.byId.get(m.to)?.at).map(m => ({ type: 'Feature' as const, properties: { n: m.n }, geometry: { type: 'LineString' as const, coordinates: [index.byId.get(m.from)!.at!, index.byId.get(m.to)!.at!] } }));
     (map.getSource('moves') as GeoJSONSource).setData({ type: 'FeatureCollection', features: moves });
     // Markers: home, HQ candidates you have seen, wonders, groups you know.
     markersRef.current.forEach(m => m.remove());
@@ -694,9 +922,9 @@ function RegionMap({ world, state, flows, overlay, selected, hops, onSelect, onO
     markersRef.current = [];
     for (const p of world.pois.filter(p => p.role === 'hq' && state.zones[p.zoneId]?.status !== 'unknown' && !state.factions.some(f => f.zoneId === p.zoneId && !f.defeated))) add(p.at, 'hq', `${p.name}: mulig HQ (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
     for (const d of WONDERS) { const zid = state.wonders?.[d.id]?.zoneId ?? (d.found === 'claim' ? wonderZone(world, d) : undefined); if (zid && (state.wonders?.[d.id] || state.zones[zid]?.status !== 'unknown')) add(index.byId.get(zid)?.at, 'wonder', `${d.name}${state.wonders?.[d.id] ? ' (deres)' : ''}`); }
-    for (const f of state.factions.filter(f => f.known && !f.defeated)) add(index.byId.get(f.zoneId)?.at, f.hostile ? 'enemy' : 'faction', f.name);
+    for (const f of state.factions.filter(f => f.known && !f.defeated && state.zones[f.zoneId]?.status !== 'controlled')) add(index.byId.get(f.zoneId)?.at, f.hostile ? 'enemy' : 'faction', f.name);
     add(index.byId.get(state.homeZoneId)?.at, 'home', 'Leiren');
-  }, [state, ready, hops, world, index, flows, overlay]);
+  }, [state, ready, hops, world, index, flows, overlay, replayMoves]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
