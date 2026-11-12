@@ -6,8 +6,9 @@ import { resolveDay, type Connection, type SimulationWorld } from '../../../simu
 import { CONTENT } from '../../../world-data/src/content';
 import type {
   ActionId, ChokepointState, RegionFaction, RegionOrder, RegionReplayStage, RegionReplayZoneChange, RegionReport,
-  RegionState, RegionSurvivor, RegionWorld, RegionZone, RegionZoneState, ReportLine, Stock, ZoneStatus,
+  RegionState, RegionSurvivor, RegionTurnDecision, RegionWorld, RegionZone, RegionZoneState, ReportLine, Stock, ZoneStatus,
 } from './types';
+import { crewPositionFor } from './location';
 import {
   ACTIONS, FACTIONS, LOOT_PER_HOME, LOOT_PER_SITE, MILESTONES, MODULE_COST, NETWORK_COST, R, RECRUIT_POOL, REGION_RULES_VERSION,
   SEASONS, START_CREW, UPGRADE_COST, VALUE, WEAPONS,
@@ -529,9 +530,10 @@ function fishYield(state: RegionState, z: RegionZoneState, workers: number) {
 
 // ------------------------------------------------------------------ the day
 
-export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOrder[]): { state: RegionState; report: RegionReport } {
+function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders: RegionOrder[]): RegionState {
   if (state0.gameOver) throw new Error('Spillet er over.');
   if (state0.event) throw new Error('Velg hva dere gjør med hendelsen først.');
+  if (state0.turnCheckpoint) throw new Error('Døgnet er allerede startet. Fortsett hendelsen før nye ordre.');
   const state = clone(state0);
   const index = indexWorld(world);
   const lines: ReportLine[] = [];
@@ -719,8 +721,8 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
   // The many: workers who scavenge, build, guard and research. Farming and fishing come with production.
   const work = workDay(state, world, rngFor('work'), lines);
 
-  // Replay-only stage boundary. The authoritative simulation still resolves a
-  // full day atomically; these stages are NOT user-interruptible checkpoints.
+  // Day operations are committed to the temporary turn state, never replayed
+  // when the saved checkpoint is resumed. This boundary also feeds replay UI.
   const operationsLineEnd = lines.length;
   const operationsZoneStatus = statusSnapshot(state);
   const operationsResources = mainResources();
@@ -730,7 +732,88 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
 
   // Zombie migration, then night.
   const { moved: migrated, moves } = migrate(state, world, noise, lines);
-  killed += nightDefence(state, world, guards, work.guardPower, lines, rngFor('night'));
+  state.turnCheckpoint = {
+    version: 1, day, worldVersion: world.worldVersion, stage: 'before-night-defence',
+    lines, guards, guardPower: work.guardPower, killed, foodMade, crewResearch, migrated, moves,
+    initialZoneStatus, operationsLineEnd, operationsZoneStatus, operationsResources,
+  };
+  return state;
+}
+
+/**
+ * First genuinely interruptible v0.4 turn slice: a severe HQ night assault
+ * while a known player avatar is physically there. Other crews retain their
+ * autonomous v0.3 resolution; remote radio escalation is a later slice.
+ *
+ * HYPOTESE (not a locked balance rule): >=8 attackers trigger the decision;
+ * five ammunition provide ten extra night-defence points.
+ */
+export function startRegionDay(
+  state0: RegionState, world: RegionWorld, orders: RegionOrder[],
+  options: { avatarId?: string } = {},
+): { status: 'paused'; state: RegionState; decision: RegionTurnDecision } | { status: 'complete'; state: RegionState; report: RegionReport } {
+  const state = runRegionDayOperations(state0, world, orders);
+  const avatarId = options.avatarId;
+  const avatar = avatarId && state.survivors.find(person => person.id === avatarId && person.alive && !person.left);
+  const position = avatar ? crewPositionFor(state, avatar.id) : undefined;
+  const homeThreat = state.zones[state.homeZoneId];
+  // A same-day assignment away from HQ has no verified return position in the
+  // v0.3 resolver. Avoid falsely presenting the avatar as present there.
+  const sentAwayToday = orders.some(order => order.survivorIds.includes(avatarId ?? '')
+    && order.zoneId !== state.homeZoneId && !['rest', 'heal', 'craft', 'module', 'research'].includes(order.action));
+  if (avatar && position?.kind === 'zone' && position.zoneId === state.homeZoneId && !sentAwayToday
+    && homeThreat?.status === 'controlled' && homeThreat.zombies >= 8) {
+    const ammoRequired = 5;
+    state.turnCheckpoint!.decision = { kind: 'hq-night-defence', avatarId: avatar.id, zoneId: state.homeZoneId, ammoRequired };
+    const choices = [
+      { id: 'hold', label: 'Hold stillingen', detail: 'Bruk vanlig vakthold og spar ammunisjonen.' },
+      { id: 'fire', label: 'Gi dekkild', detail: `Bruk ${ammoRequired} patroner for ekstra forsvar.`,
+        ...((state.stock.ammo ?? 0) < ammoRequired ? { disabled: 'Ikke nok ammunisjon.' } : {}) },
+    ];
+    return {
+      status: 'paused', state,
+      decision: { kind: 'hq-night-defence', title: 'Zombier ved hovedkvarteret',
+        text: `${homeThreat.zombies} zombier presser på. ${avatar.name} er til stede og må avgjøre innsatsen før nattforsvaret avgjøres.`,
+        zoneId: state.homeZoneId, choices },
+    };
+  }
+  const finished = resumeRegionDay(state, world);
+  return { status: 'complete', ...finished };
+}
+
+/**
+ * Reconstructs nothing from the caller's orders. The JSON checkpoint is the
+ * sole authoritative partial-day input; settlement increments the day once.
+ * A consumed checkpoint cannot be resumed again from the finished state.
+ */
+export function resumeRegionDay(
+  state0: RegionState, world: RegionWorld, choice?: 'hold' | 'fire',
+): { state: RegionState; report: RegionReport } {
+  const checkpoint = state0.turnCheckpoint;
+  if (!checkpoint || checkpoint.version !== 1 || checkpoint.stage !== 'before-night-defence') throw new Error('Ingen gyldig dagscheckpoint å fortsette.');
+  if (checkpoint.day !== state0.day || checkpoint.worldVersion !== world.worldVersion) throw new Error('Checkpoint gjelder et annet døgn eller en annen verden.');
+  if (state0.event || state0.gameOver) throw new Error('Døgnet kan ikke fortsette med en annen uavklart hendelse eller game over.');
+  if (checkpoint.decision && choice !== 'hold' && choice !== 'fire') throw new Error('Ta stilling til nattangrepet før døgnet kan fortsette.');
+  if (!checkpoint.decision && choice !== undefined) throw new Error('Døgnet har ingen spillerbeslutning.');
+
+  const state = clone(state0);
+  delete state.turnCheckpoint;
+  const lines = clone(checkpoint.lines);
+  const day = checkpoint.day;
+  const { guards, guardPower, crewResearch, migrated, moves, initialZoneStatus, operationsLineEnd,
+    operationsZoneStatus, operationsResources } = checkpoint;
+  let { killed, foodMade } = checkpoint;
+  const rngFor = (key: string) => random(state.seed, day, key);
+  const mainResources = () => ({ food: state.stock.food ?? 0, water: state.stock.water ?? 0 });
+  let homeDefenseBonus = 0;
+  if (checkpoint.decision && choice === 'fire') {
+    if (checkpoint.decision.kind !== 'hq-night-defence' || checkpoint.decision.zoneId !== state.homeZoneId) throw new Error('Ugyldig beslutning for checkpoint.');
+    if (!has(state.stock, { ammo: checkpoint.decision.ammoRequired })) throw new Error('Ammunisjonen er ikke tilgjengelig.');
+    pay(state.stock, { ammo: checkpoint.decision.ammoRequired });
+    homeDefenseBonus = checkpoint.decision.ammoRequired * 2;
+    lines.push({ tone: 'warn', title: 'Dekkild ved HQ', text: `${checkpoint.decision.ammoRequired} patroner brukt for å holde zombiene unna.`, zoneId: state.homeZoneId });
+  }
+  killed += nightDefence(state, world, guards, guardPower, lines, rngFor('night'), homeDefenseBonus);
   killed += rot(state);
   const nightLineEnd = lines.length;
   const nightZoneStatus = statusSnapshot(state);
@@ -813,6 +896,11 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
   state.reports = [...state.reports.slice(-29), report];
   state.counters.killed = (state.counters.killed ?? 0) + killed;
   return { state, report };
+}
+
+/** Backward-compatible atomic API: no new decision, same authoritative result. */
+export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOrder[]): { state: RegionState; report: RegionReport } {
+  return resumeRegionDay(runRegionDayOperations(state0, world, orders), world);
 }
 
 /** When the cruise ship is towed, it moves to the yard if you hold one, or to your safest coastal zone. */
@@ -1120,7 +1208,7 @@ function migrate(state: RegionState, world: RegionWorld, noise: Record<string, n
   return { moved: result.report.moved, moves };
 }
 
-function nightDefence(state: RegionState, world: RegionWorld, guards: Record<string, number>, guardPool: number, lines: ReportLine[], rng: () => number) {
+function nightDefence(state: RegionState, world: RegionWorld, guards: Record<string, number>, guardPool: number, lines: ReportLine[], rng: () => number, homeDefenseBonus = 0) {
   const index = indexWorld(world);
   let killed = 0;
   let pool = guardPool;
@@ -1135,7 +1223,7 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     for (const u of z.upgrades) defense += UPGRADE_COST[u]?.defense ?? 0;
     if (tech(state, 'spikes')) defense += borders.length * 2;
     defense += borders.filter(a => (state.barricadeTier[a.connId] ?? 1) >= 4).length * 4;
-    if (id === state.homeZoneId) defense += homeCombat;
+    if (id === state.homeZoneId) defense += homeCombat + homeDefenseBonus;
     for (const [wid, w] of Object.entries(state.wonders ?? {})) if (w.zoneId === id) defense += WONDERS.find(d => d.id === wid)?.levels[w.level]?.effect.defense ?? 0;
     if (state.hq?.zoneId === id) for (const m of state.hq.modules) defense += MODULE_COST[m]?.defense ?? 0;
     const fromPool = Math.min(pool, Math.max(0, z.zombies - defense));
