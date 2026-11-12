@@ -5,7 +5,7 @@ import { resolveEvent } from './events';
 import { VALUE } from './rules';
 import { LAWS, TECHS } from './systems';
 import { autoWork, lawAvailable, passLaw, setWork, totalPeople } from './society';
-import { startResearch, techBlocked } from './progress';
+import { phaseOneReadiness, startResearch, techBlocked } from './progress';
 import { dailyFlows } from './economy';
 
 export function botChooseEvent(state: RegionState): string {
@@ -135,12 +135,31 @@ export function botPlanDay(state: RegionState, world: RegionWorld): RegionOrder[
   // Research at HQ when someone is free and a project runs.
   if (state.hq && state.research.current && free.size >= 3) tryOrder('research', state.hq.zoneId, pick(1, 'craft'));
 
-  // Expand: the reachable neighbour with fewest zombies.
+  // Expand: in phase one, try to build a *connected* neighbourhood around
+  // the HQ before spreading across unrelated L2 areas. This is a bot policy,
+  // not a rule that forces the human player down a single path. If the HQ
+  // frontier is too dangerous or unreachable, the normal safe fallback stays.
   const hops = reach(state, world);
   const frontier = [...hops.entries()].filter(([id, d]) => d >= 1 && d <= 2 && state.zones[id].status !== 'controlled' && !state.zones[id].owner).map(([id]) => id);
-  const unscouted = frontier.filter(id => !state.zones[id].intel || state.zones[id].intel!.day < state.day - 5);
+  const coreFrontier = new Set<string>();
+  if (state.phase === 1 && state.hq && !phaseOneReadiness(state, world).coreReady) {
+    const hqL2 = index.byId.get(state.hq.zoneId)?.parentId;
+    const connected = new Set([state.hq.zoneId]);
+    const queue = [state.hq.zoneId];
+    for (let i = 0; i < queue.length; i++) for (const edge of index.adjacent.get(queue[i]) ?? []) {
+      if (index.byId.get(edge.to)?.parentId !== hqL2 ||
+        (edge.linkId && ['blown', 'flooded'].includes(state.chokepoints[edge.linkId]))) continue;
+      if (state.zones[edge.to]?.status === 'controlled') {
+        if (!connected.has(edge.to)) { connected.add(edge.to); queue.push(edge.to); }
+      } else if (!state.zones[edge.to]?.owner && (hops.get(edge.to) ?? 99) <= 1) coreFrontier.add(edge.to);
+    }
+  }
+  const priority = (id: string) => coreFrontier.has(id) ? 0 : 1;
+  const unscouted = frontier.filter(id => !state.zones[id].intel || state.zones[id].intel!.day < state.day - 5)
+    .sort((a, b) => priority(a) - priority(b) || (hops.get(a) ?? 99) - (hops.get(b) ?? 99));
   if (unscouted.length) tryOrder('scout', unscouted[0], pick(1, 'scouting'));
-  const known = frontier.filter(id => state.zones[id].intel).sort((a, b) => state.zones[a].intel!.max - state.zones[b].intel!.max);
+  const known = frontier.filter(id => state.zones[id].intel)
+    .sort((a, b) => priority(a) - priority(b) || state.zones[a].intel!.max - state.zones[b].intel!.max);
   const target = known.find(id => (hops.get(id) ?? 9) <= 1 && state.zones[id].intel!.max <= strength * 3);
   if (target) {
     const z = state.zones[target];
