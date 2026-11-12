@@ -79,12 +79,34 @@ export interface Population { adults: number; children: number; elderly: number;
 export type WorkId = 'farm' | 'fish' | 'scavenge' | 'clear' | 'guard' | 'build' | 'research';
 
 export interface ReportLine { tone: 'info' | 'good' | 'warn' | 'bad'; title: string; text: string; zoneId?: string }
+/**
+ * v0.4 replay metadata from the authoritative end-of-day result. This is a
+ * presentation journal, NOT a resumable mid-turn simulation checkpoint.
+ */
+export interface RegionReplayZoneChange { zoneId: string; before: ZoneStatus; after: ZoneStatus }
+export interface RegionReplayStage {
+  phase: 'operations' | 'night' | 'new-day';
+  /** Relative to the resolved turn's start day (`report.day - 1`).
+   * Explicit windows; new-day is an instantaneous 07:00 summary. */
+  from: { dayOffset: 0 | 1; clock: '07:00' | '22:00' };
+  to?: { dayOffset: 0 | 1; clock: '07:00' | '22:00' };
+  /** Events resolved in this interval, in authoritative order. */
+  lines: ReportLine[];
+  /** Only real changes in L3 status; no guesses about intermediate positions. */
+  zoneChanges: RegionReplayZoneChange[];
+  /** Resource levels after this stage, suitable for lightweight HUD playback. */
+  mainResourcesAfter: { food: number; water: number };
+  /** Night zombie moves already filtered by the engine's visibility rules. */
+  moves?: { from: string; to: string; n: number }[];
+}
 export interface RegionReport {
   day: number; lines: ReportLine[];
   food: { produced: number; eaten: number; spoiled?: number }; water: { produced: number; drunk: number };
   zombiesMoved: number; killed: number;
   /** The night's biggest movements you could see: into, out of or between zones you know. */
   moves?: { from: string; to: string; n: number }[];
+  /** Optional for compatibility with pre-v0.4 local reports/saves. */
+  replay?: RegionReplayStage[];
 }
 export interface EventChoice { id: string; label: string; detail: string; disabled?: string; tags?: Stance[] }
 export interface PendingEvent {
