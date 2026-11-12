@@ -1,9 +1,10 @@
 /** Research, phases, mutations and victory. */
 import type { RegionState, RegionWorld, ReportLine } from './types';
 import { controlled, indexWorld, living, random } from './engine';
-import { HQ_BRANCH, MUTATIONS, PHASES, SPECIAL_DISCOUNT, TECHS, type TechDef } from './systems';
+import { HQ_BRANCH, MUTATIONS, PHASES, PHASE_ONE_CAPACITY, SPECIAL_DISCOUNT, TECHS, type TechDef } from './systems';
 import { lawMods, totalPeople } from './society';
 import { wonderEffects } from './wonders';
+import { dailyFlows } from './economy';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 export const tech = (state: RegionState, id: string) => state.research.done.includes(id);
@@ -100,10 +101,69 @@ export function districtsOwned(state: RegionState, world: RegionWorld) {
   const index = indexWorld(world);
   return [...index.children.entries()].filter(([id, kids]) => index.byId.get(id)?.level === 2 && kids.length && kids.every(k => state.zones[k]?.status === 'controlled')).length;
 }
+/**
+ * V04-09 / H08: measurable phase-one capacity, with no new persisted flags.
+ * The HQ-L2 route may replace fortification of a smaller core, but neither
+ * route bypasses the physical HQ or basic food/water endurance.
+ */
+export function phaseOneReadiness(state: RegionState, world: RegionWorld) {
+  const index = indexWorld(world);
+  const home = state.hq?.zoneId;
+  const hqZone = home ? index.byId.get(home) : undefined;
+  const l2 = hqZone?.parentId;
+  const siblings = l2 ? (index.children.get(l2) ?? []).filter(id => index.byId.get(id)?.level === 3) : [];
+  const hasHQ = !!home && hqZone?.level === 3 && state.zones[home]?.status === 'controlled';
+  const ownsL2 = hasHQ && siblings.length > 0 && siblings.every(id => state.zones[id]?.status === 'controlled');
+  const connected = new Set<string>();
+  if (hasHQ && home) {
+    const queue = [home];
+    connected.add(home);
+    for (let i = 0; i < queue.length; i++) {
+      for (const edge of index.adjacent.get(queue[i]) ?? []) {
+        if (connected.has(edge.to) || index.byId.get(edge.to)?.parentId !== l2 || state.zones[edge.to]?.status !== 'controlled') continue;
+        if (edge.linkId && ['blown', 'flooded'].includes(state.chokepoints[edge.linkId])) continue;
+        connected.add(edge.to);
+        queue.push(edge.to);
+      }
+    }
+  }
+  const coreTarget = Math.min(PHASE_ONE_CAPACITY.connectedL3, siblings.length);
+  // Broken/flooded chokepoints can sever even wholly controlled L2 territory.
+  const fullL2 = ownsL2 && connected.size === siblings.length;
+  const coreReady = hasHQ && coreTarget > 0 && connected.size >= coreTarget;
+  // A one-day guard order is not a durable perimeter. It does not count here.
+  const fortifiedBorders = new Set<string>();
+  for (const id of connected) for (const edge of index.adjacent.get(id) ?? []) {
+    if (state.zones[edge.to]?.status !== 'controlled'
+      && edge.kind === 'land'
+      && (state.barricades[edge.connId] ?? 0) >= PHASE_ONE_CAPACITY.barrierDurability) fortifiedBorders.add(edge.connId);
+  }
+  const hqModules = state.hq?.modules ?? [];
+  const permanentDefence = fortifiedBorders.size > 0
+    || hqModules.includes('watchtower') || hqModules.includes('walls')
+    || [...connected].some(id => state.zones[id]?.upgrades.includes('watchpost'));
+  const defenceReady = hasHQ && (fullL2 || permanentDefence) && living(state).length > 0;
+  const flows = dailyFlows(state, world);
+  const runway = (stock: number, net: number): number | null => net >= 0 ? null : stock / -net;
+  const foodDays = runway(state.stock.food ?? 0, flows.food.net);
+  const waterDays = runway(state.stock.water ?? 0, flows.water.net);
+  const foodReady = foodDays === null || foodDays >= PHASE_ONE_CAPACITY.supplyDays;
+  const waterReady = waterDays === null || waterDays >= PHASE_ONE_CAPACITY.supplyDays;
+  const suppliesReady = foodReady && waterReady;
+  return {
+    hasHQ, l2, connectedL3: connected.size, requiredL3: coreTarget, fullL2, coreReady,
+    fortifiedBorders: fortifiedBorders.size, permanentDefence, defenceReady,
+    foodDays, waterDays, foodReady, waterReady, suppliesReady,
+    ready: hasHQ && coreReady && defenceReady && suppliesReady,
+  };
+}
 export function goalMet(state: RegionState, world: RegionWorld, id: string) {
   switch (id) {
     case 'own1': return controlled(state).length >= 1;
     case 'hq': return !!state.hq;
+    case 'phaseOneCore': return phaseOneReadiness(state, world).coreReady;
+    case 'phaseOneDefense': return phaseOneReadiness(state, world).defenceReady;
+    case 'phaseOneSupplies': return phaseOneReadiness(state, world).suppliesReady;
     case 'zones6': return controlled(state).length >= 6;
     case 'modules3': return (state.hq?.modules.length ?? 0) >= 2 + (startModules(state));
     case 'pop12': return totalPeople(state) >= 12;
