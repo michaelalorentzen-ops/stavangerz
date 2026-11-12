@@ -2,6 +2,7 @@
  * Life inside the camp: theft, crime, sickness, faith, feasts and the people who want your chair.
  * Most of these are chains. The first step looks small; the bill comes later.
  */
+import { gearWeapon } from './gear';
 import type { EventChoice, RegionState, RegionSurvivor, ReportLine, Stance } from './types';
 import {
   addPeople, amount, crewById, event, farmOwned, give, hasLaw, hasModule, hasTech, homeName, hope, hurtPerson, killPerson, leaves,
@@ -1171,9 +1172,9 @@ export const EVENTS_PEOPLE: EventDef[] = [
 
   // 18. A guard who shot an unarmed man at the gate.
   {
-    id: 'gateShooting', weight: 2, phase: [2, 5], when: s => crewHere(s).some(p => p.weapon !== 'melee'),
+    id: 'gateShooting', weight: 2, phase: [2, 5], when: s => crewHere(s).some(p => gearWeapon(s, p) !== 'melee'),
     make: (s, w, rng) => {
-      const p = pickCrew(s, rng, x => x.weapon !== 'melee');
+      const p = pickCrew(s, rng, x => gearWeapon(s, x) !== 'melee');
       if (!p) return null;
       const deaf = rng() < .4 ? 1 : 0;
       return event('Skuddet ved porten', `Rett før midnatt skjøt ${p.name} en mann ved porten i ${homeName(s, w)}. Han hadde ikke våpen. Han hadde en gutt på sju med seg, og gutten sitter nå i vaktbua og sier ingenting. ${p.name} sier mannen ikke stoppet da det ble ropt. ${deaf ? 'Gutten har skrevet på en lapp at faren var døv.' : 'Det regnet og var mørkt, og ingen andre hørte ropet.'}${noLawNote(s)}`, list(

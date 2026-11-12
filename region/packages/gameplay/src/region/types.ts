@@ -1,6 +1,7 @@
 /** The region game: the whole Stavanger region from the zone editor, one day per turn. */
 import type { ZoneMeasures } from '../../../world-data/src/model';
 import type { CrewMission, CrewPosition } from './location';
+import type { GearPreferences, RegionGearState } from './gear';
 
 export interface RegionZone {
   id: string; name: string; level: 1 | 2 | 3; parentId?: string;
@@ -72,7 +73,7 @@ export interface RegionHq { zoneId: string; type: string; modules: string[]; bui
 export type ActionId = 'scout' | 'clear' | 'search' | 'claim' | 'fortify' | 'build' | 'establishHq' | 'module' | 'network'
   | 'guard' | 'hold' | 'block' | 'blow' | 'farm' | 'fish' | 'rest' | 'heal' | 'craft'
   | 'research' | 'relocate' | 'assault' | 'repair' | 'wonder';
-export interface RegionOrder { id: string; action: ActionId; zoneId: string; survivorIds: string[]; target?: string }
+export interface RegionOrder { id: string; action: ActionId; zoneId: string; survivorIds: string[]; target?: string; gear?: GearPreferences }
 
 /** The population that is not the named crew: counted, not named. */
 export interface Population { adults: number; children: number; elderly: number; sick: number }
@@ -163,6 +164,8 @@ export interface RegionState {
   schema: 'region-2'; rulesVersion: string; worldVersion: string; seed: number; day: number;
   startZoneId: string; homeZoneId: string;
   survivors: RegionSurvivor[]; stock: Stock;
+  /** Optional additive v0.4 register. Legacy personal weapons are materialized once. */
+  gear?: RegionGearState;
   /** Canonical v0.4 geography; optional only to read old region-2 saves. */
   crewPositions?: Record<string, CrewPosition>;
   /** Persisted multi-day assignments; the engine, not the UI, advances them. */

@@ -67,6 +67,8 @@ Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når 
 - **H07:** Første reelle nattcheckpoint trigges ved minst åtte faktiske zombier i kontrollert HQ mens hovedpersonen er til stede. Fem patroner gir ti ekstra forsvarspoeng. Begge tall er testbare balansehypoteser, ikke låste krav.
 - **H08:** Første fasegate-prototype må måle *sammenhengende kontroll* rundt HQ, faktisk mat-/vannutholdenhet og forsvarsevne. Tall og metode for å måle vedvarende forsvar er bevisst åpne for bot-/spilltesting. En fullført L2 kan inngå som en alternativ, mer ambisiøs territoriell vei, men ikke frita fra alle grunnbehov.
 
+- **H09:** Første D26-utstyrsslice prøver ett slot per kategori, deterministisk auto-score, små katalogbaserte verne-/verktøybonuser og tre endelige søkecaches per sone. Vanlige dagsoppdrag binder folk/utstyr til neste 07; `awayUntil` og eksplisitt lokasjon respekteres. Dette er ikke endelig slot-, loot- eller transportbalanse. Se [31_V04_GEAR_PLAYTEST.md](31_V04_GEAR_PLAYTEST.md).
+
 ## Ny beslutning – fremgangsmåte
 
 Når en utvikler oppdager et hull:

@@ -162,4 +162,4 @@ Neste arbeidspakke: [ID og eier]
 
 Se [samlet spillteststatus](30_V04_PLAYTEST_STATUS.md) for gjenopprettet PR-/branch-baseline, faktisk implementasjon, verifiserte spillerreiser og gjenværende arbeid. `feat/v04-phase-one-playtest` samler videre UI-arbeid fra `da16b82`; bildepakken ligger separat i draft #24. Verken M2, M3 eller hele v0.4 er erklært ferdig.
 
-O05 er delvis avklart som **D26** av Mikki i denne økten: våpen, beskyttelse, oppdragsverktøy, auto-equip, manuelle låser og faktisk reservasjon/retur bygges. Motor/regnskap og et isolert utstyrspanel utvikles med disjunkt filansvar. Nye tall og ett slot per kategori prøves som hypoteser. Ingen automatisk merge/deploy.
+O05 er delvis avklart som **D26** av Mikki i denne økten: våpen, beskyttelse, oppdragsverktøy, auto-equip, manuelle låser og faktisk reservasjon/retur bygges. Motor/regnskap og utstyrspanel er levert med disjunkt filansvar på `feat/v04-personal-gear`; [integrert gear- og spillteststatus](31_V04_GEAR_PLAYTEST.md) beskriver resultat og begrensninger. Nye tall og ett slot per kategori prøves som hypoteser. Ingen automatisk merge/deploy.

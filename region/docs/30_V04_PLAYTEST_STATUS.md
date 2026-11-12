@@ -1,6 +1,6 @@
 # v0.4 – samlet spillteststatus
 
-Dato: 12.11.2026. Arbeidet gjelder bare `region/`. Ingen merge til main eller deploy er utført.
+Dato: 12.11.2026. **Nyeste gear-/integrasjonsstatus finnes i [31_V04_GEAR_PLAYTEST.md](31_V04_GEAR_PLAYTEST.md).** Arbeidet gjelder bare `region/`. Ingen merge til main eller deploy er utført.
 
 ## Gjenopprettet baseline
 
@@ -56,9 +56,9 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE=/usr/bin/chromium pnpm check:region-ui
 
 Installasjonsavviket fra eldre PR-er ble reprodusert: miljøets `pnpm` var 11, mens prosjektet angir 10.17.1. Ren, låst installasjon med deklarert versjon og eksplisitt `onlyBuiltDependencies: [esbuild]` består. Ingen eksisterende brukerfil ble gjenopprettet eller overskrevet.
 
-## Pågående neste leveranse: personlig gear
+## Oppfølger: personlig gear er levert separat
 
-Mikki avklarte D26/O05 i denne økten: bygg våpen, beskyttelse og oppdragsverktøy med auto-equip, manuelle låser og faktisk reservasjon/retur. Dette er delegert som egen motorpakke og isolert UI-komponent. Det er **ikke** del av den ferdigverifiserte UI-baselinen over. Tall, slots og lootmengder er hypoteser; ny detaljert reisetids-/transportmodell er ikke bestemt.
+Mikki avklarte D26/O05 i denne økten: bygg våpen, beskyttelse og oppdragsverktøy med auto-equip, manuelle låser og faktisk reservasjon/retur. Dette ble levert som egen motorpakke og isolert UI-komponent på `feat/v04-personal-gear`; se [siste verifiserte status](31_V04_GEAR_PLAYTEST.md). Det er **ikke** del av den historiske UI-baselinen over. Tall, slots og lootmengder er hypoteser; ny detaljert reisetids-/transportmodell er ikke bestemt.
 
 ## Fortsatt mangler / avgrensninger
 

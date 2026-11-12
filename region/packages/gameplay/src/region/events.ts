@@ -5,6 +5,7 @@
 import type { EventChoice, PendingEvent, RegionState, RegionWorld, ReportLine } from './types';
 import { living, random, recruit } from './engine';
 import { R } from './rules';
+import { confiscateGearWeapon, settleGearReturns } from './gear';
 import { REACTIONS, TRAIT_NAMES } from './systems';
 import {
   addPeople, amount, borderZones, moveZombies, chance, coastalOwned, crewById, event, farmOwned, give, hasLaw, hasModule, hasTech, hope, killPerson,
@@ -418,7 +419,11 @@ export function resolveEvent(state0: RegionState, world: RegionWorld, choiceId: 
   const def = EVENTS.find(e => e.id === ev.id)!;
   const lines: ReportLine[] = [];
   bindWorld(world);
+  const previousWeapons = new Map(state.survivors.map(p => [p.id, p.weapon]));
   def.resolve(state, world, choiceId, random(state.seed, state.day, `choice:${ev.id}`), lines);
+  // Legacy events still own disarmament, including melee-base people carrying a found gun.
+  for (const person of state.survivors) if (previousWeapons.get(person.id) !== person.weapon && person.weapon === 'melee'
+    || ev.id === 'coward' && choiceId === 'shame' && person.id === String(ev.data?.who)) confiscateGearWeapon(state, person.id);
   // The crew remembers what kind of leader you are.
   for (const p of living(state)) for (const trait of p.traits ?? []) for (const tag of choice.tags ?? []) {
     const r = REACTIONS[trait][tag] ?? 0;
@@ -427,6 +432,7 @@ export function resolveEvent(state0: RegionState, world: RegionWorld, choiceId: 
   for (const p of living(state)) if ((p.loyalty ?? 60) < 15 && !state.scheduled.some(x => x.id === 'desertion' && x.data?.who === p.id)) schedule(state, 1 + Math.floor(random(state.seed, state.day, p.id)() * 3), 'desertion', { who: p.id });
   state.morale = Math.max(0, Math.min(100, state.morale));
   for (const p of state.survivors) if (p.alive && p.health <= 0) killPerson(state, p, lines, 'Skadene ble for store.');
+  settleGearReturns(state, lines);
   lines.unshift({ tone: 'info', title: ev.title, text: `Dere valgte: ${choice.label}.` });
   delete state.event;
   state.counters.events = (state.counters.events ?? 0) + 1;
