@@ -151,4 +151,4 @@ Spørsmål til Mikki: [maksimalt få, kun blokkerende; A/B + anbefaling]
 Neste arbeidspakke: [ID og eier]
 ```
 
-**Orkestratorens første handling etter M0:** etabler baseline (V04-00), kontroller ubesvarte O01/O04/O05 som kan blokkere kontrakten, og foreslå den minste spillbare M1-leveransen. Ikke tildel V04-10 til en parallell agent før lokale posisjoner, lager og ordre er stabile.
+**Orkestratorens første handling etter M0:** etabler baseline (V04-00), kontroller ubesvarte O01/O05 som kan blokkere kontrakten, og foreslå den minste spillbare M1-leveransen. Grunnpolicy for eskalering O04 er avklart som D24. Ikke tildel V04-10 til en parallell agent før lokale posisjoner, lager og ordre er stabile.

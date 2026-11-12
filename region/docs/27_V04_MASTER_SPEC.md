@@ -45,8 +45,8 @@ Skill mellom **spilleren** (strategisk beslutningstaker), **hovedpersonen** (fys
 
 - Når hovedpersonen selv møter en situasjon, er det spilleren som tar valget.
 - Andre crew tar ordinære feltbeslutninger selv etter oppdragets mandat, ledertrekk og stående ordre.
-- Samband kan senere gjøre det mulig å spørre HQ om større valg. Det forutsetter fungerende radio, rekkevidde/forbindelse og at beslutningen faktisk kan kommuniseres.
-- Uten forbindelse må feltlederen handle selv, ikke vente på et magisk popupvindu hos spilleren.
+- **Standard for bortelag er delegert avgjørelse:** Feltlederen følger oppdragets mandat og stående instrukser, også når samband virker. Spilleren kan ved oppdragsplanlegging aktivere «Kontakt meg ved kritiske hendelser»; bare da kan større hendelser eskaleres til spilleren gjennom faktisk fungerende samband/rekkevidde.
+- Hendelser som hovedpersonen personlig møter, og kritisk forsvar der hovedpersonen faktisk er til stede, kan alltid kreve spillervalg. Uten forbindelse må bortelagets leder handle selv, ikke vente på et magisk popupvindu hos spilleren.
 - Mennesker bor og arbeider i faktiske områder; vaktlag som **holder et helt L2-område** kan ha områdedekning uten en oppdiktet punktposisjon i én bestemt L3.
 - I vanlige vanskelighetsgrader kan samfunnet fortsette med en etterfølger hvis hovedpersonen dør. Politikksystem, stedfortreder og valg/styreform påvirker overgangen.
 
