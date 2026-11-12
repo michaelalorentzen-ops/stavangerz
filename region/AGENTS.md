@@ -1,11 +1,24 @@
 # Codex orchestration rules – Stavanger Z
 
-Dette er arbeidsinstruks for Codex i et nytt Stavanger Z-repo. Følg brukerens konkrete nye instrukser dersom de avviker.
+Dette er arbeidsinstruks for agenter i StavangerZ-repoet. Følg brukerens konkrete nye instrukser dersom de avviker.
+
+## Gjeldende oppdrag: region v0.4 (12.11.2026)
+
+**Gjelder bare regionspillet i `region/`. Ingen agent skal tolke v0.4 som tillatelse til å skrive om det eldre Buøy-spillet.**
+
+1. Les først `docs/27_V04_MASTER_SPEC.md`, så `docs/28_V04_DECISIONS.md` og `docs/29_V04_IMPLEMENTATION.md`. Les deretter relevant v0.3-dokumentasjon og kode. De nye dokumentene har forrang ved produktkonflikt; eksisterende kode beskriver bare det som faktisk er bygget.
+2. Bruk **orkestrator + avgrensede arbeidspakker**. Én ansvarlig orkestrator holder beslutningslogg, avhengigheter, status og integrering. Andre agenter eier disjunkte filområder/branches. Ikke la to agenter samtidig skrive i samme filer.
+3. `LÅST` i `28_V04_DECISIONS.md` er eierens produktbeslutning. Arbeidende agenter kan foreslå avvik, men **skal ikke endre eller omklassifisere** den. `ÅPEN` eskaleres bare hvis den blokkerer aktuell arbeidspakke; samle spørsmål gjennom orkestrator i stedet for å avbryte eieren for hver liten detalj.
+4. Ingen «agent swarm» før motorens tilstands-/ordrekontrakter er stabile. Prioriter M0 → M1 → M2 i `29_V04_IMPLEMENTATION.md`; regional styring i fase 4/5 er senere leveranse. Hver milepæl skal gi demonstrerbar forbedring.
+5. Før merge: relevante type-/motor-/botkontroller, en visbar brukerflyt, vurdering av savekompatibilitet og kontroll mot akseptanse i v0.4-spesifikasjonen. Orkestratoren oppsummerer **ferdig / verifisert / mangler / risiko / nødvendige valg**.
+6. Ikke push, merge eller deploy automatisert kun fordi en underagent ble ferdig. Følg eierens autorisasjon og repositoryets normale reviewrutiner. Bevar dirty worktree og øvrige brukerendringer.
+
+De eldre instruksjonene nedenfor gjelder der de ikke kolliderer med v0.4-kontrakten.
 
 ## Oppdrag og kontroll
 
 - Gjør produktvisjonen i README og docs til en sammenhengende, spillbar implementasjon. Hold designvalg og faktiske kodeendringer adskilt.
-- **Bygg ikke hele spillet på én gang.** Utfør milepælene i `docs/07_DELIVERY_PLAN.md` i rekkefølge. Stopp ved milepælsgrensen for kort oppsummering, avvik og beslutninger.
+- **Bygg ikke hele spillet på én gang.** For v0.4: følg milepælene i `docs/29_V04_IMPLEMENTATION.md`. For eldre prototypearbeid: `docs/07_DELIVERY_PLAN.md`. Stopp ved milepælsgrensen for kort oppsummering, avvik og beslutninger.
 - Be om godkjenning når et åpent produktvalg har stor påvirkning på gameplay, verdensmodell, datamodell eller antall arbeidsuker. Mindre detaljer kan avgjøres med dokumenterte antakelser.
 - Ikke overskriv, slett, migrer eller refaktorer et eksisterende spill/repo uten uttrykkelig klarsignal. Start helst i nytt repo. Eksisterende skjermbilder er inspirasjon, ikke autoritativ spesifikasjon.
 - Ikke deploy eller kjøp kart-/driftstjenester uten tillatelse.
