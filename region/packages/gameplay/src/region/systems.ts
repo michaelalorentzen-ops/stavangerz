@@ -13,9 +13,20 @@ export interface PhaseDef {
   mods: { mobility: number; noise: number; horde: number; raid: number; rot: number; lootFind: number };
   unlocks: string[];
 }
+/** HYPOTESE H08: early capacity gate, deliberately tuneable after playtesting. */
+export const PHASE_ONE_CAPACITY = {
+  connectedL3: 3,
+  supplyDays: 3,
+  barrierDurability: 5,
+} as const;
 export const PHASES: PhaseDef[] = [
   { id: 1, name: 'Utbruddet', intro: 'Strømmen er borte, telefonene er døde, og ropene fra gata har stilnet. Det som gjelder nå, er å finne et sted dere kan holde.',
-    goals: [{ id: 'own1', text: 'Ta over en sone.' }, { id: 'hq', text: 'Etabler et hovedkvarter.' }],
+    goals: [
+      { id: 'hq', text: 'Etabler et HQ i en kontrollert sone.' },
+      { id: 'phaseOneCore', text: 'Sikre et sammenhengende kjerneområde rundt HQ (eller hele L2).' },
+      { id: 'phaseOneDefense', text: 'Sperr en utsatt grense eller bygg varig forsvar (hele L2 teller også).' },
+      { id: 'phaseOneSupplies', text: 'Sørg for minst tre døgn med mat- og vannkapasitet.' },
+    ],
     mods: { mobility: 1, noise: 1, horde: .7, raid: 0, rot: 0, lootFind: 1 }, unlocks: [] },
   { id: 2, name: 'Hovedkvarteret', intro: 'Dere har et sted. Nå kommer folk. Noen ber om hjelp, noen vil ha det dere har. Unntakstilstanden er deres å forvalte.',
     goals: [{ id: 'zones6', text: 'Eie seks soner.' }, { id: 'modules3', text: 'Bygg to HQ-moduler.' }, { id: 'pop12', text: 'Bli minst tolv personer.' }],
