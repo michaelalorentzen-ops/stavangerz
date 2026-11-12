@@ -33,6 +33,7 @@ Dette dokumentet skiller **LÅST** (produktbeslutning godkjent av eier) fra **Å
 | D22 | LÅST | Normal modus: samfunnet kan leve videre ved hovedpersonens død. Hardcore: hovedpersonens død gir game over og tidligere valg kan ikke lastes tilbake. | Meningsfull personlig risiko. |
 | D23 | LÅST | Implementering er vertikal og orkestrert. Låste designbeslutninger eies av Mikki, og agenter stopper bare ved reelt blokkerende valg. | Unngår parallelle produktbeslutninger, kodekonflikter og spørsmålsoverlast. |
 | D24 | LÅST | Bortelag med radio tar normalt egne avgjørelser etter mandat. En valgfri instruks «Kontakt meg ved kritiske hendelser» gir eskalering via faktisk samband; uten samband avgjør feltlederen selv. Hovedpersonens egne kritiske møter kan alltid stoppe døgnet. | Delegasjon skalerer i fase 4–5 uten popup-overbelastning. Godkjent 12.11.2026. |
+| D25 | LÅST | Fase 2 kan åpnes med et forsvarbart, sammenhengende kjerneområde rundt HQ og tilstrekkelig overlevelseskapasitet, selv om ikke hele hjemmets L2 er sikret. Å sikre hele L2 er fortsatt en større prestasjon, ikke et absolutt krav. | Fase 1 er en lærings-/etableringsfase som ikke skal bli tvungen repetisjon i vanskelige L2. Fase 2 kan bære mer ekspansjon. Godkjent av Mikki 12.11.2026. |
 
 ## Åpne produkt- og balansevalg
 
@@ -40,7 +41,7 @@ Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når 
 
 | ID | Status | Spørsmål / alternativer | Når det blokkerer |
 | --- | --- | --- | --- |
-| O01 | ÅPEN | Er *hele* hjemmets L2 et absolutt krav for fase 2, eller kan et dokumentert forsvarbart kjerneområde oppfylle samme kapasitet? | Før implementering av fasegating. |
+| O01 | AVKLART (D25) | Et dokumentert forsvarbart kjerneområde kan oppfylle fase-2-kapasiteten uten at hele hjemmets L2 er tatt. Eksakte terskler testes som hypoteser. | Prinsippet er låst; tall og synlig feedback må balansetestes. |
 | O02 | ÅPEN | Eksakte krav for fase 2–5, minimumsvarighet og akseptable alternative kapasiteter. | Før endelige balanseverdier og faseskifte-UI. |
 | O03 | ÅPEN | Arbeidstid, hvile, reisehastighet, nattskift, transportkapasitet og utmattelsesformler. | Før faktiske motorregler; prototypen kan bruke tydelig merket hypotese. |
 | O04 | AVKLART (D24) | Grunnregelen for automatisk/delegert beslutning og radioeskalering er låst. Eksakte hendelseskategorier og terskler er teknisk/balanseringsarbeid, ikke grunnleggende valg om hvem som bestemmer. | Kan implementeres inkrementelt og prøves med scenariotester. |
@@ -63,6 +64,7 @@ Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når 
 - **H05:** En samlet fase-1-slice bygges før region-AI i fase 4–5, selv om designet for alle faser er spesifisert nå.
 - **H06:** M1-prototypen lar spilleren eksplisitt velge en av de eksisterende navngitte overlevende som fysisk hovedperson, lagret i `flags.playerAvatarId`. En etterfølger velges aktivt ved død/fravær i vanlig modus; dette er ikke ferdig figur- eller Hardcore-system.
 - **H07:** Første reelle nattcheckpoint trigges ved minst åtte faktiske zombier i kontrollert HQ mens hovedpersonen er til stede. Fem patroner gir ti ekstra forsvarspoeng. Begge tall er testbare balansehypoteser, ikke låste krav.
+- **H08:** Første fasegate-prototype må måle *sammenhengende kontroll* rundt HQ, faktisk mat-/vannutholdenhet og forsvarsevne. Tall og metode for å måle vedvarende forsvar er bevisst åpne for bot-/spilltesting. En fullført L2 kan inngå som en alternativ, mer ambisiøs territoriell vei, men ikke frita fra alle grunnbehov.
 
 ## Ny beslutning – fremgangsmåte
 
