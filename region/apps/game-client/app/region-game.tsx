@@ -4,9 +4,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LibreMap, GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import {
-  ACTIONS, BRANCHES, HQ_BRANCH, LAW_GROUPS, LAWS, MILESTONES, MODULE_COST, MUTATIONS, NETWORK_COST, PHASES, SAVE_KEY_REGION, TECHS, TRAIT_NAMES, UPGRADE_COST, VALUE, WEAPONS, WORK_IDS, WORK_NAMES,
+  ACTIONS, BRANCHES, HQ_BRANCH, LAW_GROUPS, LAWS, MILESTONES, MODULE_COST, MUTATIONS, NETWORK_COST, PHASES, PHASE_ONE_CAPACITY, SAVE_KEY_REGION, TECHS, TRAIT_NAMES, UPGRADE_COST, VALUE, WEAPONS, WORK_IDS, WORK_NAMES,
   areaNet, assaultOdds, assigned, autoWork, bestTier, controlled, craftRecipes, dailyFlows, dateText, discontentTarget, goalMet, hopeTarget, hqModules, indexWorld, lawAvailable, lawWait, living,
-  moduleName, newRegionGame, passLaw, phaseDef, previewOrder, reach, repealLaw, resolveEvent, resourceName, searchHoursTotal, season, setWork, shelter, specialBranch, startDanger,
+  moduleName, newRegionGame, passLaw, phaseDef, phaseOneReadiness, previewOrder, reach, repealLaw, resolveEvent, resourceName, searchHoursTotal, season, setWork, shelter, specialBranch, startDanger,
   startRegionDay, resumeRegionDay, startResearch, techBlocked, techCost, totalPeople, trade, tradeValue, upgradeName, upgradesFor, workforce, WONDERS, wonderZone, nextWonderLevel, wonderEffects,
   type ActionId, type Branch, type Flows, type RegionOrder, type RegionReport, type RegionState, type RegionWorld, type WorkId,
 } from '../../../packages/gameplay/src/region/index';
@@ -710,11 +710,41 @@ function GoalsView({ world, state }: { world: RegionWorld; state: RegionState })
   return <><h2>Faser og mål</h2>
     <ol className="rz-phases">{PHASES.map(p => <li key={p.id} className={p.id < state.phase ? 'done' : p.id === state.phase ? 'on' : ''}>
       <b>Fase {p.id}: {p.name}</b>
-      {p.id >= state.phase && <ul>{p.goals.map(g => <li key={g.id} className={p.id === state.phase && goalMet(state, world, g.id) ? 'done' : ''}>{p.id === state.phase && goalMet(state, world, g.id) ? '✓ ' : ''}{g.text}</li>)}</ul>}
+      {p.id === 1 && state.phase === 1 ? <PhaseOneGoals world={world} state={state} />
+        : p.id >= state.phase && <ul>{p.goals.map(g => <li key={g.id} className={p.id === state.phase && goalMet(state, world, g.id) ? 'done' : ''}>{p.id === state.phase && goalMet(state, world, g.id) ? '✓ ' : ''}{g.text}</li>)}</ul>}
     </li>)}</ol>
     {state.mutations.length > 0 && <><h3>Zombiene</h3><ul>{state.mutations.map(m => <li key={m.id}>{m.known ? `${MUTATIONS.find(x => x.id === m.id)?.name}: ${MUTATIONS.find(x => x.id === m.id)?.text}` : 'Ukjent mutasjon. Forsk på zombiestudier.'}</li>)}</ul></>}
     <h3>Milepæler</h3><ol className="rz-goals">{MILESTONES.map(m => <li key={m.id} className={state.milestones.includes(m.id) ? 'done' : ''}><b>{m.title}</b> {m.text}</li>)}</ol>
     <p className="rz-small">Seier i fase 5: 30 dager på rad med mat nok, håp over 50 og uro under 50, en kur fra vaksineforsøket, eller alle gruppene i regionen som venner.</p></>;
+}
+
+/** Visible, honest capacity feedback from the same engine rules as the phase transition. */
+function PhaseOneGoals({ world, state }: { world: RegionWorld; state: RegionState }) {
+  const capacity = phaseOneReadiness(state, world);
+  const supplyText = (days: number | null) => days === null ? 'balanse i pluss' : `${decimal(Math.max(0, days))} døgn`;
+  const coreText = !capacity.hasHQ ? 'Etabler HQ for å måle kontrollen rundt det.'
+    : capacity.fullL2 ? 'Hele HQ-området (L2) er sikret og sammenhengende.'
+      : `${capacity.connectedL3} av ${capacity.requiredL3} nødvendige L3-soner er sammenhengende med HQ.`;
+  const defenseText = capacity.fullL2 ? 'Hele HQ-området er sikret.'
+    : capacity.fortifiedBorders ? `${capacity.fortifiedBorders} holdbare sperringer mot ukontrollert område.`
+      : capacity.permanentDefence ? 'Varig vaktpost eller HQ-forsvar er etablert.'
+        : 'Bygg sperring, vaktpost eller fast HQ-forsvar.';
+  const checks = [
+    { title: 'Hovedkvarter', done: capacity.hasHQ, detail: capacity.hasHQ ? 'Operativt HQ i en kontrollert sone.' : 'Etabler HQ i en sone dere eier.' },
+    { title: 'Sammenhengende område', done: capacity.coreReady, detail: coreText },
+    { title: 'Varig forsvar', done: capacity.defenceReady, detail: defenseText },
+    { title: 'Mat og vann', done: capacity.suppliesReady,
+      detail: `Mat: ${supplyText(capacity.foodDays)}${capacity.foodReady ? ' ✓' : ''} · vann: ${supplyText(capacity.waterDays)}${capacity.waterReady ? ' ✓' : ''}. Krav: ${PHASE_ONE_CAPACITY.supplyDays} døgn.` },
+  ];
+  return <div className="rz-phase-one">
+    <p className="rz-small">Når dere har en trygg kjerne og forsyninger, kan dere gå videre til fase 2. Hele L2 er en større prestasjon, ikke et absolutt krav.</p>
+    <ul className="rz-phase-one-checklist">{checks.map(item => <li key={item.title} className={item.done ? 'done' : 'pending'}>
+      <span className="rz-phase-one-symbol" aria-hidden="true">{item.done ? '✓' : '○'}</span>
+      <div><strong>{item.title}</strong><small>{item.detail}</small></div>
+      <span className="rz-phase-one-state">{item.done ? 'Klart' : 'Mangler'}</span>
+    </li>)}</ul>
+    {capacity.ready && <p className="rz-phase-one-ready">Kriteriene er oppfylt. Neste fullførte døgn kan åpne fase 2.</p>}
+  </div>;
 }
 
 /** Visual priority is derived from events the engine actually reported, never inferred outcomes. */
