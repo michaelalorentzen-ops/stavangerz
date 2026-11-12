@@ -153,4 +153,4 @@ Spørsmål til Mikki: [maksimalt få, kun blokkerende; A/B + anbefaling]
 Neste arbeidspakke: [ID og eier]
 ```
 
-**Orkestratorens første handling etter M0:** etabler baseline (V04-00), kontroller ubesvarte O01/O05 som kan blokkere kontrakten, og foreslå den minste spillbare M1-leveransen. Grunnpolicy for eskalering O04 er avklart som D24. Ikke tildel V04-10 til en parallell agent før lokale posisjoner, lager og ordre er stabile.
+**Videre etter M1:** O01 er låst som D25: fase 2 skal tillate defensibel kjerne som alternativ til hele L2. V04-09 kan bygges som en avgrenset kapasitetstest med eksplisitt hypotesemerket balanse og synlig progresjon. O05 blokkerer fremdeles endelig gear-regnskap. Grunnpolicy for eskalering O04 er avklart som D24. Ikke tildel V04-10 til en parallell agent før lokale posisjoner, lager og ordre er stabile.

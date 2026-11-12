@@ -1,6 +1,6 @@
 # StavangerZ v0.4 – produktspesifikasjon
 
-**Status:** designgrunnlag, godkjent på prinsippnivå i samtale 12.11.2026. Ikke implementert.  
+**Status:** designgrunnlag godkjent på prinsippnivå 12.11.2026. M1 finnes i draft-PR-er, men er ikke merget eller deployet.  
 **Produkt:** regionspillet under `region/`, videreføring av `regionspill-v0.3`.  
 **Eier:** Mikki. **Teknisk leveranse:** orkestrert, trinnvis implementering med tester og godkjenning.
 
@@ -138,7 +138,7 @@ Generell kunnskap om hvordan spillet fungerer er forskjellig fra **operativ ette
 
 - Et faseskifte skjer fordi samfunnet har **faktisk kapasitet**, ikke fordi spilleren har fulgt bokas oppskrift eller ventet et bestemt antall dager.
 - Et kriterium må kunne oppfylles med ulike virkemidler (f.eks. bærekraftig vannforsyning fra ulike anlegg). Unngå tvungne, spesifikke bygg/quests der en alternativ strategi burde fungere.
-- Fase 1 → 2 skal kreve meningsfull etablering: permanent HQ, et defensibelt sammenhengende kjerneområde og bærekraftige grunnbehov/vakthold. Hvorvidt **hele** hjemmets L2 må være sikret, og hvilke mål som teller som likeverdige, må låses i et eget balanseringsvalg. v0.3s raske fase-2-overgang fra én sone er ikke ønsket.
+- Fase 1 → 2 skal kreve meningsfull etablering: operativt HQ, et defensibelt sammenhengende kjerneområde og tilstrekkelig mat, vann og vakthold. **Hele hjemmets L2 er ikke et absolutt krav**; et reelt forsvarbart kjerneområde er en likeverdig vei (D25). Å ta hele L2 skal fortsatt gi en tydelig geografisk prestasjon. Eksakte terskler er balansehypoteser. v0.3s raske fase-2-overgang fra én sone er ikke ønsket.
 - Spilleren skal se **hvilke kapasiteter som mangler** før neste fase, selv om neste ZA-kapittel er låst.
 - Systemer introduseres gjennom fasehendelser og fortelling, uten en meny med alle fremtidige funksjoner på dag 1.
 - Hovedhistorien om samfunnets fremtid er åpen. Forskning på årsak/kur og valgfri lore kan avsløres gradvis, men skal ikke være obligatorisk for å lykkes.
