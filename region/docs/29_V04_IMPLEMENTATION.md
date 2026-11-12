@@ -109,6 +109,8 @@ Hver oppgave har ID for PR/issue og kan splittes etter behov. Alle ID-er er **fo
 - Flere typer aktivitet/POI, tydelig takeover-feedback, relevante økonomi-/forsvarsvalg.
 - Spilltest viser at fase 1 har meningsfulle daglige valg; oppnådde milepæler, ikke kunstig dag-venting, styrer fase 2.
 
+**V04-09 status 12.11 (draft, ikke balansegodkjent):** D25/O01 er avklart. #21 legger kapasitetssjekk (HQ, 3 sammenhengende L3, varig forsvar, 3 døgn mat/vann) og isolerte regresjoner; #22 viser hver delforutsetning i mål-dialogen. Tallene er **H08-hypoteser**, ikke låst fasit. En egen diagnostisk #23 prioriterer HQ-fronten for boten, men øker bare overganger innen dag 40 fra 2/17 til 3/17. Det skyldes at boten fortsatt avviser for farlige HQ-naboer, bruker crew på andre nødvendigheter og ender med spredte soner. Manuell fase-1-spilltest og videre kalibrering er nødvendig før M2 kan godkjennes; ikke senk menneskekravet bare for å få et pent bottall.
+
 ### M3 – veiviser, samfunn og valg
 
 - ZA-boka håndterer kapittel-lås, oppslagsverk og research-utfylte sider.
