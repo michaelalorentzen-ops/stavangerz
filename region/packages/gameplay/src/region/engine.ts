@@ -10,6 +10,10 @@ import type {
 } from './types';
 import { crewPositionFor } from './location';
 import {
+  GEAR_CATALOG, crewGearAway, departGear, discoverSearchGear, equippedGear, gearDamageMultiplier, gearWeapon, gearWorkMultiplier,
+  moveGearDepot, planGearForOrders, settleGearReturns, type GearPlan, type GearPreferences,
+} from './gear';
+import {
   ACTIONS, FACTIONS, LOOT_PER_HOME, LOOT_PER_SITE, MILESTONES, MODULE_COST, NETWORK_COST, R, RECRUIT_POOL, REGION_RULES_VERSION,
   SEASONS, START_CREW, UPGRADE_COST, VALUE, WEAPONS,
 } from './rules';
@@ -77,7 +81,11 @@ function zoneStatusChanges(before: Record<string, ZoneStatus>, after: Record<str
 }
 export const living = (state: RegionState) => state.survivors.filter(s => s.alive);
 /** Crew at camp today, not away on an errand. */
-export const present = (state: RegionState) => living(state).filter(s => !(s.awayUntil && s.awayUntil > state.day));
+export const present = (state: RegionState) => living(state).filter(s => {
+  const position = crewPositionFor(state, s.id);
+  return !s.left && !(s.awayUntil && s.awayUntil > state.day) && !crewGearAway(state, s.id)
+    && position?.kind === 'zone' && position.zoneId === state.homeZoneId;
+});
 const add = (stock: Stock, id: string, amount: number) => { stock[id] = Math.max(0, Math.round(((stock[id] ?? 0) + amount) * 10) / 10); };
 export const has = (stock: Stock, cost: Record<string, number>) => Object.entries(cost).every(([id, n]) => (stock[id] ?? 0) >= n);
 const pay = (stock: Stock, cost: Record<string, number>) => { for (const [id, n] of Object.entries(cost)) add(stock, id, -n); };
@@ -242,7 +250,7 @@ export function reach(state: RegionState, world: RegionWorld) {
 
 // ------------------------------------------------------------------ fighting numbers
 
-function crewOf(state: RegionState, ids: string[]) { return state.survivors.filter(s => ids.includes(s.id) && s.alive && !(s.awayUntil && s.awayUntil > state.day)); }
+function crewOf(state: RegionState, ids: string[]) { return state.survivors.filter(s => ids.includes(s.id) && s.alive && !s.left && !(s.awayUntil && s.awayUntil > state.day) && !crewGearAway(state, s.id)); }
 const efficiency = (state: RegionState, s: RegionSurvivor) => Math.max(.3, (s.fatigue > 80 ? .6 : 1) * (s.health < 50 ? .7 : 1) * (.8 + state.morale / 250));
 function weaponKills(state: RegionState, weapon: RegionSurvivor['weapon']) {
   const w = WEAPONS[weapon];
@@ -255,7 +263,7 @@ export function estimateKills(state: RegionState, crew: RegionSurvivor[], hours:
   const share = hours / Math.max(1, crew.length * R.workHours);
   const tough = 1 / mutation(state, 'tough', 1.25);
   for (const s of crew) {
-    let weapon = s.weapon;
+    let weapon = gearWeapon(state, s);
     const k0 = weaponKills(state, weapon) * (s.skills.combat / 4 + .5) * share * 2;
     if (WEAPONS[weapon].ammo && ammoLeft < k0 * WEAPONS[weapon].ammo) weapon = 'melee';
     const k = weaponKills(state, weapon) * (s.skills.combat / 4 + .5) * share * 2 * tough;
@@ -269,7 +277,7 @@ export function bestTier(state: RegionState) { return [...TIERS].reverse().find(
 export function assaultOdds(state: RegionState, crew: RegionSurvivor[], faction: RegionFaction) {
   const ammoEach = 5;
   const armed = (state.stock.ammo ?? 0) >= crew.length * ammoEach;
-  const power = crew.reduce((n, s) => n + s.skills.combat * 3 + weaponKills(state, armed ? s.weapon : 'melee') * 2, 0)
+  const power = crew.reduce((n, s) => n + s.skills.combat * 3 + weaponKills(state, armed ? gearWeapon(state, s) : 'melee') * 2, 0)
     * (tech(state, 'drill') ? 1.3 : 1) * (tech(state, 'armour') ? 1.15 : 1) * (armed ? 1.2 : 1);
   const enemy = faction.strength ?? 30;
   return { power: Math.round(power), enemy, chance: Math.max(.05, Math.min(.95, .5 + (power - enemy) / (enemy * 1.6))), ammo: armed ? crew.length * ammoEach : 0 };
@@ -309,9 +317,19 @@ function fortifyTargets(state: RegionState, world: RegionWorld, zoneId: string) 
     && (!(state.barricades[a.connId] > 0) || (state.barricadeTier[a.connId] ?? 1) < tier));
 }
 
-export function previewOrder(state: RegionState, world: RegionWorld, order: Omit<RegionOrder, 'id'>): OrderPreview {
+/** Same planner powers UI reservation and authoritative departure. No mutation or LLM. */
+export function prepareGearPlan(state: RegionState, world: RegionWorld, orders: readonly RegionOrder[], preferences: GearPreferences = {}): GearPlan {
+  return planGearForOrders(state, world, orders, preferences,
+    order => previewOrder(state, world, order, { gearPrepared: true }).errors);
+}
+
+export function previewOrder(state0: RegionState, world: RegionWorld, order: Omit<RegionOrder, 'id'>, internal: { gearPrepared?: boolean } = {}): OrderPreview {
+  // A standalone preview gets exactly the suggested/manual gear for that order.
+  // The day resolver already prepared the entire plan in reservation order.
+  const plan = internal.gearPrepared ? undefined : prepareGearPlan(state0, world, [{ ...order, id: 'preview' }]);
+  const state = plan ? { ...state0, gear: plan.gear } : state0;
   const index = indexWorld(world);
-  const errors: string[] = [];
+  const errors: string[] = [...(plan?.errors ?? [])];
   const crew = crewOf(state, order.survivorIds);
   const zone = index.byId.get(order.zoneId);
   const z = state.zones[order.zoneId];
@@ -329,7 +347,7 @@ export function previewOrder(state: RegionState, world: RegionWorld, order: Omit
   if (faction && !['scout', 'assault'].includes(order.action)) errors.push('En annen gruppe holder denne sonen. Handle med dem, speid eller angrip.');
   if (hops === undefined && !['rest', 'heal', 'craft', 'module', 'research'].includes(order.action) && !(order.action === 'wonder' && wonderHere)) errors.push('Sonen er utenfor rekkevidde. Ta over soner nærmere først.');
   const travel = (hops ?? 0) * R.hopHours * 2;
-  const hours = Math.max(0, crew.reduce((n, s) => n + (R.workHours - travel) * efficiency(state, s), 0) * lawMods(state).workMult);
+  const hours = Math.max(0, crew.reduce((n, s) => n + (R.workHours - travel) * efficiency(state, s) * gearWorkMultiplier(state, s.id, order.action), 0) * lawMods(state).workMult);
   const isControlled = z.status === 'controlled';
   const total = searchHoursTotal(zone);
   switch (order.action) {
@@ -537,6 +555,10 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders:
   const state = clone(state0);
   const index = indexWorld(world);
   const lines: ReportLine[] = [];
+  // Return reconciliation may follow an event ending an existing awayUntil errand.
+  settleGearReturns(state, lines);
+  const gearPlan = prepareGearPlan(state, world, orders);
+  state.gear = gearPlan.gear;
   const noise: Record<string, number> = {};
   const used = new Set<string>();
   const guards: Record<string, number> = {};
@@ -550,10 +572,12 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders:
   const initialZoneStatus = statusSnapshot(state);
   const mainResources = () => ({ food: state.stock.food ?? 0, water: state.stock.water ?? 0 });
 
-  for (const order of orders) {
+  for (const [orderIndex, order] of orders.entries()) {
+    const gearOrder = gearPlan.orders[orderIndex];
+    if (gearOrder.errors.length) { lines.push({ tone: 'warn', title: `${ACTIONS[order.action].label} ble ikke gjort`, text: gearOrder.errors.join(' '), zoneId: order.zoneId }); continue; }
     const crew = crewOf(state, order.survivorIds).filter(s => !used.has(s.id));
     if (crew.length !== order.survivorIds.length) { lines.push({ tone: 'warn', title: `${ACTIONS[order.action].label} ble ikke gjort`, text: 'Noen var allerede satt på et annet oppdrag eller er borte.' }); continue; }
-    const preview = previewOrder(state, world, order);
+    const preview = previewOrder(state, world, order, { gearPrepared: true });
     if (!preview.valid) { lines.push({ tone: 'warn', title: `${ACTIONS[order.action].label} ble ikke gjort`, text: preview.errors.join(' '), zoneId: order.zoneId }); continue; }
     for (const s of crew) used.add(s.id);
     const zone = index.byId.get(order.zoneId)!;
@@ -562,10 +586,11 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders:
     const names = crew.map(s => s.name).join(', ');
     const hours = preview.hours;
     if (!['rest', 'heal'].includes(order.action)) for (const s of crew) { s.fatigue = Math.min(100, s.fatigue + 18 + law.fatigue); worked.add(s.id); }
-    noise[order.zoneId] = (noise[order.zoneId] ?? 0) + ACTIONS[order.action].noise * crew.length;
+    noise[order.zoneId] = (noise[order.zoneId] ?? 0) + ACTIONS[order.action].noise * crew.length
+      + crew.reduce((sum, person) => sum + (equippedGear(state, person.id, 'tool')?.noise ?? 0), 0);
     switch (order.action) {
       case 'scout': {
-        const best = Math.max(...crew.map(s => s.skills.scouting));
+        const best = Math.max(...crew.map(s => s.skills.scouting + (equippedGear(state, s.id, 'tool')?.scouting ?? 0)));
         const faction = state.factions.find(f => f.zoneId === order.zoneId && !f.defeated);
         if (faction) {
           faction.known = true;
@@ -603,7 +628,11 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders:
         break;
       }
       case 'search': {
-        const found = searchZone(state, world, order.zoneId, hours, crew.length * R.carryPerPerson, rng);
+        const searchBefore = z.searched;
+        const searchAfter = Math.min(searchHoursTotal(zone), z.searched + hours);
+        const gearFound = discoverSearchGear(state, zone.id, searchBefore, searchAfter, searchHoursTotal(zone), order);
+        const gearWeight = gearFound.reduce((sum, item) => sum + (GEAR_CATALOG[item.kind]?.weight ?? 0), 0);
+        const found = searchZone(state, world, order.zoneId, hours, Math.max(0, crew.length * R.carryPerPerson - gearWeight), rng);
         const total = searchHoursTotal(zone);
         const danger = z.zombies / Math.max(1, crew.length * 4);
         hurt(state, crew, danger > 1 ? Math.min(35, danger * 6) : danger > .3 ? 3 : 0, rng, lines, zone.name);
@@ -653,6 +682,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders:
         const type = CONTENT.hqTypes.find(t => t.id === poi?.hqType);
         state.hq = { zoneId: order.zoneId, type: type?.id ?? 'camp', modules: [...(type?.startsWith ?? [])].filter(m => MODULE_COST[m]) };
         state.flags.hqStartModules = state.hq.modules.length;
+        // Changing the HQ address alone does not transport stored equipment.
         state.homeZoneId = order.zoneId;
         lines.push({ tone: 'good', title: `HQ etablert: ${poi?.name ?? zone.name}`, text: type ? `${type.name}. Har fra start: ${type.startsWith.map(m => moduleName(m).toLowerCase()).join(', ')}.` : 'En enkel leir.', zoneId: zone.id });
         break;
@@ -691,7 +721,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders:
       case 'rest': for (const s of crew) { s.fatigue = Math.max(0, s.fatigue - 50); s.health = Math.min(100, s.health + (state.hq?.modules.includes('medbay') ? 10 : 5)); } break;
       case 'heal': {
         const patients = living(state).filter(s => s.health < 80);
-        const medic = Math.max(...crew.map(s => s.skills.medical));
+        const medic = Math.max(...crew.map(s => s.skills.medical + (equippedGear(state, s.id, 'tool')?.medical ?? 0)));
         add(state.stock, 'medicine', -Math.max(1, patients.length));
         for (const p of patients) p.health = Math.min(100, p.health + (10 + medic * 4) * (state.hq?.modules.includes('medbay') ? 1.5 : 1) * (tech(state, 'fieldSurgery') ? 1.4 : 1));
         // A medic also works through the sick among the many.
@@ -712,6 +742,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders:
       case 'relocate': relocate(state, world, order.zoneId, rng, lines); break;
       case 'assault': assault(state, world, order.zoneId, crew, rng, lines); break;
     }
+    departGear(state, order);
   }
   discoverWonders(state, world, lines);
   for (const s of present(state)) if (!worked.has(s.id)) { s.fatigue = Math.max(0, s.fatigue - 25); s.health = Math.min(100, s.health + 2); }
@@ -864,6 +895,7 @@ export function resumeRegionDay(
 
   state.day = day + 1;
   for (const s of living(state)) if (s.awayUntil && s.awayUntil <= state.day) delete s.awayUntil;
+  settleGearReturns(state, lines);
   updateFactions(state, world, lines);
   checkMilestones(state, world, lines, foodMade);
   checkPhase(state, world, lines);
@@ -1063,6 +1095,8 @@ function relocate(state: RegionState, world: RegionWorld, zoneId: string, rng: (
   const share = Math.min(1, carry / Math.max(1, load));
   const left: Stock = {};
   if (share < 1) for (const [id, n] of Object.entries(state.stock)) { const keep = Math.floor(n * share); if (n - keep > 0 && weight(id)) { left[id] = n - keep; state.zones[from].loot[id] = (state.zones[from].loot[id] ?? 0) + n - keep; state.stock[id] = keep; } }
+  const remainingRoom = Math.max(0, carry - Object.entries(state.stock).reduce((n, [id, amount]) => n + amount * weight(id), 0));
+  moveGearDepot(state, from, zoneId, remainingRoom);
   state.homeZoneId = zoneId;
   const z = state.zones[zoneId];
   if (z.status === 'unknown') z.status = 'scouted';
@@ -1149,7 +1183,7 @@ function hurt(state: RegionState, crew: RegionSurvivor[], amount: number, rng: (
   for (const s of crew) {
     if (rng() < Math.min(.85, amount * armour / 25)) {
       // Fights happen at the edge of a crowd: bad odds make injuries likely, but no single blow is unlimited.
-      const harm = Math.min(40, Math.round((6 + amount * .6) * (.5 + rng()) * armour));
+      const harm = Math.min(40, Math.round((6 + amount * .6) * (.5 + rng()) * armour * gearDamageMultiplier(state, s.id)));
       s.health -= harm;
       lines.push({ tone: 'bad', title: `${s.name} ble skadet`, text: `I ${place}: ${harm} i skade.` });
       // A bad fight can end in a bite.
@@ -1235,7 +1269,7 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     const name = index.byId.get(id)!.name;
     if (id === state.homeZoneId) {
       const victims = present(state).sort(() => rng() - .5).slice(0, Math.min(3, Math.ceil(z.zombies / 4)));
-      for (const v of victims) { v.health -= Math.min(45, z.zombies * R.injuryPerExcessZombie); if (z.zombies > 4 && rng() < .1 && v.bitten === undefined) v.bitten = state.day + 2; }
+      for (const v of victims) { v.health -= Math.round(Math.min(45, z.zombies * R.injuryPerExcessZombie) * gearDamageMultiplier(state, v.id)); if (z.zombies > 4 && rng() < .1 && v.bitten === undefined) v.bitten = state.day + 2; }
       const many = state.population.adults + state.population.children + state.population.elderly;
       const dead = many ? Math.min(many, Math.floor(z.zombies / 3 * rng() + (z.zombies > 6 ? 1 : 0))) : 0;
       for (let i = 0; i < dead; i++) { const kind = state.population.elderly && rng() < .3 ? 'elderly' : state.population.children && rng() < .3 ? 'children' : state.population.adults ? 'adults' : 'children'; if (state.population[kind] > 0) state.population[kind] -= 1; }
