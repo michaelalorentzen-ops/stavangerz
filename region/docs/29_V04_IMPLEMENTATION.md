@@ -1,6 +1,6 @@
 # StavangerZ v0.4 – orkestrator og implementeringsplan
 
-**Status:** foreslått arbeidsordre; dokumentasjonen er opprettet, **ingen v0.4-gameplay er implementert**.  
+**Status 12.11.2026:** M0 er dokumentert. M1-motor og UI er implementert i **draft-PR-er**, men ikke merget eller deployet.  
 **Mål:** Lever v0.4 i verifiserbare, spillbare trinn uten å miste oversikt over eierens låste valg.
 
 Les i denne rekkefølgen:
@@ -100,6 +100,8 @@ Hver oppgave har ID for PR/issue og kan splittes etter behov. Alle ID-er er **fo
 - Spiller planlegger ved 07, ser rask tidsanimert fremgang og får rapport neste 07.
 - Posisjonsavhengig beslutning stopper simuleringen, kan ikke skippes og overlever reload.
 - Kart og rapport viser samme sannhet, uten å teleportere crew.
+
+**M1 status 12.11 (draft, ikke godkjent):** #16 gir autoritativ døgnjournal, #18 et reelt JSON-lagringsbart pausepunkt ved kritisk HQ-nattangrep og #19 samler kartavspilling, dagsrapport, eksplisitt hovedpersonvalg og gjenopptakbar dialog. #19 samler også rapportarbeid fra #15. TypeScript, produksjonsbygg, checkpoint-/replay-/claim-/location-regresjon, hendelsestest og 17 botløp er grønne. Direkte klikkbasert nettleser-QA er fortsatt en egen gate; lokal headless Chromium ble blokkert av miljøets prosessrettigheter. Radioeskalering for bortelag, full animert gjenopptakelse etter checkpoint og komplett per-fase kartverdireplay er ikke del av denne slicen.
 
 ### M2 – meningsfull fase-1-loop
 

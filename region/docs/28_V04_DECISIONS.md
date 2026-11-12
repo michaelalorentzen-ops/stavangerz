@@ -61,6 +61,8 @@ Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når 
 - **H03:** Report UI kan velge én dominerende hendelsesillustrasjon og bruke enklere bakgrunn ved rutinedager.
 - **H04:** Karakterens manuelle gear-valg låser bare valgte slots, mens andre slots fortsatt foreslås av Auto equip.
 - **H05:** En samlet fase-1-slice bygges før region-AI i fase 4–5, selv om designet for alle faser er spesifisert nå.
+- **H06:** M1-prototypen lar spilleren eksplisitt velge en av de eksisterende navngitte overlevende som fysisk hovedperson, lagret i `flags.playerAvatarId`. En etterfølger velges aktivt ved død/fravær i vanlig modus; dette er ikke ferdig figur- eller Hardcore-system.
+- **H07:** Første reelle nattcheckpoint trigges ved minst åtte faktiske zombier i kontrollert HQ mens hovedpersonen er til stede. Fem patroner gir ti ekstra forsvarspoeng. Begge tall er testbare balansehypoteser, ikke låste krav.
 
 ## Ny beslutning – fremgangsmåte
 
