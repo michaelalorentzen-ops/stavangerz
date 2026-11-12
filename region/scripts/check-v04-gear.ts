@@ -193,4 +193,27 @@ const shooting = forceEvent(gate, world, 'gateShooting');
 assert.equal(shooting?.data?.who, 'leila', 'A found rifle counts for firearm events despite a melee baseline');
 delete gate.gear.loadouts.leila.weapon;
 assert.equal(forceEvent(gate, world, 'gateShooting'), undefined, 'An empty weapon slot cannot fire a gun from the old scalar');
+// Canonical geography never falls back to a guessed HQ person or lendable starter weapon.
+const registered = fresh(); registered.gear = gearStateFor(registered);
+const locationCases = [
+  { kind: 'transit', fromZoneId: 'b', toZoneId: 'a', routeZoneIds: ['b', 'a'], atIndex: 0, departedDay: 0, estimatedArrivalDay: 2 },
+  { kind: 'away-unknown', expectedReturnDay: 2 },
+  { kind: 'zone', zoneId: 'b' },
+  { kind: 'area-duty', areaLevel: 3, areaZoneId: 'a', duty: 'guard' },
+  undefined,
+] as const;
+for (const position of locationCases) {
+  registered.crewPositions = position ? { leila: structuredClone(position) as NonNullable<RegionState['crewPositions']>[string] } : {};
+  assert.equal(crewGearAway(registered, 'leila'), true, `Canonical ${position?.kind ?? 'missing entry'} binds the person`);
+  assert.equal(present(registered).some(p => p.id === 'leila'), false, 'No free point-HQ defense from area/transit/unknown placement');
+  assert.ok(prepareGearPlan(registered, world, [search('canonical-hq', 'leila')]).errors.length, 'No direct HQ order from a non-HQ canonical position');
+  assert.equal(availableGear(registered, 'leila').length, 0, 'A carried starter weapon does not make the absent person available');
+}
+registered.crewPositions = { leila: { kind: 'zone', zoneId: registered.homeZoneId } };
+assert.equal(crewGearAway(registered, 'leila'), false);
+assert.equal(present(registered).some(p => p.id === 'leila'), true);
+assert.deepEqual(prepareGearPlan(registered, world, [search('canonical-present', 'leila')]).errors, []);
+const unregistered = fresh();
+assert.equal(crewGearAway(unregistered, 'leila'), false, 'Legacy saves without canonical register retain the existing HQ fallback');
+assert.deepEqual(prepareGearPlan(unregistered, world, [search('legacy-present', 'leila')]).errors, []);
 console.log('PASS v0.4 gear: pure priority reservations, locks, real effects, finite loot, physical return/absence/injury/death, JSON checkpoint and legacy weapons.');

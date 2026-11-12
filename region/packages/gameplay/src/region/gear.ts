@@ -99,6 +99,12 @@ export function availableGear(state: RegionState, survivorId: string, slot?: Gea
   return gearStateFor(state).items.filter(item => canUse(state, item, survivorId) && (!slot || GEAR_CATALOG[item.kind]?.slot === slot));
 }
 export function crewGearAway(state: RegionState, survivorId: string): boolean {
+  // The v0.4 location register is authoritative, including missing entries.
+  // Whole-area duty does not put a person at an invented point in HQ.
+  if (state.crewPositions !== undefined) {
+    const position = crewPositionFor(state, survivorId);
+    if (position?.kind !== 'zone' || position.zoneId !== state.homeZoneId) return true;
+  }
   return !!(state.gear?.missions?.[survivorId] && state.gear.missions[survivorId].targetZoneId !== state.homeZoneId) || !!state.gear?.items.some(item => item.location.kind === 'carried' && item.location.survivorId === survivorId
     && !!item.location.missionId && item.location.targetZoneId !== state.homeZoneId);
 }
