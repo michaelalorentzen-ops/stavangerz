@@ -5,8 +5,8 @@
 import { resolveDay, type Connection, type SimulationWorld } from '../../../simulation-core/src/index';
 import { CONTENT } from '../../../world-data/src/content';
 import type {
-  ActionId, ChokepointState, RegionFaction, RegionOrder, RegionReport, RegionState, RegionSurvivor, RegionWorld, RegionZone,
-  RegionZoneState, ReportLine, Stock,
+  ActionId, ChokepointState, RegionFaction, RegionOrder, RegionReplayStage, RegionReplayZoneChange, RegionReport,
+  RegionState, RegionSurvivor, RegionWorld, RegionZone, RegionZoneState, ReportLine, Stock, ZoneStatus,
 } from './types';
 import {
   ACTIONS, FACTIONS, LOOT_PER_HOME, LOOT_PER_SITE, MILESTONES, MODULE_COST, NETWORK_COST, R, RECRUIT_POOL, REGION_RULES_VERSION,
@@ -66,6 +66,14 @@ export function random(seed: number, day: number, key: string): () => number {
   return () => { hash = (Math.imul(hash, 1664525) + 1013904223) >>> 0; return hash / 4294967296; };
 }
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+/** Only status changes belong in replay: full world snapshots would bloat saves. */
+const statusSnapshot = (state: RegionState): Record<string, ZoneStatus> =>
+  Object.fromEntries(Object.entries(state.zones).map(([id, zone]) => [id, zone.status]));
+function zoneStatusChanges(before: Record<string, ZoneStatus>, after: Record<string, ZoneStatus>): RegionReplayZoneChange[] {
+  return Object.keys(after).filter(id => before[id] !== undefined && before[id] !== after[id]).sort().map(zoneId => ({
+    zoneId, before: before[zoneId], after: after[zoneId],
+  }));
+}
 export const living = (state: RegionState) => state.survivors.filter(s => s.alive);
 /** Crew at camp today, not away on an errand. */
 export const present = (state: RegionState) => living(state).filter(s => !(s.awayUntil && s.awayUntil > state.day));
@@ -537,6 +545,8 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
   const heldToday = new Set<string>();
   const law = lawMods(state);
   let crewResearch = 0;
+  const initialZoneStatus = statusSnapshot(state);
+  const mainResources = () => ({ food: state.stock.food ?? 0, water: state.stock.water ?? 0 });
 
   for (const order of orders) {
     const crew = crewOf(state, order.survivorIds).filter(s => !used.has(s.id));
@@ -709,6 +719,12 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
   // The many: workers who scavenge, build, guard and research. Farming and fishing come with production.
   const work = workDay(state, world, rngFor('work'), lines);
 
+  // Replay-only stage boundary. The authoritative simulation still resolves a
+  // full day atomically; these stages are NOT user-interruptible checkpoints.
+  const operationsLineEnd = lines.length;
+  const operationsZoneStatus = statusSnapshot(state);
+  const operationsResources = mainResources();
+
   // Where people live makes noise too.
   noise[state.homeZoneId] = (noise[state.homeZoneId] ?? 0) + (Math.ceil(living(state).length / 3) + Math.ceil(totalPeople(state) / 12) + (state.hq?.modules.includes('heavyWorkshop') ? 2 : 0)) * (tech(state, 'decoys') ? .6 : 1);
 
@@ -716,6 +732,9 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
   const { moved: migrated, moves } = migrate(state, world, noise, lines);
   killed += nightDefence(state, world, guards, work.guardPower, lines, rngFor('night'));
   killed += rot(state);
+  const nightLineEnd = lines.length;
+  const nightZoneStatus = statusSnapshot(state);
+  const nightResources = mainResources();
 
   // Production, eating and what rots. The same flows the forecast shows.
   const flows = dailyFlows(state, world);
@@ -779,7 +798,18 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
     const ev = pickEvent(state, world, random(state.seed, state.day, `event:${state.startZoneId}`));
     if (ev) { state.event = ev; lines.push({ tone: 'warn', title: ev.title, text: 'En hendelse krever et valg.' }); }
   }
-  const report: RegionReport = { day: state.day, lines, food: { produced: Math.round(foodMade), eaten: Math.round(eaten), spoiled: Math.round(spoiled) }, water: { produced: Math.round(flows.water.produced), drunk: Math.round(drunk) }, zombiesMoved: migrated, killed, moves };
+  const replay: RegionReplayStage[] = [
+    { phase: 'operations', from: { dayOffset: 0, clock: '07:00' }, to: { dayOffset: 0, clock: '22:00' },
+      lines: lines.slice(0, operationsLineEnd), zoneChanges: zoneStatusChanges(initialZoneStatus, operationsZoneStatus),
+      mainResourcesAfter: operationsResources },
+    { phase: 'night', from: { dayOffset: 0, clock: '22:00' }, to: { dayOffset: 1, clock: '07:00' },
+      lines: lines.slice(operationsLineEnd, nightLineEnd), zoneChanges: zoneStatusChanges(operationsZoneStatus, nightZoneStatus),
+      mainResourcesAfter: nightResources, moves },
+    { phase: 'new-day', from: { dayOffset: 1, clock: '07:00' },
+      lines: lines.slice(nightLineEnd), zoneChanges: zoneStatusChanges(nightZoneStatus, statusSnapshot(state)),
+      mainResourcesAfter: mainResources() },
+  ];
+  const report: RegionReport = { day: state.day, lines, food: { produced: Math.round(foodMade), eaten: Math.round(eaten), spoiled: Math.round(spoiled) }, water: { produced: Math.round(flows.water.produced), drunk: Math.round(drunk) }, zombiesMoved: migrated, killed, moves, replay };
   state.reports = [...state.reports.slice(-29), report];
   state.counters.killed = (state.counters.killed ?? 0) + killed;
   return { state, report };
