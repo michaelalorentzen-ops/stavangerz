@@ -1,4 +1,5 @@
 export * from './types';
+export * from './location';
 export * from './rules';
 export * from './engine';
 export * from './systems';

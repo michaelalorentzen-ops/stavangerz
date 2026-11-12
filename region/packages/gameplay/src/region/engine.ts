@@ -601,10 +601,21 @@ export function endDay(state0: RegionState, world: RegionWorld, orders: RegionOr
         break;
       }
       case 'claim': {
-        killed += z.zombies; z.zombies = 0; z.status = 'controlled';
+        // A plan is allowed based on the crew's most recent estimate, but the actual
+        // horde may have moved since then. A claim must never erase unseen zombies.
+        if (z.zombies > R.claimMaxZombies) {
+          const scouting = Math.max(...crew.map(s => s.skills.scouting));
+          z.intel = { ...intelFor(z.zombies, scouting, rng), day };
+          if (z.status === 'unknown') z.status = 'scouted';
+          lines.push({ tone: 'warn', title: 'Overtakelsen ble stanset',
+            text: `${names} fant flere zombier enn speiderrapporten antydet. Sonen må ryddes før den kan overtas.`, zoneId: zone.id });
+          break;
+        }
+        const remaining = z.zombies;
+        killed += remaining; z.zombies = 0; z.status = 'controlled';
         z.intel = { min: 0, max: 0, day };
         if (controlled(state).length === 1) state.homeZoneId = order.zoneId;
-        lines.push({ tone: 'good', title: `${zone.name} er deres`, text: 'Sonen er overtatt. Hold grensene for å beholde den.', zoneId: zone.id });
+        lines.push({ tone: 'good', title: `${zone.name} er deres`, text: `${remaining ? `${remaining} gjenværende zombier ble slått ned. ` : ''}Sonen er overtatt. Hold grensene for å beholde den.`, zoneId: zone.id });
         break;
       }
       case 'fortify': {

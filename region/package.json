@@ -17,6 +17,7 @@
     "region:bot": "tsx scripts/region-bot.ts",
     "region:world": "python -W ignore tools/zone-editor/zonegame.py",
     "region:events": "tsx scripts/region-events.ts",
+    "region:claim": "tsx scripts/region-claim-regression.ts",
     "art:shotlist": "tsx scripts/art-shotlist.ts",
     "art:manifest": "node scripts/art-manifest.mjs",
     "region:basemap": "python -W ignore tools/zone-editor/zonebasemap.py"
