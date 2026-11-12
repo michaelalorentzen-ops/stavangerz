@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  MUTATIONS, PHASES, TECHS, goalMet, indexWorld, phaseOneReadiness,
+  GEAR_CATALOG, MUTATIONS, PHASES, TECHS, gearItemName, goalMet, indexWorld, knownGearItems, phaseOneReadiness,
   type RegionState, type RegionWorld,
 } from '../../../packages/gameplay/src/region/index';
 import './za-book.css';
@@ -89,6 +89,18 @@ const MANUAL: { heading: string; description: string; entries: Note[] }[] = [
     ],
   },
   {
+    heading: 'Utstyr',
+    description: 'En gjenstand kan bare være ett sted om gangen.',
+    entries: [
+      { lead: 'Tre kategorier', body: 'Våpen påvirker kamp, ammunisjon og støy. Beskyttelse demper fysisk skade, men stopper ikke bitt. Oppdragsverktøy hjelper konkrete aktiviteter, som søk, speiding, bygging eller behandling.' },
+      { lead: 'Automatisk som utgangspunkt', body: 'Når du planlegger et oppdrag, foreslår Auto equip tilgjengelig utstyr som passer aktiviteten. Se tildelingen i dagsplanen. Åpne Utstyr på oppdraget for å endre den.' },
+      { lead: 'Lås bare det du vil bestemme selv', body: 'Et manuelt valg låser den kategorien. De andre kategoriene kan fortsatt velges automatisk. Du kan også låse en kategori tom eller slå automatikken av. En låst gjenstand som ikke er tilgjengelig må avklares før oppdraget kan gå.' },
+      { lead: 'Første plan får førstevalg', body: 'Utstyr reserveres i dagsplanens rekkefølge. Det kan ikke lånes til to lag samtidig. Fjern eller endre et oppdrag for å frigjøre reservasjonen.' },
+      { lead: 'Folk og utstyr følger hverandre', body: 'Et feltlag kan ikke samtidig forsvare HQ. Utstyr hos noen som er borte er utilgjengelig for andre. Søksfunn og oppdragsverktøy blir tilgjengelige på lageret etter faktisk hjemkomst og levering.' },
+      { lead: 'Leting er endelig', body: 'Nye personlige funn følger gjennomsøkingen av et område. Gjentatte søk i en tom sone skaper ikke flere gjenstander. Vurder om et nytt funn er verdt reisen og risikoen.' },
+    ],
+  },
+  {
     heading: 'Leiren',
     description: 'Et trygt område må også kunne leve.',
     entries: [
@@ -115,6 +127,7 @@ export default function ZaBook({ state, world, onGoals }: {
   const completed = current.goals.filter(g => goalMet(state, world, g.id)).length;
   const core = state.phase === 1 ? phaseOneReadiness(state, world) : null;
   const visibleMutations = state.mutations;
+  const foundGear = [...new Map(knownGearItems(state).filter(item => item.provenance.kind === 'search').map(item => [item.kind, item])).values()];
   const research = TECHS.filter(t => state.research.done.includes(t.id));
   const currentResearch = TECHS.find(t => t.id === state.research.current);
   const observedPlaces = Object.keys(state.wonders ?? {}).length;
@@ -130,7 +143,7 @@ export default function ZaBook({ state, world, onGoals }: {
       <nav className="zab-tabs" aria-label="ZA-bokas deler">
         <button className={tab === 'chapters' ? 'active' : ''} aria-current={tab === 'chapters' ? 'page' : undefined} onClick={() => setTab('chapters')}>Kapitler</button>
         <button className={tab === 'manual' ? 'active' : ''} aria-current={tab === 'manual' ? 'page' : undefined} onClick={() => setTab('manual')}>Håndbok</button>
-        <button className={tab === 'field' ? 'active' : ''} aria-current={tab === 'field' ? 'page' : undefined} onClick={() => setTab('field')}>Feltguide <span>{visibleMutations.length + research.length}</span></button>
+        <button className={tab === 'field' ? 'active' : ''} aria-current={tab === 'field' ? 'page' : undefined} onClick={() => setTab('field')}>Feltguide <span>{visibleMutations.length + research.length + foundGear.length}</span></button>
       </nav>
     </div>
 
@@ -200,6 +213,12 @@ export default function ZaBook({ state, world, onGoals }: {
         {research.length === 0 && <p className="zab-unknown">Ingen forskningsresultater nedskrevet ennå. En gruppe med kunnskap kan endre dette.</p>}
         {research.map(t => <div className="zab-discovery" key={t.id}><span className="zab-discovery-mark known">✓</span><div><strong>{t.name}</strong><p>{t.text}</p></div></div>)}
         {currentResearch && <p className="zab-in-progress">Pågående arbeid: {currentResearch.name}. Resultatene er ikke klare.</p>}
+      </section>
+      <section className="zab-field-card">
+        <p className="zab-eyebrow">RAPPORTERTE UTSTYRSFUNN</p>
+        <h3>Det vi kan ta i bruk</h3>
+        {!foundGear.length && <p className="zab-unknown">Ingen nye utstyrstyper er rapportert hjem ennå.</p>}
+        {foundGear.map(item => <div className="zab-discovery" key={item.kind}><span className="zab-discovery-mark known">✓</span><div><strong>{gearItemName(item)}</strong><p>{GEAR_CATALOG[item.kind]?.description}</p><small>Funnet under oppdrag dag {item.provenance.day}. Nåværende beholdning og bærer vises i Lager.</small></div></div>)}
       </section>
       <section className="zab-field-card">
         <p className="zab-eyebrow">FUNN OG HENDELSER</p>

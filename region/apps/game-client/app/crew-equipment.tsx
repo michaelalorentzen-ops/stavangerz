@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 import {
-  GEAR_CATALOG, availableGear, gearItemName, gearStateFor,
+  GEAR_CATALOG, availableGear, gearItemName, knownGearItems,
   type GearCrewPlan, type GearOrderPlan, type GearPlan, type GearPreference, type GearSlot,
 } from '../../../packages/gameplay/src/region/gear';
 import { prepareGearPlan } from '../../../packages/gameplay/src/region/engine';
@@ -31,7 +31,7 @@ export default function CrewEquipment({ state, world, orders, draftOrder, onChan
 }) {
   const editorId = useId();
   const plan = prepareGearPlan(state, world, equipmentDraftOrders(orders, draftOrder));
-  const inventory = gearStateFor(state).items;
+  const inventory = knownGearItems(state);
   const orderPlan = plan.orders.find(order => order.orderId === draftOrder.id);
   const crew = orderPlan?.crew ?? [];
   const allAuto = crew.length > 0 && crew.every(person => person.preference.autoEquip !== false);
@@ -139,7 +139,7 @@ export function GearInventory({ state, world, plan, open }: {
   plan?: GearPlan;
   open?: boolean;
 }) {
-  const inventory = gearStateFor(state).items;
+  const inventory = knownGearItems(state);
   const zoneName = (zoneId: string) => world.zones.find(zone => zone.id === zoneId)?.name ?? 'ukjent område';
   const personName = (survivorId: string) => state.survivors.find(person => person.id === survivorId)?.name ?? 'ukjent person';
   return <div className="ce"><details className="ce-stock" open={open}>
@@ -148,7 +148,7 @@ export function GearInventory({ state, world, plan, open }: {
       const reservation = plan?.reservations[item.id];
       const location = item.location;
       const physicalPlace = location.kind === 'stored' ? `Lager: ${zoneName(location.zoneId)}`
-        : location.kind === 'carried' ? `Bæres av ${personName(location.survivorId)}`
+        : location.kind === 'carried' ? `Bæres av ${personName(location.survivorId)}${location.atZoneId ? ` · Registrert ved ${zoneName(location.atZoneId)}` : ''}`
           : `Tapt dag ${location.day}${location.zoneId ? ` · Sist registrert ved ${zoneName(location.zoneId)}` : ''}`;
       return <li key={item.id}><strong>{gearItemName(item)}</strong>
         <span>{location.kind === 'carried' ? 'Båret' : location.kind === 'lost' ? 'Tapt' : 'På lager'}</span>

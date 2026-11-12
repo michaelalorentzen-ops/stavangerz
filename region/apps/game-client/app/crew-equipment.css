@@ -46,3 +46,7 @@
 .ce-snapshot-lock{color:#d9ca94;margin-left:4px;white-space:nowrap}
 @media(max-width:460px){.ce-header{flex-wrap:wrap}.ce-auto{width:100%;justify-content:space-between}.ce-person{padding:11px}.ce-person-header img,.ce-initial{width:40px;height:40px}.ce-person-header strong{font-size:14px}.ce-person-status{max-width:96px;font-size:9px}.ce-slot{gap:6px}.ce .ce-lock{min-width:67px;font-size:10px;padding:7px}.ce .ce-field select{font-size:11px}}
 .ce-snapshot .ce-snapshot-error{color:#e1b979}
+/* The app's general header styles must not turn person cards into page headers. */
+.ce .ce-person-header{height:auto;padding:0 0 12px;border:0;justify-content:flex-start}
+.ce .ce-person-header strong{letter-spacing:normal}
+.ce .ce-header{padding-right:36px}
