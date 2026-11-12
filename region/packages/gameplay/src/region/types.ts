@@ -117,6 +117,48 @@ export interface PendingEvent {
   kicker?: string;
 }
 
+/**
+ * Internal, JSON-serializable v0.4 night boundary. The pre-night world changes
+ * are already applied to RegionState, so resume MUST NOT replay daytime orders
+ * or zombie migration. This is distinct from presentation-only `report.replay`.
+ *
+ * Optional on region-2 saves: existing completed turns remain compatible.
+ */
+export interface RegionNightCheckpoint {
+  version: 1;
+  day: number;
+  worldVersion: string;
+  stage: 'before-night-defence';
+  lines: ReportLine[];
+  guards: Record<string, number>;
+  guardPower: number;
+  killed: number;
+  foodMade: number;
+  crewResearch: number;
+  migrated: number;
+  moves: { from: string; to: string; n: number }[];
+  initialZoneStatus: Record<string, ZoneStatus>;
+  operationsLineEnd: number;
+  operationsZoneStatus: Record<string, ZoneStatus>;
+  operationsResources: { food: number; water: number };
+  /** Set only for an actual decision involving the avatar at the home zone. */
+  decision?: {
+    kind: 'hq-night-defence';
+    avatarId: string;
+    zoneId: string;
+    ammoRequired: number;
+  };
+}
+
+/** A blocking decision may be persisted with the state as a single save. */
+export interface RegionTurnDecision {
+  kind: 'hq-night-defence';
+  title: string;
+  text: string;
+  zoneId: string;
+  choices: EventChoice[];
+}
+
 export interface RegionState {
   schema: 'region-2'; rulesVersion: string; worldVersion: string; seed: number; day: number;
   startZoneId: string; homeZoneId: string;
@@ -147,6 +189,8 @@ export interface RegionState {
   networks: Record<string, string[]>;
   factions: RegionFaction[];
   event?: PendingEvent;
+  /** In-progress turn: call resumeRegionDay, not endDay. Never store a full state recursively here. */
+  turnCheckpoint?: RegionNightCheckpoint;
   /** Chains: events that will come back on a given day. */
   scheduled: { day: number; id: string; data?: Record<string, string | number> }[];
   /** Small facts that events remember. */
