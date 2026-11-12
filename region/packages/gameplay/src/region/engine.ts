@@ -1268,7 +1268,14 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     if (!z.zombies) continue;
     const name = index.byId.get(id)!.name;
     if (id === state.homeZoneId) {
-      const victims = present(state).sort(() => rng() - .5).slice(0, Math.min(3, Math.ceil(z.zombies / 4)));
+      // A random sort comparator is not transitive: JS runtimes may call it in
+      // different orders, consuming different RNG draws. Fisher-Yates is explicit.
+      const candidates = present(state);
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
+      const victims = candidates.slice(0, Math.min(3, Math.ceil(z.zombies / 4)));
       for (const v of victims) { v.health -= Math.round(Math.min(45, z.zombies * R.injuryPerExcessZombie) * gearDamageMultiplier(state, v.id)); if (z.zombies > 4 && rng() < .1 && v.bitten === undefined) v.bitten = state.day + 2; }
       const many = state.population.adults + state.population.children + state.population.elderly;
       const dead = many ? Math.min(many, Math.floor(z.zombies / 3 * rng() + (z.zombies > 6 ? 1 : 0))) : 0;

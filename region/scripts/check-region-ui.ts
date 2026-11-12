@@ -64,6 +64,10 @@ async function main() {
   }
   try {
     for (const [label, viewport, days] of [['desktop', { width: 1440, height: 1000 }, 8], ['mobile', { width: 390, height: 844 }, 6]] as const) {
+      if (process.env.REGION_TEST_VIEWPORT === 'checkpoint') {
+        fixtureWorld = JSON.parse(await (await fetch(`${baseURL}/world/region-v1.json`)).text()) as RegionWorld;
+        break;
+      }
       if (process.env.REGION_TEST_VIEWPORT && process.env.REGION_TEST_VIEWPORT !== label) continue;
       const context = await browser.newContext({ viewport, reducedMotion: 'no-preference', isMobile: label === 'mobile', hasTouch: label === 'mobile' });
       const page = await context.newPage();
