@@ -156,3 +156,10 @@ Neste arbeidspakke: [ID og eier]
 ```
 
 **Videre etter M1:** O01 er låst som D25: fase 2 skal tillate defensibel kjerne som alternativ til hele L2. V04-09 kan bygges som en avgrenset kapasitetstest med eksplisitt hypotesemerket balanse og synlig progresjon. O05 blokkerer fremdeles endelig gear-regnskap. Grunnpolicy for eskalering O04 er avklart som D24. Ikke tildel V04-10 til en parallell agent før lokale posisjoner, lager og ordre er stabile.
+
+
+## Gjenopptatt orkestrering 12.11.2026
+
+Se [samlet spillteststatus](30_V04_PLAYTEST_STATUS.md) for gjenopprettet PR-/branch-baseline, faktisk implementasjon, verifiserte spillerreiser og gjenværende arbeid. `feat/v04-phase-one-playtest` samler videre UI-arbeid fra `da16b82`; bildepakken ligger separat i draft #24. Verken M2, M3 eller hele v0.4 er erklært ferdig.
+
+O05 er delvis avklart som **D26** av Mikki i denne økten: våpen, beskyttelse, oppdragsverktøy, auto-equip, manuelle låser og faktisk reservasjon/retur bygges. Motor/regnskap og et isolert utstyrspanel utvikles med disjunkt filansvar. Nye tall og ett slot per kategori prøves som hypoteser. Ingen automatisk merge/deploy.

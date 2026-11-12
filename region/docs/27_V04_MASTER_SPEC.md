@@ -88,6 +88,8 @@ Det finnes tre skalanivåer: fysisk hovedperson; navngitte crew-/regionledere me
 
 ### 5.1 Utstyrsklasser
 
+**D26, avklart 12.11.2026:** Første implementering bruker våpen, beskyttelse og oppdragsverktøy som de tre personlige kategoriene, med auto-equip og manuelle låser. Eksakt antall plasser, effekttall og utstyrsloot testes som hypoteser.
+
 - **Personlig gear:** våpen, beskyttelse og andre persistente karaktervalg.
 - **Oppdragsutstyr:** brekkjern, lommelykt, kikkert, spesialverktøy. Foreslås etter faktisk aktivitet.
 - **Tildelt/felles utstyr og infrastruktur:** radio, kjøretøy, generatorer og forsvarssystemer. En walkie er ikke nødvendigvis et manuelt «equip-slot», men må finnes fysisk og kunne fungere.
