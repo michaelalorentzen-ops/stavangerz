@@ -1,6 +1,6 @@
 # StavangerZ v0.4 – orkestrator og implementeringsplan
 
-**Status:** foreslått arbeidsordre; dokumentasjonen er opprettet, **ingen v0.4-gameplay er implementert**.  
+**Status 12.11.2026:** M0 er dokumentert. M1-motor og UI er implementert i **draft-PR-er**, men ikke merget eller deployet.  
 **Mål:** Lever v0.4 i verifiserbare, spillbare trinn uten å miste oversikt over eierens låste valg.
 
 Les i denne rekkefølgen:
@@ -101,11 +101,15 @@ Hver oppgave har ID for PR/issue og kan splittes etter behov. Alle ID-er er **fo
 - Posisjonsavhengig beslutning stopper simuleringen, kan ikke skippes og overlever reload.
 - Kart og rapport viser samme sannhet, uten å teleportere crew.
 
+**M1 status 12.11 (draft, ikke godkjent):** #16 gir autoritativ døgnjournal, #18 et reelt JSON-lagringsbart pausepunkt ved kritisk HQ-nattangrep og #19 samler kartavspilling, dagsrapport, eksplisitt hovedpersonvalg og gjenopptakbar dialog. #19 samler også rapportarbeid fra #15. TypeScript, produksjonsbygg, checkpoint-/replay-/claim-/location-regresjon, hendelsestest og 17 botløp er grønne. Direkte klikkbasert nettleser-QA er fortsatt en egen gate; lokal headless Chromium ble blokkert av miljøets prosessrettigheter. Radioeskalering for bortelag, full animert gjenopptakelse etter checkpoint og komplett per-fase kartverdireplay er ikke del av denne slicen.
+
 ### M2 – meningsfull fase-1-loop
 
 - Fire overlevende med gjenkjennelig identitet, gear-forslag og faktisk oppdragsutstyr.
 - Flere typer aktivitet/POI, tydelig takeover-feedback, relevante økonomi-/forsvarsvalg.
 - Spilltest viser at fase 1 har meningsfulle daglige valg; oppnådde milepæler, ikke kunstig dag-venting, styrer fase 2.
+
+**V04-09 status 12.11 (draft, ikke balansegodkjent):** D25/O01 er avklart. #21 legger kapasitetssjekk (HQ, 3 sammenhengende L3, varig forsvar, 3 døgn mat/vann) og isolerte regresjoner; #22 viser hver delforutsetning i mål-dialogen. Tallene er **H08-hypoteser**, ikke låst fasit. En egen diagnostisk #23 prioriterer HQ-fronten for boten, men øker bare overganger innen dag 40 fra 2/17 til 3/17. Det skyldes at boten fortsatt avviser for farlige HQ-naboer, bruker crew på andre nødvendigheter og ender med spredte soner. Manuell fase-1-spilltest og videre kalibrering er nødvendig før M2 kan godkjennes; ikke senk menneskekravet bare for å få et pent bottall.
 
 ### M3 – veiviser, samfunn og valg
 
@@ -151,4 +155,11 @@ Spørsmål til Mikki: [maksimalt få, kun blokkerende; A/B + anbefaling]
 Neste arbeidspakke: [ID og eier]
 ```
 
-**Orkestratorens første handling etter M0:** etabler baseline (V04-00), kontroller ubesvarte O01/O04/O05 som kan blokkere kontrakten, og foreslå den minste spillbare M1-leveransen. Ikke tildel V04-10 til en parallell agent før lokale posisjoner, lager og ordre er stabile.
+**Videre etter M1:** O01 er låst som D25: fase 2 skal tillate defensibel kjerne som alternativ til hele L2. V04-09 kan bygges som en avgrenset kapasitetstest med eksplisitt hypotesemerket balanse og synlig progresjon. O05 blokkerer fremdeles endelig gear-regnskap. Grunnpolicy for eskalering O04 er avklart som D24. Ikke tildel V04-10 til en parallell agent før lokale posisjoner, lager og ordre er stabile.
+
+
+## Gjenopptatt orkestrering 12.11.2026
+
+Se [samlet spillteststatus](30_V04_PLAYTEST_STATUS.md) for gjenopprettet PR-/branch-baseline, faktisk implementasjon, verifiserte spillerreiser og gjenværende arbeid. `feat/v04-phase-one-playtest` samler videre UI-arbeid fra `da16b82`; bildepakken ligger separat i draft #24. Verken M2, M3 eller hele v0.4 er erklært ferdig.
+
+O05 er delvis avklart som **D26** av Mikki i denne økten: våpen, beskyttelse, oppdragsverktøy, auto-equip, manuelle låser og faktisk reservasjon/retur bygges. Motor/regnskap og et isolert utstyrspanel utvikles med disjunkt filansvar. Nye tall og ett slot per kategori prøves som hypoteser. Ingen automatisk merge/deploy.
