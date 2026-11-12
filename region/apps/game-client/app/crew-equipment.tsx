@@ -3,7 +3,7 @@
 import { useId } from 'react';
 import {
   GEAR_CATALOG, availableGear, gearItemName, gearStateFor,
-  type GearCrewPlan, type GearOrderPlan, type GearPreference, type GearSlot,
+  type GearCrewPlan, type GearOrderPlan, type GearPlan, type GearPreference, type GearSlot,
 } from '../../../packages/gameplay/src/region/gear';
 import { prepareGearPlan } from '../../../packages/gameplay/src/region/engine';
 import type { RegionOrder, RegionState, RegionWorld } from '../../../packages/gameplay/src/region/types';
@@ -127,20 +127,39 @@ export default function CrewEquipment({ state, world, orders, draftOrder, onChan
       </article>;
     })}</div>
     {errors.length > 0 && <ul className="ce-issues" aria-live="polite" aria-label="Utstyr som må avklares">{errors.map(error => <li key={error}>{error}</li>)}</ul>}
-    <details className="ce-stock"><summary>Lager, reservasjoner og båret utstyr</summary>
-      {inventory.length ? <ul className="ce-stock-grid">{inventory.map(item => {
-        const reservation = plan.reservations[item.id];
-        const location = item.location;
-        const carrier = location.kind === 'carried' ? state.survivors.find(person => person.id === location.survivorId) : undefined;
-        const place = carrier ? `Hos ${carrier.name}` : location.kind === 'stored' ? `Lager: ${world.zones.find(zone => zone.id === location.zoneId)?.name ?? location.zoneId}` : 'Ikke tilgjengelig på lageret';
-        return <li key={item.id}><strong>{gearItemName(item)}</strong>
-          <span>{location.kind === 'carried' ? 'Båret' : location.kind === 'lost' ? 'Tapt' : 'På lager'}{reservation ? ' · reservert' : ''}</span>
-          <small>{place}{reservation ? ` · Dagsplan: ${state.survivors.find(person => person.id === reservation.survivorId)?.name ?? 'mannskap'}` : ''}</small>
-        </li>;
-      })}</ul> : <p className="ce-help">Ingen gjenstander registrert.</p>}
-    </details>
+    <GearInventory state={state} world={world} plan={plan} />
     <p className="ce-footer">Dagsplanens rekkefølge avgjør hvem som får førstevalget. Låste valg beholdes når du endrer de automatiske forslagene. Lagre eller avbryt for å gå tilbake til planen.</p>
   </section>;
+}
+
+/** Physical inventory is visible even before the player creates a daily order. */
+export function GearInventory({ state, world, plan, open }: {
+  state: RegionState;
+  world: RegionWorld;
+  plan?: GearPlan;
+  open?: boolean;
+}) {
+  const inventory = gearStateFor(state).items;
+  const zoneName = (zoneId: string) => world.zones.find(zone => zone.id === zoneId)?.name ?? 'ukjent område';
+  const personName = (survivorId: string) => state.survivors.find(person => person.id === survivorId)?.name ?? 'ukjent person';
+  return <div className="ce"><details className="ce-stock" open={open}>
+    <summary>Lager, reservasjoner og båret utstyr</summary>
+    {inventory.length ? <ul className="ce-stock-grid">{inventory.map(item => {
+      const reservation = plan?.reservations[item.id];
+      const location = item.location;
+      const physicalPlace = location.kind === 'stored' ? `Lager: ${zoneName(location.zoneId)}`
+        : location.kind === 'carried' ? `Bæres av ${personName(location.survivorId)}`
+          : `Tapt dag ${location.day}${location.zoneId ? ` · Sist registrert ved ${zoneName(location.zoneId)}` : ''}`;
+      return <li key={item.id}><strong>{gearItemName(item)}</strong>
+        <span>{location.kind === 'carried' ? 'Båret' : location.kind === 'lost' ? 'Tapt' : 'På lager'}</span>
+        <small>{physicalPlace}</small>
+        {location.kind === 'carried' && location.missionId && <small>Bundet til oppdrag{location.targetZoneId ? ` · Oppdragsmål: ${zoneName(location.targetZoneId)}` : ''}
+          {location.returnDay !== undefined ? ` · Forventet tilbake dag ${location.returnDay}` : ''}
+          {location.returnToZoneId ? ` · Leveres til ${zoneName(location.returnToZoneId)}` : ''}</small>}
+        {reservation && <small>Reservert i dagsplanen til {personName(reservation.survivorId)}</small>}
+      </li>;
+    })}</ul> : <p className="ce-help">Ingen gjenstander registrert.</p>}
+  </details></div>;
 }
 
 /** Show the same authoritative reservation snapshot on the parent's order card. */
