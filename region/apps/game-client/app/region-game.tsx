@@ -191,6 +191,12 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
   const [phaseShown, setPhaseShown] = useState(state.phase);
   const hops = useMemo(() => reach(state, world), [state, world]);
   const flows = useMemo(() => dailyFlows(state, world), [state, world]);
+  useEffect(() => {
+    if (!modal) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setModal(null); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [modal]);
   const busy = new Set(orders.flatMap(o => o.survivorIds));
   const people = living(state);
   const zone = index.byId.get(selected);
@@ -278,9 +284,9 @@ function Play({ world, state, setState, onQuit }: { world: RegionWorld; state: R
     {state.gameOver && <div className="rz-overlay"><section className="rz-dialog"><Art path={`end/${state.gameOver.won ? 'win' : 'lose'}`} className="rz-art rz-art-wide" /><p className="rz-kicker">{state.gameOver.won ? 'SEIER' : 'SLUTT'}</p><h2>{state.gameOver.won ? 'Dere klarte det' : `Slutt etter ${state.gameOver.day} dager`}</h2><p>{state.gameOver.reason}</p>
       <p>Fase {state.phase}, {controlled(state).length} soner, {totalPeople(state)} mennesker, {state.research.done.length} oppfinnelser, {state.counters.killed ?? 0} zombier drept.</p>
       <button className="rz-primary" onClick={() => { persist(null); onQuit(); }}>Ny gjennomspilling</button></section></div>}
-    {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}><section className="rz-dialog rz-wide-dialog">
-      <button className="rz-close" aria-label="Lukk" onClick={() => setModal(null)}>×</button>
-      {modal === 'report' && report && <ReportView report={report} onZone={id => { setSelected(id); setModal(null); }} />}
+    {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}><section className="rz-dialog rz-wide-dialog" role="dialog" aria-modal="true" aria-label={modal === 'report' ? `Dagsrapport for dag ${report?.day ?? state.day}` : undefined}>
+      <button className="rz-close" aria-label="Lukk" autoFocus onClick={() => setModal(null)}>×</button>
+      {modal === 'report' && report && <ReportView report={report} state={state} flows={flows} onZone={id => { setSelected(id); setModal(null); }} />}
       {modal === 'trade' && <TradeView state={state} world={world} onTrade={(id, give, take) => { try { const r = trade(state, id, give, take); setState(r.state); setMessage(r.message); } catch (e) { setMessage((e as Error).message); } }} message={message} />}
       {modal === 'goals' && <GoalsView world={world} state={state} />}
       {modal === 'society' && <SocietyView world={world} state={state} flows={flows} apply={apply} message={message} />}
@@ -546,10 +552,64 @@ function GoalsView({ world, state }: { world: RegionWorld; state: RegionState })
     <p className="rz-small">Seier i fase 5: 30 dager på rad med mat nok, håp over 50 og uro under 50, en kur fra vaksineforsøket, eller alle gruppene i regionen som venner.</p></>;
 }
 
-function ReportView({ report, onZone }: { report: RegionReport; onZone: (id: string) => void }) {
-  return <><p className="rz-kicker">RAPPORT · DAG {report.day}</p><h2>Natten er over</h2>
-    <p className="rz-small">Mat: +{report.food.produced} / −{report.food.eaten}{report.food.spoiled ? ` / ${report.food.spoiled} råtnet` : ''} · Vann: +{report.water.produced} / −{report.water.drunk} · {report.killed} zombier drept · {report.zombiesMoved} zombier flyttet seg i regionen</p>
-    <ul className="rz-report">{report.lines.map((l, i) => <li key={i} className={`rz-${l.tone}`}><b>{l.title}</b> {l.text}{l.zoneId && <button className="rz-link" onClick={() => onZone(l.zoneId!)}>Vis</button>}</li>)}</ul></>;
+/** Visual priority is derived from events the engine actually reported, never inferred outcomes. */
+function reportPriority(line: RegionReport['lines'][number], phase: number): number {
+  const title = line.title.toLocaleLowerCase('nb-NO');
+  let score = { bad: 400, warn: 260, good: 110, info: 25 }[line.tone];
+  if (/død|døde|tapt|mistet|brøt sammen|snudde i natt|kom ikke hjem/.test(title)) score += 180;
+  if (/angrep|sult|tørst|bitt|fiender|kom inn|mislyktes/.test(title)) score += 120;
+  if (/fase|milepæl|hq etablert|er deres|er slått/.test(title)) score += 100;
+  if (/ble med|nye i leiren|er ferdig|kontakt med/.test(title)) score += 65;
+  if (/speidet|^søk i |zombier drept|ryddelaget/.test(title)) score += phase <= 2 ? 65 : -25;
+  return score;
+}
+
+function resourceOutlook(days: number | null, net: number) {
+  if (net >= 0) return { text: 'Dekker forbruket per dag', risk: 'stable' } as const;
+  if (days === null || !Number.isFinite(days)) return { text: 'Fallende lager', risk: 'watch' } as const;
+  if (days < 3) return { text: `Kritisk · ca. ${decimal(Math.max(0, days))} døgn igjen`, risk: 'critical' } as const;
+  if (days < 7) return { text: `Lav beholdning · ca. ${decimal(days)} døgn igjen`, risk: 'watch' } as const;
+  return { text: `Ca. ${decimal(days)} døgn igjen`, risk: 'stable' } as const;
+}
+
+function ReportView({ report, state, flows, onZone }: { report: RegionReport; state: RegionState; flows: Flows; onZone: (id: string) => void }) {
+  const ranked = report.lines.map((line, index) => ({ line, index, priority: reportPriority(line, state.phase) }))
+    .sort((a, b) => b.priority - a.priority || a.index - b.index);
+  const main = ranked[0]?.line;
+  const secondary = ranked.slice(1);
+  const food = resourceOutlook(flows.food.daysLeft, flows.food.net);
+  const water = resourceOutlook(flows.water.daysLeft, flows.water.net);
+
+  return <div className="rz-daily-report">
+    <section className={`rz-report-hero rz-report-hero-${main?.tone ?? 'info'}`} aria-label="Dagens viktigste hendelse">
+      <p className="rz-kicker">DAGSRAPPORT · DAG {report.day} · VIKTIGST</p>
+      <h2>{main?.title ?? 'Dagen er over'}</h2>
+      <p>{main?.text ?? 'Ingen spesielle hendelser er rapportert.'}</p>
+      {main?.zoneId && <button className="rz-link rz-report-zone" onClick={() => onZone(main.zoneId!)}>Vis sone på kartet →</button>}
+    </section>
+
+    <section aria-label="Mat og vann" className="rz-report-resources">
+      <div className={`rz-report-resource rz-report-resource-${food.risk}`}>
+        <div className="rz-report-resource-top"><span>Mat · lager nå</span><b>{number(state.stock.food ?? 0)}</b></div>
+        <strong>{food.text}</strong>
+        <small>Dag {report.day}: +{number(report.food.produced)} produsert · −{number(report.food.eaten)} spist{report.food.spoiled ? ` · −${number(report.food.spoiled)} svinn` : ''}</small>
+      </div>
+      <div className={`rz-report-resource rz-report-resource-${water.risk}`}>
+        <div className="rz-report-resource-top"><span>Vann · lager nå</span><b>{number(state.stock.water ?? 0)}</b></div>
+        <strong>{water.text}</strong>
+        <small>Dag {report.day}: +{number(report.water.produced)} hentet · −{number(report.water.drunk)} drukket</small>
+      </div>
+    </section>
+    <p className="rz-report-footnote">Lager og prognose er fra nåværende spillstatus. Dagstallene viser registrert produksjon og forbruk, ikke full lagerendring.</p>
+    <div className="rz-report-activity" aria-label="Zombier denne dagen"><span><b>{number(report.killed)}</b> zombier drept</span><span><b>{number(report.zombiesMoved)}</b> zombier flyttet seg</span></div>
+    {secondary.length > 0 && <section aria-label="Øvrige hendelser" className="rz-report-secondary">
+      <h3>Øvrige hendelser <small>{secondary.length}</small></h3>
+      <ul className="rz-report">{secondary.map(({ line, index }) => <li key={index} className={`rz-${line.tone}`}>
+        <div><b>{line.title}</b><p>{line.text}</p></div>
+        {line.zoneId && <button className="rz-link" aria-label={`Vis sone for ${line.title}`} onClick={() => onZone(line.zoneId!)}>Vis sone →</button>}
+      </li>)}</ul>
+    </section>}
+  </div>;
 }
 
 function TradeView({ state, world, onTrade, message }: { state: RegionState; world: RegionWorld; onTrade: (id: string, give: Record<string, number>, take: Record<string, number>) => void; message: string }) {
