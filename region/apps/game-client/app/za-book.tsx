@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  MUTATIONS, PHASES, TECHS, goalMet, indexWorld,
+  MUTATIONS, PHASES, TECHS, goalMet, indexWorld, phaseOneReadiness,
   type RegionState, type RegionWorld,
 } from '../../../packages/gameplay/src/region/index';
 import './za-book.css';
@@ -41,8 +41,8 @@ const CHAPTER_NOTES: Record<number, { motto: string; advice: Note[]; closing: st
   4: {
     motto: 'Du kan ikke stå vakt i hele Stavanger.',
     advice: [
-      { lead: 'Deleger det daglige.', body: 'Regionale ledere trenger folk, et sted å styre fra og ressurser. Gi dem rammer, ikke bare en tittel.' },
-      { lead: 'Lag klare mandater.', body: 'Hvor mye frihet skal en lokal leder ha? En rask beslutning i felten kan bli et stort politisk problem.' },
+      { lead: 'Fordel arbeidet.', body: 'Se etter flaskehalser i mat, bygging og vakthold. Flere områder hjelper lite dersom dere mangler folk til å holde dem.' },
+      { lead: 'Husk menneskene.', body: 'Et stort samfunn trenger mer enn forsvar. Lover, helse og tillit påvirker hvor lenge folk holder sammen.' },
       { lead: 'Beskytt helheten.', body: 'En dårlig forbindelse, et svakt forsvarsverk eller en tom matbod kan true mer enn én bydel.' },
     ],
     closing: 'Du må velge hva slags makt du vil ha, og hva du lar andre bestemme.',
@@ -66,14 +66,15 @@ const MANUAL: { heading: string; description: string; entries: Note[] }[] = [
       { lead: 'L1, L2 og L3', body: 'L1 er store deler av regionen, L2 er distrikter, og L3 er de lokale områdene du kan undersøke og sikre. Zoom for å se detaljene.' },
       { lead: 'Speiding', body: 'Et ukjent område må undersøkes før du kan stole på det som vises. Speiderrapporter gir kunnskap, ikke eierskap.' },
       { lead: 'Kontroll', body: 'Å rydde og ta et område er bare starten. Vakthold og forbindelser avgjør om du kan holde det over tid.' },
-      { lead: 'Spesielle steder', body: 'Et POI kan ha utstyr, farer eller funksjoner som vanlige områder ikke har. Å eie sonen er ikke nødvendigvis det samme som å ha tatt stedet i bruk.' },
+      { lead: 'Spesielle steder', body: 'Et POI er et navngitt sted i en sone, som en butikk eller en mulig HQ-bygning. Sjekk sonepanelet for kjente funn, funksjoner og handlinger.' },
     ],
   },
   {
     heading: 'Døgnet',
     description: 'Du gir ordre før verden beveger seg.',
     entries: [
-      { lead: 'Dagsplan', body: 'Velg mannskap og oppdrag. Andre oppgaver og zombienes bevegelser avgjøres når du avslutter dagen.' },
+      { lead: 'Dagsplan', body: 'Velg en eller flere personer, velg en lokal sone på kartet og legg til et oppdrag fra sonepanelet. Planen gjennomføres når du avslutter dagen. Du kan fjerne et oppdrag før døgnet begynner.' },
+      { lead: 'Speid, rydd, søk eller overta', body: 'Speid gir fersk etterretning. Rydd bekjemper zombier. Søk henter ressurser og kan finne folk. Overta gir kontroll når sonen er nesten tom. Oppdragskortet viser krav, kostnader og forventning før du legger det til.' },
       { lead: 'Risiko', body: 'Nattangrep, utmattelse, lyd og uventede hendelser kan endre planen. Noen beslutninger må tas før døgnet kan fortsette.' },
       { lead: 'Rapporter', body: 'Dagsrapporten løfter frem det viktigste. Mindre hendelser og spor finner du i detaljene og krøniken.' },
     ],
@@ -83,8 +84,8 @@ const MANUAL: { heading: string; description: string; entries: Note[] }[] = [
     description: 'Folk er mer enn et tall.',
     entries: [
       { lead: 'Crew', body: 'Helse, utmattelse, ferdigheter og våpen påvirker hvem du bør sende ut. Skadde eller utslitte folk kan koste mer enn de hjelper.' },
-      { lead: 'Din person', body: 'Du velger hvem du spiller som. Å bli i HQ er tryggere, mens det å dra ut setter deg i fare, men gir mulighet til å påvirke det som skjer der du er.' },
-      { lead: 'Utstyr', body: 'Våpen og ressurser er begrensede. Planlegg hvem som trenger hva, og husk at folk på oppdrag ikke nødvendigvis er hjemme.' },
+      { lead: 'Din person', body: 'Du velger en av de navngitte overlevende som hovedperson. Ved et kritisk nattangrep på HQ kan døgnet stoppe for et valg dersom hovedpersonen er til stede. Oppdrag kan koste helse og liv.' },
+      { lead: 'Våpen', body: 'Hver person har et våpen som vises i personkortet. Skytevåpen bruker ammunisjon og lager støy; uten patroner blir kampen svakere. Kontroller oppdragskortets prognose før du sender laget.' },
     ],
   },
   {
@@ -92,8 +93,8 @@ const MANUAL: { heading: string; description: string; entries: Note[] }[] = [
     description: 'Et trygt område må også kunne leve.',
     entries: [
       { lead: 'Forsyninger', body: 'Se på forbruk og produksjon, ikke bare hvor mye som ligger på lageret. Flere folk krever mer mat og vann.' },
-      { lead: 'Forsvar', body: 'Sperringer og vakter kan slites ned. En trygg natt betyr ikke at grensen er trygg i morgen.' },
-      { lead: 'Forskning', body: 'Med et operativt HQ kan dere etter hvert utvikle nye løsninger og undersøke trusler. Funn blir skrevet inn i feltguiden.' },
+      { lead: 'Forsvar og fase 2', body: 'Et HQ, et sammenhengende kjerneområde, varig forsvar og utholdenhet for mat og vann åpner neste fase. Hele hjemmets L2 er en større prestasjon, men er ikke obligatorisk. Se de faktiske fasekravene for hva som mangler hos dere.' },
+      { lead: 'Forskning', body: 'Fra fase 2 kan dere starte tilgjengelige forskningsprosjekter med riktig HQ og ressurser. Fullførte resultater blir skrevet inn i feltguiden.' },
     ],
   },
 ];
@@ -112,6 +113,7 @@ export default function ZaBook({ state, world, onGoals }: {
   const current = PHASES[activeChapter - 1];
   const notes = CHAPTER_NOTES[activeChapter];
   const completed = current.goals.filter(g => goalMet(state, world, g.id)).length;
+  const core = state.phase === 1 ? phaseOneReadiness(state, world) : null;
   const visibleMutations = state.mutations;
   const research = TECHS.filter(t => state.research.done.includes(t.id));
   const currentResearch = TECHS.find(t => t.id === state.research.current);
@@ -124,7 +126,7 @@ export default function ZaBook({ state, world, onGoals }: {
     <div className="zab-head">
       <p className="zab-eyebrow">FELTNOTATER · STAVANGER · DAG {state.day}</p>
       <h2>ZA-boka</h2>
-      <p>Skrevet for dem som fortsatt lever. Råd, ikke ordre. Det er du som bestemmer hva dere gjør.</p>
+      <p>Skrevet for dem som fortsatt lever. Finn råd for kapitlet deres, slå opp grunnreglene, eller les det dere har oppdaget.</p>
       <nav className="zab-tabs" aria-label="ZA-bokas deler">
         <button className={tab === 'chapters' ? 'active' : ''} aria-current={tab === 'chapters' ? 'page' : undefined} onClick={() => setTab('chapters')}>Kapitler</button>
         <button className={tab === 'manual' ? 'active' : ''} aria-current={tab === 'manual' ? 'page' : undefined} onClick={() => setTab('manual')}>Håndbok</button>
@@ -137,7 +139,7 @@ export default function ZaBook({ state, world, onGoals }: {
         {PHASES.map(p => {
           const open = p.id <= state.phase;
           return <button type="button" key={p.id} className={(open ? 'zab-chapter-open' : 'zab-chapter-locked') + (activeChapter === p.id ? ' active' : '')}
-            disabled={!open} aria-label={open ? 'Kapittel ' + p.id + ': ' + p.name : 'Kapittel ' + p.id + ' låst'}
+            disabled={!open} aria-current={activeChapter === p.id ? 'page' : undefined} aria-label={open ? 'Kapittel ' + p.id + ': ' + p.name : 'Kapittel ' + p.id + ' låst'}
             onClick={() => setChapter(p.id)}>
             <span className="zab-chapter-number">{ROMAN[p.id - 1]}</span>
             <span><strong>{open ? p.name : 'Ikke skrevet ennå'}</strong><small>{open ? (p.id === state.phase ? 'Nåværende kapittel' : 'Tidligere kapittel') : 'Låses opp i fase ' + p.id}</small></span>
@@ -156,7 +158,11 @@ export default function ZaBook({ state, world, onGoals }: {
         </div>
         <p className="zab-ending">{notes.closing}</p>
         {activeChapter === state.phase && <div className="zab-goal-note">
-          <div><strong>Din verden akkurat nå</strong><span>{completed} av {current.goals.length} milepæler oppfylt · {totalControlled} lokale soner kontrollert · Leir: {homeName}</span></div>
+          <div><strong>Din verden akkurat nå</strong>
+            <span>{totalControlled} lokale soner kontrollert · Leir: {homeName}</span>
+            {core ? <span>{core.hasHQ ? `HQ-kjerne: ${core.connectedL3}/${core.requiredL3} sammenhengende soner` : 'Dere har ikke et operativt HQ ennå.'} · {core.defenceReady ? 'Varig forsvar på plass' : 'Varig forsvar gjenstår'} · {core.suppliesReady ? 'Mat og vann holder' : 'Forsyningskapasitet gjenstår'}</span>
+              : <span>{completed} av {current.goals.length} milepæler oppfylt</span>}
+          </div>
           <button type="button" onClick={onGoals}>Vis faktiske fasekrav</button>
         </div>}
       </article>
@@ -164,7 +170,7 @@ export default function ZaBook({ state, world, onGoals }: {
 
     {tab === 'manual' && <div className="zab-manual">
       <div className="zab-manual-nav">
-        {MANUAL.map((section, i) => <button key={section.heading} type="button" className={manualIndex === i ? 'active' : ''} onClick={() => setManualIndex(i)}>{section.heading}<span>›</span></button>)}
+        {MANUAL.map((section, i) => <button key={section.heading} type="button" aria-current={manualIndex === i ? 'page' : undefined} className={manualIndex === i ? 'active' : ''} onClick={() => setManualIndex(i)}>{section.heading}<span aria-hidden="true">›</span></button>)}
       </div>
       <article className="zab-paper">
         <p className="zab-eyebrow">OPPSLAGSVERK / ALLTID TILGJENGELIG</p>
