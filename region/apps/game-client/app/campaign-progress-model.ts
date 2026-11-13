@@ -14,7 +14,7 @@ export function campaignProgress(state: RegionState, world: RegionWorld) {
     phase, next, goals, completed: goals.filter(goal => goal.met).length,
     nextAction: goals.find(goal => !goal.met)?.text ?? (state.gameOver?.won ? 'Gjennomspillingen er vunnet.' : 'Kapasiteten er på plass. Neste døgn vurderer overgangen.'),
     cure: { done: state.research.done.includes('cure'), blocked: techBlocked(state, cure), missingResearch, current: state.research.current === 'cure', progress: state.research.current === 'cure' ? state.research.progress : 0 },
-    alliance: { ready: allies.length === rivals.length, allies: allies.length, total: rivals.length, missing: rivals.filter(faction => !allies.includes(faction)).map(faction => ({ id: faction.id, name: faction.known ? faction.name : 'Ukjent gruppe', known: faction.known, relation: faction.relation, hostile: faction.hostile })) },
+    alliance: { ready: allies.length === rivals.length, allies: allies.filter(faction => faction.known).length, total: rivals.filter(faction => faction.known).length, unknown: rivals.some(faction => !faction.known), missing: rivals.filter(faction => faction.known && !allies.includes(faction)).map(faction => ({ id: faction.id, name: faction.name, relation: faction.relation, hostile: faction.hostile })) },
     stable: { days: stableDays, moraleReady: state.morale >= 50, discontentReady: state.discontent < 50, crewReady: living(state).length > 0 },
   };
 }
