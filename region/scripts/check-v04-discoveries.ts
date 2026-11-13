@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { newRegionGame } from '../packages/gameplay/src/region/engine';
 import { discoverWonders, wonderEffects, WONDERS, wonderZone } from '../packages/gameplay/src/region/wonders';
+import { createDiscoveryEvents } from '../packages/gameplay/src/region/events-wonders';
 import type { RegionWorld, ReportLine, Stock } from '../packages/gameplay/src/region/types';
 import {
   discoveryOrderPreview, discoverySites, deliverDiscoveryReports, executeDiscoveryOrder,
@@ -53,6 +54,29 @@ assert.equal(hidden.discoveries!.pending.length, 0);
 const falseRadio = fresh(); field(falseRadio, 'ingrid', ordinary.zoneId);
 observeDiscoveries(falseRadio, world, { source: 'radio', zoneId: ordinary.zoneId, reporterIds: ['ingrid'], delivery: 'radio', radioVerified: false }, lines);
 assert.deepEqual(visibleDiscoveries(falseRadio), [], 'A claimed radio without verified connection reports nothing');
+
+// Real event definitions receive evidence from a physical visitor, or existing live field notes.
+const rumor = fresh(); rumor.day = 2;
+const rumorDef = createDiscoveryEvents(() => false).find(e => e.id === 'localFieldRumor')!;
+assert.equal(rumorDef.when(rumor, world), true);
+rumor.event = { id: rumorDef.id, ...rumorDef.make(rumor, world, () => .5)! };
+rumorDef.resolve(rumor, world, 'listen', () => .5, lines);
+assert.deepEqual(visibleDiscoveries(rumor)[0].sources, ['rumor']);
+const radio = fresh(); radio.homeZoneId = hidden.homeZoneId;
+field(radio, 'tor', radio.homeZoneId); field(radio, 'ingrid', ordinary.zoneId);
+observeDiscoveries(radio, world, { source: 'scout', zoneId: ordinary.zoneId, reporterIds: ['ingrid'], delivery: 'none' }, lines);
+let connected = false;
+const radioDef = createDiscoveryEvents(() => connected).find(e => e.id === 'fieldRadioReport')!;
+assert.equal(radioDef.when(radio, world), false, 'Event requires the authoritative radio service');
+connected = true; assert.equal(radioDef.when(radio, world), true);
+radio.event = { id: radioDef.id, ...radioDef.make(radio, world, () => .5)! };
+connected = false; radioDef.resolve(radio, world, 'receive', () => .5, lines);
+assert.deepEqual(visibleDiscoveries(radio), [], 'A broken connection between make and resolve sends nothing');
+const radioStock = structuredClone(radio.stock);
+connected = true; radioDef.resolve(radio, world, 'receive', () => .5, lines);
+assert.deepEqual(visibleDiscoveries(radio)[0].sources, ['scout', 'radio']);
+assert.equal(radio.discoveries!.pending.length, 0);
+assert.deepEqual(radio.stock, radioStock, 'Radio sends knowledge, never cargo');
 
 const evidence = (zoneId: string, source: DiscoveryEvidence['source'] = 'search'): DiscoveryEvidence => ({ source, zoneId, reporterIds: ['tor'], delivery: 'returned' });
 function run(s: DiscoveryRegionState, target: string, kind: DiscoveryWork['kind'], personId = 'tor'): Stock {

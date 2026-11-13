@@ -2,8 +2,69 @@
 import { living, reach } from './engine';
 import { addPeople, amount, event, give, hope, hurtPerson, need, pay, pickCrew, remember, schedule, zoneName, type EventDef } from './kit';
 import { gainWonder, WONDERS, wonderZone } from './wonders';
+import { crewPositionFor } from './location';
+import { discoverySites, observeDiscoveries, transmitDiscoveryReports, type DiscoveryRegionState } from './discoveries';
+import type { RegionState, RegionWorld } from './types';
 
 const def = (id: string) => WONDERS.find(w => w.id === id)!;
+
+/** Actual information sources. Inject the authoritative communications service;
+ * importing this file must not invent another radio/range implementation.
+ * Register with the regular event catalog alongside EVENTS_WONDERS.
+ */
+export function createDiscoveryEvents(connected: (state: RegionState, world: RegionWorld, crewIds: readonly string[]) => boolean): EventDef[] {
+  const listeners = (s: RegionState) => living(s).filter(p => {
+    const position = crewPositionFor(s, p.id);
+    return position?.kind === 'zone' && [s.homeZoneId, s.hq?.zoneId].includes(position.zoneId);
+  }).map(p => p.id);
+  const rumorSite = (s: RegionState, w: RegionWorld) => {
+    const sites = discoverySites(s, w), entries = (s as DiscoveryRegionState).discoveries?.entries ?? {};
+    return !entries['emergency-cupboard'] ? sites.ordinary
+      : !entries['tor-repair-notes'] && living(s).some(p => p.id === 'tor') ? sites.tor : undefined;
+  };
+  const radioReport = (s: RegionState, w: RegionWorld) => (s as DiscoveryRegionState).discoveries?.pending
+    .find(observation => observation.reporterIds.some(id => living(s).some(p => p.id === id)) && connected(s, w, observation.reporterIds));
+  return [
+    {
+      id: 'localFieldRumor', weight: 3, once: true, phase: [1, 5],
+      when: (s, w) => s.day >= 2 && listeners(s).length > 0 && !!rumorSite(s, w),
+      make: (s, w) => {
+        const site = rumorSite(s, w);
+        if (!site) return null;
+        return event('En som kjenner området', `En forbipasserende stanser ved leiren. Hun nevner ${site.name}: «Det var en lapp der, før folk dro. Jeg rakk aldri å se nærmere.» Det er et rykte, ikke en rapport om at stedet er trygt.`, [
+          { id: 'listen', label: 'Noter ledetråden', detail: 'Stedet kan undersøkes med et eget oppdrag. Ingen vet hva som fortsatt finnes der.' },
+          { id: 'pass', label: 'La ryktet ligge', detail: 'Dere trenger ikke følge hvert spor. Speiding eller søk kan fortsatt finne det senere.' },
+        ], { kicker: 'LOKALT RYKTE', data: { poiId: site.id } });
+      },
+      resolve: (s, w, choice, _rng, lines) => {
+        if (choice !== 'listen') return;
+        const site = w.pois.find(p => p.id === s.event?.data?.poiId), reporterIds = listeners(s);
+        if (!site || !reporterIds.length) return;
+        observeDiscoveries(s, w, { source: 'rumor', zoneId: site.zoneId, reporterIds, delivery: 'returned' }, lines);
+      },
+    },
+    {
+      id: 'fieldRadioReport', weight: 2, good: true, once: true, phase: [1, 5],
+      when: (s, w) => listeners(s).length > 0 && !!radioReport(s, w),
+      make: (s, w) => {
+        const observation = radioReport(s, w);
+        if (!observation) return null;
+        return event('Et feltnotat over radio', 'Et feltlag med fungerende samband vil sende et notat fra undersøkelsen. De er fortsatt ute. Det de sier kan skrives i boka nå, men last og utstyr må fortsatt fraktes hjem.', [
+          { id: 'receive', label: 'Ta imot rapporten', detail: 'Bare det laget faktisk har observert blir kjent. Sambandet kontrolleres igjen.' },
+          { id: 'wait', label: 'Vent til laget kommer hjem', detail: 'Notatet blir hos laget inntil en levende avsender rapporterer.' },
+        ], { kicker: 'FAKTISK SAMBAND', data: { observationId: observation.id } });
+      },
+      resolve: (s, w, choice, _rng, lines) => {
+        if (choice !== 'receive') return;
+        const observation = (s as DiscoveryRegionState).discoveries?.pending.find(p => p.id === s.event?.data?.observationId);
+        if (!observation) return;
+        const verified = connected(s, w, observation.reporterIds);
+        if (!verified) { lines.push({ tone: 'warn', title: 'Sambandet brøt sammen', text: 'Ingen nye feltnotater kom fram. Laget beholder notatet til hjemkomst eller et nytt fungerende samband.' }); return; }
+        transmitDiscoveryReports(s, w, observation.reporterIds, verified, lines);
+      },
+    },
+  ];
+}
 
 export const EVENTS_WONDERS: EventDef[] = [
   {

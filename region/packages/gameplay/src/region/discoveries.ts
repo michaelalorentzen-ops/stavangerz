@@ -151,6 +151,21 @@ export function deliverDiscoveryReports(state: DiscoveryRegionState, _world: Reg
   }
   state.discoveries.pending = waiting;
 }
+/** Existing field observations can be transmitted only through a verified live connection.
+ * Caller's communications service checks actual radio carrier, batteries and range.
+ * This function deliberately never reads, moves or credits mission cargo.
+ */
+export function transmitDiscoveryReports(state: DiscoveryRegionState, _world: RegionWorld, crewIds: readonly string[], radioVerified: boolean, lines: ReportLine[]) {
+  if (!radioVerified || !state.discoveries) return;
+  const senders = new Set(crewIds.filter(id => alive(state, id)));
+  state.discoveries.pending = state.discoveries.pending.filter(observation => {
+    if (!observation.reporterIds.some(id => senders.has(id))) return true;
+    const transmitted = structuredClone(observation);
+    transmitted.entry.sources = [...new Set([...transmitted.entry.sources, 'radio' as const])];
+    publish(state, transmitted, lines);
+    return false;
+  });
+}
 /** Called after death/desertion; never creates public knowledge from a dead crew. */
 export function maintainDiscoveries(state: DiscoveryRegionState, lines: ReportLine[]) {
   const r = state.discoveries;
