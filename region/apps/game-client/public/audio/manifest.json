@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "sample_rate": 44100,
+  "assets": [
+    {
+      "id": "order",
+      "file": "order.mp3",
+      "sha256": "c6d96bff9c8b5c02d86084c4ed3e67e89997f141bef22e8b3ed447eef169b4a1",
+      "duration": 2.2,
+      "peak": 0.68,
+      "rms": 0.033733,
+      "description": "Equipment picked up and two departing footsteps.",
+      "ingredients": [
+        "rpg/cloth1",
+        "rpg/beltHandle1",
+        "rpg/footstep00",
+        "rpg/footstep01"
+      ]
+    },
+    {
+      "id": "confirm",
+      "file": "confirm.mp3",
+      "sha256": "4c133d58fa0f7cc349a1e945b35b84381de3b2f49a82d78b354a8c5bb67b8ec2",
+      "duration": 1.1,
+      "peak": 0.68,
+      "rms": 0.026946,
+      "description": "Short physical latch and cloth confirmation.",
+      "ingredients": [
+        "rpg/metalLatch",
+        "rpg/cloth1"
+      ]
+    },
+    {
+      "id": "discovery",
+      "file": "discovery.mp3",
+      "sha256": "f7635b31fd80d16914859228919b48224eeda913c79476207faad5356fba8877",
+      "duration": 2.5,
+      "peak": 0.68,
+      "rms": 0.019663,
+      "description": "A journal opened, material find and restrained bell resonance.",
+      "ingredients": [
+        "rpg/bookOpen",
+        "rpg/handleCoins",
+        "impact/impactBell_heavy_001"
+      ]
+    },
+    {
+      "id": "claim",
+      "file": "claim.mp3",
+      "sha256": "f510e3b475e5bd7573cf4134afcdffb1e4ef7a685778d1c082a025bc7f4c9f42",
+      "duration": 3.8,
+      "peak": 0.68,
+      "rms": 0.047336,
+      "description": "Physical stake impact and layered resonant bells for actual control gained.",
+      "ingredients": [
+        "impact/impactWood_heavy_002",
+        "rpg/cloth1",
+        "impact/impactBell_heavy_001"
+      ]
+    },
+    {
+      "id": "combat",
+      "file": "combat.mp3",
+      "sha256": "dbebb7a2d84141f89d6960f3e10fb5b9c99b7498150fd8ddc7a5c07c2cc8d54e",
+      "duration": 2.8,
+      "peak": 0.68,
+      "rms": 0.035524,
+      "description": "Distant material impacts; no gunshot, voice or implied weapon.",
+      "ingredients": [
+        "impact/impactWood_heavy_002",
+        "impact/impactMetal_medium_003"
+      ]
+    },
+    {
+      "id": "event",
+      "file": "event.mp3",
+      "sha256": "4d69e0d2235d36c788f61a3dfb85a80b5a8adfdd0d567563587a338f63198946",
+      "duration": 2.4,
+      "peak": 0.68,
+      "rms": 0.025801,
+      "description": "A journal closed and nearby material movement.",
+      "ingredients": [
+        "rpg/bookClose",
+        "rpg/cloth1",
+        "impact/footstep_wood_000"
+      ]
+    },
+    {
+      "id": "day",
+      "file": "day.mp3",
+      "sha256": "ab271870f741e83ddeca9751c07b4a0fec2e5272d4c19d3eeb8bfc692fbd670c",
+      "duration": 3.0,
+      "peak": 0.68,
+      "rms": 0.028108,
+      "description": "Returning steps and opening the day record.",
+      "ingredients": [
+        "impact/footstep_grass_001",
+        "rpg/footstep01",
+        "rpg/bookOpen",
+        "impact/impactBell_heavy_001"
+      ]
+    },
+    {
+      "id": "night",
+      "file": "night.mp3",
+      "sha256": "251bb6a6ad7bd0128447d94abda9b88601f9b6793e2afcf85a29a8804d5c5380",
+      "duration": 3.8,
+      "peak": 0.68,
+      "rms": 0.057355,
+      "description": "A quiet shelter creak and wind transition; no enemy cue.",
+      "ingredients": [
+        "rpg/creak1",
+        "rpg/cloth1",
+        "original filtered-noise design"
+      ]
+    },
+    {
+      "id": "victory",
+      "file": "victory.mp3",
+      "sha256": "3eeea0063c08e67318a3eadae7365d6636e525d4bff234b0cfba67364d9f4987",
+      "duration": 5.5,
+      "peak": 0.68,
+      "rms": 0.04556,
+      "description": "Longer bell resolution with grounded material attack for actual campaign victory.",
+      "ingredients": [
+        "impact/impactWood_heavy_002",
+        "impact/impactBell_heavy_001",
+        "rpg/handleCoins"
+      ]
+    },
+    {
+      "id": "defeat",
+      "file": "defeat.mp3",
+      "sha256": "e1abe4bfa23983ff215c2bdfefced2f8e2594b56bcd8594d653c5397e9e3f3e3",
+      "duration": 5.0,
+      "peak": 0.68,
+      "rms": 0.020265,
+      "description": "Closing journal and low fading resonance for actual campaign loss.",
+      "ingredients": [
+        "rpg/bookClose",
+        "impact/impactBell_heavy_001",
+        "rpg/creak1"
+      ]
+    },
+    {
+      "id": "ambient-camp",
+      "file": "ambient-camp.mp3",
+      "sha256": "072a1092c0e17a365659c577095fdfe06fa9916c8945c9b32d4ee842db7647ba",
+      "duration": 22.0,
+      "peak": 0.36,
+      "rms": 0.051494,
+      "description": "Original offline camp atmosphere composite; not a field recording.",
+      "ingredients": [
+        "original filtered-noise wind/wash design",
+        "selected Kenney CC0 material Foley; see build script"
+      ]
+    },
+    {
+      "id": "ambient-harbor",
+      "file": "ambient-harbor.mp3",
+      "sha256": "9aa2c9cdf8301eb996011dfccf6b41ef31fb6c576a4f5db15d31a2b817edf2b7",
+      "duration": 22.0,
+      "peak": 0.36,
+      "rms": 0.047056,
+      "description": "Original offline harbor atmosphere composite; not a field recording.",
+      "ingredients": [
+        "original filtered-noise wind/wash design",
+        "selected Kenney CC0 material Foley; see build script"
+      ]
+    },
+    {
+      "id": "ambient-night",
+      "file": "ambient-night.mp3",
+      "sha256": "be3204ce6cd2900c062e66760465a0bfb11dd6e1074a9613dd66bbeefb588c74",
+      "duration": 22.0,
+      "peak": 0.36,
+      "rms": 0.05886,
+      "description": "Original offline night atmosphere composite; not a field recording.",
+      "ingredients": [
+        "original filtered-noise wind/wash design",
+        "selected Kenney CC0 material Foley; see build script"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+# Preserve the two upstream license files byte-for-byte for provenance hashes.
+*/LICENSE.txt -whitespace
