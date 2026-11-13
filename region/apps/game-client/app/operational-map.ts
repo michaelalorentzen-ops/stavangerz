@@ -65,13 +65,25 @@ export function attachOperationalMap(map: LibreMap, lib: typeof import('maplibre
     }
     (map.getSource('crew-routes') as GeoJSONSource).setData({ type: 'FeatureCollection', features: routes });
     (map.getSource('crew-coverage') as GeoJSONSource).setData({ type: 'FeatureCollection', features: coverage });
+    const occupied: { left: number; top: number; right: number; bottom: number }[] = [];
     const label = (zone: RegionZone, text: string, title: string, crew = false) => {
       if (!zone.at || !map.getBounds().contains(zone.at) || markers.length >= 100) return;
+      const point = map.project(zone.at), width = Math.min(180, Math.max(70, text.length * 7 + 20)), height = 32;
+      let offset = 0;
+      if (!crew) {
+        const placement = [0, -38, 38, -76, 76].find(dy => {
+          const box = { left: point.x - width / 2 - 5, right: point.x + width / 2 + 5, top: point.y + dy - height / 2 - 4, bottom: point.y + dy + height / 2 + 4 };
+          return !occupied.some(r => box.left < r.right && box.right > r.left && box.top < r.bottom && box.bottom > r.top);
+        });
+        if (placement === undefined) return;
+        offset = placement;
+      }
+      occupied.push(crew ? { left: point.x, right: point.x + width + 20, top: point.y - height - 16, bottom: point.y + 6 } : { left: point.x - width / 2 - 5, right: point.x + width / 2 + 5, top: point.y + offset - height / 2 - 4, bottom: point.y + offset + height / 2 + 4 });
       const button = document.createElement('button');
       button.type = 'button'; button.className = crew ? 'rz-map-unit' : 'rz-map-area-label';
       button.textContent = text; button.title = title; button.setAttribute('aria-label', title);
       button.addEventListener('click', event => { event.stopPropagation(); onSelect(zone.id); });
-      markers.push(new lib.Marker({ element: button, anchor: crew ? 'bottom-left' : 'center' }).setLngLat(zone.at).addTo(map));
+      markers.push(new lib.Marker({ element: button, anchor: crew ? 'bottom-left' : 'center', offset: [0, offset] }).setLngLat(zone.at).addTo(map));
     };
     for (const { zone, names, transit, area } of groups.values()) label(zone,
       `${area ? '▱' : transit ? '→' : '●'} ${names.length === 1 && level === 3 ? names[0].split(' ')[0] : `${names.length} crew`}`,

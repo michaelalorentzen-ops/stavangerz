@@ -6,20 +6,21 @@ import { communicationsStatus } from '../../../packages/gameplay/src/region/comm
 import { localStock, missionPreview } from '../../../packages/gameplay/src/region/mobility';
 import { centralPopulation } from '../../../packages/gameplay/src/region/administration';
 import { GEAR_CATALOG } from '../../../packages/gameplay/src/region/gear';
-import { resourceName } from '../../../packages/gameplay/src/region/engine';
+import { resourceName, previewOrder } from '../../../packages/gameplay/src/region/engine';
 const count = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits: 1 });
 export function MissionOptions({ state, world, order, onChange }: { state: RegionState; world: RegionWorld; order: RegionOrder; onChange: (order: RegionOrder) => void }) {
-  const preview = missionPreview(state, world, order);
+  const preview = missionPreview(state, world, order, previewOrder(state, world, order).costs);
   const source = localStock(state, preview.originZoneId);
   const link = communicationsStatus(state, world, order.survivorIds);
   const logistics = (change: Partial<NonNullable<RegionOrder['logistics']>>) => onChange({ ...order, logistics: { ...order.logistics, ...change } });
   const communication = (change: Partial<NonNullable<RegionOrder['communication']>>) => onChange({ ...order, communication: { ...order.communication, ...change } });
   return <section className="rz-mission-options"><h3>Reise og mandat</h3>
-    <p>{preview.routeZoneIds.length} soner i ruten · {count(preview.travelHours)} t ut · {count(preview.workHours)} t arbeid · kapasitet {preview.capacity}.</p>
+    <p>{preview.routeZoneIds.length} soner i ruten · {count(preview.travelHours)} t ut · {count(preview.workHours)} t arbeid · kapasitet {preview.capacity}, {count(preview.availableCapacity)} ledig etter planlagt last.</p>
     <p>{preview.returnsToday ? 'Planlagt fremme ved returstedet samme døgn.' : 'Reise og oppdrag fortsetter over flere døgn. Laget er bundet til det er tilbake.'}</p>
     {!['travel', 'return', 'areaGuard'].includes(order.action) && <label><input type="checkbox" checked={order.logistics?.stay ?? false} onChange={e => logistics({ stay: e.target.checked, destinationZoneId: e.target.checked ? order.zoneId : state.homeZoneId })} /> Bli i målsonen etter oppdraget</label>}
     <label>Retursted <select value={order.logistics?.destinationZoneId ?? preview.returnZoneId} onChange={e => logistics({ destinationZoneId: e.target.value })}>{world.zones.filter(z => z.level === 3 && (z.id === state.homeZoneId || z.id === order.zoneId || state.zones[z.id]?.status === 'controlled' || state.mobility?.depots[z.id])).map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
-    {!['supply', 'retrieve'].includes(order.action) && <fieldset><legend>Feltproviant fra avreisestedet</legend>{['food', 'water'].map(id => <label key={id}>{resourceName(id)} · {count(source[id] ?? 0)} tilgjengelig <input type="number" min="0" max={source[id] ?? 0} value={order.logistics?.cargo?.[id] ?? 0} onChange={e => logistics({ cargo: { ...order.logistics?.cargo, [id]: Math.max(0, Number(e.target.value) || 0) } })} /></label>)}<p className="rz-small">Brukes på reisen og under områdevakt. Ubrukt proviant blir med til returstedet og tar bærekapasitet fra funn.</p></fieldset>}
+    {!['supply', 'retrieve'].includes(order.action) && <fieldset><legend>Feltproviant fra avreisestedet</legend>{['food', 'water'].map(id => <label key={id}>{resourceName(id)} · {count(source[id] ?? 0)} tilgjengelig <input type="number" min="0" max={source[id] ?? 0} placeholder={`Auto: ${count(preview.reservedCargo[id] ?? 0)}`} value={order.logistics?.cargo?.[id] ?? ''} onChange={e => { const cargo = { ...order.logistics?.cargo }; if (e.target.value === '') delete cargo[id]; else cargo[id] = Math.max(0, Number(e.target.value) || 0); logistics({ cargo }); }} /></label>)}<p className="rz-small">Tomt felt bruker automatisk proviant; 0 betyr at du bevisst lar denne varen ligge. Brukes på reisen og under områdevakt. Ubrukt proviant blir med til returstedet og tar bærekapasitet fra funn.</p></fieldset>}
+    <p className="rz-small">Faktisk avreiselast: {Object.entries(preview.reservedCargo).filter(([, n]) => n > 0).map(([id, n]) => `${count(n)} ${resourceName(id).toLocaleLowerCase('nb-NO')}`).join(', ') || 'ingen'}.</p>
     <label>Lagets leder <select value={order.communication?.leaderId ?? order.survivorIds[0] ?? ''} onChange={e => communication({ leaderId: e.target.value })}>{order.survivorIds.map(id => <option key={id} value={id}>{state.survivors.find(p => p.id === id)?.name}</option>)}</select></label>
     <label>Mandat <select value={order.communication?.mandate ?? 'balanced'} onChange={e => communication({ mandate: e.target.value as 'cautious' | 'balanced' | 'bold' })}><option value="cautious">Forsiktig · trekk dere ved fare</option><option value="balanced">Avveid · følg planen</option><option value="bold">Dristig · aksepter risiko</option></select></label>
     <label><input type="checkbox" checked={order.communication?.radio ?? false} onChange={e => communication({ radio: e.target.checked })} /> Ta med radio og batterier fra avreisestedet</label>
@@ -40,7 +41,7 @@ export function LogisticsPanel({ state, world, zoneId, crewIds, initialCargo, on
   const stock = localStock(state, sourceZoneId ?? state.homeZoneId);
   const order: RegionOrder = { id: `o${state.day}-${action}-${zoneId}-${crewIds.join('.')}`, action, zoneId: action === 'return' ? state.homeZoneId : zoneId, survivorIds: crewIds,
     logistics: { sourceZoneId, cargo: action === 'supply' ? cargo : undefined, passengers: action === 'supply' ? passengers : undefined, gearIds: action === 'supply' ? gearIds : undefined, areaLevel } };
-  const preview = missionPreview(state, world, order);
+  const preview = missionPreview(state, world, order, previewOrder(state, world, order).costs);
   return <section className="rz-logistics"><h3>Reise og forsyninger</h3>
     <p className="rz-small">Send et samlet lag fra stedet de faktisk befinner seg. Avreise, last og retur avgjøres av motoren når døgnet går.</p>
     <label>Oppdrag <select value={action} onChange={e => setAction(e.target.value as typeof action)}><option value="travel">Reis hit og bli</option><option value="return">Reis tilbake til leiren</option><option value="retrieve">Hent lager og løst utstyr her</option><option value="supply">Lever forsyninger hit</option><option value="areaGuard">Hold vakt i denne sonen</option></select></label>

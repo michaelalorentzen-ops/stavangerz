@@ -30,7 +30,6 @@ import { redirectMission } from '../../../packages/gameplay/src/region/mobility'
 import './region.css';
 
 const WORLD_URL = '/world/region-v1.json';
-const ZONE_EDITOR_URL = 'http://127.0.0.1:5178/';
 const CORE = ['medicine', 'fuel', 'ammo', 'building'];
 const STATUS_LABEL = { unknown: 'Ukjent', scouted: 'Speidet', controlled: 'Deres' } as const;
 const DANGER_COLOR: Record<string, string> = { Rolig: '#5f9a5f', Middels: '#a8a24a', Krevende: '#c48a3a', 'Svært krevende': '#b8563c', 'Nesten umulig': '#7c2230' };
@@ -145,7 +144,7 @@ function StartScreen({ world, saved, onStart }: { world: RegionWorld; saved: Reg
           <strong>{s.name}</strong><span><i className="rz-dot" style={{ background: DANGER_COLOR[dangers[s.zoneId].level] }} />{dangers[s.zoneId].level}</span>
         </button>)}
       </div>
-      <p className="rz-small">Spillet lagres automatisk i nettleseren. <a href="/fase1">Den første Buøy-prototypen</a> · <a href={ZONE_EDITOR_URL} target="_blank" rel="noreferrer">Soneeditoren ↗</a></p>
+      <p className="rz-small">Spillet lagres automatisk i nettleseren. <a href="/fase1">Buøy – førsteutgaven</a></p>
     </section>
     <section className="rz-start-map">
       <StartMap world={world} dangers={dangers} selected={choice} onSelect={setChoice} />
@@ -269,6 +268,12 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   const flows = useMemo(() => dailyFlows(state, world), [state, world]);
   const mapState = useMemo(() => {
     if (!replay || replayStep < 0) return state;
+    const snapshot = replay.report.replay?.[replayStep]?.mapSnapshot;
+    if (snapshot) {
+      const zones = Object.fromEntries(Object.entries(replay.before.zones).map(([id, z]) => [id, { ...z, intel: undefined, owner: undefined, ...(snapshot.zones[id] ?? { status: 'unknown' as const }) }]));
+      const factions = replay.before.factions.map(f => ({ ...f, known: snapshot.zones[f.zoneId]?.owner === f.id }));
+      return { ...replay.before, zones, factions, homeZoneId: snapshot.homeZoneId, crewPositions: snapshot.crewPositions, crewMissions: snapshot.crewMissions };
+    }
     const zones = { ...replay.before.zones };
     for (const stage of replay.report.replay?.slice(0, replayStep + 1) ?? []) {
       for (const change of stage.zoneChanges) {
@@ -482,7 +487,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
       <Art path={`events/${state.event.id}`} className="rz-art rz-art-wide" />
       <p className="rz-kicker">{state.event.kicker ?? `HENDELSE · DAG ${state.day}`}</p><h2>{state.event.title}</h2><p>{state.event.text}</p>
       {!!state.event.voices?.length && <ul className="rz-voices">{state.event.voices.map(v => <li key={v}>{v}</li>)}</ul>}
-      {state.event.choices.map(c => <button key={c.id} disabled={!!c.disabled} onClick={() => apply(() => resolveEvent(state, world, c.id).state, false, `event:${state.event!.id}:${c.id}`)}><strong>{c.label}</strong><small>{c.disabled ?? c.detail}</small></button>)}
+      {state.event.choices.map(c => <button key={c.id} disabled={!!c.disabled} onClick={() => apply(() => resolveEvent(state, world, c.id).state, true, `event:${state.event!.id}:${c.id}`)}><strong>{c.label}</strong><small>{c.disabled ?? c.detail}</small></button>)}
     </section></div>}
     {avatarNeedsSelection && <div className="rz-overlay"><section className="rz-dialog rz-avatar-choice" role="dialog" aria-modal="true" aria-label="Velg hovedperson">
       <p className="rz-kicker">DIN HISTORIE · FASE {state.phase}</p>
@@ -535,7 +540,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
         <button onClick={() => { const blob = new Blob([JSON.stringify(state)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `stavanger-z-dag-${state.day}.json`; a.click(); URL.revokeObjectURL(a.href); }}>Last ned lagring</button>
         <button onClick={onQuit}>Til startskjermen</button>
         <button onClick={() => { if (confirm('Avslutte og starte på nytt? Lagringen slettes.')) { onRestart(); } }}>Ny gjennomspilling</button>
-        <a className="rz-link" href={ZONE_EDITOR_URL} target="_blank" rel="noreferrer">Åpne soneeditoren ↗</a></>}
+</>}
     </section></div>}
     {replay && <DayReplay session={replay} step={replayStep} onSkip={closeReplay} />}
   </main>;
@@ -830,6 +835,7 @@ function PhaseOneGoals({ world, state }: { world: RegionWorld; state: RegionStat
 
 /** Visual priority is derived from events the engine actually reported, never inferred outcomes. */
 function reportPriority(line: RegionReport['lines'][number], phase: number): number {
+  if (line.priority !== undefined) return 100 + line.priority * 5;
   const title = line.title.toLocaleLowerCase('nb-NO');
   let score = { bad: 400, warn: 260, good: 110, info: 25 }[line.tone];
   if (line.text.startsWith('Dere valgte: ')) score += 300;

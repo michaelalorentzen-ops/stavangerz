@@ -22,7 +22,9 @@
     "art:manifest": "node scripts/art-manifest.mjs",
     "region:basemap": "python -W ignore tools/zone-editor/zonebasemap.py",
     "check:region-ui": "tsx scripts/check-region-ui.ts",
-    "region:gear": "tsx scripts/check-v04-gear.ts"
+    "region:gear": "tsx scripts/check-v04-gear.ts",
+    "check:v04": "node scripts/check-v04.mjs",
+    "check:region-completion-ui": "tsx scripts/check-v04-completion-ui.ts"
   },
   "dependencies": {
     "maplibre-gl": "6.16.0",

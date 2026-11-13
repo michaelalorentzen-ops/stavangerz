@@ -15,7 +15,7 @@ export function WondersOperations({ state, world, crewIds = [], onOrder, onSelec
   const holdings = knownWonders(state).filter(([, holding]) => !zoneId || holding.zoneId === zoneId);
   return <section className="rz-installations" aria-label="Unike anleggsoppdrag">
     <p className="rz-kicker">OPPDAGELSE · SIKRING · DRIFT</p><h2>Unike steder</h2>
-    <p>Å finne eller overta sonen setter ikke et nytt anlegg i drift. Send et crew til selve stedet, sikre det og klargjør grunnfunksjonen. Kostnader og timer nedenfor er spilltestverdier.</p>
+    <p>Å finne eller overta sonen setter ikke et nytt anlegg i drift. Send et crew til selve stedet, sikre det og klargjør grunnfunksjonen. Se hva arbeidet krever før du sender laget.</p>
     {!holdings.length && <p className="rz-installations-empty">Ingen unike steder er rapportert ennå. Steder kan finnes gjennom feltoppdrag og konkrete ledetråder. Uoppdagede anlegg vises ikke i denne oversikten.</p>}
     {holdings.map(([id, holding]) => {
       const def = WONDERS.find(d => d.id === id);
