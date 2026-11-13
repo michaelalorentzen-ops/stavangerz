@@ -8,6 +8,9 @@ import { crewPositionFor } from './location';
 import { dailyFlows } from './economy';
 import { lawMods } from './society';
 
+// Provisional numeric rules; tuning is intentionally deferred by the owner.
+export const REGIONAL_RULES = { hungerDeathInterval: 3, foodDamage: 5, waterDamage: 9, sickRecovery: .12, medicinePerRecovery: .3, loyaltyPause: 20 } as const;
+
 export type RegionalPolicy = 'defense' | 'balanced' | 'growth';
 export interface RegionalLedger {
   day: number; produced: Stock; consumed: Stock; shortages: Stock;
@@ -108,6 +111,7 @@ export function administrationCommandError(state: RegionState, world: RegionWorl
   const region = administrations(state).find(r => r.l1Id === command.l1Id);
   if (!region) return 'Regionen har ikke et regionalt HQ.';
   if (command.kind === 'leader') return leaderError(state, command.leaderId, region.hqZoneId, region.l1Id);
+  if (command.kind === 'successor' && command.survivorId === region.leaderId) return 'Lederen kan ikke være sin egen stedfortreder.';
   if (command.kind === 'successor' && command.survivorId) return leaderError(state, command.survivorId, region.hqZoneId, region.l1Id);
   if (command.kind === 'policy' && !REGIONAL_POLICIES[command.policy]) return 'Ukjent mandat.';
   if (command.kind === 'budget' && Object.values(command.budget).some(n => !Number.isFinite(n) || n < 0)) return 'Budsjett må ha endelige, positive mengder.';
@@ -232,9 +236,9 @@ export function regionalDay(state: RegionState, world: RegionWorld, lines: Repor
       if (next && regionalMandate(state).automaticSuccession) { region.leaderId = next.id; region.successorId = undefined; lines.push({ tone: 'warn', title: `${next.name} overtar regionen`, text: 'Den utpekte stedfortrederen viderefører mandatet.', zoneId: region.hqZoneId }); }
       else { region.leaderId = undefined; region.alerts.push('Ingen regional leder. Bekreft en lokal etterfølger.'); }
     } else if (!atHq(state, leader.id, region.hqZoneId)) region.alerts.push('Lederen er utenfor regionalt HQ. Ny lokal drift venter.');
-    if (leader && (leader.loyalty ?? 60) < 20) region.alerts.push('Lav lederlojalitet: lokal arbeidsfordeling står på vent.');
+    if (leader && (leader.loyalty ?? 60) < REGIONAL_RULES.loyaltyPause) region.alerts.push('Lav lederlojalitet: lokal arbeidsfordeling står på vent.');
     region.work = regionalWork(state, world, region);
-    if (!region.leaderId || !atHq(state, region.leaderId, region.hqZoneId) || (leader?.loyalty ?? 60) < 20 || state.zones[region.hqZoneId]?.status !== 'controlled') region.work = emptyWork();
+    if (!region.leaderId || !atHq(state, region.leaderId, region.hqZoneId) || (leader?.loyalty ?? 60) < REGIONAL_RULES.loyaltyPause || state.zones[region.hqZoneId]?.status !== 'controlled') region.work = emptyWork();
     const local = regionalCommunity(state, world, region);
     const ids = new Set(world.zones.filter(z => z.level !== 3 || regionalL1(world, z.id) === region.l1Id).map(z => z.id));
     const regionalWorld = scopeWorld(world, ids);
@@ -267,18 +271,18 @@ export function regionalDay(state: RegionState, world: RegionWorld, lines: Repor
     consume('food', flows.food.eaten + flows.food.upkeep); consume('water', flows.water.drunk); consume('fuel', flows.fuel.used); consume('food', Math.min(stock.food ?? 0, flows.food.spoiled));
     for (const person of local.survivors) {
       handled.push(person.id);
-      if ((shortages.food ?? 0) > .01 || (shortages.water ?? 0) > .01) { person.health = Math.max(0, person.health - ((shortages.food ?? 0) > .01 ? 5 : 0) - ((shortages.water ?? 0) > .01 ? 9 : 0)); if (person.health <= 0) { person.alive = false; lines.push({ tone: 'bad', title: `${person.name} døde ved regionalt HQ`, text: 'Lokale forsyninger strakk ikke til.', zoneId: region.hqZoneId }); } }
+      if ((shortages.food ?? 0) > .01 || (shortages.water ?? 0) > .01) { person.health = Math.max(0, person.health - ((shortages.food ?? 0) > .01 ? REGIONAL_RULES.foodDamage : 0) - ((shortages.water ?? 0) > .01 ? REGIONAL_RULES.waterDamage : 0)); if (person.health <= 0) { person.alive = false; lines.push({ tone: 'bad', title: `${person.name} døde ved regionalt HQ`, text: 'Lokale forsyninger strakk ikke til.', zoneId: region.hqZoneId }); } }
     }
     if ((shortages.food ?? 0) > .01 || (shortages.water ?? 0) > .01) {
       region.alerts.push('Lokalt underskudd på mat eller vann. Send en fysisk forsyning.');
       const count = region.residents.adults + region.residents.children + region.residents.elderly;
-      if (count && state.day % 3 === 0) { const kind = region.residents.elderly ? 'elderly' : region.residents.adults ? 'adults' : 'children'; region.residents[kind] -= 1; state.population[kind] = Math.max(0, state.population[kind] - 1); const oldSick = region.residents.sick; region.residents.sick = Math.min(oldSick, count - 1); state.population.sick = Math.max(0, state.population.sick - (oldSick - region.residents.sick)); region.alerts.push('En lokal innbygger døde av forsyningssvikt.'); }
+      if (count && state.day % REGIONAL_RULES.hungerDeathInterval === 0) { const kind = region.residents.elderly ? 'elderly' : region.residents.adults ? 'adults' : 'children'; region.residents[kind] -= 1; state.population[kind] = Math.max(0, state.population[kind] - 1); const oldSick = region.residents.sick; region.residents.sick = Math.min(oldSick, count - 1); state.population.sick = Math.max(0, state.population.sick - (oldSick - region.residents.sick)); region.alerts.push('En lokal innbygger døde av forsyningssvikt.'); }
     }
     const residentCount = region.residents.adults + region.residents.children + region.residents.elderly;
     const newSick = Math.min(Math.max(0, residentCount - region.residents.sick), Math.floor(residentCount * POP.sickPerDay * lawMods(state).sickMult * (state.research.done.includes('hygiene') ? .5 : 1) + rng()));
     region.residents.sick += newSick; state.population.sick += newSick;
-    const sick = Math.min(region.residents.sick, Math.ceil(region.residents.sick * .12));
-    const medicine = Math.min(stock.medicine ?? 0, Math.ceil(sick * .3));
+    const sick = Math.min(region.residents.sick, Math.ceil(region.residents.sick * REGIONAL_RULES.sickRecovery));
+    const medicine = Math.min(stock.medicine ?? 0, Math.ceil(sick * REGIONAL_RULES.medicinePerRecovery));
     if (medicine > 0) { consume('medicine', medicine); region.residents.sick -= sick; state.population.sick = Math.max(0, state.population.sick - sick); }
     region.ledger = { day: state.day, produced, consumed, shortages };
     for (const alert of region.alerts) lines.push({ tone: 'warn', title: indexWorld(world).byId.get(region.l1Id)?.name ?? 'Regionalt avvik', text: alert, zoneId: region.hqZoneId });
@@ -288,5 +292,7 @@ export function regionalDay(state: RegionState, world: RegionWorld, lines: Repor
 /** Local guards defend their own L1; they are never available to central workDay. */
 export function regionalGuardFor(state: RegionState, world: RegionWorld, zoneId: string) {
   const region = administrations(state).find(r => r.l1Id === regionalL1(world, zoneId));
-  return region && region.leaderId ? (region.work.guard ?? 0) * lawMods(state).guardMult : 0;
+  const leader = state.survivors.find(s => s.id === region?.leaderId && s.alive && !s.left);
+  return region && leader && atHq(state, leader.id, region.hqZoneId) && state.zones[region.hqZoneId]?.status === 'controlled'
+    ? regionalWork(state, world, region).guard * lawMods(state).guardMult : 0;
 }

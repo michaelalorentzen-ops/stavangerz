@@ -7,7 +7,7 @@ import { controlled, indexWorld, living, season } from './engine';
 const seasonFarm = (state: RegionState) => season(state.day).farm;
 import { LAW_COOLDOWN, LAWS, POP, REACTIONS, type LawEffect } from './systems';
 import { wonderEffects } from './wonders';
-import { administrations, centralPopulation } from './administration';
+import { administrations, centralCommunity, centralPopulation } from './administration';
 
 export const WORK_IDS: WorkId[] = ['farm', 'fish', 'scavenge', 'clear', 'guard', 'build', 'research'];
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -94,6 +94,7 @@ export function trimWork(state: RegionState) {
 }
 /** A sensible default split: food first, then guards, builders, research and scavengers. */
 export function autoWork(state: RegionState, world: RegionWorld): Record<WorkId, number> {
+  if (administrations(state).length) { const scope = centralCommunity(state, world); return autoWork(scope.state, scope.world); }
   const index = indexWorld(world);
   const n = workforce(state);
   const owned = controlled(state);

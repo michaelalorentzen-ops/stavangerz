@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { newRegionGame } from '../packages/gameplay/src/region/engine';
 import type { Population, RegionState, RegionWorld, ReportLine } from '../packages/gameplay/src/region/types';
-import { applyAdministrationCommand, administrations, centralAvailablePopulation, regionalCommunity, regionalDay, regionalL1, regionalMandate, regionalStock, regionalSupplyRequest, type AdministrationGame } from '../packages/gameplay/src/region/administration';
+import { applyAdministrationCommand, administrations, centralAvailablePopulation, centralCommunity, regionalCommunity, regionalDay, regionalL1, regionalMandate, regionalStock, regionalSupplyRequest, type AdministrationGame } from '../packages/gameplay/src/region/administration';
 import { dailyFlows } from '../packages/gameplay/src/region/economy';
 import { societyDay, workforce } from '../packages/gameplay/src/region/society';
 const world = JSON.parse(readFileSync('apps/game-client/public/world/region-v1.json', 'utf8')) as RegionWorld;
@@ -53,4 +53,31 @@ const death = fresh(); const orphan = applyAdministrationCommand(death, world, {
 orphan.survivors[1].alive = false; regionalDay(orphan, world, [], () => .99); assert.equal(administrations(orphan)[0].leaderId, undefined); assert.ok(administrations(orphan)[0].alerts.some(a => a.includes('leder')));
 assert.equal(regionalMandate({ ...state, laws: ['council'] }).automaticSuccession, false); assert.equal(regionalMandate({ ...state, laws: ['strongman'] }).automaticSuccession, false);
 const regionalPopBefore = { ...region.residents }; societyDay(state, world, [], () => .99); assert.deepEqual(region.residents, regionalPopBefore, 'Global disease/accidents cannot consume local population');
+// Central work cannot discover a regional zone or consume its population on death.
+const scope = centralCommunity(state, world);
+assert.equal(scope.state.zones[remote.id], undefined);
+assert.equal(scope.world.zones.find(z => z.id === remote.id), undefined);
+const oldEmpire = state.population.adults;
+scope.state.population.adults -= 1; scope.commit(state);
+assert.equal(state.population.adults, oldEmpire - 1);
+assert.deepEqual(region.residents, regionalPopBefore);
+// Active passengers and delivered nonregional communities remain subsets, never new people.
+const travelling = fresh();
+travelling.crewMissions = { transport: { id: 'transport', orderId: 'transport', action: 'search', survivorIds: [], originZoneId: home, targetZoneId: remote.id, issuedDay: 0, status: 'outbound', passengers: { ...zero(), adults: 3, children: 1 } } } as RegionState['crewMissions'];
+assert.equal(centralAvailablePopulation(travelling).adults, 17);
+assert.equal(travelling.population.adults, 20);
+// Local starvation cannot be masked by a full global store. Death decrements both representations once.
+const hungry = applyAdministrationCommand(fresh(), world, { kind: 'establish', hqZoneId: remote.id, leaderId: legacy.survivors[1].id }) as AdministrationGame;
+const hungryRegion = administrations(hungry)[0];
+hungryRegion.residents = { ...zero(), adults: 10 };
+hungryRegion.leaderId = undefined; hungry.day = 3;
+hungry.mobility!.depots[remote.id] = {};
+hungry.zones[remote.id].upgrades = [];
+const healthBefore = hungry.survivors[1].health;
+regionalDay(hungry, world, [], () => .99);
+assert.ok((hungryRegion.ledger?.shortages.food ?? 0) > 0);
+assert.ok(hungry.survivors[1].health < healthBefore);
+assert.equal(hungry.stock.food, 500);
+assert.equal(hungryRegion.residents.adults, 9);
+assert.equal(hungry.population.adults, 19);
 console.log('v0.4 administration: commands, legacy, physical people/stock, disjoint flows/work, budgets, idempotence and leader loss passed.');
