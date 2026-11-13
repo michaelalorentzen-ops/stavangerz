@@ -7,3 +7,7 @@ node_modules
 dist/
 .superpowers/
 .claude/worktrees/
+
+# Local build and browser QA outputs
+.next/
+region/artifacts/

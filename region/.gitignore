@@ -1,0 +1,12 @@
+node_modules/
+.next/
+*.tsbuildinfo
+.env*
+!*.example
+.tools/
+apps/game-client/public/maplibre/
+world-zones/history/
+__pycache__/
+
+# Root .gitignore ignores data/; the region game needs its data folders.
+!data/

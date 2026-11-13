@@ -1,0 +1,234 @@
+/** The region game: the whole Stavanger region from the zone editor, one day per turn. */
+import type { ZoneMeasures } from '../../../world-data/src/model';
+import type { CrewMission, CrewPosition } from './location';
+import type { GearPreferences, RegionGearState } from './gear';
+import type { WonderInstallation } from './wonders';
+import type { AdministrationState } from './administration';
+import type { CampaignState } from './campaign';
+import type { DiscoveryState } from './discoveries';
+import type { MobilityState } from './mobility';
+
+export interface RegionZone {
+  id: string; name: string; level: 1 | 2 | 3; parentId?: string;
+  type?: string; potential?: Record<string, number>; finds?: string[]; produces?: string[];
+  measures?: ZoneMeasures; at?: [number, number];
+  geometry?: { type: 'Polygon' | 'MultiPolygon'; coordinates: unknown };
+}
+export interface RegionNeighbour { a: string; b: string; borderM: number }
+export interface RegionLink { id: string; name: string; kind: 'bridge' | 'tunnel'; a: string; b: string; lengthM: number; poiId: string }
+export interface RegionPoi {
+  id: string; name: string; zoneId: string; role: '' | 'hq' | 'outpost' | 'facility' | 'resource'; kind: string; at: [number, number];
+  hqType?: string; facilityType?: string; siteType?: string; lengthM?: number;
+}
+export interface RegionStart { zoneId: string; name: string; district: string; region: string; hqNearby: string[] }
+export interface RegionWorld {
+  schemaVersion: 1; worldId: string; worldVersion: string; sources: string[];
+  zones: RegionZone[]; neighbours: RegionNeighbour[]; links: RegionLink[]; pois: RegionPoi[]; starts: RegionStart[];
+}
+
+export type Stock = Record<string, number>;
+export type Weapon = 'melee' | 'pistol' | 'shotgun' | 'rifle';
+/** Traits colour how a person reacts to the leader's choices. */
+export type Trait = 'kind' | 'hard' | 'devout' | 'suspicious' | 'parent' | 'loner';
+/** What a choice says about the leader. People with matching traits like or resent it. */
+export type Stance = 'cruel' | 'merciful' | 'harsh' | 'charity' | 'children' | 'faith' | 'betrayal' | 'reckless';
+export interface RegionSurvivor {
+  id: string; name: string; role: string; about: string;
+  skills: { combat: number; scouting: number; craft: number; medical: number };
+  weapon: Weapon; health: number; fatigue: number; alive: boolean; joinedDay: number;
+  traits?: Trait[];
+  /** 0–100. Below 20 they may leave or turn on you. */
+  loyalty?: number;
+  /** Bitten: the day they turn unless treated. */
+  bitten?: number;
+  /** Away on a multi-day errand until this day. */
+  awayUntil?: number;
+  /** Walked out on the group (not dead). */
+  left?: boolean;
+}
+export type ZoneStatus = 'unknown' | 'scouted' | 'controlled';
+export interface RegionZoneState {
+  zombies: number;
+  /** What the player believes: a range, and the day it was seen. */
+  intel?: { min: number; max: number; day: number };
+  status: ZoneStatus;
+  /** Search hours done, and what is left to find. */
+  searched: number; loot: Stock;
+  upgrades: string[];
+  building?: { id: string; hours: number };
+  /** Set when an NPC group holds the zone. */
+  owner?: string;
+}
+export type ChokepointState = 'open' | 'held' | 'blocked' | 'blown' | 'flooded';
+export interface RegionFaction {
+  id: string; name: string; zoneId: string; about: string;
+  offers: string[]; wants: string[]; stock: Stock;
+  relation: number; known: boolean; tradedDay?: number;
+  /** Fighting strength, for raids both ways. */
+  strength?: number;
+  /** Open enemies demand and raid; masked ones smile until they strike. */
+  hostile?: boolean;
+  /** Hidden: what they really want. Revealed by intelligence, scouting or too late. */
+  intent?: 'honest' | 'betray';
+  revealed?: boolean;
+  defeated?: boolean;
+}
+export interface RegionHq { zoneId: string; type: string; modules: string[]; building?: { id: string; hours: number } }
+
+export type ActionId = 'scout' | 'clear' | 'search' | 'claim' | 'fortify' | 'build' | 'establishHq' | 'module' | 'network'
+  | 'guard' | 'hold' | 'block' | 'blow' | 'farm' | 'fish' | 'rest' | 'heal' | 'craft'
+  | 'research' | 'relocate' | 'assault' | 'repair' | 'wonder'
+  | 'travel' | 'return' | 'retrieve' | 'supply' | 'areaGuard' | 'investigate' | 'discoveryChoice';
+export interface RegionOrder { id: string; action: ActionId; zoneId: string; survivorIds: string[]; target?: string; gear?: GearPreferences;
+  logistics?: { sourceZoneId?: string; destinationZoneId?: string; cargo?: Stock; gearIds?: string[]; passengers?: Population; stay?: boolean; areaLevel?: 2 | 3 };
+  communication?: { contactOnCritical?: boolean; radio?: boolean; leaderId?: string; mandate?: 'cautious' | 'balanced' | 'bold' };
+}
+
+/** The population that is not the named crew: counted, not named. */
+export interface Population { adults: number; children: number; elderly: number; sick: number }
+export type WorkId = 'farm' | 'fish' | 'scavenge' | 'clear' | 'guard' | 'build' | 'research';
+
+export interface ReportLine { category?: string; priority?: number; facts?: Record<string, string | number | boolean>; tone: 'info' | 'good' | 'warn' | 'bad'; title: string; text: string; zoneId?: string }
+/**
+ * v0.4 replay metadata from the authoritative end-of-day result. This is a
+ * presentation journal, NOT a resumable mid-turn simulation checkpoint.
+ */
+export interface RegionReplayZoneChange { zoneId: string; before: ZoneStatus; after: ZoneStatus }
+export interface RegionMapSnapshot {
+  homeZoneId: string;
+  zones: Record<string, { status: ZoneStatus; intel?: { min: number; max: number; day: number }; owner?: string }>;
+  crewPositions: Record<string, CrewPosition>;
+  crewMissions: Record<string, CrewMission>;
+}
+export interface RegionReplayStage {
+  mapSnapshot?: RegionMapSnapshot;
+  phase: 'operations' | 'night' | 'new-day';
+  /** Relative to the resolved turn's start day (`report.day - 1`).
+   * Explicit windows; new-day is an instantaneous 07:00 summary. */
+  from: { dayOffset: 0 | 1; clock: '07:00' | '22:00' };
+  to?: { dayOffset: 0 | 1; clock: '07:00' | '22:00' };
+  /** Events resolved in this interval, in authoritative order. */
+  lines: ReportLine[];
+  /** Only real changes in L3 status; no guesses about intermediate positions. */
+  zoneChanges: RegionReplayZoneChange[];
+  /** Resource levels after this stage, suitable for lightweight HUD playback. */
+  mainResourcesAfter: { food: number; water: number };
+  /** Night zombie moves already filtered by the engine's visibility rules. */
+  moves?: { from: string; to: string; n: number }[];
+  crewPositions?: Record<string, CrewPosition>;
+  zoneIntel?: Record<string, { min: number; max: number; day: number }>;
+}
+export interface RegionReport {
+  day: number; lines: ReportLine[];
+  food: { produced: number; eaten: number; spoiled?: number }; water: { produced: number; drunk: number };
+  zombiesMoved: number; killed: number;
+  /** The night's biggest movements you could see: into, out of or between zones you know. */
+  moves?: { from: string; to: string; n: number }[];
+  /** Optional for compatibility with pre-v0.4 local reports/saves. */
+  replay?: RegionReplayStage[];
+}
+export interface EventChoice { id: string; label: string; detail: string; disabled?: string; tags?: Stance[] }
+export interface PendingEvent {
+  id: string; title: string; text: string; zoneId?: string; factionId?: string; choices: EventChoice[];
+  data?: Record<string, string | number>;
+  /** Shown above the choices: who in the crew objects or agrees. */
+  voices?: string[];
+  kicker?: string;
+}
+
+/**
+ * Internal, JSON-serializable v0.4 night boundary. The pre-night world changes
+ * are already applied to RegionState, so resume MUST NOT replay daytime orders
+ * or zombie migration. This is distinct from presentation-only `report.replay`.
+ *
+ * Optional on region-2 saves: existing completed turns remain compatible.
+ */
+export interface RegionNightCheckpoint {
+  version: 1;
+  day: number;
+  worldVersion: string;
+  stage: 'before-night-defence' | 'before-field-order';
+  operations?: { orders: RegionOrder[]; nextIndex: number; used: string[]; worked: string[]; heldToday: string[]; noise: Record<string, number>; avatarId?: string; missionId?: string; choice?: 'proceed' | 'withdraw' };
+  lines: ReportLine[];
+  guards: Record<string, number>;
+  guardPower: number;
+  killed: number;
+  foodMade: number;
+  crewResearch: number;
+  migrated: number;
+  moves: { from: string; to: string; n: number }[];
+  initialZoneStatus: Record<string, ZoneStatus>;
+  operationsLineEnd: number;
+  operationsZoneStatus: Record<string, ZoneStatus>;
+  operationsResources: { food: number; water: number };
+  operationsMapSnapshot?: RegionMapSnapshot;
+  operationsPositions?: Record<string, CrewPosition>;
+  operationsIntel?: Record<string, { min: number; max: number; day: number }>;
+  /** Set only for an actual decision involving the avatar at the home zone. */
+  decision?: {
+    kind: 'hq-night-defence' | 'field-encounter';
+    orderId?: string; survivorIds?: string[]; title?: string; text?: string; choices?: EventChoice[];
+    avatarId: string;
+    zoneId: string;
+    ammoRequired: number;
+  };
+}
+
+/** A blocking decision may be persisted with the state as a single save. */
+export interface RegionTurnDecision {
+  kind: 'hq-night-defence' | 'field-encounter';
+  title: string;
+  text: string;
+  zoneId: string;
+  choices: EventChoice[];
+}
+
+export interface RegionState {
+  schema: 'region-2'; rulesVersion: string; worldVersion: string; seed: number; day: number;
+  startZoneId: string; homeZoneId: string;
+  survivors: RegionSurvivor[]; stock: Stock;
+  /** Optional additive v0.4 register. Legacy personal weapons are materialized once. */
+  gear?: RegionGearState;
+  mobility?: MobilityState;
+  discoveries?: DiscoveryState;
+  campaign?: CampaignState;
+  administration?: AdministrationState;
+  /** Canonical v0.4 geography; optional only to read old region-2 saves. */
+  crewPositions?: Record<string, CrewPosition>;
+  /** Persisted multi-day assignments; the engine, not the UI, advances them. */
+  crewMissions?: Record<string, CrewMission>;
+  /** Hope: the long fuel. At 0 the group falls apart. */
+  morale: number;
+  /** Discontent: the short fuse. At 100 someone takes the leadership from you. */
+  discontent: number;
+  population: Population;
+  work: Record<WorkId, number>;
+  laws: string[]; lawDay: number;
+  research: { done: string[]; current?: string; progress: number };
+  phase: number; phaseDay: number;
+  mutations: { id: string; day: number; known: boolean }[];
+  zones: Record<string, RegionZoneState>;
+  /** Barricades on land borders and links, by connection id: durability left, and tier. */
+  barricades: Record<string, number>;
+  barricadeTier: Record<string, number>;
+  chokepoints: Record<string, ChokepointState>;
+  hq?: RegionHq;
+  /** Unique places you hold: level 0 is found, higher levels are built. */
+  wonders?: Record<string, { level: number; zoneId: string; progress: number; installation?: WonderInstallation }>;
+  /** Networks built per L2 zone. */
+  networks: Record<string, string[]>;
+  factions: RegionFaction[];
+  event?: PendingEvent;
+  /** In-progress turn: call resumeRegionDay, not endDay. Never store a full state recursively here. */
+  turnCheckpoint?: RegionNightCheckpoint;
+  /** Chains: events that will come back on a given day. */
+  scheduled: { day: number; id: string; data?: Record<string, string | number> }[];
+  /** Small facts that events remember. */
+  flags: Record<string, string | number>;
+  /** Big choices, in a sentence each, for the chronicle. */
+  memory: { day: number; text: string }[];
+  milestones: string[];
+  reports: RegionReport[];
+  counters: Record<string, number>;
+  gameOver?: { day: number; reason: string; won?: boolean };
+}

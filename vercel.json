@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "feat/v04-completion": false,
+      "feat/v04-situational-hud": false
+    }
+  }
+}

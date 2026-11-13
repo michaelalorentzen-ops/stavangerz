@@ -1,0 +1,22 @@
+.rz-installations { color: #d5ddd5; line-height: 1.6; }
+.rz-installations > p { max-width: 72ch; color: #afc0b6; }
+.rz-installations-empty { padding: 20px; border: 1px dashed #486053; border-radius: 8px; }
+.rz-installation { margin: 18px 0; padding: 20px; background: #162220; border: 1px solid #45594b; border-radius: 10px; }
+.rz-installation header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rz-installation h3 { color: #eee3bf; margin: 0; }
+.rz-installation header span { color: #d6c89b; font-size: 12px; }
+.rz-installation p { font-size: 14px; }
+.rz-installation-stages { display: flex; flex-wrap: wrap; list-style: none; gap: 6px; padding: 0; margin: 16px 0; }
+.rz-installation-stages li { padding: 5px 9px; font-size: 12px; border: 1px solid #46584d; color: #a6b5aa; border-radius: 4px; }
+.rz-installation-stages li[aria-current="step"] { border-color: #a39156; color: #eee1b2; background: #303422; }
+.rz-installation .rz-installation-note { padding-left: 12px; border-left: 2px solid #a89760; color: #d2c69c; }
+.rz-installation-legacy { display: block; color: #a4b9a6; }
+.rz-installation-next { margin: 18px 0 14px; padding: 15px; background: #0e1a18; border: 1px solid #354c40; border-radius: 6px; }
+.rz-installation-next h4 { margin: 0; }
+.rz-installation-next label { display: block; color: #bcc9ba; font-size: 13px; }
+.rz-installation-next progress { display: block; width: 100%; height: 8px; margin-top: 8px; accent-color: #adbd7e; }
+.rz-installation-next small { display: block; margin-top: 8px; color: #b5c3b6; }
+.rz-installation-next button, .rz-installation-map { min-height: 44px; }
+.rz-installation-cost { color: #ddcda6; }
+.rz-installations button:focus-visible { outline: 2px solid #e4c375; outline-offset: 3px; }
+@media(max-width: 600px) { .rz-installation { padding: 15px; } .rz-installation-next { padding: 12px; } .rz-installation-next button { width: 100%; } }

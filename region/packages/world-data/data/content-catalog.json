@@ -1,0 +1,970 @@
+{
+  "version": 1,
+  "note": "Felles katalog for soneeditoren og spillet. Tall under yields er spillhypoteser til kalibrering, ikke fasit.",
+  "resourceLayers": [
+    {
+      "id": "consumable",
+      "name": "Forbruksvarer",
+      "help": "Brukes opp hver dag og har egne målere."
+    },
+    {
+      "id": "material",
+      "name": "Materialer",
+      "help": "Få grove kategorier. Løse gjenstander demonteres til disse."
+    },
+    {
+      "id": "component",
+      "name": "Strategiske komponenter",
+      "help": "Sjeldne enkeltgjenstander. Kan sjelden eller aldri lages, og er derfor gode byttevarer."
+    },
+    {
+      "id": "capacity",
+      "name": "Kapasiteter",
+      "help": "Hører til et sted eller en sone og kan ikke flyttes. Det de produserer kan byttes."
+    }
+  ],
+  "resources": [
+    {
+      "id": "food",
+      "name": "Mat",
+      "layer": "consumable",
+      "decays": "Butikkmat tar slutt. Konservert mat holder lenge."
+    },
+    {
+      "id": "water",
+      "name": "Vann",
+      "layer": "consumable"
+    },
+    {
+      "id": "medicine",
+      "name": "Medisin",
+      "layer": "consumable",
+      "decays": "Går ut på dato."
+    },
+    {
+      "id": "fuel",
+      "name": "Drivstoff",
+      "layer": "consumable",
+      "decays": "Bensin blir dårlig etter omtrent et år. Diesel holder lenger."
+    },
+    {
+      "id": "ammo",
+      "name": "Ammunisjon",
+      "layer": "consumable"
+    },
+    {
+      "id": "building",
+      "name": "Byggemateriale",
+      "layer": "material"
+    },
+    {
+      "id": "metal",
+      "name": "Metall",
+      "layer": "material"
+    },
+    {
+      "id": "parts",
+      "name": "Mekaniske deler",
+      "layer": "material"
+    },
+    {
+      "id": "electronics",
+      "name": "Elektronikk",
+      "layer": "material"
+    },
+    {
+      "id": "salt",
+      "name": "Salt",
+      "layer": "material",
+      "help": "Gjør mat holdbar, og holdbar mat kan byttes."
+    },
+    {
+      "id": "batteries",
+      "name": "Batterier",
+      "layer": "component"
+    },
+    {
+      "id": "solar",
+      "name": "Solcellepaneler",
+      "layer": "component"
+    },
+    {
+      "id": "generator",
+      "name": "Generatorer",
+      "layer": "component"
+    },
+    {
+      "id": "antibiotics",
+      "name": "Antibiotika",
+      "layer": "component",
+      "help": "Kan bare lages med laboratorium og fagfolk sent i spillet."
+    },
+    {
+      "id": "primers",
+      "name": "Tennhetter",
+      "layer": "component",
+      "help": "Trengs for å lade ammunisjon. Kan bare finnes i lang tid."
+    },
+    {
+      "id": "radio",
+      "name": "Radioutstyr",
+      "layer": "component"
+    },
+    {
+      "id": "engine",
+      "name": "Motorer",
+      "layer": "component"
+    },
+    {
+      "id": "boat",
+      "name": "Båter",
+      "layer": "component"
+    },
+    {
+      "id": "printer",
+      "name": "3D-printer",
+      "layer": "component"
+    },
+    {
+      "id": "explosives",
+      "name": "Sprengstoff",
+      "layer": "component",
+      "help": "Fra steinbrudd, anlegg og militærleirer. Trengs for å sprenge bruer og tunneler."
+    },
+    {
+      "id": "power",
+      "name": "Strøm",
+      "layer": "capacity"
+    },
+    {
+      "id": "waterSupply",
+      "name": "Vannforsyning",
+      "layer": "capacity"
+    },
+    {
+      "id": "workshop",
+      "name": "Verksted",
+      "layer": "capacity"
+    },
+    {
+      "id": "clinic",
+      "name": "Helsetjeneste",
+      "layer": "capacity"
+    },
+    {
+      "id": "comms",
+      "name": "Samband",
+      "layer": "capacity"
+    },
+    {
+      "id": "harbour",
+      "name": "Havn",
+      "layer": "capacity"
+    },
+    {
+      "id": "farming",
+      "name": "Dyrking",
+      "layer": "capacity"
+    },
+    {
+      "id": "fishing",
+      "name": "Fiske",
+      "layer": "capacity"
+    },
+    {
+      "id": "timber",
+      "name": "Tømmer",
+      "layer": "capacity"
+    }
+  ],
+  "modules": [
+    {
+      "id": "kitchen",
+      "name": "Felleskjøkken",
+      "effect": "Mindre matsvinn og bedre moral."
+    },
+    {
+      "id": "medbay",
+      "name": "Medbay",
+      "effect": "Skadde blir friske raskere."
+    },
+    {
+      "id": "gate",
+      "name": "Sluse",
+      "effect": "Trygg inn- og utpassering, så færre zombier følger etter inn."
+    },
+    {
+      "id": "workshop",
+      "name": "Verksted",
+      "effect": "Reparasjon av utstyr, sykler og barrikader."
+    },
+    {
+      "id": "heavyWorkshop",
+      "name": "Tungverksted",
+      "effect": "Sveis, pansring og ombygging av kjøretøy og båter."
+    },
+    {
+      "id": "ammoLab",
+      "name": "Ammoverksted",
+      "effect": "Lader tomhylser. Trenger tennhetter."
+    },
+    {
+      "id": "housing",
+      "name": "Boliger",
+      "effect": "Plass til flere i HQ-sonen."
+    },
+    {
+      "id": "greenhouse",
+      "name": "Drivhus",
+      "effect": "Mat hele året."
+    },
+    {
+      "id": "watchtower",
+      "name": "Vakttårn",
+      "effect": "Ser trusler tidligere og frigjør patruljer."
+    },
+    {
+      "id": "training",
+      "name": "Treningsleir",
+      "effect": "Nye folk blir kampklare raskere."
+    },
+    {
+      "id": "lab",
+      "name": "Laboratorium",
+      "effect": "Eneste vei til antibiotika og forskning."
+    },
+    {
+      "id": "saltworks",
+      "name": "Saltkokeri",
+      "effect": "Salt av sjøvann, så mat kan lagres og byttes."
+    },
+    {
+      "id": "classroom",
+      "name": "Opplæring",
+      "effect": "Folk lærer ferdigheter raskere."
+    },
+    {
+      "id": "refuge",
+      "name": "Tilflukt",
+      "effect": "Overlevende søker hit. Høyere moral og færre konflikter."
+    },
+    {
+      "id": "radioRoom",
+      "name": "Radiorom",
+      "effect": "Kontakt med andre grupper og egne lag ute."
+    },
+    {
+      "id": "depot",
+      "name": "Stort lager",
+      "effect": "Mindre svinn og plass til handelsvarer."
+    },
+    {
+      "id": "dock",
+      "name": "Kai og båtplass",
+      "effect": "Båter kan brukes til frakt og fiske."
+    },
+    {
+      "id": "overview",
+      "name": "Utkikk",
+      "effect": "Oversikt over store åpne flater."
+    },
+    {
+      "id": "walls",
+      "name": "Murer og gjerder",
+      "effect": "Sterk ytre perimeter fra start."
+    },
+    {
+      "id": "rooftop",
+      "name": "Takhage",
+      "effect": "Drivhus og solceller på taket, uten å bruke mark."
+    }
+  ],
+  "hqTypes": [
+    {
+      "id": "military",
+      "name": "Militærbase",
+      "startsWith": [
+        "walls",
+        "watchtower",
+        "depot"
+      ],
+      "unique": "training",
+      "summary": "Gjerder, vakthold og lager er der fra start. Våpenlageret tømmes etter hvert.",
+      "finds": [
+        "ammo",
+        "primers",
+        "radio",
+        "fuel",
+        "medicine",
+        "explosives"
+      ]
+    },
+    {
+      "id": "airport",
+      "name": "Flyplass",
+      "startsWith": [
+        "walls",
+        "overview",
+        "depot"
+      ],
+      "unique": "overview",
+      "summary": "Stort inngjerdet område med drivstofflager og hangarer.",
+      "finds": [
+        "fuel",
+        "parts",
+        "radio",
+        "electronics"
+      ]
+    },
+    {
+      "id": "mall",
+      "name": "Kjøpesenter",
+      "startsWith": [
+        "depot",
+        "kitchen"
+      ],
+      "unique": "rooftop",
+      "summary": "Stort tak, lagre og plass til mange. Taket kan bli drivhus og solceller.",
+      "finds": [
+        "food",
+        "water",
+        "salt",
+        "electronics",
+        "batteries"
+      ]
+    },
+    {
+      "id": "hospital",
+      "name": "Sykehus",
+      "startsWith": [
+        "medbay",
+        "kitchen"
+      ],
+      "unique": "lab",
+      "summary": "Medbay og fagmiljø fra start. Eneste vei til antibiotika.",
+      "finds": [
+        "medicine",
+        "antibiotics",
+        "generator"
+      ]
+    },
+    {
+      "id": "shipyard",
+      "name": "Industri og verft",
+      "startsWith": [
+        "workshop",
+        "heavyWorkshop",
+        "dock"
+      ],
+      "unique": "heavyWorkshop",
+      "summary": "Verksted, kraner og kai. Metall og deler i nærheten.",
+      "finds": [
+        "metal",
+        "parts",
+        "engine",
+        "building"
+      ]
+    },
+    {
+      "id": "school",
+      "name": "Skole og campus",
+      "startsWith": [
+        "kitchen",
+        "classroom"
+      ],
+      "unique": "classroom",
+      "summary": "Kjøkken, gymsal og klasserom. Et naturlig første HQ.",
+      "finds": [
+        "printer",
+        "electronics",
+        "food"
+      ]
+    },
+    {
+      "id": "coastFarm",
+      "name": "Kystgård",
+      "startsWith": [
+        "dock"
+      ],
+      "unique": "saltworks",
+      "summary": "Jord, naust og sjø. Mat, fisk og salt.",
+      "finds": [
+        "food",
+        "fuel",
+        "engine",
+        "boat"
+      ]
+    },
+    {
+      "id": "refuge",
+      "name": "Kirke og tilflukt",
+      "startsWith": [
+        "walls"
+      ],
+      "unique": "refuge",
+      "summary": "Et kjent samlingssted. Gir folk og samhold.",
+      "finds": [
+        "food"
+      ]
+    },
+    {
+      "id": "prison",
+      "name": "Fengsel",
+      "startsWith": [
+        "walls",
+        "gate",
+        "kitchen"
+      ],
+      "unique": "gate",
+      "summary": "Murer, porter og celler. Svært lett å holde.",
+      "finds": [
+        "food",
+        "medicine"
+      ]
+    }
+  ],
+  "facilityTypes": [
+    {
+      "id": "substation",
+      "name": "Trafostasjon",
+      "network": "power",
+      "summary": "Åpner lokalt strømnett i L2-området når solceller og batterier kobles til.",
+      "finds": [
+        "metal"
+      ]
+    },
+    {
+      "id": "commsTower",
+      "name": "Sambandstårn",
+      "network": "comms",
+      "summary": "Samband og utsikt over store deler av byen.",
+      "finds": [
+        "radio",
+        "electronics"
+      ]
+    },
+    {
+      "id": "waterworks",
+      "name": "Vannverk",
+      "network": "water",
+      "summary": "Rent vann som kapasitet for hele L2-området."
+    },
+    {
+      "id": "waterTower",
+      "name": "Vanntårn",
+      "network": "water",
+      "summary": "Vannlager med trykk. Del av vannettet."
+    },
+    {
+      "id": "wastewater",
+      "name": "Renseanlegg",
+      "network": "water",
+      "summary": "Mindre sykdom når vannettet er i drift."
+    },
+    {
+      "id": "incinerator",
+      "name": "Forbrenning",
+      "network": "power",
+      "summary": "Strøm og varme fra avfall sent i spillet."
+    },
+    {
+      "id": "fuelDepot",
+      "name": "Drivstofflager",
+      "summary": "Store mengder drivstoff som må forsvares.",
+      "finds": [
+        "fuel"
+      ]
+    },
+    {
+      "id": "harbour",
+      "name": "Havn og kai",
+      "network": "roads",
+      "summary": "Frakt med båt og plass til større fartøy.",
+      "finds": [
+        "boat",
+        "engine",
+        "fuel"
+      ]
+    },
+    {
+      "id": "ferry",
+      "name": "Fergeleie",
+      "network": "roads",
+      "summary": "Kobler øyer og byområder sammen.",
+      "finds": [
+        "boat",
+        "fuel"
+      ]
+    },
+    {
+      "id": "fireStation",
+      "name": "Brannstasjon",
+      "summary": "Kjøretøy, pumper og verneutstyr.",
+      "finds": [
+        "fuel",
+        "medicine",
+        "engine"
+      ]
+    },
+    {
+      "id": "police",
+      "name": "Politistasjon",
+      "summary": "Våpen, ammunisjon og samband.",
+      "finds": [
+        "ammo",
+        "primers",
+        "radio"
+      ]
+    },
+    {
+      "id": "landfill",
+      "name": "Deponi",
+      "summary": "Skrap og byggemateriale i store mengder.",
+      "finds": [
+        "metal",
+        "parts",
+        "building"
+      ]
+    },
+    {
+      "id": "bridge",
+      "name": "Bru",
+      "network": "roads",
+      "summary": "Strategisk forbindelse. Kan holdes, sperres eller sprenges.",
+      "finds": []
+    },
+    {
+      "id": "tunnel",
+      "name": "Tunnel",
+      "network": "roads",
+      "summary": "Strategisk forbindelse. Kan holdes, sperres eller sprenges.",
+      "finds": []
+    }
+  ],
+  "siteTypes": [
+    {
+      "id": "supermarket",
+      "name": "Dagligvare",
+      "finds": [
+        "food",
+        "water",
+        "salt",
+        "batteries"
+      ]
+    },
+    {
+      "id": "pharmacy",
+      "name": "Apotek",
+      "finds": [
+        "medicine",
+        "antibiotics"
+      ]
+    },
+    {
+      "id": "clinic",
+      "name": "Legekontor og klinikk",
+      "finds": [
+        "medicine"
+      ]
+    },
+    {
+      "id": "gunShop",
+      "name": "Våpen og jakt",
+      "finds": [
+        "ammo",
+        "primers"
+      ]
+    },
+    {
+      "id": "shootingRange",
+      "name": "Skytebane",
+      "finds": [
+        "ammo",
+        "primers"
+      ]
+    },
+    {
+      "id": "outdoorShop",
+      "name": "Sport, jakt og friluft",
+      "finds": [
+        "ammo",
+        "primers",
+        "boat",
+        "batteries"
+      ]
+    },
+    {
+      "id": "hardware",
+      "name": "Byggevare",
+      "finds": [
+        "building",
+        "parts",
+        "generator",
+        "solar",
+        "salt"
+      ]
+    },
+    {
+      "id": "electronics",
+      "name": "Elektronikk",
+      "finds": [
+        "electronics",
+        "batteries",
+        "radio",
+        "printer"
+      ]
+    },
+    {
+      "id": "carRepair",
+      "name": "Bilverksted",
+      "finds": [
+        "parts",
+        "engine",
+        "fuel"
+      ]
+    },
+    {
+      "id": "fuelStation",
+      "name": "Bensinstasjon",
+      "finds": [
+        "fuel",
+        "food"
+      ]
+    },
+    {
+      "id": "solarRoof",
+      "name": "Solcelleanlegg",
+      "finds": [
+        "solar",
+        "batteries"
+      ]
+    },
+    {
+      "id": "marina",
+      "name": "Båthavn",
+      "finds": [
+        "boat",
+        "engine",
+        "fuel"
+      ]
+    },
+    {
+      "id": "warehouse",
+      "name": "Lagerbygg",
+      "finds": [
+        "building",
+        "parts"
+      ]
+    },
+    {
+      "id": "greenhouse",
+      "name": "Gartneri",
+      "produces": [
+        "farming"
+      ]
+    },
+    {
+      "id": "farm",
+      "name": "Gård",
+      "produces": [
+        "farming"
+      ]
+    },
+    {
+      "id": "industry",
+      "name": "Verksted og industri",
+      "finds": [
+        "metal",
+        "parts"
+      ],
+      "produces": [
+        "workshop"
+      ]
+    },
+    {
+      "id": "school",
+      "name": "Skole",
+      "finds": [
+        "printer",
+        "electronics",
+        "food",
+        "medicine"
+      ]
+    },
+    {
+      "id": "boathouses",
+      "name": "Naust og båtplasser",
+      "finds": [
+        "boat",
+        "engine",
+        "fuel"
+      ]
+    },
+    {
+      "id": "quarry",
+      "name": "Steinbrudd og anlegg",
+      "finds": [
+        "explosives",
+        "building",
+        "fuel",
+        "engine"
+      ]
+    }
+  ],
+  "upgrades": [
+    {
+      "id": "greenhouse",
+      "name": "Drivhus",
+      "level": 3,
+      "needs": [
+        "building",
+        "parts"
+      ],
+      "requires": {
+        "openHa": 0.1
+      },
+      "gives": "Mat hele året."
+    },
+    {
+      "id": "field",
+      "name": "Dyrk opp åpen mark",
+      "level": 3,
+      "needs": [
+        "parts"
+      ],
+      "requires": {
+        "openHa": 0.5
+      },
+      "gives": "Mat fra plener, parker og jorder."
+    },
+    {
+      "id": "demolishField",
+      "name": "Riv og dyrk",
+      "level": 3,
+      "needs": [],
+      "requires": {
+        "housing": 1
+      },
+      "gives": "Mer jord, men færre boliger."
+    },
+    {
+      "id": "salvage",
+      "name": "Riv for materialer",
+      "level": 3,
+      "needs": [],
+      "requires": {
+        "housing": 1
+      },
+      "gives": "Byggemateriale og metall, men færre boliger."
+    },
+    {
+      "id": "fishing",
+      "name": "Fiskebase",
+      "level": 3,
+      "needs": [
+        "boat"
+      ],
+      "requires": {
+        "coastM": 100
+      },
+      "gives": "Fisk hver dag med båt og mannskap."
+    },
+    {
+      "id": "solarPark",
+      "name": "Solcellepark",
+      "level": 3,
+      "needs": [
+        "solar",
+        "batteries"
+      ],
+      "requires": {
+        "network": "power"
+      },
+      "gives": "Strøm til L2-nettet."
+    },
+    {
+      "id": "rainwater",
+      "name": "Regnvannsoppsamling",
+      "level": 3,
+      "needs": [
+        "building"
+      ],
+      "requires": {},
+      "gives": "Litt vann uten vannverk."
+    },
+    {
+      "id": "barricades",
+      "name": "Sperringer",
+      "level": 3,
+      "needs": [
+        "building"
+      ],
+      "requires": {},
+      "gives": "Færre zombier inn fra nabosonene."
+    },
+    {
+      "id": "watchpost",
+      "name": "Vaktpost",
+      "level": 3,
+      "needs": [
+        "building"
+      ],
+      "requires": {},
+      "gives": "Tidlig varsel og mindre patruljering."
+    },
+    {
+      "id": "saltworks",
+      "name": "Saltkoking",
+      "level": 3,
+      "needs": [
+        "metal"
+      ],
+      "requires": {
+        "coastM": 100
+      },
+      "gives": "Salt til konservering."
+    }
+  ],
+  "networks": [
+    {
+      "id": "power",
+      "name": "Strøm",
+      "level": 2,
+      "needs": "Trafostasjon i området, pluss solceller og batterier.",
+      "gives": "Høyere moral, lys og maskiner i drift."
+    },
+    {
+      "id": "comms",
+      "name": "Samband",
+      "level": 2,
+      "needs": "Sambandstårn eller radiorom.",
+      "gives": "Bedre koordinering og færre overraskelser."
+    },
+    {
+      "id": "roads",
+      "name": "Veier",
+      "level": 2,
+      "needs": "Ryddede ruter og sperringer.",
+      "gives": "Raskere frakt og patruljer."
+    },
+    {
+      "id": "water",
+      "name": "Vann",
+      "level": 2,
+      "needs": "Vannverk, vanntårn eller filtre.",
+      "gives": "Mindre sykdom og vann til dyrking."
+    }
+  ],
+  "zoneTypes": [
+    [
+      "bolig",
+      "Bolig"
+    ],
+    [
+      "blandet",
+      "Blandet"
+    ],
+    [
+      "sentrum",
+      "Sentrum og handel"
+    ],
+    [
+      "industri",
+      "Industri"
+    ],
+    [
+      "kai",
+      "Havn og kai"
+    ],
+    [
+      "jordbruk",
+      "Jordbruk"
+    ],
+    [
+      "natur",
+      "Natur og skog"
+    ],
+    [
+      "institusjon",
+      "Institusjon"
+    ],
+    [
+      "infrastruktur",
+      "Infrastruktur"
+    ]
+  ],
+  "yields": {
+    "note": "Hypoteser. 1 mat = én persons dagsbehov.",
+    "fieldFoodPerHaYear": 3000,
+    "openLandFoodPerHaYear": 1500,
+    "pastureFoodPerHaYear": 1500,
+    "gardenShareOfBuilt": 0.3,
+    "greenhouseFoodPerM2Year": 1.5,
+    "fishFoodPerBoatDay": 6,
+    "floorM2PerPerson": 30,
+    "residentialFloors": {
+      "house": 1.6,
+      "detached": 1.6,
+      "semidetached_house": 1.8,
+      "terrace": 2,
+      "bungalow": 1,
+      "apartments": 4,
+      "residential": 2.5,
+      "dormitory": 3,
+      "farm": 1.6,
+      "cabin": 1,
+      "yes": 1.6
+    }
+  },
+  "takeover": {
+    "note": "Hypoteser. Timer er arbeidstimer, samme mål som bygningssøk i spillet (en enebolig tar om lag én time).",
+    "residentFloorM2": 55,
+    "zombieShare": 0.3,
+    "searchFloorM2PerHour": 150,
+    "otherBuildingHours": 2,
+    "hoursPerZombie": 0.5,
+    "sweepHoursPerHa": 0.4,
+    "guardMetersPerPost": 250,
+    "levels": [
+      [
+        60,
+        "Lett"
+      ],
+      [
+        200,
+        "Middels"
+      ],
+      [
+        600,
+        "Tung"
+      ],
+      [
+        1000000000.0,
+        "Svært tung"
+      ]
+    ]
+  },
+  "chokepointActions": [
+    {
+      "id": "hold",
+      "name": "Hold",
+      "effect": "Vaktpost ved forbindelsen. Du bestemmer hvem som slipper over, og den kan brukes fritt.",
+      "costs": "Folk på vakt hver dag. Mer press fra zombier betyr flere vakter.",
+      "reversible": true
+    },
+    {
+      "id": "block",
+      "name": "Sperr",
+      "effect": "Barrikade som stopper zombier og kjøretøy. Kan åpnes igjen.",
+      "costs": "Byggemateriale nå, og vedlikehold når sperringen er under press.",
+      "reversible": true
+    },
+    {
+      "id": "blow",
+      "name": "Spreng",
+      "effect": "Forbindelsen er borte. Ingen kommer over, heller ikke dere selv. Trafikk må ta andre veier.",
+      "costs": "Sprengstoff og en person med kompetanse. En sprengt bru kan bygges opp igjen sent i spillet med tungverksted, metall og mange arbeidsdøgn. En sprengt tunnel kan ikke åpnes igjen.",
+      "reversible": false
+    }
+  ]
+}
