@@ -512,7 +512,9 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
     case 'relocate': {
       if (state.hq || controlled(state).length) errors.push('Dere har allerede et sted. Leiren flyttes ikke lenger.');
       if (order.zoneId === state.homeZoneId) errors.push('Leiren er her allerede.');
-      if ((hops ?? 9) > 2) errors.push('For langt. Leiren kan flyttes inntil to soner.');
+      const campHops = distances(world, [state.homeZoneId], a => !a.linkId || !['blown', 'flooded'].includes(state.chokepoints[a.linkId]), 2, (state.stock.boat ?? 0) >= 1, tech(state, 'ferry') ? R.ferryReachKm : R.boatReachKm).get(order.zoneId);
+      if (movement.originZoneId !== state.homeZoneId) errors.push('Felles leirflytting må starte med laget i den nåværende leiren.');
+      if (campHops === undefined || campHops > 2) errors.push('For langt. Leiren kan flyttes inntil to soner fra nåværende leir.');
       const carry = present(state).length * R.carryPerPerson * 1.5;
       const load = Object.entries(state.stock).reduce((n, [id, k]) => n + k * weight(id), 0);
       const known = z.intel ? z.intel.max : z.zombies;

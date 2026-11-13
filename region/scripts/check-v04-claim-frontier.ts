@@ -19,4 +19,16 @@ const frontierPreview=previewOrder(frontier,world,{action:'claim',zoneId:'z3',su
 assert.equal(frontier.crewPositions!.marius.kind,'zone');
 assert.deepEqual(frontierPreview.errors,[],'A real frontier next to owned z2 remains claimable despite a three-hop route from HQ');
 assert.equal(frontierPreview.valid,true);
+const camp=newRegionGame(world,'z0',52);delete camp.event;
+for(const zone of Object.values(camp.zones)){zone.status='scouted';zone.zombies=0;zone.intel={min:0,max:0,day:0};}
+ensureMobility(camp);
+const distant=structuredClone(camp);distant.crewPositions!.marius={kind:'zone',zoneId:'z5'};
+const remoteMove=previewOrder(distant,world,{action:'relocate',zoneId:'z5',survivorIds:['marius']});
+assert.equal(remoteMove.valid,false,'A crew at a distant target cannot teleport the whole camp there');
+assert.ok(remoteMove.errors.some(message=>message.includes('Felles leirflytting må starte')));
+assert.ok(remoteMove.errors.some(message=>message.includes('fra nåværende leir')));
+const localMove=previewOrder(camp,world,{action:'relocate',zoneId:'z2',survivorIds:['marius']});
+assert.deepEqual(localMove.errors,[],'The existing two-hop whole-camp relocation remains available from camp');
+const remoteNear=structuredClone(camp);remoteNear.crewPositions!.marius={kind:'zone',zoneId:'z1'};
+assert.equal(previewOrder(remoteNear,world,{action:'relocate',zoneId:'z2',survivorIds:['marius']}).valid,false,'Even a nearby field crew cannot move a camp where it is not present');
 console.log('PASS claim frontier: isolated local crew rejected; legitimate controlled frontier accepted independently of HQ travel distance.');
