@@ -9,6 +9,7 @@ import { wonderOperational } from '../../../packages/gameplay/src/region/wonders
 import { attachWorldObjects, type WorldObjectController } from './world-object-layer';
 import { territoryGeometry, territoryBounds } from './territory-map';
 import './world-map.css';
+import { registerBenchmarkMap } from './map-benchmark';
 const STATUS_LABEL = { unknown: 'Ukjent', scouted: 'Speidet', controlled: 'Deres' } as const;
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n).toLocaleString('nb-NO', { maximumFractionDigits: 1 })}`;
 export default function RegionWorldMap({ focus, world, state, flows, overlay, selected, hops, replayMoves, onSelect, onOverlay, onSelectPoi, onSelectCrew, targeting, validTargetZoneIds, reducedMotion = typeof window!=='undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches }: { focus: { zoneId: string; key: number; scope?: 'territory' } | null; world: RegionWorld; state: RegionState; flows: Flows; overlay: 'territory' | 'zombies' | 'food'; selected: string; hops: Map<string, number>; replayMoves?: { from: string; to: string; n: number }[]; onSelect: (id: string) => void; onOverlay: (o: 'territory' | 'zombies' | 'food') => void; onSelectPoi?: (poiId: string) => void; onSelectCrew?: (personId: string) => void; targeting?: { action: ActionId; crewIds: string[] }; validTargetZoneIds?: string[]; reducedMotion?: boolean }) {
@@ -37,6 +38,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
   useEffect(() => {
     let map: LibreMap | null = null;
     let cancelled = false;
+    let unregisterBenchmark: (() => void) | undefined;
     import('maplibre-gl').then(lib => {
       if (cancelled || !ref.current) return;
       libRef.current = lib;
@@ -113,10 +115,11 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
         objectsRef.current = attachWorldObjects(map!, lib, world, stateRef.current, { onCrew: (id, zoneId) => { if (callbacksRef.current.onSelectCrew) callbacksRef.current.onSelectCrew(id); else onSelectRef.current(zoneId); }, onZone: id => onSelectRef.current(id) });
         operationsRef.current = attachOperationalMap(map!, lib, world, stateRef.current, id => onSelectRef.current(id), setLevel, true);
         mapRef.current = map;
+        unregisterBenchmark = registerBenchmarkMap(map!, () => ({ phase: stateRef.current.phase, knownZones: Object.values(stateRef.current.zones).filter(z => z.status !== 'unknown').length, controlledZones: Object.values(stateRef.current.zones).filter(z => z.status === 'controlled').length }));
         setReady(true);
       });
     });
-    return () => { cancelled = true; objectsRef.current?.destroy(); objectsRef.current = null; operationsRef.current?.destroy(); operationsRef.current = null; markersRef.current.forEach(m => m.remove()); captureRef.current?.destroy(); captureRef.current = null; previousZonesRef.current = undefined; map?.remove(); mapRef.current = null; };
+    return () => { cancelled = true; unregisterBenchmark?.(); objectsRef.current?.destroy(); objectsRef.current = null; operationsRef.current?.destroy(); operationsRef.current = null; markersRef.current.forEach(m => m.remove()); captureRef.current?.destroy(); captureRef.current = null; previousZonesRef.current = undefined; map?.remove(); mapRef.current = null; };
     // The map is created once; state is pushed through feature-state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [world]);
