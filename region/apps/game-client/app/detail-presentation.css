@@ -1,0 +1,125 @@
+/* Illustrated field equipment and journals. Presentation only; all values remain canonical. */
+/* A place to come home to. The illustration is atmosphere, never POI intelligence. */
+.sz-game .dv-hq{background:#11262c;color:#efe4cc}
+.sz-game .dv-hq .dv-hq-header{position:relative;isolation:isolate;overflow:hidden;border:1px solid #e4bc7838;border-radius:14px 14px 0 0;background:#182c2e}
+.sz-game .dv-hq-header .dv-hq-mood{position:absolute;inset:0 0 0 auto;width:65%;height:100%;object-fit:cover;object-position:50% 52%;z-index:-2;opacity:.72;mask-image:linear-gradient(90deg,transparent,#000 45%)}
+.sz-game .dv-hq-header:after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#10232b 20%,#10232b85 65%,#10232b4d)}
+.sz-game .dv-hq-header>button{background:#10232be8;border-color:#ddc39355;color:#f0dfb8;border-radius:22px}
+.sz-game .dv-hq .dv-hq-header .dv-place-symbol{border-radius:50%;background:radial-gradient(circle at 40% 25%,#4b4b38,#1b3031 72%);border-color:#e4bc7877;box-shadow:inset 0 0 0 4px #10232b,0 2px 10px #0004}
+.sz-game .dv-hq .dv-hq-header h2{color:#fff0ce;text-shadow:0 2px 8px #0007}
+.sz-game .dv-hq-header .dv-eyebrow{color:#e1cda5}.sz-game .dv-hq-header .dv-tag{background:#183d36c9;border-color:#a2d3b744;color:#bde7cf;border-radius:20px}
+.sz-game .dv-hq .dv-tabs{background:#0d2028;border-color:#dac09528;border-radius:0 0 12px 12px}
+.sz-game .dv-hq .dv-tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:#aebfba}
+.sz-game .dv-hq .dv-tabs button[aria-selected=true]{color:#f4d797;background:linear-gradient(0deg,#b38b352b,transparent);border-bottom-color:#d7b774}
+.sz-game .dv-hq .dv-hq-panel{background:radial-gradient(ellipse at 0 0,#9d7f4210,transparent 65%),#11262c}
+.sz-game .dv-hq .hq-command .dv-eyebrow{color:#c0b493}.sz-game .dv-hq .hq-command h3{color:#f3e8d1;letter-spacing:.025em}
+.sz-game .dv-hq .hq-primary-actions .dv-primary{background:linear-gradient(135deg,#f0d39a,#d1aa67);border-color:#efd29a;color:#26312b;border-radius:22px 7px 22px 7px;box-shadow:inset 0 1px #fff6,0 3px 8px #0003}
+.sz-game .dv-hq .hq-primary-actions button:not(.dv-primary){background:#24383a;border-color:#d8c29833;border-radius:22px}
+.sz-game .dv-hq .hq-production{padding:0;border:1px solid #c9c2a22e;border-radius:14px;background:linear-gradient(120deg,#263c35,#152c33);overflow:hidden;gap:0}
+.sz-game .dv-hq .hq-supply{border:0;border-radius:0;background:none;border-top:3px solid var(--supply-color);box-shadow:none}
+.sz-game .dv-hq .hq-supply+.hq-supply{border-left:1px solid #d9d8b71c;background:#88b8c407}
+.sz-game .dv-hq .hq-supply-icon{border-radius:50%;border:1px solid color-mix(in srgb,var(--supply-color) 35%,transparent);background:radial-gradient(circle at 40% 30%,color-mix(in srgb,var(--supply-color) 24%,transparent),transparent 80%);box-shadow:inset 0 0 0 3px #10282b}
+.sz-game .dv-hq .hq-produced>strong{color:var(--supply-color);text-shadow:0 3px #0002}
+.sz-game .dv-hq .hq-workforce{border-radius:14px;border:1px solid #d5bc8533;background:linear-gradient(125deg,#273a39,#142c34);box-shadow:inset 0 1px #eff1d408}
+.sz-game .dv-hq .hq-workforce h3>strong{color:#efcc8d}
+.sz-game .dv-hq .hq-work-bar{height:8px;border-radius:5px;box-shadow:0 0 0 4px #0b1b203d}
+.sz-game .dv-hq .hq-footprint{border-top-color:#c6b68a2e;border-bottom-color:#c6b68a2e}
+.sz-game .dv-hq .hq-footprint svg{color:#d6c59c}.sz-game .dv-hq .hq-footprint button{border-radius:22px;background:#263b38;border-color:#b9c5a933}
+/* A supply rack, with colored fittings rather than eight identical form fields. */
+.sz-game .ishelf{background:linear-gradient(140deg,#213335,#11262d 65%);border-radius:14px;color:#efe4cc}
+.sz-game .ishelf-header h2{color:#f2e6cb}.sz-game .ishelf .ishelf-eyebrow{color:#d1ba8f}.sz-game .ishelf-readonly{border:0;background:#d6bd7e0e;color:#bac5ba;border-radius:20px}
+.sz-game .ishelf-categories{border-color:#d0bb8b30;gap:6px}.sz-game .ishelf-categories button{border-radius:22px;background:transparent}
+.sz-game .ishelf-categories button[aria-pressed=true]{background:linear-gradient(135deg,#d8b97730,#a5823f18);border-color:#d4b4777d;color:#f1d299;box-shadow:inset 0 1px #f7e1b512}
+.sz-game .ishelf .ishelf-tile{border:1px solid color-mix(in srgb,var(--is-color) 28%,#34484a);border-bottom-width:3px;border-radius:12px 4px 12px 4px;background:radial-gradient(ellipse at 50% 18%,color-mix(in srgb,var(--is-color) 17%,transparent),transparent 68%),linear-gradient(140deg,#23383b,#10252c);box-shadow:inset 0 1px #ffffdf0a,0 2px 0 #06171ba6;transition:transform .14s,border-color .14s,box-shadow .14s}
+.sz-game .ishelf .ishelf-tile[aria-pressed=true]{border-color:#e7c387;background:radial-gradient(ellipse at 50% 10%,#d1b77c26,transparent 80%),#283b3c;box-shadow:inset 0 0 0 1px #e4bc7880,0 3px 12px #030e1566}
+.sz-game .ishelf .ishelf-tile:hover:not(:disabled){transform:translateY(-2px);border-color:var(--is-color);box-shadow:inset 0 1px #ffffdf1a,0 4px 10px #020c1666}
+.sz-game .ishelf-item-icon{border-radius:50%;background:radial-gradient(circle at 40% 25%,color-mix(in srgb,var(--is-color) 18%,transparent),#0c2228);border:1px solid color-mix(in srgb,var(--is-color) 36%,transparent);box-shadow:inset 0 0 0 3px #10252b}
+.sz-game .ishelf-tile strong{color:#f7ead0;text-shadow:0 2px #0004}.sz-game .ishelf-item-name{color:#c8d3c7}
+.sz-game .ishelf-detail{border-radius:12px;border-color:color-mix(in srgb,var(--is-color) 35%,#334647);border-top:3px solid var(--is-color);background:linear-gradient(145deg,color-mix(in srgb,var(--is-color) 13%,#22343a),#12272d);box-shadow:0 4px 15px #0002}
+.sz-game .ishelf-detail-icon{border-radius:50%;background:#10232b;border-color:color-mix(in srgb,var(--is-color) 55%,transparent);box-shadow:inset 0 0 0 5px #ddc4910a}
+.sz-game .ishelf-detail h3{color:#f1e1bd}.sz-game .ishelf .ishelf-quantity{color:var(--is-color)}
+.sz-game .ishelf-pager button{border-radius:50%;background:#1c3337;border-color:#bcbd9633}.sz-game .ishelf-help{color:#e5c88d}
+/* Illustrated character dossiers: the portrait is the focus, not another spreadsheet. */
+.sz-game .dv-crew{background:#11262c;border:1px solid #d7bd8030;border-radius:14px;overflow:hidden}
+.sz-game .dv-crew .dv-portrait{background:#1d3639}
+.sz-game .dv-crew .dv-portrait:before{content:'';position:absolute;inset:12px;z-index:2;pointer-events:none;border:1px solid #f0d9a744;border-radius:8px;box-shadow:0 0 0 6px #10232b3d}
+.sz-game .dv-crew .dv-portrait:after{background:linear-gradient(0deg,#0a1c23 2%,#10232b66 35%,transparent 80%)}
+.sz-game .dv-portrait-caption{color:#efd5a2}.sz-game .dv-portrait-caption span{color:#e4c78c}.sz-game .dv-portrait-caption strong{color:#efe5ce}
+.sz-game .dv-dossier{background:radial-gradient(ellipse at 100% 0,#d3b97a0e,transparent 60%),#11262c}
+.sz-game .dv-dossier h2{color:#f3e5c7}.sz-game .dv-dossier .dv-eyebrow{color:#c9c2a5}.sz-game .dv-dossier .dv-tag{border-radius:20px;background:#b6ccaa0d;border-color:#b9d1ac30;color:#bfd4ba}
+.sz-game .dv-vitals>div{color:#d7b373}.sz-game .dv-vitals>div:first-child{color:#dd9c86}.sz-game .dv-vitals strong{color:#f3e7cc}
+.sz-game .dv-dossier .dv-location{background:#d3c7a006;border-color:#cbb98728}
+.sz-game .dv-gear article{border-radius:10px 3px 10px 3px;border:1px solid #c0b38833;background:linear-gradient(145deg,#2b3c3a,#1b3034);box-shadow:inset 0 1px #fff7d80a}
+.sz-game .dv-gear article>svg{color:#d7bd84}.sz-game .dv-traits>span{border-radius:20px;background:#c2d3b912;border-color:#aac6a52b}
+/* The ZA book is recognisably an actual field journal, with readable paper. */
+.sz-game .zab{--book-line:#a38e5f55;--book-muted:#bcc7b5;--book-paper:#e5ddc7}
+.sz-game .zab .zab-eyebrow{color:#d2bb89}.sz-game .zab-head{border-color:#c5b68c33}.sz-game .zab-head h2{color:#f1e1bd}
+.sz-game .zab .zab-tabs button.active{border-color:#cbb17c66;border-bottom-color:#d5c5a1;background:#d5c5a1;color:#283d37}
+.sz-game .zab-paper{color:#35443a;border:1px solid #cfbd9233;border-left:6px solid #a28b58;border-radius:3px 12px 12px 3px;background:radial-gradient(ellipse at 0 0,#fff3d66b,transparent 62%),repeating-linear-gradient(0deg,transparent,transparent 27px,#76623b05 28px),#e5ddc7;box-shadow:3px 3px 0 #8b785144,6px 6px 0 #091b2055,inset 0 0 30px #8c714715}
+.sz-game .zab-paper:before{background:#9b633d;width:25px;height:4px;left:14px}
+.sz-game .zab-paper h3{font-family:Georgia,'Times New Roman',serif;font-size:27px;font-weight:500;color:#2c423c;letter-spacing:-.025em}
+.sz-game .zab-paper :is(p,.zab-intro,.zab-handwriting p,.zab-ending,.zab-unknown,.zab-discovery p,.zab-memory p){color:#475047}
+.sz-game .zab-paper :is(h4,.zab-handwriting h4,.zab-discovery strong,.zab-goal-note strong){color:#334c40}
+.sz-game .zab-paper :is(small,.zab-eyebrow,.zab-discovery small,.zab-memory small,.zab-page-controls>span){color:#62684f!important}
+.sz-game .zab-paper blockquote{font-size:17px;color:#76613b;border-color:#a38a57}
+.sz-game .zab-paper :is(.zab-handwriting,.zab-ending,.zab-memory,.zab-discovery){border-color:#68754f33}
+.sz-game .zab-paper .zab-goal-note{background:#b5c29a26;border-color:#84936e44;color:#4c5b43}
+.sz-game .zab-paper .zab-goal-note span{color:#526148}.sz-game .zab-paper .zab-goal-note>summary{color:#40583b}
+.sz-game .zab-paper :is(.zab-page-controls button,.zab-goal-note button){border-radius:20px;background:#c5cbb0;color:#344d39;border-color:#798a6255}
+.sz-game .zab-paper .zab-topic-focus{border-color:#9b8248}.sz-game .zab-paper .zab-advanced-note{background:#d2c9aa66;color:#5f674c;border-color:#9b8b5c}
+.sz-game .zab .zab-chapter-nav button,.sz-game .zab .zab-manual-nav button{border-radius:5px 12px 12px 5px;border-color:#d0bd8e24;background:#172b2d}
+.sz-game .zab .zab-chapter-nav button.active,.sz-game .zab .zab-manual-nav button.active{background:linear-gradient(90deg,#bda26832,#1c3332);border-color:#ddbd7866;box-shadow:inset 3px 0 #ddbd78;color:#efe0bc}
+.sz-game .zab-chapter-number{color:#d9c08e}.sz-game .zab-foot{border-color:#c6b38333;color:#b9bea9}
+/* Report imagery is constrained to its real severity; it never replaces the facts. */
+.sz-game .dr-report .dr-heading{position:relative;isolation:isolate;border-radius:10px;min-width:0}
+.sz-game .dr-heading:before{content:'';position:absolute;top:-10px;bottom:-8px;right:-10px;width:58%;z-index:-2;pointer-events:none;border-radius:10px;background-image:linear-gradient(90deg,#10232b,transparent 70%),url('/art/report/quiet.webp');background-position:center;background-size:cover;opacity:.56}
+.sz-game .dr-report[data-report-mood=success] .dr-heading:before{background-image:linear-gradient(90deg,#10232b,transparent 75%),url('/art/report/success.webp')}
+.sz-game .dr-report[data-report-mood=danger] .dr-heading:before{background-image:linear-gradient(90deg,#10232b,transparent 75%),url('/art/report/danger.webp')}
+.sz-game .dr-report .dr-heading h2{color:#f2e4c6;text-shadow:0 2px 8px #0005}.sz-game .dr-report .dr-heading .rz-kicker{color:#d5bb8e}
+.sz-game .dr-report .dr-help{border-radius:50%;background:#142a30dc;border-color:#d3ba8644;color:#edcf99}
+.sz-game .dr-stats{gap:0;border:1px solid #cbb67b28;border-radius:12px;overflow:hidden;background:#12282d}
+.sz-game .dr-stat{border:0;border-radius:0;background:linear-gradient(150deg,#c6d49e0b,transparent);box-shadow:none}
+.sz-game .dr-stat+.dr-stat{border-left:1px solid #cbb67b20}.sz-game .dr-stat>svg{padding:6px;width:35px;height:35px;border-radius:50%;background:#d9c8870e}
+.sz-game .dr-stat strong{color:#f3e7cb}.sz-game .dr-tabs{border-color:#cbb67b2b}.sz-game .dr-tabs>button[aria-pressed=true]{border-color:#e2bd78;color:#efd39a}
+.sz-game .dr-outcome{border:0;border-left:3px solid #7a9b8d;border-radius:4px 12px 12px 4px;background:linear-gradient(90deg,#9bb7850b,transparent);box-shadow:inset 0 -1px #c3c9a91a}
+.sz-game .dr-outcome.dr-warn{background:linear-gradient(90deg,#c39c4f17,transparent)}.sz-game .dr-outcome.dr-bad{background:linear-gradient(90deg,#bb76592b,#332c2908)}
+.sz-game .dr-outcome-symbol{border-radius:50%;background:#aac4a312}
+.sz-game .dr-progress-beat{border-radius:12px 4px 12px 4px;border-color:#b2c59333;background:radial-gradient(ellipse at 0 0,#b9cf8c20,transparent 80%),#18312e;box-shadow:inset 0 1px #f6efd20a}
+.sz-game .dr-earned-track{background:#0c2023}.sz-game .dr-earned-today{background:linear-gradient(90deg,#92bf85,#cfe0a5)}
+.sz-game .dr-pagination button,.sz-game .dr-text-pages button{border-radius:50%}.sz-game .dr-log-event{border-color:#c0bb9130;background:linear-gradient(140deg,#263a36,#12282d)}
+/* A quiet illustrated backdrop keeps preferences within the same game world. */
+.sz-game .game-settings{position:relative;isolation:isolate;border-radius:12px;background:#10232b;overflow:hidden}
+.sz-game .game-settings:before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(110deg,#10232b 30%,#10232bcf),url('/art/intro/3.webp') 75% 40%/cover;opacity:.75}
+.sz-game .game-settings .gs-heading h2{color:#f0dfbb}.sz-game .game-settings .gs-heading p{color:#d3bb8f}
+.sz-game .game-settings fieldset{border-color:#d7bd7d30;background:#142a2be8;border-radius:12px}.sz-game .game-settings legend{color:#e6cb92}
+.sz-game .game-settings button{border-radius:22px;background:#354337!important;border-color:#c5b17d55!important;color:#eddfba!important}
+@media(max-width:820px){
+ .sz-game .dv-hq-header .dv-hq-mood{width:100%;opacity:.55;object-position:66% 54%}
+ .sz-game .dv-hq-header:after{background:linear-gradient(90deg,#10232bf2,#10232b8c)}
+ .sz-game .ishelf .ishelf-tile{border-radius:10px 3px 10px 3px}.sz-game .ishelf-item-icon{box-shadow:none}
+ .sz-game .zab-paper{border-left-width:4px;box-shadow:2px 3px 0 #8b785144,4px 5px 0 #091b2055}
+ .sz-game .zab-paper h3{font-size:25px}.sz-game .dr-heading:before{width:78%;opacity:.45}
+ .sz-game .dr-stat>svg{width:28px;height:28px;padding:4px}.sz-game .dr-stat{gap:8px}
+}
+@media(prefers-reduced-motion:reduce){.sz-game .ishelf .ishelf-tile{transition:none}.sz-game .ishelf .ishelf-tile:hover:not(:disabled){transform:none}}
+.sz-game.pref-reduced-motion .ishelf .ishelf-tile:hover:not(:disabled){transform:none}
+/* Soft-edged still life suggests a real supply bench without inventing owned items. */
+.sz-game .ishelf-header{position:relative;isolation:isolate}
+.sz-game .ishelf-header:before{content:'';position:absolute;inset:-8px -8px -6px auto;width:55%;z-index:-1;pointer-events:none;background:url('/art/intro/3.webp') center 64%/cover;opacity:.45;mask-image:linear-gradient(90deg,transparent,#000 70%);border-radius:10px}
+.sz-game .ishelf-readonly{background:#12272cd9;color:#d3c29c}
+.sz-game .ishelf-item-icon{width:41px;height:41px}
+.sz-game .dr-heading:before{mask-image:linear-gradient(90deg,transparent,#000 38%)}
+@media(max-width:820px){.sz-game .ishelf-item-icon{width:34px;height:34px}.sz-game .ishelf-header:before{width:70%;opacity:.32}}
+@media(max-width:620px){.sz-game .zab .zab-chapter-nav{display:flex;gap:5px}.sz-game .zab .zab-chapter-nav>button{flex:1;min-width:44px}.sz-game .zab .zab-chapter-nav>button.active{flex:1.6}.sz-game .zab .zab-chapter-nav .active strong{overflow-wrap:normal;word-break:normal}}
+/* The base overview has a real illustrated scene, not only a decorative title strip. */
+.sz-game .dv-hq .hq-operating-grid{grid-template-columns:minmax(180px,.66fr) minmax(0,1.16fr) minmax(0,1.14fr);gap:12px;align-items:stretch}
+.sz-game .dv-hq .hq-base-scene{position:relative;margin:0;min-width:0;min-height:280px;overflow:hidden;border:1px solid #dbc38c66;border-radius:14px 4px 14px 4px;background:#273e3a;box-shadow:inset 0 0 0 5px #12272b,0 3px 12px #0003}
+.sz-game .dv-hq .hq-base-scene img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:51% 50%}
+.sz-game .dv-hq .hq-base-scene:after{content:'';position:absolute;inset:6px;pointer-events:none;border:1px solid #f3e2b833;border-radius:9px 0 9px 0;box-shadow:0 0 0 6px #0c232226}
+.sz-game .dv-hq .hq-production{min-width:0}.sz-game .dv-hq .hq-supply{padding:13px 11px}
+.sz-game .dv-hq .hq-produced{margin:15px 0 12px}.sz-game .dv-hq .hq-produced>strong{font-size:42px}
+.sz-game .dv-hq .hq-flow>div{display:block}.sz-game .dv-hq .hq-flow dd{margin-top:2px}
+.sz-game .dv-hq .hq-supply footer{flex-direction:column;gap:2px;margin-top:12px}
+.sz-game .dv-hq .hq-workforce{padding:14px}.sz-game .dv-hq .hq-job-list{gap:9px 12px}.sz-game .dv-hq .hq-work-note{margin-top:12px}
+@media(max-width:820px){.sz-game .dv-hq .hq-operating-grid{grid-template-columns:1fr}.sz-game .dv-hq .hq-base-scene{min-height:132px;height:132px;border-radius:12px}.sz-game .dv-hq .hq-base-scene img{object-position:50% 43%}.sz-game .dv-hq .hq-supply{padding:12px}.sz-game .dv-hq .hq-produced>strong{font-size:43px}.sz-game .dv-hq .hq-flow>div{display:flex;flex-wrap:wrap}.sz-game .dv-hq .hq-flow dd{margin-top:0}.sz-game .dv-hq .hq-supply footer{flex-direction:row;flex-wrap:wrap}}
+.sz-game .dv-hq:has(.hq-base-scene) .dv-hq-mood{display:none}

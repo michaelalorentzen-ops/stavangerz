@@ -10,6 +10,7 @@ import type { GearPlan } from '../../../packages/gameplay/src/region/gear';
 import CrewEquipment, { CompactCrewGear, equipmentDraftOrders } from './crew-equipment';
 import { MissionOptions } from './mission-controls';
 import { HudIcon } from './hud-icons';
+import { actionIcon } from './hud-context';
 import './command-panels.css';
 
 export const commandNumber = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits: 1 });
@@ -94,8 +95,9 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
     onChange({ ...draft, survivorIds, communication: draft.communication ? { ...draft.communication, leaderId: survivorIds.includes(draft.communication.leaderId ?? '') ? draft.communication.leaderId : survivorIds[0] } : undefined });
   };
 
-  return <div className="cmd-composer">
+  return <div className="cmd-composer" data-action={draft.action}>
     <header className="cmd-intro cmd-composer-heading">
+      <span className="cmd-action-emblem" aria-hidden="true"><HudIcon name={actionIcon(draft.action)} size={30}/></span>
       <p className="cmd-kicker">{editing ? 'JUSTER DAGENS PLAN' : 'NY ORDRE'} / DAG {state.day}</p>
       <div className="cmd-heading-main"><div><h2>{ACTIONS[draft.action].label}<span className={`cmd-risk cmd-risk-${riskClass}`}>{risk} risiko</span></h2><p className="cmd-heading-place"><HudIcon name="location" size={16} />{commandZone(world, draft.zoneId)}</p></div><button type="button" onClick={onPickTarget}>Velg på kartet <HudIcon name="map" size={16} /></button>{onHelp && <button type="button" className="cmd-help" aria-label="Hjelp om oppdrag" onClick={() => onHelp(draft.action)}><HudIcon name="book" size={18} /></button>}</div>
     </header>

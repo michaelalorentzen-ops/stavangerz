@@ -30,6 +30,12 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const lowPower = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2);
   const clock = new THREE.Clock();
+  const screenOffset=(piece:Piece):[number,number]=>{
+    const slot=piece.offset??0;
+    if(!piece.crew)return [slot*48,8];
+    const compact=map.getCanvas().clientWidth<=820;
+    return [55+(compact?slot%2:slot)*42,-8-(compact?Math.floor(slot/2)*62:0)];
+  };
   // Camera and anchor geometry is static during idle animation. Reuse matrices
   // and only project a piece again after the camera or its reported position moves.
   const projection = new THREE.Matrix4(), translation = new THREE.Matrix4(), scaling = new THREE.Matrix4();
@@ -94,8 +100,8 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         button.innerHTML = `<span class="rz-piece-fallback" aria-hidden="true"><svg viewBox="0 0 32 36" width="26" height="30" fill="currentColor">${silhouette}</svg></span><span class="rz-piece-caption"></span>`;
         button.querySelector('.rz-piece-caption')!.textContent = piece.crew ? piece.title.split(' ')[0] : '';
         button.onclick = event => { event.stopPropagation(); const current = pieces.find(p => p.id === piece.id); if (!current) return; if (current.crew) select.onCrew(current.crew, current.zone); else select.onZone(current.zone); };
-        markers.set(piece.id, new lib.Marker({ element: button, anchor: 'bottom', offset: [piece.crew ? 35 + (piece.offset ?? 0) * 42 : (piece.offset ?? 0) * 48, piece.crew ? -8 : 8] }).setLngLat(piece.at).addTo(map));
-      } else markers.get(piece.id)!.setLngLat(piece.at);
+        markers.set(piece.id, new lib.Marker({ element: button, anchor: 'bottom', offset: screenOffset(piece) }).setLngLat(piece.at).addTo(map));
+      } else markers.get(piece.id)!.setLngLat(piece.at).setOffset(screenOffset(piece));
       if (!lowPower && !lost) load(piece.asset);
     }
     map.triggerRepaint();
@@ -116,7 +122,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
       projection.fromArray(options.defaultProjectionData.mainMatrix);
       // Keep GPU coordinates near zero; global Mercator floats jitter at street zoom.
       const center = map.getCenter(), canvas = map.getCanvas();
-      const view = [center.lng, center.lat, map.getZoom(), map.getPitch(), map.getBearing(), canvas.width, canvas.height];
+      const view = [center.lng, center.lat, map.getZoom(), map.getPitch(), map.getBearing(), canvas.width, canvas.height, canvas.clientWidth, canvas.clientHeight];
       if (view.some((value, i) => value !== previousView[i])) { previousView = view; viewRevision++; }
       const origin = lib.MercatorCoordinate.fromLngLat(center, 0);
       const delta = Math.min(clock.getDelta(), .05);
@@ -149,7 +155,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         const offset = piece.offset ?? 0;
         if (!instance.layout || instance.layout.view !== viewRevision || instance.layout.lng !== at[0] || instance.layout.lat !== at[1] || instance.layout.offset !== offset) {
           const point = map.project(at);
-          if (piece.crew) { point.x += 35 + offset * 42; point.y -= 8; } else { point.x += offset * 48; point.y += 8; }
+          const [offsetX,offsetY]=screenOffset(piece);point.x+=offsetX;point.y+=offsetY;
           const lngLat = map.unproject(point);
           const anchor = lib.MercatorCoordinate.fromLngLat(lngLat, 0);
           const metersPerPixel = 40075016.686 * Math.cos(lngLat.lat * Math.PI / 180) / (512 * 2 ** map.getZoom());

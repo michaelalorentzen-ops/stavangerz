@@ -7,7 +7,7 @@ import type { Map as LibreMap, GeoJSONSource, StyleSpecification } from 'maplibr
 const BASE = '/world/basemap';
 export const MAP_ATTRIBUTION = '© OpenStreetMap-bidragsytere (ODbL) · © Kartverket · © NIBIO AR5';
 export const COLORS = {
-  sea: '#102b39', land: '#344138', home: '#ffe08a', owned: '#6fd08a', faction: '#a98be0', enemy: '#e0588f', zombie: '#d8462f', hq: '#e2b84a', wonder: '#7fd7e8',
+  sea: '#173642', land: '#49544a', home: '#ffe08a', owned: '#6fd08a', faction: '#a98be0', enemy: '#e0588f', zombie: '#d8462f', hq: '#e2b84a', wonder: '#7fd7e8',
 };
 
 export function gameStyle(): StyleSpecification {
@@ -24,18 +24,19 @@ export function gameStyle(): StyleSpecification {
       { id: 'sea', type: 'background', paint: { 'background-color': COLORS.sea } },
       { id: 'land', type: 'fill', source: 'land', paint: { 'fill-color': COLORS.land } },
       { id: 'landuse', type: 'fill', source: 'landuse', paint: {
-        'fill-color': ['match', ['get', 'k'], 'residential', '#41483d', 'industry', '#424747', 'farm', '#3e4936', 'forest', '#293f33', 'grass', '#3b4c38',
-          'heath', '#424b37', 'wetland', '#304844', 'sand', '#5c5b48', 'rock', '#4d534c', 'water', '#153644', '#344138'],
+        'fill-color': ['match', ['get', 'k'], 'residential', '#596055', 'industry', '#515955', 'farm', '#566145', 'forest', '#344d3c', 'grass', '#4a6048',
+          'heath', '#62634a', 'wetland', '#3b5950', 'sand', '#83795c', 'rock', '#67716a', 'water', '#254650', '#49544a'],
         'fill-opacity': .95 } },
-      { id: 'coast', type: 'line', source: 'land', paint: { 'line-color': '#6a928b', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, .6, 15, 2], 'line-blur': 1.5 } },
+      { id: 'coast', type: 'line', source: 'land', paint: { 'line-color': '#a0b4a0', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, .6, 15, 2], 'line-blur': .35 } },
       { id: 'roads-minor', type: 'line', source: 'roads', minzoom: 12.5, filter: ['in', ['get', 'c'], ['literal', ['minor', 'track']]], paint: {
-        'line-color': '#718071', 'line-width': ['interpolate', ['linear'], ['zoom'], 12.5, .4, 16, 3], 'line-dasharray': ['case', ['==', ['get', 'c'], 'track'], ['literal', [2, 2]], ['literal', [1, 0]]] } },
+        'line-color': '#84917b', 'line-width': ['interpolate', ['linear'], ['zoom'], 12.5, .4, 16, 3], 'line-dasharray': ['case', ['==', ['get', 'c'], 'track'], ['literal', [2, 2]], ['literal', [1, 0]]] } },
       { id: 'roads-medium', type: 'line', source: 'roads', minzoom: 10.5, filter: ['==', ['get', 'c'], 'medium'], paint: {
-        'line-color': '#899082', 'line-width': ['interpolate', ['linear'], ['zoom'], 10.5, .5, 16, 5] } },
+        'line-color': '#a0a18c', 'line-width': ['interpolate', ['linear'], ['zoom'], 10.5, .5, 16, 5] } },
+      { id: 'roads-major-casing', type: 'line', source: 'roads', filter: ['==', ['get', 'c'], 'major'], paint: {'line-color':'#283b38','line-width':['interpolate',['linear'],['zoom'],9,1.6,16,9.5],'line-opacity':.75} },
       { id: 'roads-major', type: 'line', source: 'roads', filter: ['==', ['get', 'c'], 'major'], paint: {
-        'line-color': '#b3ac8c', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, .6, 16, 7] } },
+        'line-color': '#c2b999', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, .6, 16, 7] } },
       { id: 'buildings', type: 'fill-extrusion', source: 'buildings', minzoom: 13.5, paint: {
-        'fill-extrusion-color': '#70786b', 'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13.5, 0, 15, ['get', 'h']],
+        'fill-extrusion-color': '#9a9b83', 'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13.5, 0, 15, ['get', 'h']],
         'fill-extrusion-opacity': .88 } },
     ],
   };

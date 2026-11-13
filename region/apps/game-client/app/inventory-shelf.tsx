@@ -13,6 +13,7 @@ import { GEAR_CATALOG, gearItemName, knownGearItems, type GearItem, type GearPla
 import { resourceName } from '../../../packages/gameplay/src/region/engine';
 import { CONTENT } from '../../../packages/world-data/src/content';
 import './inventory-shelf.css';
+import {ItemArt,hasItemArt} from './item-art';
 
 export interface InventoryShelfProps {
   state: RegionState;
@@ -87,28 +88,27 @@ export function InventoryShelf({ state, world, plan, onHelp }: InventoryShelfPro
   return <section className="ishelf" aria-label="Lager og utstyr">
     <header className="ishelf-header"><div><p className="ishelf-eyebrow">FORSYNINGER / INVENTAR</p><h2>Alt dere har å bygge på</h2></div><span className="ishelf-readonly">Lageroversikt</span></header>
     <div className="ishelf-categories" role="group" aria-label="Lagerkategori">{CATEGORIES.map(([key, label, Icon]) => <button type="button" key={key} aria-pressed={category === key} onClick={() => changeCategory(key)}><Icon aria-hidden="true" />{label}</button>)}</div>
-    <div className="ishelf-layout"><div className="ishelf-rack"><div className="ishelf-grid" aria-label={CATEGORIES.find(c => c[0] === category)?.[1]}>{shown.map(entry => {
+    <div className="ishelf-layout"><div className="ishelf-rack"><div className={`ishelf-grid ${shown.length>0&&shown.length<=6?'ishelf-small-batch':''}`} aria-label={CATEGORIES.find(c => c[0] === category)?.[1]}>{shown.map(entry => {
       const Icon = entry.icon;
       const held = entry.gear ? reservation(entry.gear) : undefined;
       const locked = entry.gear ? locks(entry.gear).length > 0 : false;
       const carried = entry.gear?.location.kind === 'carried';
       const lost = entry.gear?.location.kind === 'lost';
       return <button type="button" key={entry.id} className={`ishelf-tile ishelf-${entry.family}${lost ? ' ishelf-lost' : ''}`} aria-pressed={selected?.id === entry.id} aria-controls={detailId} aria-label={`${entry.name}, ${number(entry.count)}${lost ? ', tapt' : held ? ', reservert' : carried ? ', båret' : ''}${locked ? ', manuelt låst' : ''}`} title={entry.name} onClick={() => setSelectedId(entry.id)}>
-        <span className="ishelf-item-icon"><Icon aria-hidden="true" /></span><strong>{number(entry.count)}</strong><span className="ishelf-item-name">{entry.name}</span>
+        <span className="ishelf-item-icon">{hasItemArt(entry.resource??entry.gear?.kind)?<ItemArt id={(entry.resource??entry.gear?.kind)!}/>:<Icon aria-hidden="true" />}</span><strong>{number(entry.count)}</strong><span className="ishelf-item-name">{entry.name}</span>
         <span className="ishelf-markers">{held && <span title="Reservert i dagsplanen"><CircleDot aria-hidden="true" /></span>}{carried && <span title="Båret av person"><Backpack aria-hidden="true" /></span>}{locked && <span title="Manuelt låst"><LockKeyhole aria-hidden="true" /></span>}{lost && <span>Tapt</span>}</span>
       </button>;
     })}</div>{!entries.length && <p className="ishelf-empty">Ingen kjente gjenstander i denne kategorien ennå.</p>}
-      <nav className="ishelf-pager" aria-label="Lagersider"><button type="button" aria-label="Forrige lagerside" disabled={currentPage === 0} onClick={() => { setPage(currentPage - 1); setSelectedId(undefined); }}><ArrowLeft aria-hidden="true" /></button><span aria-live="polite">Side {currentPage + 1} / {pages}<small>{entries.length} varetyper og gjenstander</small></span><button type="button" aria-label="Neste lagerside" disabled={currentPage + 1 >= pages} onClick={() => { setPage(currentPage + 1); setSelectedId(undefined); }}><ArrowRight aria-hidden="true" /></button></nav>
-      <p className="ishelf-legend"><Backpack aria-hidden="true" /> Båret <CircleDot aria-hidden="true" /> Reservert <LockKeyhole aria-hidden="true" /> Låst valg</p>
+      {pages>1&&<nav className="ishelf-pager" aria-label="Lagersider"><button type="button" aria-label="Forrige lagerside" disabled={currentPage === 0} onClick={() => { setPage(currentPage - 1); setSelectedId(undefined); }}><ArrowLeft aria-hidden="true" /></button><span aria-live="polite">Side {currentPage + 1} / {pages}<small>{entries.length} varetyper og gjenstander</small></span><button type="button" aria-label="Neste lagerside" disabled={currentPage + 1 >= pages} onClick={() => { setPage(currentPage + 1); setSelectedId(undefined); }}><ArrowRight aria-hidden="true" /></button></nav>}
+      {shown.some(entry=>entry.gear)&&<p className="ishelf-legend"><Backpack aria-hidden="true" /> Båret <CircleDot aria-hidden="true" /> Reservert <LockKeyhole aria-hidden="true" /> Låst valg</p>}
     </div>
-    <aside id={detailId} className={`ishelf-detail ishelf-${selected?.family ?? 'technical'}`} aria-label="Valgt gjenstand" aria-live="polite">{selected ? <><div className="ishelf-detail-top"><span className="ishelf-detail-icon"><SelectedIcon aria-hidden="true" /></span><span className="ishelf-eyebrow">{item ? 'PERSONLIG UTSTYR' : category === 'equipment' ? 'FELLES UTSTYR' : 'SENTRALLAGER'}</span></div><h3>{selected.name}</h3><p className="ishelf-quantity">{number(selected.count)} <small>{location?.kind === 'lost' ? 'tilgjengelig · tapt gjenstand' : item ? 'gjenstand' : 'på lager'}</small></p>
+    <aside id={detailId} className={`ishelf-detail ishelf-${selected?.family ?? 'technical'}`} aria-label="Valgt gjenstand" aria-live="polite">{selected ? <><div className="ishelf-detail-top"><span className="ishelf-detail-icon">{hasItemArt(selected.resource??selected.gear?.kind)?<ItemArt id={(selected.resource??selected.gear?.kind)!}/>:<SelectedIcon aria-hidden="true" />}</span><span className="ishelf-eyebrow">{item ? 'PERSONLIG UTSTYR' : category === 'equipment' ? 'FELLES UTSTYR' : 'SENTRALLAGER'}</span></div><h3>{selected.name}</h3><p className="ishelf-quantity">{number(selected.count)} <small>{location?.kind === 'lost' ? 'tilgjengelig · tapt gjenstand' : item ? 'gjenstand' : 'på lager'}</small></p>
       <p className="ishelf-description">{item ? GEAR_CATALOG[item.kind]?.description ?? 'Utstyr registrert fra en tidligere lagring.' : resource?.help ?? resource?.decays ?? (category === 'supplies' ? 'Forbruksvare til gruppen og planlagte oppdrag.' : category === 'materials' ? 'Brukes til bygging, reparasjon og utvikling.' : 'Felles utstyr til transport, drift og planlagte oppdrag.')}</p>
       {location && <div className="ishelf-facts"><p><MapPin aria-hidden="true" /><span>{location.kind === 'stored' ? `Lagret i ${zoneName(location.zoneId)}` : location.kind === 'carried' ? `Bæres av ${personName(location.survivorId)}` : `Tapt dag ${location.day}${location.zoneId ? ` ved ${zoneName(location.zoneId)}` : ''}`}</span></p>
         {location.kind === 'carried' && <>{location.atZoneId && <p>Registrert ved {zoneName(location.atZoneId)}</p>}{location.missionId && <p>Bundet til pågående oppdrag{location.targetZoneId ? ` mot ${zoneName(location.targetZoneId)}` : ''}.</p>}{location.returnDay !== undefined && <p>Forventet retur dag {location.returnDay}{location.returnToZoneId ? ` til ${zoneName(location.returnToZoneId)}` : ''}.</p>}</>}
         {held && <p><CircleDot aria-hidden="true" /><span>Reservert i dagsplanen til {personName(held.survivorId)}.</span></p>}{lockedBy.length > 0 && <p><LockKeyhole aria-hidden="true" /><span>Manuelt låst for {lockedBy.map(personName).join(', ')}.</span></p>}
         {location.kind === 'stored' && !held && <p>På lager. Kan brukes av crew som faktisk har tilgang til stedet.</p>}
       </div>}
-      {!item && <p className="ishelf-note">Oppdragsplanen kontrollerer kostnader og reservasjoner før døgnet starter.</p>}
       {onHelp && <button type="button" className="ishelf-help" onClick={() => onHelp(selected.resource ? `resource:${selected.resource}` : 'gear')}><CircleHelp aria-hidden="true" />Les i håndboka</button>}
     </> : <><Package aria-hidden="true" /><h3>Plass til nye funn</h3><p className="ishelf-description">Rapportert utstyr vises her når gruppen finner det.</p></>}</aside></div>
   </section>;

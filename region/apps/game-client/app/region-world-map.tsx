@@ -42,10 +42,13 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
       libRef.current = lib;
       lib.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
       const home = index.byId.get(state.homeZoneId)?.at ?? [5.73, 58.97];
-      map = new lib.Map({ container: ref.current, canvasContextAttributes: { antialias: true }, center: home, zoom: 14, pitch: 35, minZoom: 9, maxZoom: 17.5, maxPitch: 60, dragRotate: true, attributionControl: false, style: gameStyle() });
+      map = new lib.Map({ container: ref.current, canvasContextAttributes: { antialias: true }, center: home, zoom: 14.2, pitch: 40, minZoom: 9, maxZoom: 17.5, maxPitch: 60, dragRotate: true, attributionControl: false, style: gameStyle() });
       map.addControl(new lib.AttributionControl({ compact: true, customAttribution: MAP_ATTRIBUTION }));
       map.addControl(new lib.NavigationControl({ visualizePitch: true, showZoom: false }), 'bottom-right');
       map.on('load', () => {
+        // Frame the camp above centre so its land and approaches occupy the playable area.
+        // This is an initial composition only; later turns never move the player's camera.
+        map!.easeTo({center:home,zoom:14.2,pitch:40,offset:[window.innerWidth<=820?8:42,window.innerWidth<=820?-15:-55],duration:0});
         attachBuildings(map!);
         // MapLibre rebuilds the style after context restoration; feature-state
         // must be pushed again from this exact public snapshot.
