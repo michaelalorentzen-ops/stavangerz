@@ -38,3 +38,75 @@
 .cmd-plan-details{margin-top:9px;padding-top:7px;border-top:1px solid var(--cmd-line)}.cmd-plan-details>summary{font-size:11px;color:var(--cmd-teal);cursor:pointer;min-height:22px}.cmd-plan-details>summary:focus-visible{outline:2px solid var(--cmd-amber);outline-offset:2px}
 .cmd-day-plan .cmd-section-title{margin:16px 0 10px}.cmd-day-plan .cmd-order{padding:12px}.cmd-day-plan .cmd-plan-crew{margin:8px 0}.cmd-day-plan .cmd-order-actions{padding-top:8px;margin-top:8px}.cmd-day-plan .cmd-order p{margin:5px 0}
 @media(max-width:480px){.cmd-confirm-facts{font-size:10px;gap:4px 8px}.cmd-confirm-actions{gap:8px}.cmd-confirm-actions .cmd-primary{min-height:42px}.cmd-zone-card .cmd-zone-name{font-size:15px}.cmd-zone-card>header>button{font-size:10px!important;min-height:34px;padding:6px!important}.cmd-plan-summary .cmd-plan-stats span{width:100%}}
+/* Focused order surface: place, people and time share one reading path. */
+.cmd-composer{font-size:14px}
+.cmd-composer .cmd-composer-heading{padding:0 32px 12px 2px;margin-bottom:8px}
+.cmd-composer .cmd-kicker{font-size:12px;letter-spacing:.08em;margin-bottom:5px}
+.cmd-composer .cmd-heading-main{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cmd-composer .cmd-heading-main>div{min-width:0}
+.cmd-composer .cmd-heading-main h2{font-size:23px;margin:0;line-height:1.2}
+.cmd-composer .cmd-heading-place{display:flex;align-items:center;gap:5px;color:var(--cmd-teal);font-size:14px;margin:5px 0 0;line-height:1.3;overflow-wrap:anywhere}
+.cmd-composer .cmd-heading-place svg{flex:none}
+.cmd-composer button{min-height:44px;font-size:12px}
+.cmd-composer .cmd-heading-main>button{flex:none;padding:7px 10px}
+.cmd-composer .cmd-scroll{padding:0 2px 12px}
+.cmd-composer .cmd-mission-brief{padding:0 0 12px;margin:0 0 4px;border-bottom:1px solid var(--cmd-line)}
+.cmd-composer .cmd-target{font-size:12px;margin:6px 0 10px;gap:4px}
+.cmd-composer .cmd-target select{min-height:44px;font-size:14px}
+.cmd-composer .cmd-mission-result{display:flex;align-items:flex-start;gap:12px}
+.cmd-composer .cmd-mission-result>p{flex:1;font-size:13px;line-height:1.4;margin:5px 0 10px;color:var(--cmd-ink)}
+.cmd-composer .cmd-risk{font-size:12px!important;letter-spacing:0;text-transform:none;background:none;padding:5px 0;color:var(--cmd-teal)}
+.cmd-composer .cmd-risk-medium{color:#f1cc82}.cmd-composer .cmd-risk-high{color:#f2b2a4}
+.cmd-composer .cmd-timeline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;list-style:none;padding:0;margin:0}
+.cmd-composer .cmd-timeline>li{position:relative;display:grid;gap:2px;min-width:0}
+.cmd-composer .cmd-timeline>li:not(:last-child):after{content:'→';position:absolute;right:-15px;top:14px;color:var(--cmd-muted)}
+.cmd-composer .cmd-timeline span{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--cmd-muted)}
+.cmd-composer .cmd-timeline b{font-size:15px;font-weight:600;color:var(--cmd-ink)}
+.cmd-composer .cmd-timeline .is-local b{font-size:13px;color:var(--cmd-muted);font-weight:400}
+.cmd-composer .cmd-return-plan{font-size:12px;color:var(--cmd-muted);margin:8px 0 0;line-height:1.4}
+.cmd-composer .cmd-crew-section{border:0;background:none;margin:0;padding:0}
+.cmd-composer .cmd-crew-section>header{display:flex;align-items:center;gap:8px;height:auto;min-height:38px;padding:0;background:none;border:0;position:static}
+.cmd-composer .cmd-crew-section h3{font-size:14px;margin:0}.cmd-composer .cmd-crew-section>header>svg{color:var(--cmd-teal)}
+.cmd-composer .cmd-crew-section>header>span{margin-left:auto;font-size:12px;color:var(--cmd-muted)}
+.cmd-composer .cmd-crew-list{gap:0;margin:0 0 8px}
+.cmd-composer .cmd-person{display:grid;grid-template-columns:17px 32px minmax(0,1fr) 63px;gap:9px;min-height:61px;padding:7px 5px;border:0;border-bottom:1px solid var(--cmd-line);border-radius:0;background:none}
+.cmd-composer .cmd-person.is-selected{background:#244038;box-shadow:inset 2px 0 var(--cmd-teal)}
+.cmd-composer .cmd-person.is-unavailable{opacity:.65}
+.cmd-composer .cmd-person .cmd-portrait{width:32px;height:38px}
+.cmd-composer .cmd-person input{margin:0;width:17px;height:17px}
+.cmd-composer .cmd-person strong{font-size:14px;line-height:1.3}
+.cmd-composer .cmd-person strong>small{display:inline;margin-left:7px;font-weight:400;color:var(--cmd-muted)}
+.cmd-composer .cmd-person small{font-size:12px;line-height:1.35}
+.cmd-composer .cmd-person-identity>small{margin-top:2px}
+.cmd-composer .cmd-person-condition{display:grid;gap:2px;align-self:center;font-size:12px;line-height:1.35;color:var(--cmd-muted)}
+.cmd-composer .cmd-person-condition>span{display:flex;justify-content:space-between;gap:5px}
+.cmd-composer .cmd-person-condition b{font-weight:500;color:var(--cmd-ink)}
+.cmd-composer .cmd-cost-details,.cmd-composer .cmd-details{border:0;border-top:1px solid var(--cmd-line);border-radius:0;margin:0;background:none}
+.cmd-composer .cmd-cost-details>summary,.cmd-composer .cmd-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:9px 2px;cursor:pointer;font-size:13px;font-weight:500;line-height:1.4}
+.cmd-composer .cmd-cost-details>summary:after{content:'+';margin-left:auto;color:var(--cmd-teal)}
+.cmd-composer .cmd-cost-details[open]>summary:after{content:'−'}
+.cmd-composer .cmd-details>summary>span{display:none}
+.cmd-composer .cmd-cost-details .cmd-consequences{border:0;background:none;padding:0 2px 12px}
+.cmd-composer .cmd-cost-details h3{font-size:14px;margin:4px 0}.cmd-composer .cmd-cost-details section>header{display:none}
+.cmd-composer .cmd-cost-details :is(dt,dd,p){font-size:12px}
+.cmd-composer .cmd-details :is(select,input[type=number],.ce-lock){min-height:44px}
+.cmd-composer .cmd-details .ce :is(p,small,select,button,.ce-label,.ce-person-status,.ce-plan-status,.ce-stock-grid li){font-size:12px}
+.cmd-composer .cmd-confirm{gap:7px;padding:9px 2px max(8px,env(safe-area-inset-bottom))}
+.cmd-composer .cmd-confirm-facts{display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:1.4}
+.cmd-composer .cmd-confirm-return{font-size:12px;color:var(--cmd-muted)}
+.cmd-composer .cmd-confirm-home{white-space:normal;align-items:flex-start;color:var(--cmd-ink);font-size:13px;line-height:1.4}
+.cmd-composer .cmd-confirm-home>svg{margin-top:2px}
+.cmd-composer .cmd-confirm-home b{font-weight:600;color:var(--cmd-ink)}
+.cmd-composer .cmd-confirm-home small{display:block;color:var(--cmd-muted);font-size:12px;line-height:1.4}
+.cmd-composer .cmd-confirm-load{font-size:12px}
+.cmd-composer .cmd-confirm .cmd-primary{min-height:44px}
+@media(max-width:480px){
+  .cmd-composer .cmd-heading-main{gap:8px}.cmd-composer .cmd-heading-main>button{max-width:92px;font-size:12px;padding:6px}
+  .cmd-composer .cmd-heading-main>button>svg{display:none}.cmd-composer .cmd-heading-main h2{font-size:21px}
+  .cmd-composer .cmd-person{gap:7px;grid-template-columns:17px 30px minmax(0,1fr) 62px;min-height:62px}
+  .cmd-composer .cmd-person .cmd-portrait{width:30px;height:36px}
+  .cmd-composer .cmd-person strong>small{display:block;margin:1px 0 0}
+  .cmd-composer .cmd-person-identity>small{margin-top:1px}
+  .cmd-composer .cmd-confirm-actions .cmd-primary{font-size:13px;min-height:44px}
+}
+.cmd-composer .cmd-details .ce-auto{min-height:44px}
