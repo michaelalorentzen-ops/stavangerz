@@ -15,7 +15,7 @@ import { reserveMissionRadio, communicationsStatus, shouldEscalateField, fieldMa
 import { centralCommunity, centralAvailablePopulation, regionalDay, regionalWorkDay, regionalSurvivorIds, regionalGuardFor, regionalOverrun, regionalL1 } from './administration';
 import { observeDiscoveries, deliverDiscoveryReports, maintainDiscoveries, discoveryOrderPreview, executeDiscoveryOrder } from './discoveries';
 import {
-  GEAR_CATALOG, crewGearAway, departGear, discoverSearchGear, equippedGear, gearDamageMultiplier, gearWeapon, gearWorkMultiplier,
+  GEAR_CATALOG, crewGearAway, departGear, discoverSearchGear, equippedGear, gearDamageMultiplier, gearWeapon, gearWorkMultiplier, gearStateFor,
   moveGearDepot, planGearForOrders, settleGearReturns, type GearPlan, type GearPreferences,
 } from './gear';
 import {
@@ -745,7 +745,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
         hurt(state, crew, danger > 1 ? Math.min(35, danger * 6) : danger > .3 ? 3 : 0, rng, lines, zone.name);
         if (z.zombies && danger > .2) { const lost = Math.min(z.zombies, Math.round(crew.length * rng() * 2)); z.zombies -= lost; killed += lost; }
         lines.push({ tone: 'good', title: `Søk i ${zone.name}`, text: `${names} fant ${stockText(found) || 'lite av verdi'}. ${Math.round(z.searched / total * 100)} % gjennomsøkt.`, zoneId: zone.id });
-        if ((zone.measures?.homes ?? 0) > 5 && rng() < hours * R.recruitChancePerSearchHour) recruit(state, lines, `${names} fant noen som gjemte seg i ${zone.name}.`, rng);
+        if ((zone.measures?.homes ?? 0) > 5 && rng() < hours * R.recruitChancePerSearchHour) recruit(state, lines, `${names} fant noen som gjemte seg i ${zone.name}.`, rng, { zoneId: zone.id, missionId: mission.id });
         break;
       }
       case 'claim': {
@@ -1046,7 +1046,12 @@ export function resumeRegionDay(
   if (spoiled >= 3) lines.push({ tone: 'warn', title: `${Math.round(spoiled)} mat råtnet`, text: 'Fersk mat holder ikke. Salting, jordkjeller og lager hjelper.' });
 
   bittenDay(state, lines, rngFor('bitten'));
+  const knownSurvivorIds = new Set(state.survivors.map(person => person.id));
   societyDay(state, world, lines, rngFor('society'));
+  const promoted = state.survivors.filter(person => !knownSurvivorIds.has(person.id));
+  if (promoted.length) ensureMobility(state);
+  for (const person of promoted) if (person.alive && !person.left) state.crewPositions![person.id] = { kind: 'zone', zoneId: state.homeZoneId };
+  if (promoted.length) state.gear = gearStateFor(state);
   const regionalFed = regionalDay(state, world, lines, rngFor('regional'));
   researchDay(state, researchRate(state, crewResearch), lines);
 
@@ -1365,20 +1370,37 @@ function hurt(state: RegionState, crew: RegionSurvivor[], amount: number, rng: (
   }
 }
 
-export function recruit(state: RegionState, lines: ReportLine[], text: string, rng: () => number) {
+export function recruit(state: RegionState, lines: ReportLine[], text: string, rng: () => number, arrival: { zoneId: string; missionId?: string } = { zoneId: state.homeZoneId }) {
   const taken = new Set(state.survivors.map(s => s.name));
   const options = RECRUIT_POOL.filter(p => !taken.has(p.name));
   if (living(state).length < R.crewCap && options.length && rng() < .55) {
     const p = options[Math.floor(rng() * options.length)];
     state.survivors.push({ ...p, skills: { ...p.skills }, traits: [...(p.traits ?? [])], id: `r${state.day}-${state.survivors.length}`, joinedDay: state.day });
+    const joined = state.survivors.at(-1)!;
+    if (state.crewPositions || arrival.zoneId !== state.homeZoneId) {
+      ensureMobility(state);
+      state.crewPositions![joined.id] = { kind: 'zone', zoneId: arrival.zoneId };
+    }
+    state.gear = gearStateFor(state);
+    const mission = arrival.missionId && state.crewMissions?.[arrival.missionId];
+    if (mission) {
+      mission.survivorIds.push(joined.id);
+      state.gear.missions[joined.id] = { orderId: mission.orderId, targetZoneId: arrival.zoneId, returnDay: 1e9, returnToZoneId: mission.returnZoneId ?? state.homeZoneId };
+      const weapon = state.gear.items.find(item => item.id === `starter:${joined.id}`);
+      if (weapon) weapon.location = { kind: 'carried', survivorId: joined.id, missionId: mission.id, targetZoneId: arrival.zoneId, returnDay: 1e9, returnToZoneId: mission.returnZoneId ?? state.homeZoneId };
+    }
     state.morale = Math.min(100, state.morale + R.morale.recruit);
     lines.push({ tone: 'good', title: `${p.name} ble med`, text: `${text} ${p.role}: ${p.about}` });
     return;
   }
   const n = 1 + Math.floor(rng() * 3);
   state.population.adults += n;
-  if (rng() < .4) state.population.children += 1;
-  lines.push({ tone: 'good', title: `${n} nye i leiren`, text });
+  const children = rng() < .4 ? 1 : 0;
+  state.population.children += children;
+  const mission = arrival.missionId && state.crewMissions?.[arrival.missionId];
+  if (mission) { mission.passengers ??= { adults: 0, children: 0, elderly: 0, sick: 0 }; mission.passengers.adults += n; mission.passengers.children += children; }
+  else if (arrival.zoneId !== state.homeZoneId && state.mobility) { const residents = (state.mobility.depotResidents ??= {})[arrival.zoneId] ??= { adults: 0, children: 0, elderly: 0, sick: 0 }; residents.adults += n; residents.children += children; }
+  lines.push({ tone: 'good', title: `${n} nye overlevende`, text });
 }
 
 function migrate(state: RegionState, world: RegionWorld, noise: Record<string, number>, lines: ReportLine[]) {
