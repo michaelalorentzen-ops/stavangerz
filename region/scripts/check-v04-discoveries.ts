@@ -144,6 +144,13 @@ assert.equal(torDead.gameOver, undefined, 'An optional person story never gates 
 const neverMet = fresh(); neverMet.survivors.find(p => p.id === 'tor')!.alive = false;
 observeDiscoveries(neverMet, world, { source: 'search', zoneId: workshop.zoneId, reporterIds: ['ingrid'], delivery: 'returned' }, lines);
 assert.deepEqual(visibleDiscoveries(neverMet), [], 'An unseen, dead-person story is not exposed in the journal');
+const lateWitness = fresh(); field(lateWitness, 'ingrid', workshop.zoneId);
+observeDiscoveries(lateWitness, world, { source: 'search', zoneId: workshop.zoneId, reporterIds: ['ingrid'], delivery: 'none' }, lines);
+lateWitness.survivors.find(p => p.id === 'tor')!.alive = false;
+maintainDiscoveries(lateWitness, lines);
+assert.deepEqual(visibleDiscoveries(lateWitness), [], 'An unreported person story stays private even after its bound person dies');
+field(lateWitness, 'ingrid', lateWitness.homeZoneId); deliverDiscoveryReports(lateWitness, world, lines);
+assert.equal(lateWitness.discoveries!.entries['tor-repair-notes'].status, 'lost', 'A living witness can preserve the note, but cannot resurrect a dead person quest');
 
 // Existing active unique places preserve their effects; newly claimed sites follow D27 installation stages.
 const oldWonders = fresh();

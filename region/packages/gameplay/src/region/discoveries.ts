@@ -97,7 +97,14 @@ function clue(state: RegionState, poi: RegionPoi, kind: DiscoveryEntry['kind'], 
   return entry;
 }
 function publish(state: DiscoveryRegionState, observation: DiscoveryObservation, lines: ReportLine[]) {
-  const r = registry(state), entry = observation.entry, old = r.entries[entry.id];
+  const r = registry(state), old = r.entries[observation.entry.id];
+  let entry = observation.entry;
+  // A surviving witness may bring home a lost person's note. It stays known,
+  // but must not create an actionable person-bound quest after that person's death.
+  if (entry.boundPersonId && !alive(state, entry.boundPersonId) && !['resolved', 'lost'].includes(entry.status)) {
+    entry = structuredClone(entry); entry.status = 'lost'; entry.revision++; entry.choices = [];
+    note(entry, state.day, 'Notatet kom fram med en levende avsender, men Tor kan ikke lenger følge sporet. Den valgfrie historien er avsluttet; vanlig progresjon er fortsatt tilgjengelig.');
+  }
   if (old && old.revision >= entry.revision) {
     old.sources = [...new Set([...old.sources, ...entry.sources])];
     return;
@@ -110,7 +117,7 @@ function publish(state: DiscoveryRegionState, observation: DiscoveryObservation,
     tor.loyalty = Math.max(0, Math.min(100, (tor.loyalty ?? 60) + observation.loyalty));
   }
   const latest = entry.notes.at(-1)!;
-  line(lines, entry, entry.status === 'resolved' ? `Avsluttet: ${entry.title}` : `Feltnotat: ${entry.title}`, latest.text, entry.status === 'resolved' ? 'good' : 'info');
+  line(lines, entry, entry.status === 'resolved' ? `Avsluttet: ${entry.title}` : `Feltnotat: ${entry.title}`, latest.text, entry.status === 'resolved' ? 'good' : entry.status === 'lost' ? 'warn' : 'info');
   if (!state.memory.some(m => m.text === latest.text)) state.memory.push({ day: state.day, text: latest.text });
 }
 function receive(state: DiscoveryRegionState, observation: DiscoveryObservation, evidence: Pick<DiscoveryEvidence, 'delivery' | 'radioVerified'>, lines: ReportLine[]) {
