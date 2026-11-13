@@ -107,6 +107,18 @@ if (typeof integratedWorkDay === 'function') {
   assert.equal(productive.stock.wood ?? 0, woodBefore, 'Regional finds never teleport to central stock');
   assert.ok((productive.zones[remote.id].building?.hours ?? 0) > 0 || productive.zones[remote.id].upgrades.includes('field'), 'Regional builders advance actual local construction');
   assert.ok((productiveRegion.ledger?.produced.wood ?? 0) > 0, 'Actual delegated loot appears in the local ledger');
+  // Resolve the same late-game community through the authoritative complete-day path.
+  let wholeDay = applyAdministrationCommand(fresh(), world, { kind: 'establish', hqZoneId: remote.id, leaderId: legacy.survivors[1].id }) as AdministrationGame;
+  const wholeRegion = administrations(wholeDay)[0];
+  wholeRegion.residents = { ...zero(), adults: 8 };
+  wholeDay.mobility!.depots[remote.id] = { food: 100, water: 100 };
+  for (const z of Object.values(wholeDay.zones)) z.zombies = 0;
+  wholeDay.factions = []; wholeDay.scheduled = [];
+  const originalDay = wholeDay.day;
+  const completed = engine.endDay(wholeDay, world, []);
+  assert.equal(completed.state.day, originalDay + 1);
+  assert.equal(administrations(completed.state)[0].ledger?.day, originalDay, 'Regional settlement is actually part of the day transaction');
+  assert.ok((regionalStock(completed.state, administrations(completed.state)[0]).food ?? 0) < 100, 'Real complete-day path consumes the local depot');
   console.log('Regional work integration: finite scavenging, local construction and physical depot delivery passed.');
 } else console.log('Regional work integration deferred: groundwork branch does not yet export core workDay. Use REQUIRE_REGIONAL_WORK=1 on integration.');
 console.log('v0.4 administration: commands, legacy, physical people/stock, disjoint flows/work, budgets, idempotence and leader loss passed.');

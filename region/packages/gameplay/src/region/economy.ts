@@ -55,6 +55,7 @@ export function dailyFlows(state: RegionState, world: RegionWorld): Flows {
   if (delegated.length) {
     const regions = new Set(delegated.map(r => r.l1Id));
     state = { ...state, population: centralPopulation(state), administration: undefined, mobility: undefined,
+      wonders: Object.fromEntries(Object.entries(state.wonders ?? {}).filter(([, w]) => !regions.has(regionalL1(world, w.zoneId) ?? ''))),
       zones: Object.fromEntries(Object.entries(state.zones).map(([id, z]) => [id, regions.has(regionalL1(world, id) ?? '') && z.status === 'controlled' ? { ...z, status: 'scouted' } : z])),
     } as RegionState;
   }

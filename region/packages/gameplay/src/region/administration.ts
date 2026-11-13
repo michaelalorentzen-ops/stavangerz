@@ -20,6 +20,7 @@ export interface RegionalAdministration {
   residents: Population; policy: RegionalPolicy; work: Record<WorkId, number>;
   /** Desired reserves, not a second wallet. Only transport can deliver these goods. */
   budget: Stock; establishedDay: number; ledger?: RegionalLedger; alerts: string[];
+  workDoneDay?: number; workProduction?: Stock;
 }
 export interface AdministrationState { version: 1; regions: Record<string, RegionalAdministration> }
 export type AdministrationGame = RegionState & {
@@ -196,7 +197,7 @@ export function regionalCommunity(state: RegionState, world: RegionWorld, region
   const ids = new Set(regionalSurvivorIds(state).filter(id => atHq(state, id, region.hqZoneId)));
   return { ...state, administration: undefined, mobility: undefined, homeZoneId: region.hqZoneId, hq: undefined, population: { ...region.residents },
     survivors: state.survivors.filter(s => ids.has(s.id)), stock: regionalStock(state, region), work: region.work,
-    wonders: undefined, zones: Object.fromEntries(Object.entries(state.zones).map(([id, z]) => [id, regionalL1(world, id) === region.l1Id ? z : { ...z, status: z.status === 'controlled' ? 'scouted' : z.status }])),
+    wonders: Object.fromEntries(Object.entries(state.wonders ?? {}).filter(([, w]) => regionalL1(world, w.zoneId) === region.l1Id)), zones: Object.fromEntries(Object.entries(state.zones).map(([id, z]) => [id, regionalL1(world, id) === region.l1Id ? z : { ...z, status: z.status === 'controlled' ? 'scouted' : z.status }])),
   } as RegionState;
 }
 export function regionalWork(state: RegionState, world: RegionWorld, region: RegionalAdministration): Record<WorkId, number> {
@@ -220,11 +221,10 @@ export function regionalSupplyRequest(state: RegionState, region: RegionalAdmini
   const stock = regionalStock(state, region);
   return Object.fromEntries(Object.entries(region.budget).map(([id, wanted]) => [id, Math.max(0, wanted - (stock[id] ?? 0))]).filter(([, n]) => Number(n) > 0));
 }
-/** Mutating settlement hook, called once inside the authoritative daily transaction. */
-export function regionalDay(state: RegionState, world: RegionWorld, lines: ReportLine[], rng: () => number = () => .5): string[] {
-  const handled: string[] = [];
+/** Daytime regional work. Persisted receipt prevents checkpoint replay from repeating finite loot or construction. */
+export function regionalWorkDay(state: RegionState, world: RegionWorld, lines: ReportLine[], rng: () => number = () => .5): void {
   for (const region of administrations(state)) {
-    if (region.ledger?.day === state.day) { handled.push(...regionalSurvivorIds(state).filter(id => atHq(state, id, region.hqZoneId))); continue; }
+    if (region.workDoneDay === state.day) continue;
     region.alerts = [];
     const arrivals = (state as AdministrationGame).mobility?.depotResidents?.[region.hqZoneId];
     if (arrivals) {
@@ -262,12 +262,28 @@ export function regionalDay(state: RegionState, world: RegionWorld, lines: Repor
     for (const key of Object.keys(beforeCounters)) if (!(key in local.counters) && (key.startsWith('network:') || key.startsWith('repair:'))) delete state.counters[key];
     for (const [key, value] of Object.entries(local.counters)) state.counters[key] = (state.counters[key] ?? 0) + value - (beforeCounters[key] ?? 0);
     Object.assign(state.barricades, local.barricades); Object.assign(state.networks, local.networks);
+    region.workProduction = Object.fromEntries(Object.entries(local.stock).map(([resource, amount]) => [resource, Math.max(0, amount - (beforeWorkStock[resource] ?? 0))]).filter(([, amount]) => Number(amount) > 0));
+    region.workDoneDay = state.day;
+  }
+}
+
+/** Local food, water and health settle after central society, never against the global wallet. */
+export function regionalDay(state: RegionState, world: RegionWorld, lines: ReportLine[], rng: () => number = () => .5): string[] {
+  regionalWorkDay(state, world, lines, rng);
+  const handled: string[] = [];
+  for (const region of administrations(state)) {
+    if (region.ledger?.day === state.day) { handled.push(...regionalSurvivorIds(state).filter(id => atHq(state, id, region.hqZoneId))); continue; }
+    const leader = state.survivors.find(s => s.id === region.leaderId && s.alive && !s.left);
+    if (!leader) { region.leaderId = undefined; if (!region.alerts.some(a => a.includes('leder'))) region.alerts.push('Ingen regional leder. Bekreft en lokal etterfølger.'); }
+    const local = regionalCommunity(state, world, region);
+    const ids = new Set(world.zones.filter(z => z.level !== 3 || regionalL1(world, z.id) === region.l1Id).map(z => z.id));
+    const regionalWorld = scopeWorld(world, ids);
     const flows = dailyFlows(local, regionalWorld);
     const game = state as AdministrationGame; game.mobility ??= { version: 1, depots: {}, radios: {} };
     const stock = game.mobility.depots[region.hqZoneId] ??= {};
     const flowProduction: Stock = { food: flows.food.produced, water: flows.water.produced, ...flows.other };
     const produced = { ...flowProduction };
-    for (const [resource, amount] of Object.entries(stock)) if (amount > (beforeWorkStock[resource] ?? 0)) produced[resource] = (produced[resource] ?? 0) + amount - (beforeWorkStock[resource] ?? 0);
+    for (const [resource, amount] of Object.entries(region.workProduction ?? {})) produced[resource] = (produced[resource] ?? 0) + amount;
     const consumed: Stock = {}; const shortages: Stock = {};
     for (const [resource, amount] of Object.entries(flowProduction)) stock[resource] = (stock[resource] ?? 0) + amount;
     const consume = (resource: string, amount: number) => { const used = Math.min(stock[resource] ?? 0, Math.max(0, amount)); stock[resource] = Math.max(0, (stock[resource] ?? 0) - used); consumed[resource] = (consumed[resource] ?? 0) + used; shortages[resource] = (shortages[resource] ?? 0) + Math.max(0, amount - used); };
