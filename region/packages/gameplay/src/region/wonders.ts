@@ -5,6 +5,29 @@
  */
 import type { RegionState, RegionWorld, ReportLine } from './types';
 import { controlled, indexWorld } from './engine';
+import { R } from './rules';
+
+export interface WonderInstallation {
+  version: 1;
+  status: 'discovered' | 'secured' | 'operational';
+  /** Which stage was paid; durable across partial work, loss, reload and retry. */
+  paidFor?: string;
+}
+export type WonderHolding = { level: number; zoneId: string; progress: number; installation?: WonderInstallation };
+export const wonderHolding = (state: RegionState, id: string): WonderHolding | undefined => state.wonders?.[id];
+/** Missing metadata is the explicit compatibility rule: old active sites stay active. */
+export const wonderOperational = (holding: WonderHolding): boolean => !holding.installation || holding.installation.status === 'operational';
+export const wonderStatus = (holding: WonderHolding) => holding.installation?.status ?? 'operational';
+
+/** D27 implementation values: finite crew work/cost hypotheses, not final balance. */
+export const WONDER_INSTALLATIONS: Record<string, { survey: { hours: number; cost: Record<string, number> }; operate: { hours: number; cost: Record<string, number> } }> = {
+  cruise: { survey: { hours: 12, cost: { ammo: 6 } }, operate: { hours: 16, cost: { building: 6, parts: 2 } } },
+  utstein: { survey: { hours: 8, cost: {} }, operate: { hours: 12, cost: { building: 6 } } },
+  tower: { survey: { hours: 8, cost: { parts: 1 } }, operate: { hours: 12, cost: { parts: 2, batteries: 2 } } },
+  plane: { survey: { hours: 12, cost: { parts: 2 } }, operate: { hours: 16, cost: { parts: 4 } } },
+  cathedral: { survey: { hours: 8, cost: { building: 1 } }, operate: { hours: 8, cost: { building: 4 } } },
+  arena: { survey: { hours: 16, cost: { ammo: 4 } }, operate: { hours: 16, cost: { building: 8 } } },
+};
 
 export interface WonderEffect {
   shelter?: number; hope?: number; defense?: number; food?: number; medicine?: number; fuel?: number;
@@ -99,7 +122,8 @@ export function wonderZone(world: RegionWorld, def: WonderDef): string | undefin
 }
 
 export const wonderState = (state: RegionState) => (state.wonders ??= {});
-export const ownedWonders = (state: RegionState) => Object.entries(state.wonders ?? {}).filter(([, w]) => w.level >= 0);
+export const knownWonders = (state: RegionState): [string, WonderHolding][] => Object.entries(state.wonders ?? {});
+export const ownedWonders = (state: RegionState) => knownWonders(state).filter(([, w]) => w.level >= 0 && wonderOperational(w));
 
 /** Combined effect of all wonders you hold, at their level. A wonder in a zone you lost gives nothing. */
 export function wonderEffects(state: RegionState): Required<WonderEffect> {
@@ -119,15 +143,18 @@ export function wonderEffects(state: RegionState): Required<WonderEffect> {
   return sum;
 }
 
-/** Make a wonder yours. Called by claiming its zone, or by an event. */
-export function gainWonder(state: RegionState, world: RegionWorld, id: string, lines: ReportLine[], zoneId?: string) {
+/** D27: a claim/event gives a known site, never free operating effects.
+ * legacyActive is only for resolving an already persisted pre-D27 event promise.
+ */
+export function gainWonder(state: RegionState, world: RegionWorld, id: string, lines: ReportLine[], zoneId?: string, legacyActive = false) {
   const def = WONDERS.find(d => d.id === id);
   if (!def || state.wonders?.[id]) return;
   const zone = zoneId ?? wonderZone(world, def);
   if (!zone) return;
-  wonderState(state)[id] = { level: 0, zoneId: zone, progress: 0 };
-  lines.push({ tone: 'good', title: `Unikt sted: ${def.name}`, text: `${def.about} ${def.levels[0].text}`, zoneId: zone });
-  state.memory.push({ day: state.day, text: `${def.name} ble deres.` });
+  const holding: WonderHolding = { level: 0, zoneId: zone, progress: 0, ...(!legacyActive ? { installation: { version: 1 as const, status: 'discovered' as const } } : {}) };
+  wonderState(state)[id] = holding;
+  lines.push({ tone: legacyActive ? 'good' : 'info', title: `Unikt sted: ${def.name}`, text: legacyActive ? `${def.about} ${def.levels[0].text}` : `${def.about} Stedet er oppdaget. Et faktisk crew må undersøke og sikre det, og deretter gjøre det operativt. Ingen anleggseffekter er aktive ennå.`, zoneId: zone });
+  state.memory.push({ day: state.day, text: legacyActive ? `${def.name} ble deres.` : `${def.name} er oppdaget, men ikke satt i drift.` });
 }
 /** Wonders found by holding ground: check the zones you hold. */
 export function discoverWonders(state: RegionState, world: RegionWorld, lines: ReportLine[]) {
@@ -138,17 +165,68 @@ export function discoverWonders(state: RegionState, world: RegionWorld, lines: R
   }
 }
 export function nextWonderLevel(state: RegionState, id: string) {
-  const w = state.wonders?.[id];
+  const w = wonderHolding(state, id);
   const def = WONDERS.find(d => d.id === id);
   if (!w || !def) return undefined;
+  const initial = WONDER_INSTALLATIONS[id];
+  if (w.installation?.status === 'discovered' && initial) return {
+    name: 'Undersøk og sikre', text: 'Et crew må selv undersøke adkomsten og sikre anlegget. Sonetakning alene gjør det ikke operativt.',
+    hours: initial.survey.hours, cost: initial.survey.cost, effect: {},
+  } satisfies WonderLevel;
+  if (w.installation?.status === 'secured' && initial) return {
+    name: 'Gjør anlegget operativt', text: `Et nytt crew-oppdrag klargjør anlegget for «${def.levels[0].name}». Først da blir grunnvirkningene aktive.`,
+    hours: initial.operate.hours, cost: initial.operate.cost, effect: def.levels[0].effect,
+  } satisfies WonderLevel;
   return def.levels[w.level + 1];
 }
+export function wonderWorkCost(state: RegionState, id: string): Record<string, number> {
+  const holding = wonderHolding(state, id), next = nextWonderLevel(state, id);
+  if (!holding || !next || holding.progress > 0) return {};
+  const stage = holding.installation?.status;
+  return stage && stage !== 'operational' && holding.installation?.paidFor === stage ? {} : { ...next.cost };
+}
+/** Adds installation-specific validation to ordinary mission reach/position checks. */
+export function wonderOrderError(state: RegionState, id: string, zoneId: string): string | undefined {
+  const holding = wonderHolding(state, id);
+  if (!holding) return 'Stedet er ikke rapportert oppdaget.';
+  if (holding.zoneId !== zoneId) return 'Anleggsoppdraget må utføres der stedet faktisk er.';
+  const zone = state.zones[zoneId];
+  if (!zone) return 'Sonen finnes ikke i lagringen.';
+  if (!wonderOperational(holding) && zone.status !== 'controlled' && (!zone.intel || zone.intel.day < state.day - 3 || zone.intel.max > R.claimMaxZombies)) {
+    return 'Undersøk og rydd adkomsten først. Sonen må være kontrollert eller ha fersk etterretning om en nesten tom adkomst.';
+  }
+}
 /** Work on the next level. Returns a report line when something happens. */
-export function workOnWonder(state: RegionState, id: string, hours: number, lines: ReportLine[], pay: (cost: Record<string, number>) => void) {
-  const w = state.wonders?.[id];
+export function workOnWonder(state: RegionState, id: string, hours: number, lines: ReportLine[], pay: (cost: Record<string, number>) => void, source: 'crew' | 'population' = 'crew') {
+  const w = wonderHolding(state, id);
   const def = WONDERS.find(d => d.id === id);
   const next = nextWonderLevel(state, id);
   if (!w || !def || !next) return;
+  if (!Number.isFinite(hours) || hours <= 0) return;
+  if (!wonderOperational(w)) {
+    if (source !== 'crew') return;
+    if ((state.zones[w.zoneId]?.zombies ?? Infinity) > R.claimMaxZombies) {
+      lines.push({ tone: 'warn', title: `${def.name}: arbeidet stanset`, text: 'Adkomsten er ikke trygg nok. Et anleggsoppdrag fjerner ikke en horde eller erstatter rydding.', zoneId: w.zoneId });
+      return;
+    }
+    const stage = w.installation!.status;
+    if (w.installation!.paidFor !== stage) { pay(next.cost); w.installation!.paidFor = stage; }
+    w.progress += hours;
+    if (w.progress < next.hours) {
+      lines.push({ tone: 'info', title: `${def.name}: ${next.name}`, text: `${Math.round(w.progress)} av ${next.hours} arbeidstimer utført av crew på stedet.`, zoneId: w.zoneId });
+      return;
+    }
+    w.progress = 0;
+    w.installation!.status = stage === 'discovered' ? 'secured' : 'operational';
+    delete w.installation!.paidFor;
+    const operational = w.installation!.status === 'operational';
+    if (operational) state.population.adults += def.levels[0].effect.workers ?? 0;
+    if (operational && id === 'plane' && !state.scheduled.some(event => event.id === 'airlift')) state.scheduled.push({ id: 'airlift', day: state.day + 20 });
+    const text = operational ? `${def.name} er operativt: ${def.levels[0].text}` : `${def.name} er undersøkt og sikret. Et nytt anleggsoppdrag må klargjøre grunnfunksjonen før stedet gir effekter.`;
+    lines.push({ tone: 'good', title: operational ? `${def.name} satt i drift` : `${def.name} undersøkt og sikret`, text, zoneId: w.zoneId });
+    state.memory.push({ day: state.day, text });
+    return;
+  }
   if (!w.progress) pay(next.cost);
   w.progress = (w.progress || 0) + hours;
   if (w.progress >= next.hours) {

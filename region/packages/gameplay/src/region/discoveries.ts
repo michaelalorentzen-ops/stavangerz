@@ -4,6 +4,7 @@
  */
 import type { RegionPoi, RegionState, RegionWorld, ReportLine, Stock } from './types';
 import { crewPositionFor } from './location';
+import { gainWonder, WONDERS, wonderZone } from './wonders';
 
 export type DiscoverySource = 'scout' | 'search' | 'rumor' | 'radio';
 export type DiscoveryDelivery = 'none' | 'returned' | 'radio';
@@ -27,6 +28,8 @@ export interface DiscoveryState {
   pending: DiscoveryObservation[];
   /** Finite work/reward receipts survive failed return and prevent cache respawn. */
   receipts: string[];
+  /** Private reports of unique sites use the same living-reporter gate. */
+  wonderObservations?: { id: string; zoneId: string; reporterIds: string[] }[];
 }
 export type DiscoveryRegionState = RegionState & { discoveries?: DiscoveryState };
 export interface DiscoveryEvidence {
@@ -128,6 +131,19 @@ function receive(state: DiscoveryRegionState, observation: DiscoveryObservation,
 /** Observe locally after successful scout/search, or from a real rumor/radio source. */
 export function observeDiscoveries(state: DiscoveryRegionState, world: RegionWorld, evidence: DiscoveryEvidence, lines: ReportLine[]) {
   if (!evidence.reporterIds.some(id => alive(state, id))) return;
+  for (const def of WONDERS) {
+    const zoneId = wonderZone(world, def);
+    if (!zoneId || zoneId !== evidence.zoneId || state.wonders?.[def.id]) continue;
+    const reported = evidence.delivery === 'radio' && evidence.radioVerified
+      || evidence.delivery === 'returned' && evidence.reporterIds.some(id => alive(state, id) && home(state, id));
+    if (reported) gainWonder(state, world, def.id, lines, zoneId);
+    else {
+      const pending = registry(state).wonderObservations ??= [];
+      const old = pending.find(item => item.id === def.id);
+      if (old) old.reporterIds = [...new Set([...old.reporterIds, ...evidence.reporterIds])];
+      else pending.push({ id: def.id, zoneId, reporterIds: [...evidence.reporterIds] });
+    }
+  }
   const sites = discoverySites(state, world);
   for (const kind of ['ordinary', 'tor'] as const) {
     const poi = sites[kind];
@@ -144,7 +160,7 @@ export function observeDiscoveries(state: DiscoveryRegionState, world: RegionWor
   }
 }
 /** Invoke only at real arrival. Pending observations remain private while away. */
-export function deliverDiscoveryReports(state: DiscoveryRegionState, _world: RegionWorld, lines: ReportLine[]) {
+export function deliverDiscoveryReports(state: DiscoveryRegionState, world: RegionWorld, lines: ReportLine[]) {
   if (!state.discoveries) return;
   const waiting: DiscoveryObservation[] = [];
   for (const observation of state.discoveries.pending) {
@@ -153,12 +169,17 @@ export function deliverDiscoveryReports(state: DiscoveryRegionState, _world: Reg
     else if (livingReporters.length) waiting.push(observation);
   }
   state.discoveries.pending = waiting;
+  state.discoveries.wonderObservations = state.discoveries.wonderObservations?.filter(observation => {
+    const livingReporters = observation.reporterIds.filter(id => alive(state, id));
+    if (livingReporters.some(id => home(state, id))) { gainWonder(state, world, observation.id, lines, observation.zoneId); return false; }
+    return livingReporters.length > 0;
+  });
 }
 /** Existing field observations can be transmitted only through a verified live connection.
  * Caller's communications service checks actual radio carrier, batteries and range.
  * This function deliberately never reads, moves or credits mission cargo.
  */
-export function transmitDiscoveryReports(state: DiscoveryRegionState, _world: RegionWorld, crewIds: readonly string[], radioVerified: boolean, lines: ReportLine[]) {
+export function transmitDiscoveryReports(state: DiscoveryRegionState, world: RegionWorld, crewIds: readonly string[], radioVerified: boolean, lines: ReportLine[]) {
   if (!radioVerified || !state.discoveries) return;
   const senders = new Set(crewIds.filter(id => alive(state, id)));
   state.discoveries.pending = state.discoveries.pending.filter(observation => {
@@ -168,12 +189,18 @@ export function transmitDiscoveryReports(state: DiscoveryRegionState, _world: Re
     publish(state, transmitted, lines);
     return false;
   });
+  state.discoveries.wonderObservations = state.discoveries.wonderObservations?.filter(observation => {
+    if (!observation.reporterIds.some(id => senders.has(id))) return true;
+    gainWonder(state, world, observation.id, lines, observation.zoneId);
+    return false;
+  });
 }
 /** Called after death/desertion; never creates public knowledge from a dead crew. */
 export function maintainDiscoveries(state: DiscoveryRegionState, lines: ReportLine[]) {
   const r = state.discoveries;
   if (!r) return;
   r.pending = r.pending.filter(p => p.reporterIds.some(id => alive(state, id)));
+  r.wonderObservations = r.wonderObservations?.filter(p => p.reporterIds.some(id => alive(state, id)));
   for (const entry of Object.values(r.entries)) if (entry.boundPersonId && !alive(state, entry.boundPersonId) && !['resolved', 'lost'].includes(entry.status)) {
     entry.status = 'lost'; entry.revision++; entry.choices = [];
     note(entry, state.day, 'Tor kan ikke lenger følge sporet. Det som allerede er rapportert, blir stående i feltboka. Historien er valgfri; andre oppdrag og all vanlig progresjon er fortsatt tilgjengelig.');
