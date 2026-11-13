@@ -95,6 +95,7 @@ export interface ReportLine { category?: string; priority?: number; facts?: Reco
  */
 export interface RegionReplayZoneChange { zoneId: string; before: ZoneStatus; after: ZoneStatus }
 export interface RegionMapSnapshot {
+  homeZoneId: string;
   zones: Record<string, { status: ZoneStatus; intel?: { min: number; max: number; day: number }; owner?: string }>;
   crewPositions: Record<string, CrewPosition>;
   crewMissions: Record<string, CrewMission>;

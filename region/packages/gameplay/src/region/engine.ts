@@ -1634,5 +1634,5 @@ function mapSnapshot(state: RegionState): RegionMapSnapshot {
     return [id, visible];
   }));
   const live = new Set(state.survivors.filter(p => p.alive && !p.left && p.health > 0).map(p => p.id));
-  return { zones, crewPositions: clone(Object.fromEntries(Object.entries(state.crewPositions ?? {}).filter(([id]) => live.has(id)))), crewMissions: clone(crewMissions) };
+  return { homeZoneId: state.homeZoneId, zones, crewPositions: clone(Object.fromEntries(Object.entries(state.crewPositions ?? {}).filter(([id]) => live.has(id)))), crewMissions: clone(crewMissions) };
 }
