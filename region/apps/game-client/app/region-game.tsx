@@ -2,7 +2,6 @@
 
 /** Stavanger Z, the region game: the whole Stavanger region from the zone editor, one day at a time. */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Map as LibreMap, GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import {
   ACTIONS, BRANCHES, HQ_BRANCH, LAW_GROUPS, LAWS, MILESTONES, MODULE_COST, MUTATIONS, NETWORK_COST, PHASES, PHASE_ONE_CAPACITY, R, SAVE_KEY_REGION, TECHS, TRAIT_NAMES, UPGRADE_COST, VALUE, WEAPONS, WORK_IDS, WORK_NAMES,
   areaNet, assaultOdds, assigned, autoWork, bestTier, controlled, craftRecipes, crewGearAway, dailyFlows, equippedGear, gearWeapon, dateText, discontentTarget, goalMet, hopeTarget, hqModules, indexWorld, lawAvailable, lawWait, living,
@@ -11,12 +10,12 @@ import {
   type ActionId, type Branch, type Flows, type RegionOrder, type RegionReport, type RegionState, type RegionWorld, type WorkId,
 } from '../../../packages/gameplay/src/region/index';
 import { CONTENT } from '../../../packages/world-data/src/content';
-import { attachBuildings, COLORS, gameStyle, MAP_ATTRIBUTION, markerElement } from './region-map-style';
 import ZaBook from './za-book';
+import StartScreen from './start-screen';
 import CrewEquipment, { GearInventory, OrderGearSummary, equipmentDraftOrders } from './crew-equipment';
 import { attachTerritoryCaptureEffects, territoryShifts, type TerritoryCaptureController } from './territory-capture-effects';
-import CampaignControls, { CampaignModeInfo, CampaignHelp, CampaignEndingView } from './campaign-controls';
-import { advanceCampaignCommit, campaignAvatarStatus, chooseCampaignAvatar, type CampaignOptions } from '../../../packages/gameplay/src/region/campaign';
+import { CampaignModeInfo, CampaignHelp, CampaignEndingView } from './campaign-controls';
+import { advanceCampaignCommit, campaignAvatarStatus, chooseCampaignAvatar } from '../../../packages/gameplay/src/region/campaign';
 import { loadRegionSave, saveRegionState, clearRegionSave } from './region-save';
 import { attachOperationalMap, areaLeaves, type OperationalMapController } from './operational-map';
 import { AdministrativeView } from './administrative-view';
@@ -50,7 +49,6 @@ import { useGameAudio } from './game-audio';
 const WORLD_URL = '/world/region-v1.json';
 const CORE = ['medicine', 'fuel', 'ammo', 'building'];
 const STATUS_LABEL = { unknown: 'Ukjent', scouted: 'Speidet', controlled: 'Deres' } as const;
-const DANGER_COLOR: Record<string, string> = { Rolig: '#5f9a5f', Middels: '#a8a24a', Krevende: '#c48a3a', 'Svært krevende': '#b8563c', 'Nesten umulig': '#7c2230' };
 const number = (n: number) => Math.round(n).toLocaleString('nb-NO');
 const decimal = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits: 1 });
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${decimal(Math.abs(Math.round(n * 10) / 10))}`;
@@ -136,99 +134,6 @@ export default function RegionGame() {
 }
 
 // ------------------------------------------------------------------ start
-
-function StartScreen({ world, saved, onStart }: { world: RegionWorld; saved: RegionState | null; onStart: (s: RegionState, fresh: boolean) => void }) {
-  const index = useMemo(() => indexWorld(world), [world]);
-  const [choice, setChoice] = useState(world.starts.find(s => s.name.startsWith('Lundsneset'))?.zoneId ?? world.starts[0]?.zoneId ?? '');
-  const [campaignOptions, setCampaignOptions] = useState<CampaignOptions>({ difficulty: 'survival', hardcore: false });
-  const [seed, setSeed] = useState(() => 1 + Math.floor(Math.random() * 9999));
-  const estimates = useMemo(() => Object.fromEntries(index.l3.map(z => [z.id, startDanger(world, z.id)])), [world, index]);
-  const seededStarts = useMemo(() => Object.fromEntries(world.starts.map(start => [start.zoneId, startDanger(world, start.zoneId, seed)])), [world, seed]);
-  const zone = index.byId.get(choice);
-  const d = useMemo(() => choice ? seededStarts[choice] ?? startDanger(world, choice, seed) : undefined, [world, choice, seed, seededStarts]);
-  const dangers = useMemo(() => ({ ...estimates, ...seededStarts, ...(choice && d ? { [choice]: d } : {}) }), [estimates, seededStarts, choice, d]);
-  const l2 = index.byId.get(zone?.parentId ?? '');
-  const hqNear = [choice, ...(index.adjacent.get(choice) ?? []).map(a => a.to)].flatMap(id => (index.poisByZone.get(id) ?? []).filter(p => p.role === 'hq')).map(p => `${p.name} (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
-  return <main className="rz-shell rz-start">
-    <section className="rz-start-intro">
-      <Art path="intro/hero" className="rz-art rz-art-hero" alt="Stavanger etter dag null" />
-      <p className="rz-kicker">STAVANGER Z / ETTER DAG NULL</p>
-      <h1>Hele regionen.<br />Ett døgn av gangen.</h1>
-      <p>Du leder en liten gruppe gjennom en zombieapokalypse i Stavanger-regionen. Det finnes ingen regjering lenger, bare deg, folkene dine og de valgene du tar.</p>
-      <p>Start hvor du vil. Tette bysentre har mye å finne, men så mange døde at det kan være umulig å bli. Da er første oppgave å komme seg ut. På landet er det jord, båter og diesel, og lange avstander.</p>
-      {saved && <button className="rz-primary rz-wide" onClick={() => onStart(saved, false)}>{saved.gameOver ? 'Vis avslutningen etter' : 'Fortsett'} dag {saved.day} i {index.byId.get(saved.homeZoneId)?.name} →</button>}
-      <CampaignControls value={campaignOptions} onChange={setCampaignOptions} />
-      <h2 className="rz-subhead">Forslag</h2>
-      <div className="rz-start-list" aria-label="Forslag til startområder">
-        {world.starts.map(s => <button key={s.zoneId} className={`rz-start-card ${choice === s.zoneId ? 'on' : ''}`} onClick={() => setChoice(s.zoneId)}>
-          <strong>{s.name}</strong><span><i className="rz-dot" style={{ background: DANGER_COLOR[dangers[s.zoneId].level] }} />{dangers[s.zoneId].level}</span>
-        </button>)}
-      </div>
-      <p className="rz-small">Spillet lagres automatisk i nettleseren. <a href="/fase1">Buøy – førsteutgaven</a></p>
-    </section>
-    <section className="rz-start-map">
-      <StartMap world={world} dangers={dangers} selected={choice} onSelect={setChoice} />
-      {zone && d && <div className="rz-start-pick">
-        <p className="rz-kicker">{l2?.name}</p>
-        <h2>{zone.name}</h2>
-        <p><b style={{ color: DANGER_COLOR[d.level] }}>Å bli: {d.level}</b> · om lag {number(d.zombies)} døde i sonen og {number(d.around)} rundt.{d.escape ? <> Beste fluktvei: <b>{index.byId.get(d.escape.zoneId)?.name}</b> (om lag {number(d.escape.zombies)} døde).</> : null}</p>
-        <p className="rz-small">{d.level === 'Nesten umulig' ? 'Dere kommer ikke til å klare å holde dette stedet. Planlegg flukten fra første dag.' : d.level === 'Svært krevende' ? 'Mange døde. Det kan være lurt å flytte leiren før dere tar over noe.' : d.level === 'Krevende' ? 'Det går, men det koster.' : 'Et godt sted å begynne.'}
-          {' '}{CONTENT.zoneTypes.find(t => t[0] === zone.type)?.[1] ?? ''}.{hqNear.length ? ` HQ i nærheten: ${hqNear.slice(0, 3).join(', ')}.` : ''}</p>
-        <div className="rz-start-go">
-          <label>Frø <input type="number" value={seed} onChange={e => setSeed(Number(e.target.value) || 1)} /></label>
-          <button className="rz-primary" data-testid="start-game" onClick={() => {
-            if (saved && !confirm('En ny gjennomspilling erstatter den lagrede. Fortsette?')) return;
-            onStart(newRegionGame(world, choice, seed, { ...campaignOptions, runId: crypto.randomUUID() }), true);
-          }}>Start i {zone.name} →</button>
-        </div>
-      </div>}
-    </section>
-  </main>;
-}
-
-function StartMap({ world, dangers, selected, onSelect }: { world: RegionWorld; dangers: Record<string, ReturnType<typeof startDanger>>; selected: string; onSelect: (id: string) => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LibreMap | null>(null);
-  const [ready, setReady] = useState(false);
-  const index = useMemo(() => indexWorld(world), [world]);
-  useEffect(() => {
-    let map: LibreMap | null = null;
-    let cancelled = false;
-    import('maplibre-gl').then(lib => {
-      if (cancelled || !ref.current) return;
-      lib.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
-      map = new lib.Map({ container: ref.current, center: [5.72, 58.96], zoom: 10.2, minZoom: 9, maxZoom: 16, dragRotate: false, attributionControl: false, style: gameStyle() });
-      map.addControl(new lib.AttributionControl({ compact: true, customAttribution: MAP_ATTRIBUTION }));
-      map.on('load', () => {
-        const l3 = world.zones.filter(z => z.level === 3 && z.geometry).map(z => ({ type: 'Feature' as const, id: z.id, properties: { id: z.id, c: DANGER_COLOR[dangers[z.id]?.level ?? 'Rolig'] }, geometry: z.geometry as GeoJSON.Geometry }));
-        map!.addSource('l3', { type: 'geojson', data: { type: 'FeatureCollection', features: l3 }, promoteId: 'id' });
-        attachBuildings(map!);
-        map!.addLayer({ id: 'fill', type: 'fill', source: 'l3', paint: { 'fill-color': ['coalesce', ['feature-state', 'danger'], ['get', 'c']], 'fill-opacity': .42 } });
-        map!.addLayer({ id: 'line', type: 'line', source: 'l3', paint: { 'line-color': '#0c1416', 'line-width': .5 } });
-        map!.addLayer({ id: 'sel', type: 'line', source: 'l3', filter: ['==', ['get', 'id'], ''], paint: { 'line-color': '#ffe08a', 'line-width': 3 } });
-        map!.on('click', 'fill', (e: MapLayerMouseEvent) => { const id = e.features?.[0]?.properties?.id as string | undefined; if (id) onSelect(id); });
-        map!.on('mouseenter', 'fill', () => { map!.getCanvas().style.cursor = 'pointer'; });
-        map!.on('mouseleave', 'fill', () => { map!.getCanvas().style.cursor = ''; });
-        mapRef.current = map;
-        setReady(true);
-      });
-    });
-    return () => { cancelled = true; map?.remove(); mapRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [world]);
-  useEffect(() => {
-    if (!ready || !mapRef.current) return;
-    for (const [id, danger] of Object.entries(dangers)) mapRef.current.setFeatureState({ source: 'l3', id }, { danger: DANGER_COLOR[danger.level] });
-  }, [dangers, ready]);
-  useEffect(() => {
-    if (!ready || !mapRef.current) return;
-    mapRef.current.setFilter('sel', ['==', ['get', 'id'], selected]);
-    const at = index.byId.get(selected)?.at;
-    if (at) mapRef.current.easeTo({ center: at, zoom: Math.max(mapRef.current.getZoom(), 11.5) });
-  }, [selected, ready, index]);
-  return <div className="rz-start-canvas" aria-busy={!ready}><div ref={ref} className="rz-map-canvas" />
-    <div className="rz-legend">{Object.entries(DANGER_COLOR).map(([k, c]) => <span key={k}><i style={{ background: c }} />{k}</span>)}<span>Startforslag og valgt sted følger frøet · øvrige farger er anslag</span></div></div>;
-}
 
 // ------------------------------------------------------------------ intro
 
