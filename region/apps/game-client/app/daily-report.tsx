@@ -84,8 +84,8 @@ export function DailyReport({ report, world, onZone, onHelp }: DailyReportProps)
   const location = (line: ReportLine) => line.zoneId ? world.zones.find(zone => zone.id === line.zoneId)?.name ?? 'Registrert sted' : undefined;
   const openLog = (line: Outcome) => { setLogIndex(Math.max(0, log.findIndex(entry => entry.key === line.key))); setTextPage(0); setTab('log'); };
   const tiles: { icon: HudIconName; label: string; value: string; detail: string; tone: string }[] = [
-    { icon: 'food', label: 'Mat', value: signed(report.food.produced - report.food.eaten - (report.food.spoiled ?? 0)), detail: `${count(report.food.produced)} produsert · ${count(report.food.eaten)} spist${report.food.spoiled ? ` · ${count(report.food.spoiled)} svinn` : ''}`, tone: 'food' },
-    { icon: 'water', label: 'Vann', value: signed(report.water.produced - report.water.drunk), detail: `${count(report.water.produced)} hentet · ${count(report.water.drunk)} drukket`, tone: 'water' },
+    { icon: 'food', label: 'Mat · drift', value: signed(report.food.produced - report.food.eaten - (report.food.spoiled ?? 0)), detail: `${count(report.food.produced)} produsert · ${count(report.food.eaten)} spist${report.food.spoiled ? ` · ${count(report.food.spoiled)} svinn` : ''}`, tone: 'food' },
+    { icon: 'water', label: 'Vann · drift', value: signed(report.water.produced - report.water.drunk), detail: `${count(report.water.produced)} hentet · ${count(report.water.drunk)} drukket`, tone: 'water' },
     { icon: 'clear', label: 'Zombier drept', value: count(report.killed), detail: 'Registrerte dødsfall denne dagen', tone: 'combat' },
     { icon: 'claim', label: 'Soner', value: gained || lost ? `${gained ? `+${gained}` : ''}${gained && lost ? ' / ' : ''}${lost ? `−${lost}` : ''}` : '—', detail: `${gained} vunnet · ${lost} tapt`, tone: lost ? 'loss' : 'territory' },
   ];

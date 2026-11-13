@@ -271,7 +271,7 @@ const CORE: EventDef[] = [
       const calm = escapeRoute(s, w)?.zoneId;
       if (!calm) return null;
       const coast = index.coastal.has(s.homeZoneId);
-      return event('Den første natta', `Det er om lag ${here} døde i gatene rundt dere i ${zoneName(w, s.homeZoneId)}. Dere kan ikke rydde dette med fire personer. ${zoneName(w, calm)} ser roligere ut, men dere må gjennom.`, [
+      return event('Den første natta', `Det er om lag ${here} døde i gatene rundt dere i ${zoneName(w, s.homeZoneId)}. Dere kan ikke rydde dette med fire personer. En mulig vei ut går mot ${zoneName(w, calm)}, men også der venter det døde.`, [
         { id: 'run', label: `Bryt ut mot ${zoneName(w, calm)}`, detail: `Om lag ${s.zones[calm].zombies} døde der. Dere får med det meste. Noen kan bli skadet.` },
         { id: 'hole', label: 'Barrikader dere inne', detail: 'Bruk alt byggemateriale på dører og trapper. Bråket trekker til flere. Et rolig sted holder, et tett sted blir en beleiring.' },
         ...(coast ? [{ id: 'boat', label: 'Ta en båt fra kaia', detail: 'Stille ut på fjorden og i land et roligere sted. Mye må bli igjen.' }] : []),

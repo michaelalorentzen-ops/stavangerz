@@ -278,7 +278,8 @@ export function reach(state: RegionState, world: RegionWorld) {
 // ------------------------------------------------------------------ fighting numbers
 
 function crewOf(state: RegionState, ids: string[], field = false) { return state.survivors.filter(s => ids.includes(s.id) && s.alive && !s.left && !(s.awayUntil && s.awayUntil > state.day) && (field || !crewGearAway(state, s.id))); }
-const efficiency = (state: RegionState, s: RegionSurvivor) => Math.max(.3, (s.fatigue > 80 ? .6 : 1) * (s.health < 50 ? .7 : 1) * (.8 + state.morale / 250));
+export const fatigueWorkMultiplier = (fatigue: number) => fatigue > 80 ? .6 : 1;
+const efficiency = (state: RegionState, s: RegionSurvivor) => Math.max(.3, fatigueWorkMultiplier(s.fatigue) * (s.health < 50 ? .7 : 1) * (.8 + state.morale / 250));
 function weaponKills(state: RegionState, weapon: RegionSurvivor['weapon']) {
   const w = WEAPONS[weapon];
   if (weapon !== 'melee') return w.kills;
@@ -444,7 +445,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
     case 'build': {
-      if (state.phase < 2) errors.push('Soneutbygging åpnes i fase 2.');
+      if (!internal.field && state.phase < 2) errors.push('Soneutbygging åpnes i fase 2.');
       if (!isControlled) errors.push('Bygg bare i soner dere eier.');
       const u = UPGRADE_COST[order.target ?? ''];
       if (!u || !upgradesFor(state, world, order.zoneId).some(x => x.id === order.target)) errors.push('Kan ikke bygges her.');
@@ -468,7 +469,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
     case 'network': {
-      if (state.phase < 3) errors.push('Områdenettverk åpnes i fase 3.');
+      if (!internal.field && state.phase < 3) errors.push('Områdenettverk åpnes i fase 3.');
       const l2 = zone.parentId ?? '';
       const n = NETWORK_COST[order.target ?? ''];
       if (!n) { errors.push('Ukjent nett.'); break; }

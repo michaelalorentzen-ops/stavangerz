@@ -203,7 +203,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     {!ready && <p className="rz-map-loading" role="status">Tegner kartet …</p>}
     {hover && <div className="rz-tip" style={{ left: hover.x + 14, top: hover.y + 10 }}>{hover.text}</div>}
     <div className="rz-legend" aria-label="Kartforklaring">{overlay === 'territory'
-      ? <><span><i className="rz-own-key" />Ditt område</span><span className="rz-map-key-note">Kontroll er ikke det samme som trygghet</span></>
+      ? <><span><i className="rz-own-key" />Ditt område</span></>
       : overlay === 'zombies'
       ? <><span><i style={{ background: COLORS.zombie }} />Sist rapportert fare</span><span className="rz-map-key-note">Uten rapport: ukjent</span></>
       : <><span><i style={{ background: '#4f9a6b' }} />Gir mat</span><span><i style={{ background: '#c0533f' }} />Koster mat</span></>}</div>

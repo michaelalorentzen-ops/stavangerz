@@ -26,7 +26,8 @@
     "check:v04": "node scripts/check-v04.mjs",
     "check:region-completion-ui": "tsx scripts/check-hud-contexts.ts",
     "check:region-checkpoints-ui": "tsx scripts/check-hud-checkpoints.ts",
-    "check:region-map-ui": "tsx scripts/check-world-map.ts"
+    "check:region-map-ui": "tsx scripts/check-world-map.ts",
+    "check:region-clarity-ui": "tsx scripts/check-v04-ui-clarity.ts"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",

@@ -2,7 +2,7 @@
 
 import { useId, useMemo } from 'react';
 import type { RegionOrder, RegionState, RegionWorld, Stock } from '../../../packages/gameplay/src/region/types';
-import { prepareGearPlan, previewOrder, resourceName } from '../../../packages/gameplay/src/region/engine';
+import { fatigueWorkMultiplier, prepareGearPlan, previewOrder, resourceName } from '../../../packages/gameplay/src/region/engine';
 import { ACTIONS, R } from '../../../packages/gameplay/src/region/rules';
 import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
 import { localStock, missionLoad, missionPreview, routeBetween } from '../../../packages/gameplay/src/region/mobility';
@@ -122,7 +122,7 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
         const reason = unavailable ?? (differentOrigin ? 'Et annet avreisested enn laget' : undefined);
         const place = position?.kind === 'zone' ? commandZone(world, position.zoneId) : reason ?? 'Ukjent sted';
         const gearPerson = ownPlan?.crew.find(p => p.survivorId === person.id) ?? probe;
-        return <div key={person.id} className={`cmd-person ${selected ? 'is-selected' : ''} ${reason && !selected ? 'is-unavailable' : ''}`}><input id={`${id}-${person.id}`} aria-label={person.name} type="checkbox" checked={selected} disabled={!!reason && !selected} onChange={() => toggle(person.id)} /><CrewPortrait name={person.name} /><span className="cmd-person-identity"><label htmlFor={`${id}-${person.id}`}><strong>{person.name}</strong></label><small className={reason ? 'cmd-person-status' : 'cmd-person-location'}>{reason ?? place}</small></span><span className="cmd-person-condition"><span>Helse <b>{person.health}</b></span><span>Utm. <b>{person.fatigue}</b></span></span>{gearPerson && <CompactCrewGear state={state} plan={plan} person={gearPerson} order={draft} disabled={!selected || !!reason} onChange={onChange} />}</div>;
+        return <div key={person.id} className={`cmd-person ${selected ? 'is-selected' : ''} ${reason && !selected ? 'is-unavailable' : ''}`}><input id={`${id}-${person.id}`} aria-label={person.name} type="checkbox" checked={selected} disabled={!!reason && !selected} onChange={() => toggle(person.id)} /><CrewPortrait name={person.name} /><span className="cmd-person-identity"><label htmlFor={`${id}-${person.id}`}><strong>{person.name}</strong></label><small className={reason ? 'cmd-person-status' : 'cmd-person-location'}>{reason ?? place}</small></span><span className="cmd-person-condition"><span>Helse <b>{person.health}</b></span><span title={`Utmattelse ${Math.round(person.fatigue)} av 100`}>{fatigueWorkMultiplier(person.fatigue)<1?'−40 % innsats':'Klar'}</span></span>{gearPerson && <CompactCrewGear state={state} plan={plan} person={gearPerson} order={draft} disabled={!selected || !!reason} onChange={onChange} />}</div>;
       })}</div>
       </section>
       <details className="cmd-details"><summary><HudIcon name="settings" />Avansert <span>Auto equip, mandat, leder og retursted</span></summary><CrewEquipment state={state} world={world} orders={orders} draftOrder={draft} onChange={onChange} /><MissionOptions state={budget} world={world} order={draft} onChange={onChange} /></details>

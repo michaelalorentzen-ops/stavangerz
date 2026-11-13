@@ -55,3 +55,9 @@
 .sz-game .sz-modal-poi .dv-place-hero h2{overflow-wrap:anywhere}
 .sz-game .sz-modal-poi .dv-place-hero p{display:flex}
 .sz-game .sz-modal-poi .dv-place-hero .dv-eyebrow{display:block}
+
+/* Keep introductory paragraphs separate even when legacy dialog rules apply. */
+.sz-game .regional-admin>header{height:auto;overflow:visible}
+.sz-game .regional-admin>header>p{margin:12px 0 0;position:static;height:auto}
+.sz-game .regional-admin>.regional-mandate{position:static;margin:12px 0 20px;line-height:1.65}
+.rz-start-canvas>.rz-legend{bottom:38px;right:12px;left:12px;width:auto;max-width:calc(100% - 24px);box-sizing:border-box}

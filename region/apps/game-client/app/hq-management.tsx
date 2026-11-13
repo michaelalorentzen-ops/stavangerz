@@ -7,6 +7,7 @@ import './detail-views.css';
 type HqView = 'stock' | 'research' | 'society' | 'administration' | 'construction';
 export interface HQManagementProps {
  state: RegionState; world: RegionWorld; onSelectZone: (zoneId: string) => void; onOpen?: (view: HqView) => void;
+ activeTab?:Tab;onTab?:(tab:Tab)=>void;
  construction?: ReactNode; society?: ReactNode; research?: ReactNode; stock?: ReactNode;
 }
 const TABS = [['overview','Oversikt',House],['construction','Utvikling',Wrench],['society','Arbeid og samfunn',Users],['research','Forskning',FlaskConical],['stock','Lager',Package]] as const;
@@ -16,8 +17,8 @@ const signed = (n: number) => `${n > 0 ? '+' : ''}${decimal(n)}`;
 const JOBS = [['farm','Dyrking',Sprout],['fish','Fiske',Fish],['scavenge','Sanking',Search],['clear','Rydding',Swords],['guard','Vakthold',Shield],['build','Bygging',Hammer],['research','Forskning',FlaskConical]] as const;
 const days = (n: number | null) => n === null ? 'Balanse' : `${Math.max(0,n).toLocaleString('nb-NO',{maximumFractionDigits:1})} døgn`;
 /** The injected views own all commands; this shell reads only authoritative state. */
-export function HQManagement({state,world,onSelectZone,onOpen,...content}: HQManagementProps) {
- const [tab,setTab] = useState<Tab>('overview'); const id=useId();
+export function HQManagement({state,world,onSelectZone,onOpen,activeTab,onTab,...content}: HQManagementProps) {
+ const [localTab,setLocalTab]=useState<Tab>('overview');const tab=activeTab??localTab;const setTab=(next:Tab)=>{setLocalTab(next);onTab?.(next);};const id=useId();
  if (!state.hq) return <section className="dv"><p className="dv-eyebrow">HOVEDKVARTER</p><h2>Et fast tilhold mangler</h2><p className="dv-lead">Finn et egnet sted og planlegg etableringen fra kartet.</p><button type="button" onClick={()=>onSelectZone(state.homeZoneId)}>Vis gruppens tilhold</button></section>;
  const hq=state.hq, zone=world.zones.find(z=>z.id===hq.zoneId), type=CONTENT.hqTypes.find(t=>t.id===hq.type), poi=world.pois.find(p=>p.zoneId===hq.zoneId&&p.hqType===hq.type);
  const flows=dailyFlows(state,world), here=living(state).filter(p=>{const pos=crewPositionFor(state,p.id);return pos?.kind==='zone'&&pos.zoneId===hq.zoneId;});

@@ -80,7 +80,7 @@ const MANUAL: { id: ManualSectionId; heading: string; description: string; entri
     entries: [
       { lead: 'Dagsplan', body: 'Start med folk, sted og oppdrag. Kontroller forventet arbeid og risiko før du legger ordren i planen. Oppdraget begynner når du lar døgnet gå; frem til da kan det endres eller fjernes.' },
       { lead: 'Flere hender, mer arbeid', body: 'Flere folk kan søke, rydde og bygge mer i samme døgn. Ferdigheter, helse, utmattelse, utstyr og reisetid påvirker hvor mye laget får gjort. Et større lag trenger også mer forsyninger og kan lage mer støy.' },
-      { lead: 'Rydd zombiene', body: 'Rydd bekjemper zombier i den valgte sonen. Kampferdigheter og våpen påvirker utfallet; skytevåpen bruker ammunisjon og høres. Et vellykket angrep gir ikke i seg selv eierskap eller varig trygghet.' },
+      { lead: 'Bekjemp zombier', body: 'Rydd bekjemper zombier i den valgte sonen. Kampferdigheter og våpen påvirker utfallet; skytevåpen bruker ammunisjon og høres. Et vellykket angrep gir ikke i seg selv eierskap eller varig trygghet.' },
       { lead: 'Søk etter forsyninger', body: 'Søk går gjennom bygg og henter det laget kan bære. Sonens prosent gjennomsøkt viser fremgangen, og gjentatte oppdrag fortsetter der dere slapp. Flere arbeidstimer gir mer søk, men farer, bærekapasitet og det som faktisk finnes begrenser funnene.' },
       { lead: 'Overta et område', body: 'Overta gir eierskap når sonen er tilstrekkelig undersøkt og nesten tom for zombier. Ordrekortet viser hva som fortsatt mangler. Etterretningen kan bli utdatert; motoren kontrollerer situasjonen når laget faktisk kommer frem.' },
       { lead: 'Risiko før avreise', body: 'Et risikoanslag bygger på det dere vet. Manglende eller gammel etterretning er ingen garanti for lav fare. Oppdrag kan gi skader og utmattelse, og en kritisk situasjon kan kreve et valg før døgnet fortsetter.' },
@@ -92,6 +92,8 @@ const MANUAL: { id: ManualSectionId; heading: string; description: string; entri
     heading: 'Menneskene',
     description: 'Folk er mer enn et tall.',
     entries: [
+      { lead: 'Utmattelse og innsats', body: 'Til og med 80 utmattelse gir ingen egen arbeidsstraff. Over 80 reduseres arbeidskapasiteten med 40 %. Et vanlig oppdrag gir 18 i normal modus; lover og vanskelighetsgrad kan påvirke dette. Et ledig døgn hjemme fjerner 25. En hvileordre hjemme fjerner normalt 75 totalt. Vanlig arbeid får foreløpig ikke automatisk nattrestitusjon; dette er en grov balansemodell.' },
+      { lead: 'De mange', body: 'Nye innbyggere er ikke automatisk navngitte crew-medlemmer. Friske voksne kan fordeles på leirens jobber. De får ikke automatisk arbeid; oversikten viser hvem som står uten oppgave. Foreslå fordeling er et forslag du selv velger å bruke. Barn, eldre og syke telles separat.' },
       { lead: 'Crew', body: 'Helse, utmattelse, ferdigheter og våpen påvirker hvem du bør sende ut. Skadde eller utslitte folk kan koste mer enn de hjelper.' },
       { lead: 'Din person', body: 'Du velger en av de navngitte overlevende som hovedperson. Ved et kritisk nattangrep på HQ kan døgnet stoppe for et valg dersom hovedpersonen er til stede. Oppdrag kan koste helse og liv.' },
       { lead: 'Våpen', body: 'Hver person har et våpen som vises i personkortet. Skytevåpen bruker ammunisjon og lager støy; uten patroner blir kampen svakere. Kontroller oppdragskortets prognose før du sender laget.' },
@@ -177,8 +179,8 @@ const MANUAL: { id: ManualSectionId; heading: string; description: string; entri
       { lead: 'Forsyninger', body: 'Se på forbruk og produksjon, ikke bare hvor mye som ligger på lageret. Flere folk krever mer mat og vann.' },
       { lead: 'Forsvar og fase 2', body: 'Et HQ, et sammenhengende kjerneområde, varig forsvar og utholdenhet for mat og vann åpner neste fase. Hele hjemmets L2 er en større prestasjon, men er ikke obligatorisk. Se de faktiske fasekravene for hva som mangler hos dere.' },
       { lead: 'Forskning', body: 'Fra fase 2 kan dere starte tilgjengelige forskningsprosjekter med riktig HQ og ressurser. Fullførte resultater blir skrevet inn i feltguiden.' },
-      { lead: 'Bygging', body: 'Bygg krever både materialer og arbeidstid på stedet. Fremgangen vises mens arbeidet pågår; anlegget er ikke ferdig fordi ordren er lagt inn. Et større arbeidslag kan få mer gjort, mens reise og utmattelse tar av kapasiteten.' },
-      { lead: 'Nett i distriktet', body: 'Strøm, vann, veier og samband er nett for et L2-distrikt. De ulike nettene krever forskjellige kontrollerte områder eller anlegg, varer og arbeid. Ordrekortet viser kravene for nettet dere velger; et nytt nett gir ikke automatisk kontroll over hele distriktet.' },
+      { lead: 'Bygging', body: 'Soneutbygging åpner i fase 2. Bygg krever både materialer og arbeidstid på stedet. Fremgangen vises mens arbeidet pågår; anlegget er ikke ferdig fordi ordren er lagt inn. Et større arbeidslag kan få mer gjort, mens reise og utmattelse tar av kapasiteten.' },
+      { lead: 'Nett i distriktet', body: 'Nettverk åpner i fase 3. Strøm, vann, veier og samband er nett for et L2-distrikt. De ulike nettene krever forskjellige kontrollerte områder eller anlegg, varer og arbeid. Ordrekortet viser kravene for nettet dere velger; et nytt nett gir ikke automatisk kontroll over hele distriktet.' },
     ],
   },
 ];
@@ -187,9 +189,13 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 const NOTES_PER_PAGE = 2;
 /** Context links point into the same handbook text; there is no parallel help encyclopedia. */
 export const BOOK_HELP_TOPICS = {
+  supplies: { section: 'camp', lead: 'Forsyninger' },
+  community: { section: 'people', lead: 'De mange' },
+  research: { section: 'camp', lead: 'Forskning' },
+  fatigue: { section: 'people', lead: 'Utmattelse og innsats' },
   scout: { section: 'map', lead: 'Speiding' },
   search: { section: 'day', lead: 'Søk etter forsyninger' },
-  clear: { section: 'day', lead: 'Rydd zombiene' },
+  clear: { section: 'day', lead: 'Bekjemp zombier' },
   claim: { section: 'day', lead: 'Overta et område' },
   build: { section: 'camp', lead: 'Bygging' },
   network: { section: 'camp', lead: 'Nett i distriktet' },
@@ -204,7 +210,7 @@ function topicPage(topic?: string) {
   const match = BOOK_HELP_TOPICS[topic as BookHelpTopic];
   const index = Math.max(0, MANUAL.findIndex(section => section.id === match?.section));
   const entry = Math.max(0, MANUAL[index].entries.findIndex(note => note.lead === match?.lead));
-  return { index, page: Math.floor(entry / NOTES_PER_PAGE), lead: match?.lead };
+  return { index, page: entry, lead: match?.lead };
 }
 
 export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTopic }: {
@@ -217,6 +223,7 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
   const requested = topicPage(initialTopic);
   const manualSelectId = useId();
   const [tab, setTab] = useState<BookTab>(() => requested ? 'manual' : 'chapters');
+  const [chapterPage,setChapterPage]=useState(0);
   const [chapter, setChapter] = useState(Math.min(5, Math.max(1, state.phase)));
   const [manualIndex, setManualIndex] = useState(() => requested?.index ?? 0);
   const [manualPage, setManualPage] = useState(() => requested?.page ?? 0);
@@ -225,7 +232,8 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
     if (next) { setTab('manual'); setManualIndex(next.index); setManualPage(next.page); }
   }, [initialTopic]);
   const manual = MANUAL[manualIndex];
-  const manualPages = Math.ceil(manual.entries.length / NOTES_PER_PAGE);
+  const notesPerPage=initialTopic?1:NOTES_PER_PAGE;
+  const manualPages = Math.ceil(manual.entries.length / notesPerPage);
   const activeManualPage = Math.min(manualPage, manualPages - 1);
   const changeManual = (index: number) => { setManualIndex(index); setManualPage(0); };
   const activeChapter = Math.min(chapter, state.phase);
@@ -261,7 +269,7 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
           const open = p.id <= state.phase;
           return <button type="button" key={p.id} className={(open ? 'zab-chapter-open' : 'zab-chapter-locked') + (activeChapter === p.id ? ' active' : '')}
             disabled={!open} aria-current={activeChapter === p.id ? 'page' : undefined} aria-label={open ? 'Kapittel ' + p.id + ': ' + p.name : 'Kapittel ' + p.id + ' låst'}
-            onClick={() => setChapter(p.id)}>
+            onClick={() => {setChapter(p.id);setChapterPage(0);}}>
             <span className="zab-chapter-number">{ROMAN[p.id - 1]}</span>
             <span><strong>{open ? p.name : 'Ikke skrevet ennå'}</strong><small>{open ? (p.id === state.phase ? 'Nåværende kapittel' : 'Tidligere kapittel') : 'Låses opp i fase ' + p.id}</small></span>
             <span aria-hidden="true">{open ? '›' : '◌'}</span>
@@ -275,17 +283,18 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
         <blockquote>{notes.motto}</blockquote>
         <p className="zab-intro">{current.intro}</p>
         <div className="zab-handwriting">
-          {notes.advice.map(note => <section key={note.lead}><h4>{note.lead}</h4><p>{note.body}</p></section>)}
+          {notes.advice.slice(chapterPage*2,chapterPage*2+2).map(note => <section key={note.lead}><h4>{note.lead}</h4><p>{note.body}</p></section>)}
         </div>
+        <div className="zab-page-controls"><button disabled={!chapterPage} onClick={()=>setChapterPage(chapterPage-1)} aria-label="Forrige kapittelside"><HudIcon name="back"/>Forrige</button><span>Side {chapterPage+1}/{Math.ceil(notes.advice.length/2)}</span><button disabled={(chapterPage+1)*2>=notes.advice.length} onClick={()=>setChapterPage(chapterPage+1)} aria-label="Neste kapittelside">Neste<HudIcon name="arrow"/></button></div>
         <p className="zab-ending">{notes.closing}</p>
-        {activeChapter === state.phase && <div className="zab-goal-note">
+        {activeChapter === state.phase && <details className="zab-goal-note"><summary>Din verden akkurat nå</summary>
           <div><strong>Din verden akkurat nå</strong>
             <span>{totalControlled} lokale soner kontrollert · Leir: {homeName}</span>
             {core ? <span>{core.hasHQ ? `HQ-kjerne: ${core.connectedL3}/${core.requiredL3} sammenhengende soner` : 'Dere har ikke et operativt HQ ennå.'} · {core.defenceReady ? 'Varig forsvar på plass' : 'Varig forsvar gjenstår'} · {core.suppliesReady ? 'Mat og vann holder' : 'Forsyningskapasitet gjenstår'}</span>
               : <span>{completed} av {current.goals.length} milepæler oppfylt</span>}
           </div>
           <button type="button" onClick={onGoals}>Vis faktiske fasekrav</button>
-        </div>}
+        </details>}
       </article>
     </div>}
 
@@ -303,7 +312,7 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
         <h3>{manual.heading}</h3>
         <p className="zab-intro">{manual.description}</p>
         {manual.advanced && state.phase === 1 && <p className="zab-advanced-note">Start med folk, sted og oppdrag. Mandater og selvstendige lag er fordypning når dere trenger det.</p>}
-        <div className="zab-handwriting" aria-live="polite">{manual.entries.slice(activeManualPage * NOTES_PER_PAGE, (activeManualPage + 1) * NOTES_PER_PAGE).map(entry => <section className={requested?.lead === entry.lead ? 'zab-topic-focus' : undefined} key={entry.lead}><h4>{entry.lead}</h4><p>{entry.body}</p></section>)}</div>
+        <div className="zab-handwriting" aria-live="polite">{manual.entries.slice(activeManualPage * notesPerPage, (activeManualPage + 1) * notesPerPage).map(entry => <section className={requested?.lead === entry.lead ? 'zab-topic-focus' : undefined} key={entry.lead}><h4>{entry.lead}</h4><p>{entry.body}</p></section>)}</div>
         <nav className="zab-page-controls" aria-label="Sider i håndboktemaet">
           <button type="button" aria-label="Forrige håndbokside" disabled={activeManualPage === 0} onClick={() => setManualPage(activeManualPage - 1)}><HudIcon name="back" size={16} /><span>Forrige</span></button>
           <span>Side {activeManualPage + 1} av {manualPages}</span>
