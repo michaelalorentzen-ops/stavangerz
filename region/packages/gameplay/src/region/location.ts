@@ -5,7 +5,7 @@
  * not move people: the future day resolver owns that transition. Existing
  * region-2 saves are read using the conservative legacy fallback below.
  */
-import type { ActionId } from './types';
+import type { ActionId, RegionOrder, Stock, Population } from './types';
 
 /** A named person is at a known L3 zone, not at an arbitrary map coordinate. */
 export interface CrewAtZone {
@@ -45,6 +45,7 @@ export interface CrewAreaDuty {
 export interface CrewAwayUnknown {
   kind: 'away-unknown';
   expectedReturnDay?: number;
+
 }
 
 export type CrewPosition = CrewAtZone | CrewInTransit | CrewAreaDuty | CrewAwayUnknown;
@@ -65,6 +66,22 @@ export interface CrewMission {
   issuedDay: number;
   status: CrewMissionStatus;
   expectedReturnDay?: number;
+  order?: RegionOrder;
+  routeZoneIds?: string[];
+  routeIndex?: number;
+  elapsedHours?: number;
+  returnZoneId?: string;
+  workHours?: number;
+  cargo?: Stock;
+  transportBoat?: number;
+  factionObservations?: Record<string, { known: boolean; revealed?: boolean }>;
+  privateLines?: import('./types').ReportLine[];
+  passengers?: Population;
+  cargoGearIds?: string[];
+  encounterResolved?: boolean;
+  lastAdvancedDay?: number;
+  operationDone?: boolean;
+  observations?: Record<string, { status: import('./types').ZoneStatus; intel?: { min: number; max: number; day: number } }>;
 }
 
 export interface CrewLocationState {

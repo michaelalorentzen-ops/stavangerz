@@ -116,11 +116,11 @@ const criticalOrders: RegionOrder[] = [{ id: 'night-search', action: 'search', z
 const paused = startRegionDay(critical, world, criticalOrders, { avatarId: 'ingrid' });
 assert.equal(paused.status, 'paused');
 if (paused.status === 'paused') {
-  assert.equal(paused.state.gear!.items.find(i => i.id === 'checkpoint-crowbar')!.location.kind, 'carried');
-  assert.equal(availableGear(paused.state, 'tor').some(i => i.id === 'checkpoint-crowbar'), false);
+  assert.equal(paused.state.gear!.items.find(i => i.id === 'checkpoint-crowbar')!.location.kind, 'stored', 'A short trip really returns and delivers before night');
+  assert.equal(availableGear(paused.state, 'tor').some(i => i.id === 'checkpoint-crowbar'), true, 'Physically returned gear is no longer mission-bound');
   const resumed = resumeRegionDay(JSON.parse(JSON.stringify(paused.state)), world, 'hold');
   assert.deepEqual(resumed, resumeRegionDay(paused.state, world, 'hold'), 'Checkpoint JSON retains gear and finite loot');
-  assert.deepEqual(resumed, endDay(critical, world, criticalOrders), 'Atomic legacy endDay equals checkpoint hold');
+  assert.deepEqual({ ...resumed, state: { ...resumed.state, campaign: undefined } }, (() => { const atomic = endDay(critical, world, criticalOrders); return { ...atomic, state: { ...atomic.state, campaign: undefined } }; })(), 'Atomic and manual paths agree on all gameplay; campaign receipts retain actual interaction ancestry');
   assert.equal(resumed.state.gear?.preferences.leila.locks?.tool, 'checkpoint-crowbar', 'Locks survive next day');
   assert.equal(resumed.state.gear?.items.find(i => i.id === 'checkpoint-crowbar')?.location.kind, 'stored');
   resumed.state.event = undefined;
@@ -206,7 +206,8 @@ for (const position of locationCases) {
   registered.crewPositions = position ? { leila: structuredClone(position) as NonNullable<RegionState['crewPositions']>[string] } : {};
   assert.equal(crewGearAway(registered, 'leila'), true, `Canonical ${position?.kind ?? 'missing entry'} binds the person`);
   assert.equal(present(registered).some(p => p.id === 'leila'), false, 'No free point-HQ defense from area/transit/unknown placement');
-  assert.ok(prepareGearPlan(registered, world, [search('canonical-hq', 'leila')]).errors.length, 'No direct HQ order from a non-HQ canonical position');
+  if (position?.kind === 'zone') assert.deepEqual(prepareGearPlan(registered, world, [search('canonical-local', 'leila', position.zoneId)]).errors, [], 'An idle field crew can receive a real local order');
+  else assert.ok(prepareGearPlan(registered, world, [search('canonical-hq', 'leila')]).errors.length, 'No direct HQ order from transit, area duty or unknown position');
   assert.equal(availableGear(registered, 'leila').length, 0, 'A carried starter weapon does not make the absent person available');
 }
 registered.crewPositions = { leila: { kind: 'zone', zoneId: registered.homeZoneId } };

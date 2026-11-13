@@ -3,7 +3,7 @@
  * only through these helpers, so the rules stay in one place.
  */
 import type { EventChoice, PendingEvent, Population, RegionState, RegionSurvivor, RegionWorld, ReportLine, Stock } from './types';
-import { controlled, has, indexWorld, living, resourceName, season } from './engine';
+import { controlled, has, indexWorld, living, present, resourceName, season } from './engine';
 
 export interface EventDef {
   id: string;
@@ -47,7 +47,7 @@ export function removePeople(s: RegionState, kind: keyof Population, n: number) 
 }
 /** A random named crew member at camp, optionally filtered. */
 export function pickCrew(s: RegionState, rng: () => number, filter: (p: RegionSurvivor) => boolean = () => true) {
-  const options = living(s).filter(p => !(p.awayUntil && p.awayUntil > s.day)).filter(filter);
+  const options = present(s).filter(filter);
   return options.length ? options[Math.floor(rng() * options.length)] : undefined;
 }
 export const crewById = (s: RegionState, id?: string | number) => s.survivors.find(p => p.id === String(id) && p.alive);

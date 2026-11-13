@@ -1,4 +1,5 @@
 /** Research, phases, mutations and victory. */
+import { enforceAvatarFate, recordCampaignEnding } from './campaign';
 import type { RegionState, RegionWorld, ReportLine } from './types';
 import { controlled, indexWorld, living, random } from './engine';
 import { HQ_BRANCH, MUTATIONS, PHASES, PHASE_ONE_CAPACITY, SPECIAL_DISCOUNT, TECHS, type TechDef } from './systems';
@@ -206,11 +207,13 @@ export function rot(state: RegionState) {
 // ------------------------------------------------------------------ victory
 
 export function checkVictory(state: RegionState, foodNet: number) {
+  enforceAvatarFate(state);
+  if (state.gameOver) return;
   if (state.phase < 5) return;
-  if (tech(state, 'cure')) { state.gameOver = { day: state.day, reason: 'Vaksineforsøket virket. Det finnes en vei tilbake.', won: true }; return; }
+  if (tech(state, 'cure')) { state.gameOver = { day: state.day, reason: 'Vaksineforsøket virket. Det finnes en vei tilbake.', won: true }; recordCampaignEnding(state, 'cure'); return; }
   const rivals = state.factions.filter(f => !f.defeated);
-  if (rivals.every(f => f.relation >= 60 && !f.hostile)) { state.gameOver = { day: state.day, reason: 'Alle gruppene i regionen står sammen med dere.', won: true }; return; }
+  if (rivals.every(f => f.relation >= 60 && !f.hostile)) { state.gameOver = { day: state.day, reason: 'Alle gruppene i regionen står sammen med dere.', won: true }; recordCampaignEnding(state, 'alliance'); return; }
   const stable = foodNet >= 0 && state.morale >= 50 && state.discontent < 50 && living(state).length > 0;
   state.counters.stable = stable ? (state.counters.stable ?? 0) + 1 : 0;
-  if ((state.counters.stable ?? 0) >= 30) state.gameOver = { day: state.day, reason: 'Tretti dager med mat, håp og ro. Dere har bygd et samfunn som varer.', won: true };
+  if ((state.counters.stable ?? 0) >= 30) { state.gameOver = { day: state.day, reason: 'Tretti dager med mat, håp og ro. Dere har bygd et samfunn som varer.', won: true }; recordCampaignEnding(state, 'stable'); }
 }

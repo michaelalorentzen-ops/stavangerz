@@ -30,3 +30,16 @@ Rapportvariantene er uttrykkelig gjenbruk av miljøfamilier, ikke unike event-il
 Bruk tom `alt` på rene stemningsbilder når nærliggende overskrift allerede gir sammenhengen. Faste portretter kan ha `alt="Portrett av Ingrid"` osv., eller tom `alt` når navnet står rett ved siden av. Ikke legg rollen eller skjult spillinformasjon i alternativtekst.
 
 Manifest regenereres med `node scripts/art-manifest.mjs` fra `region/`.
+
+## Fase- og avslutningsbilder, 13.11.2026
+
+Seks nye ImageGen-illustrasjoner er visuelt kontrollert mot den samme sjøgrønne/ravfargede, maleriske stilen. De er 1280 × 720 WebP og bruker lave kystlandskap uten fjell eller påstander om kartets eksakte geografi. Ingen eksisterende bilder er byttet ut.
+
+- `phases/2.webp`: et beskjedent permanent HQ med braced treport, regntønne og varmt lys.
+- `phases/3.webp`: fiske, enkel dyrking og et lite drivhus som viser produksjon og rutiner.
+- `phases/4.webp`: et større kystkart og flere bydeler sett fra et praktisk planleggingsrom.
+- `phases/5.webp`: et møtebord, notatbok og radio; felles ansvar uten å fastsette styreform.
+- `end/win.webp`: et reparert hjem, kjøkkenhage og rolig havn; generisk håpefullt etterord som kan brukes for flere avslutninger.
+- `end/lose.webp`: en tom stol, notatbok og nedskrudd lykt; et verdig siste bilde uten å påstå hvem som døde eller hvilken krise som avsluttet spillet.
+
+Bildene gir stemning; motorens faktiske epilogtekst beskriver resultatet. Ingen gjenkjennelige hovedpersoner eller nye kanoniske figurer er lagt inn. Dekorative fase-/epilogbilder bør ha tom `alt` når overskriften/etterordet allerede gir innholdet.

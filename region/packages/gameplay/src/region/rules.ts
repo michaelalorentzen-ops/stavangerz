@@ -49,6 +49,13 @@ export const WEAPONS: Record<Weapon, { kills: number; ammo: number; noise: numbe
 };
 
 export const ACTIONS: Record<ActionId, { label: string; help: string; noise: number }> = {
+  travel: { label: 'Reis og bli', help: 'Reis langs en faktisk åpen rute. Lag og utstyr blir på målet.', noise: 0 },
+  return: { label: 'Returner / omdiriger', help: 'Hent et stasjonert lag tilbake langs en fysisk rute.', noise: 0 },
+  retrieve: { label: 'Hent fra depot', help: 'Hent lagrede ressurser og utstyr med faktisk bærekapasitet.', noise: 0 },
+  supply: { label: 'Lever forsyninger', help: 'Reserver last ved avreise og lever den fysisk til et lokalt depot.', noise: 0 },
+  areaGuard: { label: 'Områdevakt', help: 'Reis til et kontrollert område og hold perimeteren over flere døgn.', noise: 0 },
+  investigate: { label: 'Undersøk spor', help: 'Undersøk et oppdaget lokalt spor.', noise: 0 },
+  discoveryChoice: { label: 'Følg opp funn', help: 'Gjennomfør et valg ved et undersøkt sted.', noise: 0 },
   scout: { label: 'Speid', help: 'Se hvor mange zombier som er der, og hva som kan finnes. Lite støy.', noise: 0 },
   clear: { label: 'Rydd', help: 'Drep zombier. Skytevåpen dreper flere, men bruker ammunisjon og lager støy som trekker andre til.', noise: 1 },
   search: { label: 'Søk', help: 'Gå gjennom bygg og hent det som finnes. Kan gi nye overlevende.', noise: 1 },

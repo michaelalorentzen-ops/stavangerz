@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium, type Page } from 'playwright';
-import { ACTIONS, SAVE_KEY_REGION, botChooseEvent, botPlanDay, newRegionGame, startRegionDay, resumeRegionDay, type RegionState, type RegionWorld, type RegionOrder } from '../packages/gameplay/src/region/index';
+import { ACTIONS, SAVE_KEY_REGION, botChooseEvent, botPlanDay, newRegionGame, startRegionDay, resumeRegionDay, pendingTurnDecision, type RegionState, type RegionWorld, type RegionOrder } from '../packages/gameplay/src/region/index';
 
 const baseURL = process.env.REGION_TEST_URL ?? 'http://127.0.0.1:3000';
 const output = process.env.REGION_TEST_ARTIFACTS ?? 'artifacts/region-ui';
@@ -42,10 +42,10 @@ async function main() {
   async function settle(page: Page, skip: boolean) {
     // Every blocking choice is made with a real button. Skip cannot settle it.
     for (let tries = 0; tries < 16; tries++) {
-      const night = page.getByRole('dialog', { name: 'Nattangrep ved HQ' });
-      if (await night.isVisible()) await night.getByRole('button', { name: 'Hold stillingen' }).click();
+      const pending = pendingTurnDecision((await read(page)).state);
+      if (pending) { const choice = pending.choices.find(c => c.id === 'hold' || c.id === 'proceed') ?? pending.choices.find(c => !c.disabled)!; await page.getByRole('dialog', { name: pending.title, exact: true }).getByRole('button').filter({ hasText: choice.label }).click(); }
       const replay = page.getByTestId('skip-replay');
-      if (skip && await replay.isVisible()) await replay.click();
+      if (skip && await replay.isVisible()) await replay.click({ timeout: 1000 }).catch(async error => { if (await replay.isVisible()) throw error; });
       const { state } = await read(page);
       if (state.event && await page.getByRole('dialog', { name: state.event.title, exact: true }).isVisible()) {
         const choice = state.event.choices.find(c => c.id === botChooseEvent(state))!;
@@ -198,7 +198,7 @@ async function main() {
     await page.evaluate(({ key, state }) => localStorage.setItem(key, JSON.stringify(state)), { key: SAVE_KEY_REGION, state: paused.state });
     await page.reload();
     await page.getByRole('button', { name: /Fortsett dag 0/ }).click();
-    const decision = page.getByRole('dialog', { name: 'Nattangrep ved HQ', exact: true });
+    const decision = page.getByRole('dialog', { name: 'Zombier ved hovedkvarteret', exact: true });
     await decision.waitFor();
     assert.equal(await page.getByTestId('skip-replay').count(), 0, 'Reduced motion never creates a way to skip a mandatory decision.');
     assert(await page.getByTestId('end-day').isDisabled());

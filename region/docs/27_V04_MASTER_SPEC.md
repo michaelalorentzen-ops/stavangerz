@@ -226,3 +226,8 @@ Forleng **ikke** fase 1 ved å repetere samme speid–rydd–loot–sikre-løkke
 Følg [29_V04_IMPLEMENTATION.md](29_V04_IMPLEMENTATION.md). Arbeid i vertikale, verifiserbare leveranser, ikke en total omskriving. Først: motorens dag/posisjon/ordre-kontrakt og et spillbart fase-1-utsnitt med relevant kartfeedback, rapport og utstyr. Så: ZA-bok/POI, fasegating og langsiktig delegasjon. Regional styring i fase 4–5 implementeres etter at grunnsystemene er stabile. Balansering er kontinuerlig, med en avsluttende tverrfase-runde.
 
 Spør eier **samlet og kun når et åpent valg blokkerer arbeid**. Ikke gjør nye låste produktbeslutninger på vegne av eier.
+
+
+## Eieravklaring 13.11.2026: funksjonell ferdigstillelse
+
+Mikki ønsker hele v0.4 ferdigstilt; tallbalansering tas senere. D25 gjelder fortsatt faseprogresjon. D27 presiserer landemerker: nye funn krever eksplisitte crew-oppdrag gjennom oppdaget, undersøkt/sikret og operativt. Allerede aktive landemerker i gamle saves beholder effekt. D28 presiserer regional styring: kontrollert sone, navngitt lokal leder, fysisk lokallager, budsjett og forsvar/balanse/vekst. Rutiner delegeres; krig, diplomati og lover er spillervalg. Folk og forsyninger må transporteres. Se beslutningsloggen for eierens konkrete svar og hvilke tall som fortsatt er hypoteser.

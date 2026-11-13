@@ -2,6 +2,11 @@
 import type { ZoneMeasures } from '../../../world-data/src/model';
 import type { CrewMission, CrewPosition } from './location';
 import type { GearPreferences, RegionGearState } from './gear';
+import type { WonderInstallation } from './wonders';
+import type { AdministrationState } from './administration';
+import type { CampaignState } from './campaign';
+import type { DiscoveryState } from './discoveries';
+import type { MobilityState } from './mobility';
 
 export interface RegionZone {
   id: string; name: string; level: 1 | 2 | 3; parentId?: string;
@@ -72,20 +77,31 @@ export interface RegionHq { zoneId: string; type: string; modules: string[]; bui
 
 export type ActionId = 'scout' | 'clear' | 'search' | 'claim' | 'fortify' | 'build' | 'establishHq' | 'module' | 'network'
   | 'guard' | 'hold' | 'block' | 'blow' | 'farm' | 'fish' | 'rest' | 'heal' | 'craft'
-  | 'research' | 'relocate' | 'assault' | 'repair' | 'wonder';
-export interface RegionOrder { id: string; action: ActionId; zoneId: string; survivorIds: string[]; target?: string; gear?: GearPreferences }
+  | 'research' | 'relocate' | 'assault' | 'repair' | 'wonder'
+  | 'travel' | 'return' | 'retrieve' | 'supply' | 'areaGuard' | 'investigate' | 'discoveryChoice';
+export interface RegionOrder { id: string; action: ActionId; zoneId: string; survivorIds: string[]; target?: string; gear?: GearPreferences;
+  logistics?: { sourceZoneId?: string; destinationZoneId?: string; cargo?: Stock; gearIds?: string[]; passengers?: Population; stay?: boolean; areaLevel?: 2 | 3 };
+  communication?: { contactOnCritical?: boolean; radio?: boolean; leaderId?: string; mandate?: 'cautious' | 'balanced' | 'bold' };
+}
 
 /** The population that is not the named crew: counted, not named. */
 export interface Population { adults: number; children: number; elderly: number; sick: number }
 export type WorkId = 'farm' | 'fish' | 'scavenge' | 'clear' | 'guard' | 'build' | 'research';
 
-export interface ReportLine { tone: 'info' | 'good' | 'warn' | 'bad'; title: string; text: string; zoneId?: string }
+export interface ReportLine { category?: string; priority?: number; facts?: Record<string, string | number | boolean>; tone: 'info' | 'good' | 'warn' | 'bad'; title: string; text: string; zoneId?: string }
 /**
  * v0.4 replay metadata from the authoritative end-of-day result. This is a
  * presentation journal, NOT a resumable mid-turn simulation checkpoint.
  */
 export interface RegionReplayZoneChange { zoneId: string; before: ZoneStatus; after: ZoneStatus }
+export interface RegionMapSnapshot {
+  homeZoneId: string;
+  zones: Record<string, { status: ZoneStatus; intel?: { min: number; max: number; day: number }; owner?: string }>;
+  crewPositions: Record<string, CrewPosition>;
+  crewMissions: Record<string, CrewMission>;
+}
 export interface RegionReplayStage {
+  mapSnapshot?: RegionMapSnapshot;
   phase: 'operations' | 'night' | 'new-day';
   /** Relative to the resolved turn's start day (`report.day - 1`).
    * Explicit windows; new-day is an instantaneous 07:00 summary. */
@@ -99,6 +115,8 @@ export interface RegionReplayStage {
   mainResourcesAfter: { food: number; water: number };
   /** Night zombie moves already filtered by the engine's visibility rules. */
   moves?: { from: string; to: string; n: number }[];
+  crewPositions?: Record<string, CrewPosition>;
+  zoneIntel?: Record<string, { min: number; max: number; day: number }>;
 }
 export interface RegionReport {
   day: number; lines: ReportLine[];
@@ -129,7 +147,8 @@ export interface RegionNightCheckpoint {
   version: 1;
   day: number;
   worldVersion: string;
-  stage: 'before-night-defence';
+  stage: 'before-night-defence' | 'before-field-order';
+  operations?: { orders: RegionOrder[]; nextIndex: number; used: string[]; worked: string[]; heldToday: string[]; noise: Record<string, number>; avatarId?: string; missionId?: string; choice?: 'proceed' | 'withdraw' };
   lines: ReportLine[];
   guards: Record<string, number>;
   guardPower: number;
@@ -142,9 +161,13 @@ export interface RegionNightCheckpoint {
   operationsLineEnd: number;
   operationsZoneStatus: Record<string, ZoneStatus>;
   operationsResources: { food: number; water: number };
+  operationsMapSnapshot?: RegionMapSnapshot;
+  operationsPositions?: Record<string, CrewPosition>;
+  operationsIntel?: Record<string, { min: number; max: number; day: number }>;
   /** Set only for an actual decision involving the avatar at the home zone. */
   decision?: {
-    kind: 'hq-night-defence';
+    kind: 'hq-night-defence' | 'field-encounter';
+    orderId?: string; survivorIds?: string[]; title?: string; text?: string; choices?: EventChoice[];
     avatarId: string;
     zoneId: string;
     ammoRequired: number;
@@ -153,7 +176,7 @@ export interface RegionNightCheckpoint {
 
 /** A blocking decision may be persisted with the state as a single save. */
 export interface RegionTurnDecision {
-  kind: 'hq-night-defence';
+  kind: 'hq-night-defence' | 'field-encounter';
   title: string;
   text: string;
   zoneId: string;
@@ -166,6 +189,10 @@ export interface RegionState {
   survivors: RegionSurvivor[]; stock: Stock;
   /** Optional additive v0.4 register. Legacy personal weapons are materialized once. */
   gear?: RegionGearState;
+  mobility?: MobilityState;
+  discoveries?: DiscoveryState;
+  campaign?: CampaignState;
+  administration?: AdministrationState;
   /** Canonical v0.4 geography; optional only to read old region-2 saves. */
   crewPositions?: Record<string, CrewPosition>;
   /** Persisted multi-day assignments; the engine, not the UI, advances them. */
@@ -187,7 +214,7 @@ export interface RegionState {
   chokepoints: Record<string, ChokepointState>;
   hq?: RegionHq;
   /** Unique places you hold: level 0 is found, higher levels are built. */
-  wonders?: Record<string, { level: number; zoneId: string; progress: number }>;
+  wonders?: Record<string, { level: number; zoneId: string; progress: number; installation?: WonderInstallation }>;
   /** Networks built per L2 zone. */
   networks: Record<string, string[]>;
   factions: RegionFaction[];
