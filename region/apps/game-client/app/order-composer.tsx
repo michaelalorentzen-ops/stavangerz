@@ -5,7 +5,7 @@ import type { RegionOrder, RegionState, RegionWorld, Stock } from '../../../pack
 import { prepareGearPlan, previewOrder, resourceName } from '../../../packages/gameplay/src/region/engine';
 import { ACTIONS, R } from '../../../packages/gameplay/src/region/rules';
 import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
-import { localStock, missionPreview, routeBetween } from '../../../packages/gameplay/src/region/mobility';
+import { localStock, missionLoad, missionPreview, routeBetween } from '../../../packages/gameplay/src/region/mobility';
 import { gearItemName, GEAR_SLOTS, type GearPlan } from '../../../packages/gameplay/src/region/gear';
 import CrewEquipment, { equipmentDraftOrders } from './crew-equipment';
 import { MissionOptions } from './mission-controls';
@@ -28,15 +28,13 @@ export function commandOrderPreview(state: RegionState, world: RegionWorld, orde
     if (!preview.valid || !movement.valid) continue;
     const source = movement.originZoneId === state.homeZoneId ? budget.stock : budget.mobility?.depots[movement.originZoneId];
     if (!source) continue;
-    for (const [id, amount] of Object.entries(movement.reservedCargo)) source[id] = (source[id] ?? 0) - amount;
-    if (previous.communication?.radio && (source.radio ?? 0) >= 1 && (source.batteries ?? 0) >= 1) { source.radio -= 1; source.batteries -= 1; }
+    for (const [id, amount] of Object.entries(missionLoad(budget, previous, preview.costs).reservations)) source[id] = (source[id] ?? 0) - amount;
     if (movement.boatRequired) source.boat = Math.max(0, (source.boat ?? 0) - 1);
   }
   const preview = previewOrder(budget, world, order, { gearPrepared: true });
   const movement = missionPreview(budget, world, order, preview.costs);
-  const source = localStock(budget, movement.originZoneId);
-  const radioReserved = !!order.communication?.radio && (source.radio ?? 0) - (movement.reservedCargo.radio ?? 0) >= 1 && (source.batteries ?? 0) - (movement.reservedCargo.batteries ?? 0) >= 1;
-  return { budget, preview, movement, radioReserved };
+  const load = missionLoad(budget, order, preview.costs);
+  return { budget, preview, movement, radioReserved: load.radio, reservations: load.reservations };
 }
 
 /** Presentation only: planned homecoming is conditional on the mission succeeding. */

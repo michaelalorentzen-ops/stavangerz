@@ -136,7 +136,7 @@ function StartScreen({ world, saved, onStart }: { world: RegionWorld; saved: Reg
   const [seed, setSeed] = useState(() => 1 + Math.floor(Math.random() * 9999));
   const dangers = useMemo(() => Object.fromEntries(index.l3.map(z => [z.id, startDanger(world, z.id)])), [world, index]);
   const zone = index.byId.get(choice);
-  const d = dangers[choice];
+  const d = useMemo(() => choice ? startDanger(world, choice, seed) : undefined, [world, choice, seed]);
   const l2 = index.byId.get(zone?.parentId ?? '');
   const hqNear = [choice, ...(index.adjacent.get(choice) ?? []).map(a => a.to)].flatMap(id => (index.poisByZone.get(id) ?? []).filter(p => p.role === 'hq')).map(p => `${p.name} (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
   return <main className="rz-shell rz-start">
