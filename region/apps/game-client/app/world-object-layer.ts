@@ -16,7 +16,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
   const scene = new THREE.Scene();
   const camera = new THREE.Camera();
   const loader = new GLTFLoader();
-  const templates = new Map<string, { scene: THREE.Group; clips: THREE.AnimationClip[]; height: number }>();
+  const templates = new Map<string, { scene: THREE.Group; clips: THREE.AnimationClip[]; height: number; span: number }>();
   const instances = new Map<string, Instance>();
   const pending = new Set<string>();
   const journeys = new Map<string, { from: [number, number]; to: [number, number]; started: number }>();
@@ -40,7 +40,8 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
       pending.delete(assetId);
       if (disposed) { disposeObject(gltf.scene); return; }
       const box = new THREE.Box3().setFromObject(gltf.scene);
-      templates.set(assetId, { scene: gltf.scene, clips: gltf.animations, height: Math.max(.1, box.max.y - box.min.y) });
+      const size = box.getSize(new THREE.Vector3());
+      templates.set(assetId, { scene: gltf.scene, clips: gltf.animations, height: Math.max(.1, size.y), span: Math.max(.1, size.x, size.y, size.z) });
       map.triggerRepaint();
     }, undefined, () => { pending.delete(assetId); });
   };
@@ -79,7 +80,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
     for (const piece of pieces) {
       if (!markers.has(piece.id)) {
         const button = document.createElement('button'); button.type = 'button';
-        button.className = `rz-world-piece ${piece.crew ? 'rz-world-crew' : 'rz-world-prop'}`;
+        button.className = `rz-world-piece ${piece.crew ? 'rz-world-crew' : 'rz-world-prop'} ${piece.asset === 'zombie' ? 'rz-world-threat' : ''}`;
         button.title = piece.title; button.setAttribute('aria-label', piece.title);
         const silhouette = piece.crew ? '<circle cx="16" cy="8" r="4"/><path d="M11 15h10l3 10h-5v7h-6v-7H8z"/>' : piece.asset === 'zombie' ? '<path d="M16 4 30 30H2z"/><path d="M16 12v8m0 4v2" stroke="#17302c" stroke-width="3"/>' : piece.asset === 'hq' ? '<path d="m2 16 14-12 14 12h-4v16H6V16zm11 7v9h6v-9z"/>' : '<path d="M3 10h26v20H3zM3 10l8-6h12l6 6M16 10v20" stroke="currentColor" stroke-width="2" fill="none"/>';
         button.innerHTML = `<span class="rz-piece-fallback" aria-hidden="true"><svg viewBox="0 0 32 36" width="26" height="30" fill="currentColor">${silhouette}</svg></span><span class="rz-piece-caption"></span>`;
@@ -100,7 +101,10 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
       renderer.toneMappingExposure = 1.05;
     },
     render(_gl, options) {
-      if (!renderer || disposed || lost || lowPower || map.getZoom() < 12) return;
+      if (!renderer || disposed || lost || lowPower || map.getZoom() < 12 || map.getPitch() < 15) {
+        markers.forEach(marker => marker.getElement().classList.remove('has-model'));
+        return;
+      }
       const projection = new THREE.Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
       // Keep GPU coordinates near zero; global Mercator floats jitter at street zoom.
       const origin = lib.MercatorCoordinate.fromLngLat(map.getCenter(), 0);
@@ -136,7 +140,10 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         const lngLat = map.unproject(point);
         const anchor = lib.MercatorCoordinate.fromLngLat(lngLat, 0);
         const metersPerPixel = 40075016.686 * Math.cos(lngLat.lat * Math.PI / 180) / (512 * 2 ** map.getZoom());
-        const scale = anchor.meterInMercatorCoordinateUnits() * metersPerPixel * (piece.crew ? 45 : piece.asset === 'hq' ? 64 : 36) / template.height;
+        const upright = !!piece.crew || piece.asset === 'zombie';
+        const targetSize = piece.crew ? 43 : piece.asset === 'zombie' ? 34 : piece.asset === 'hq' ? 64 : 42;
+        const modelSize = upright ? template.height * Math.max(.25, Math.sin(map.getPitch() * Math.PI / 180)) : template.span;
+        const scale = anchor.meterInMercatorCoordinateUnits() * metersPerPixel * targetSize / modelSize;
         instance.object.matrixAutoUpdate = false;
         // glTF Y-up becomes map Z-up; reflection accounts for Mercator's south-positive Y.
         instance.object.matrix.makeTranslation(anchor.x - origin.x, anchor.y - origin.y, anchor.z - origin.z).multiply(new THREE.Matrix4().makeScale(scale, -scale, scale)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
@@ -149,6 +156,12 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
     },
     onRemove() { renderer?.dispose(); renderer = undefined; },
   };
+  const restoreLayer = () => {
+    if (disposed) return;
+    if (!map.getLayer(id)) map.addLayer(layer);
+    refresh();
+  };
+  map.on('style.load', restoreLayer);
   const contextLost = () => { lost = true; markers.forEach(m => m.getElement().classList.remove('has-model')); };
   const contextRestored = () => { lost = false; map.triggerRepaint(); };
   map.getCanvas().addEventListener('webglcontextlost', contextLost);
@@ -168,7 +181,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
     }
     state = next; refresh();
   }, destroy() {
-    disposed = true; abort.abort(); journeys.clear(); map.off('moveend', refresh);
+    disposed = true; abort.abort(); journeys.clear(); map.off('moveend', refresh); map.off('style.load', restoreLayer);
     map.getCanvas().removeEventListener('webglcontextlost', contextLost); map.getCanvas().removeEventListener('webglcontextrestored', contextRestored);
     markers.forEach(m => m.remove()); markers.clear();
     instances.forEach(instance => instance.mixer?.stopAllAction()); instances.clear();

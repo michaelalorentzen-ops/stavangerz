@@ -23,6 +23,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
   const previousZonesRef = useRef<RegionState['zones'] | undefined>(undefined);
   const libRef = useRef<typeof import('maplibre-gl') | null>(null);
   const [ready, setReady] = useState(false);
+  const [styleRevision, setStyleRevision] = useState(0);
   const [hover, setHover] = useState<{ x: number; y: number; text: string } | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -42,6 +43,9 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
       map.addControl(new lib.NavigationControl({ visualizePitch: true, showZoom: false }), 'bottom-right');
       map.on('load', () => {
         attachBuildings(map!);
+        // MapLibre rebuilds the style after context restoration; feature-state
+        // must be pushed again from this exact public snapshot.
+        map!.on('style.load', () => setStyleRevision(revision => revision + 1));
         const l3 = world.zones.filter(z => z.level === 3 && z.geometry).map(z => ({ type: 'Feature' as const, id: z.id, properties: { id: z.id }, geometry: z.geometry as GeoJSON.Geometry }));
         const outlines = (level: number) => world.zones.filter(z => z.level === level && z.geometry).map(z => ({ type: 'Feature' as const, properties: { id: z.id }, geometry: z.geometry as GeoJSON.Geometry }));
         map!.on('zoom', () => ref.current?.classList.toggle('rz-world-overview', map!.getZoom() < 12));
@@ -79,8 +83,8 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
         map!.addLayer({ id: 'l2-line', type: 'line', source: 'l2', paint: { 'line-color': '#d9d2b0', 'line-width': 1, 'line-opacity': .16 } });
         map!.addLayer({ id: 'l1-line', type: 'line', source: 'l1', paint: { 'line-color': '#f2e2a0', 'line-width': 2, 'line-opacity': .22, 'line-dasharray': [4, 2] } });
         map!.addLayer({ id: 'links', type: 'line', source: 'links', paint: {
-          'line-color': ['match', ['coalesce', ['feature-state', 'c'], 'open'], 'blown', '#e05a4a', 'flooded', '#4a8ee0', 'blocked', '#e0a64a', 'held', '#6fd08a', '#e8e1c4'],
-          'line-width': 3, 'line-dasharray': [2, 1.5] } });
+          'line-color': ['match', ['coalesce', ['feature-state', 'c'], 'open'], 'blown', '#e05a4a', 'flooded', '#4a8ee0', 'blocked', '#e0a64a', 'held', '#6fd08a', '#92a49a'],
+          'line-width': 1.5, 'line-dasharray': [3, 3], 'line-opacity': ['case', ['==', ['coalesce', ['feature-state', 'c'], 'open'], 'open'], .35, .85] } });
         map!.addLayer({ id: 'moves', type: 'line', source: 'moves', minzoom: 12, paint: {
           'line-color': COLORS.zombie, 'line-width': ['interpolate', ['linear'], ['get', 'n'], 1, 1.5, 30, 6], 'line-opacity': .8, 'line-dasharray': [0, 2, 2] }, layout: { 'line-cap': 'round' } });
         map!.addLayer({ id: 'valid-targets', type: 'line', source: 'l3', filter: ['in', ['get', 'id'], ['literal', []]], paint: { 'line-color': '#b4d8ee', 'line-width': 2, 'line-dasharray': [3, 2], 'line-opacity': .8 } });
@@ -109,7 +113,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
   useEffect(() => {
     const map = mapRef.current;
     const lib = libRef.current;
-    if (!map || !ready || !lib) return;
+    if (!map || !ready || !lib || !map.getSource('l3') || !map.getSource('heat') || !map.getSource('moves')) return;
     operationsRef.current?.update(state);
     objectsRef.current?.update(state);
     for (const zone of index.l3) {
@@ -146,7 +150,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     for (const d of WONDERS) { const zid = state.wonders?.[d.id]?.zoneId ?? (d.found === 'claim' ? wonderZone(world, d) : undefined); if (zid && (state.wonders?.[d.id] || state.zones[zid]?.status !== 'unknown')) add(index.byId.get(zid)?.at, 'wonder', `${d.name}${state.wonders?.[d.id] ? wonderOperational(state.wonders[d.id]) ? ' (operativt)' : ' (kjent)' : ''}`, () => onSelectRef.current(zid)); }
     for (const f of state.factions.filter(f => f.known && !f.defeated && state.zones[f.zoneId]?.status !== 'controlled')) add(index.byId.get(f.zoneId)?.at, f.hostile ? 'enemy' : 'faction', f.name, () => onSelectRef.current(f.zoneId));
     add(index.byId.get(state.homeZoneId)?.at, 'home', 'Leiren · egen posisjon', () => onSelectRef.current(state.homeZoneId));
-  }, [state, ready, hops, world, index, flows, overlay, replayMoves]);
+  }, [state, ready, styleRevision, hops, world, index, flows, overlay, replayMoves]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !(replayMoves ?? state.reports.at(-1)?.moves ?? []).length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -166,7 +170,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     if (!map || !ready) return;
     if (map.getLayer('valid-targets')) map.setFilter('valid-targets', ['in', ['get', 'id'], ['literal', targeting ? validTargetZoneIds ?? [] : []]]);
     for (const n of [1, 2, 3]) map.setFilter(`l${n}-selected`, ['==', ['get', 'id'], selected]);
-  }, [selected, ready, targeting, validTargetZoneIds]);
+  }, [selected, ready, styleRevision, targeting, validTargetZoneIds]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !ref.current) return;

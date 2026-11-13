@@ -31,6 +31,7 @@ export function attachOperationalMap(map: LibreMap, lib: typeof import('maplibre
     return zone;
   };
   const render = () => {
+    if (!map.getSource('crew-routes') || !map.getSource('crew-coverage')) return;
     const level = commandLevel(map.getZoom());
     onLevel(level);
     markers.forEach(m => m.remove()); markers = [];

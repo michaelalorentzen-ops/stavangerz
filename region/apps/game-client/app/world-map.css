@@ -18,3 +18,5 @@
 @media (prefers-reduced-motion:reduce) { .rz-world-piece * { animation:none!important; transition:none!important; } }
 
 .rz-world-overview .rz-geographic-poi { display: none; }
+
+.rz-world-threat .rz-piece-fallback { color: #ffd3b4; border-color: #ce6b4f; background: #402a25; }

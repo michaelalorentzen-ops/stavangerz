@@ -41,6 +41,13 @@ async function run() {
     for (const poiId of shownIds) assert.notEqual(state.zones[world.pois.find(p => p.id === poiId)!.zoneId]?.status, 'unknown', `Unknown active POI must remain hidden: ${poiId}`);
     await page.screenshot({ path: `${output}/coastal-crew-glb.png` });
     await page.locator('.rz-map').screenshot({ path: `${output}/coastal-map-detail.png` });
+    const contextExtension = await page.evaluateHandle(() => document.querySelector<HTMLCanvasElement>('.rz-map-canvas canvas')?.getContext('webgl2')?.getExtension('WEBGL_lose_context'));
+    assert(await contextExtension.evaluate(extension => !!extension), 'Chromium exposes the context-loss regression hook.');
+    await contextExtension.evaluate(extension => extension!.loseContext());
+    await page.waitForFunction(() => document.querySelectorAll('.has-model').length === 0);
+    await contextExtension.evaluate(extension => extension!.restoreContext());
+    await page.waitForFunction(() => document.querySelectorAll('.rz-world-crew.has-model').length === 4);
+    await contextExtension.dispose();
     for (let i = 0; i < 3; i++) { await page.getByRole('button', { name: 'Zoom ut', exact: true }).click(); await page.waitForTimeout(400); }
     await page.waitForFunction(() => document.querySelectorAll('.rz-world-crew').length === 0);
     assert((await page.locator('.rz-command-level').innerText()).includes('L2'));
@@ -57,7 +64,7 @@ async function run() {
     assert.equal(await fallback.locator('.rz-world-crew svg').count(), 2);
     await fallback.screenshot({ path: `${output}/low-power-coverage-fallback.png` });
     assert.deepEqual(errors, []);
-    writeFileSync(`${output}/world-map-qa.json`, JSON.stringify({ glbResponses: requests, errors, knownPoiCount: knownPoiIds.size, assertions: ['4 real GLB crew at local zoom', 'known POI accessible buttons', 'no local models at L2', 'area-duty and unknown never have point pieces', 'low-power SVG fallback'] }, null, 2));
+    writeFileSync(`${output}/world-map-qa.json`, JSON.stringify({ glbResponses: requests, errors, knownPoiCount: knownPoiIds.size, assertions: ['4 real GLB crew at local zoom', 'known POI accessible buttons', 'WebGL context loss uses SVG and restoration restores GLB', 'no local models at L2', 'area-duty and unknown never have point pieces', 'low-power SVG fallback'] }, null, 2));
     console.log(`World map verified; artifacts: ${output}`);
   } finally { await browser.close(); }
 }
