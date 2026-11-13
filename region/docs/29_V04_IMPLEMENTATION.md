@@ -173,3 +173,8 @@ Mikki ba om resten av v0.4 med tallbalansering utsatt, og godkjente D27 (anleggs
 ## Revisjon etter eierens ti-døgnstest, 13.11.2026
 
 PR28 ble merget til main og publisert etter særskilt eiermandat. Spillerens faktiske test avdekket vesentlige UX-mangler som tekniske kontroller ikke fanget. Arbeidsgrenen `feat/v04-territory-clarity` reviderer kart, ordre, rapport, leirarbeid og detaljflater. Se [36_V04_PLAYTEST_UX_REVISION.md](36_V04_PLAYTEST_UX_REVISION.md) for implementert, verifisert og fortsatt manglende. Ingen ny balanse eller eierlåst regel erklæres godkjent.
+
+
+## Visuell retning etter QA31
+
+Eieren ba om tydeligere spillpreg etter en funksjonelt positiv QA. [40_V04_ART_DIRECTION.md](40_V04_ART_DIRECTION.md) dokumenterer den samlede illustrerte retningen, kontroll mot bevart flyt og konkrete skjermbevis. Det endrer ikke D25–D28 eller balanserer motoren; stilretningen er fortsatt en vurderbar hypotese, ikke en ny eierlåst produktbeslutning.

@@ -43,3 +43,7 @@ Seks nye ImageGen-illustrasjoner er visuelt kontrollert mot den samme sjøgrønn
 - `end/lose.webp`: en tom stol, notatbok og nedskrudd lykt; et verdig siste bilde uten å påstå hvem som døde eller hvilken krise som avsluttet spillet.
 
 Bildene gir stemning; motorens faktiske epilogtekst beskriver resultatet. Ingen gjenkjennelige hovedpersoner eller nye kanoniske figurer er lagt inn. Dekorative fase-/epilogbilder bør ha tom `alt` når overskriften/etterordet allerede gir innholdet.
+
+## Illustrert inventar, 13.11.2026
+
+`items/inventory-atlas.png` er en original ImageGen-generert 4×4-atlas med transparent bakgrunn, visuelt inspisert før integrering. Ingen tekst er bakt inn i bildene. Rekkefølge (venstre→høyre, øverst→nederst): mat, vann, medisin, drivstoff; ammunisjon, byggematerialer, brekkjern, kikkert; verktøykasse, lommelykt, medisinveske, hjelm; beskyttelsesvest, arbeidsjakke, pistol, rifle. Illustrasjonene er generiske representasjoner av eksisterende kategorier, ikke nye ressurser eller nye utrustningsregler. `ItemArt` bruker CSS-celler; ikonfallback beholdes for øvrige katalogvarer. Asseten lastes ved bruk av illustrerte inventarflater og gjenbrukes mellom rutene. Antall, tilgjengelighet, navn, plass og reservasjon kommer fortsatt fra motoren.

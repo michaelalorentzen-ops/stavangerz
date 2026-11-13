@@ -6,6 +6,7 @@ import { DIFFICULTIES, type CampaignOptions } from '../../../packages/gameplay/s
 import { CONTENT } from '../../../packages/world-data/src/content';
 import { attachBuildings, gameStyle, MAP_ATTRIBUTION } from './region-map-style';
 import './start-screen.css';
+import { HudIcon, type HudIconName } from './hud-icons';
 const DANGER_COLOR: Record<string,string> = { Rolig:'#5f9a5f',Middels:'#a8a24a',Krevende:'#c48a3a','Svært krevende':'#b8563c','Nesten umulig':'#7c2230' };
 const number=(n:number)=>Math.round(n).toLocaleString('nb-NO');
 export default function StartScreen({ world, saved, onStart }: { world: RegionWorld; saved: RegionState | null; onStart: (s: RegionState, fresh: boolean) => void }) {
@@ -21,16 +22,16 @@ export default function StartScreen({ world, saved, onStart }: { world: RegionWo
   const dangers = useMemo(() => ({ ...estimates, ...seededStarts, ...(choice && d ? { [choice]: d } : {}) }), [estimates, seededStarts, choice, d]);
   const l2 = index.byId.get(zone?.parentId ?? '');
   const hqNear = [choice, ...(index.adjacent.get(choice) ?? []).map(a => a.to)].flatMap(id => (index.poisByZone.get(id) ?? []).filter(p => p.role === 'hq')).map(p => `${p.name} (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
-  return <main className="rz-shell rz-start rz-start-ready">
+  return <main className={`rz-shell rz-start rz-start-ready ${saved?'is-returning':''}`}>
     <section className="rz-start-intro">
-      <div className="rz-start-brand"><img src="/art/intro/hero.webp" className="rz-art rz-art-hero" alt="Stavanger etter dag null" /><div><p className="rz-kicker">STAVANGER Z / ETTER DAG NULL</p><h1>Hele regionen.<br />Ett døgn av gangen.</h1></div></div>
+      <div className="rz-start-brand"><img src="/art/intro/hero.webp" className="rz-art rz-art-hero" alt="" /><div><p className="rz-kicker">ETTER DAG NULL</p><h1 className="start-wordmark"><span>STAVANGER</span><b>Z</b></h1><p className="start-tagline">Hele regionen. Ett døgn av gangen.</p></div></div>
       <p className="rz-start-lead">Led folkene dine gjennom utbruddet. Velg et startsted på kartet, gi ordre og se hva neste døgn bringer.</p>
       <details className="rz-start-story"><summary>Om verden og startstedet</summary><p>Tette bysentre har mye å finne, men så mange døde at første oppgave kan være å flykte. På landet finnes jord, båter og diesel, men avstandene er lange.</p></details>
       {saved && <button className="rz-primary rz-wide" onClick={() => onStart(saved, false)}>{saved.gameOver ? 'Vis avslutningen etter' : 'Fortsett'} dag {saved.day} i {index.byId.get(saved.homeZoneId)?.name} →</button>}
-      <section className="start-campaign" aria-label="Vanskelighetsgrad og Hardcore"><fieldset><legend>Velg spillestil</legend><div className="start-modes">{DIFFICULTIES.map(mode=><label key={mode.id} className={campaignOptions.difficulty===mode.id?'selected':''}><input type="radio" name="start-difficulty" checked={campaignOptions.difficulty===mode.id} onChange={()=>setCampaignOptions({...campaignOptions,difficulty:mode.id})}/><span><strong>{mode.name}</strong><small>{mode.id==='survival'?'Standard':mode.id==='story'?'Mer rom for historien':'En hardere kamp'}</small></span></label>)}</div></fieldset><p className="start-mode-description">{DIFFICULTIES.find(mode=>mode.id===campaignOptions.difficulty)?.description}</p><label className="start-hardcore"><input type="checkbox" checked={campaignOptions.hardcore??false} onChange={e=>setCampaignOptions({...campaignOptions,hardcore:e.target.checked})}/><span><strong>Hardcore</strong><small>Hovedpersonens død avslutter gjennomspillingen.</small></span></label><details><summary>Om Hardcore og lagring</summary><p>Hardcore kan kombineres med alle tre spillestiler. Du fortsetter fra siste kontrollpunkt uten å gå tilbake til tidligere valg. Uten Hardcore kan du velge en etterfølger hvis hovedpersonen dør.</p></details></section>
+      <section className="start-campaign" aria-label="Vanskelighetsgrad og Hardcore"><fieldset><legend>Velg spillestil</legend><div className="start-modes">{DIFFICULTIES.map(mode=><label key={mode.id} data-difficulty={mode.id} className={campaignOptions.difficulty===mode.id?'selected':''}><HudIcon name={({story:'book',survival:'guard',realistic:'unrest'} as Record<string,HudIconName>)[mode.id]} size={25}/><input type="radio" name="start-difficulty" checked={campaignOptions.difficulty===mode.id} onChange={()=>setCampaignOptions({...campaignOptions,difficulty:mode.id})}/><span><strong>{mode.name}</strong><small>{mode.id==='survival'?'Standard':mode.id==='story'?'Mer rom for historien':'En hardere kamp'}</small></span></label>)}</div></fieldset><p className="start-mode-description">{DIFFICULTIES.find(mode=>mode.id===campaignOptions.difficulty)?.description}</p><label className="start-hardcore"><input type="checkbox" checked={campaignOptions.hardcore??false} onChange={e=>setCampaignOptions({...campaignOptions,hardcore:e.target.checked})}/><span><strong>Hardcore</strong><small>Hovedpersonens død avslutter gjennomspillingen.</small></span></label><details><summary>Om Hardcore og lagring</summary><p>Hardcore kan kombineres med alle tre spillestiler. Du fortsetter fra siste kontrollpunkt uten å gå tilbake til tidligere valg. Uten Hardcore kan du velge en etterfølger hvis hovedpersonen dør.</p></details></section>
       <div className="start-suggestions-heading"><h2 className="rz-subhead">Forslag</h2><div aria-label="Sider med startforslag"><button aria-label="Forrige startforslag" disabled={startPage===0} onClick={()=>setStartPage(startPage-1)}>←</button><span>{startPage+1} / {Math.ceil(world.starts.length/6)}</span><button aria-label="Neste startforslag" disabled={(startPage+1)*6>=world.starts.length} onClick={()=>setStartPage(startPage+1)}>→</button></div></div>
       <div className="rz-start-list" aria-label="Forslag til startområder">
-        {world.starts.slice(startPage*6,startPage*6+6).map(s => <button key={s.zoneId} className={`rz-start-card ${choice === s.zoneId ? 'on' : ''}`} onClick={() => setChoice(s.zoneId)}>
+        {world.starts.slice(startPage*6,startPage*6+6).map(s => <button key={s.zoneId} className={`rz-start-card ${choice === s.zoneId ? 'on' : ''}`} aria-pressed={choice===s.zoneId} onClick={() => setChoice(s.zoneId)}>
           <strong>{s.name.split(',')[0]}</strong><span><i className="rz-dot" style={{ background: DANGER_COLOR[dangers[s.zoneId].level] }} />{dangers[s.zoneId].level}</span>
         </button>)}
       </div>
@@ -41,7 +42,7 @@ export default function StartScreen({ world, saved, onStart }: { world: RegionWo
       {zone && d && <div className="rz-start-pick">
         <p className="rz-kicker">{l2?.name}</p>
         <h2>{zone.name}</h2>
-        <p><b style={{ color: DANGER_COLOR[d.level] }}>Å bli: {d.level}</b> · om lag {number(d.zombies)} døde i sonen og {number(d.around)} rundt.{d.escape ? <> Beste fluktvei: <b>{index.byId.get(d.escape.zoneId)?.name}</b> (om lag {number(d.escape.zombies)} døde).</> : null}</p>
+        <p><b style={{ color: DANGER_COLOR[d.level] }}>Startforhold: {d.level}</b> · om lag {number(d.zombies)} døde i sonen og {number(d.around)} rundt.{d.escape ? <> Beste fluktvei: <b>{index.byId.get(d.escape.zoneId)?.name}</b> (om lag {number(d.escape.zombies)} døde).</> : null}</p>
         <p className="rz-small">{d.level === 'Nesten umulig' ? 'Dere kommer ikke til å klare å holde dette stedet. Planlegg flukten fra første dag.' : d.level === 'Svært krevende' ? 'Mange døde. Det kan være lurt å flytte leiren før dere tar over noe.' : d.level === 'Krevende' ? 'Det går, men det koster.' : 'Et godt sted å begynne.'}
           {' '}{CONTENT.zoneTypes.find(t => t[0] === zone.type)?.[1] ?? ''}.{hqNear.length ? ` HQ i nærheten: ${hqNear.slice(0, 3).join(', ')}.` : ''}</p>
         <div className="rz-start-go">
@@ -49,7 +50,7 @@ export default function StartScreen({ world, saved, onStart }: { world: RegionWo
           <button className="rz-primary" data-testid="start-game" onClick={() => {
             if (saved && !confirm('En ny gjennomspilling erstatter den lagrede. Fortsette?')) return;
             onStart(newRegionGame(world, choice, seed, { ...campaignOptions, runId: crypto.randomUUID() }), true);
-          }}>Start i {zone.name} →</button>
+          }}><HudIcon name="claim" size={20}/><span>Start i {zone.name}</span><HudIcon name="arrow" size={18}/></button>
         </div>
       </div>}
     </section>

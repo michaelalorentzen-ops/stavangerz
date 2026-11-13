@@ -1,6 +1,6 @@
-# Regionspillet v0.3 (QA)
+# Stavanger Z – regionspillet v0.4
 
-> **v0.4 klar for spilltest:** Kartbasert HUD, animerte kartfigurer, personlig utstyr, fysisk logistikk og regional styring er implementert. Siste arbeid: [QA30 – spillerflyt, tilgjengelighet og framgang](docs/39_V04_QA30_PLAYER_POLISH.md). Tidligere [QA29-rettelser](docs/38_V04_QA29_FIXES.md) og [UX-revisjon](docs/36_V04_PLAYTEST_UX_REVISION.md). Tidligere [leveranse og testbevis](docs/35_V04_HUD_AND_QA.md). Tallbalansering og menneskelig langspilltest gjenstår. [Master spec](docs/27_V04_MASTER_SPEC.md), [beslutningslogg](docs/28_V04_DECISIONS.md) og [implementeringsplan](docs/29_V04_IMPLEMENTATION.md) beskriver den godkjente rammen.
+> **v0.4 klar for spilltest:** Kartbasert HUD, animerte kartfigurer, personlig utstyr, fysisk logistikk og regional styring er implementert. Siste arbeid: [visuell spillidentitet etter QA31](docs/40_V04_ART_DIRECTION.md). Tidligere [QA30 – spillerflyt og framgang](docs/39_V04_QA30_PLAYER_POLISH.md). Tidligere [QA29-rettelser](docs/38_V04_QA29_FIXES.md) og [UX-revisjon](docs/36_V04_PLAYTEST_UX_REVISION.md). Tidligere [leveranse og testbevis](docs/35_V04_HUD_AND_QA.md). Tallbalansering og menneskelig langspilltest gjenstår. [Master spec](docs/27_V04_MASTER_SPEC.md), [beslutningslogg](docs/28_V04_DECISIONS.md) og [implementeringsplan](docs/29_V04_IMPLEMENTATION.md) beskriver den godkjente rammen.
 
 Dette er regionspillet: hele Stavanger-regionen med 663 soner. Det er en egen kodebase ved siden av Buøy-spillet i rotmappen.
 - **Start:** du kan starte hvor du vil, også steder som er nesten umulige å holde.

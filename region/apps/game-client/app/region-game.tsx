@@ -47,6 +47,10 @@ import './player-controls.css';
 import { GameSettings, useGamePreferences } from './game-settings';
 import { useGameAudio, type GameSound } from './game-audio';
 import './usability.css';
+import './game-presentation.css';
+import './expedition-presentation.css';
+import './detail-presentation.css';
+import './item-art.css';
 
 const HUD_SHORTCUTS:Record<string,string>={crew:'C',book:'B',settings:'I',hq:'H'};
 function reportSound(report:RegionReport):GameSound {
