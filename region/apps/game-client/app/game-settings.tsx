@@ -21,6 +21,9 @@ export function useGamePreferences() {
     const initial = { ...DEFAULT_GAME_PREFERENCES, reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches };
     try { setPreferences(parseGamePreferences(JSON.parse(localStorage.getItem(GAME_PREFERENCES_KEY) ?? 'null'), initial)); } catch { setPreferences(initial); }
     setReady(true);
+    const media=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const changed=(event:MediaQueryListEvent)=>setPreferences(previous=>({...previous,reducedMotion:event.matches}));
+    media.addEventListener('change',changed);return()=>media.removeEventListener('change',changed);
   }, []);
   useEffect(() => { if (ready) try { localStorage.setItem(GAME_PREFERENCES_KEY, JSON.stringify(preferences)); } catch { /* Private browsing may disallow storage. */ } }, [preferences, ready]);
   function updatePreferences(patch: Partial<GamePreferences>) { setPreferences(previous => parseGamePreferences({ ...previous, ...patch }, previous)); }
