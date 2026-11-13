@@ -109,7 +109,7 @@ function useDialogFocus() {
       } else if (returnTo?.isConnected && returnTo.getClientRects().length) returnTo.focus();
     };
     const trap = (event: KeyboardEvent) => {
-      if (!active || event.key !== 'Tab') return;
+      if (!active || event.key !== 'Tab' || active instanceof HTMLDialogElement) return; // The native top layer already traps its own focus.
       const candidates = focusable();
       const first = candidates[0] ?? active;
       const last = candidates.at(-1) ?? active;
@@ -587,13 +587,17 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
 function CampaignConclusion({state,onRestart,onLibrary}:{state:RegionState;onRestart:()=>void;onLibrary:()=>void}) {
   const [tab,setTab]=useState<'overview'|'story'|'achievements'>('overview'),[page,setPage]=useState(0);
   const ending=state.campaign?.ending, gameOver=state.gameOver!;
-  const pages=tab==='story'?Math.max(1,Math.ceil((ending?.epilogue.length??0)/2)):Math.max(1,Math.ceil(state.milestones.length/4));
+  const epiloguePages=Math.max(1,Math.ceil((ending?.epilogue.length??0)/2));
+  const researchPages=Math.ceil((ending?.facts.research.length??0)/6);
+  const decisionPages=ending?.facts.decisions.length??0;
+  const pages=tab==='story'?epiloguePages+researchPages+decisionPages:Math.max(1,Math.ceil(state.milestones.length/4));
+  const decision=ending?.facts.decisions[page-epiloguePages-researchPages];
   const viewState:RegionState={...state,milestones:state.milestones.slice(page*4,page*4+4),campaign:state.campaign&&{...state.campaign,ending:ending&&{...ending,epilogue:ending.epilogue.slice(page*2,page*2+2),facts:{...ending.facts,decisions:[],research:[]}}}};
   return <div className="rz-overlay"><section className="rz-dialog" role="dialog" aria-modal="true" aria-label="Gjennomspillingen er over">
     <p className="rz-kicker">{gameOver.won?'SEIER':'SLUTT'} · DAG {gameOver.day}</p>
     <nav className="sz-context-tabs sz-ending-tabs" aria-label="Avslutningen">{([['overview','Oversikt'],['story','Historien'],['achievements','Prestasjoner']]as const).map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setPage(0);}}>{label}</button>)}</nav>
     {tab==='overview'&&<><Art path={`end/${gameOver.won?'win':'lose'}`} className="rz-art rz-art-wide"/><h2>{gameOver.won?'Dere klarte det':`Slutt etter ${gameOver.day} dager`}</h2><p>{gameOver.reason}</p><p>Fase {state.phase} · {controlled(state).length} soner · {totalPeople(state)} mennesker · {state.research.done.length} oppfinnelser</p></>}
-    {tab==='story'&&(ending?<CampaignEndingView state={viewState}/>:<p>Historien tok slutt etter {gameOver.day} døgn. Se prestasjonene for det samfunnet rakk å bygge.</p>)}
+    {tab==='story'&&(ending?page<epiloguePages?<CampaignEndingView state={viewState}/>:page<epiloguePages+researchPages?<section><h2>Kunnskapen dere etterlater</h2><ul>{ending.facts.research.slice((page-epiloguePages)*6,(page-epiloguePages+1)*6).map((name,index)=><li key={index}>{name}</li>)}</ul></section>:<section><h2>Valgene som formet samfunnet</h2><p className="rz-kicker">Dag {decision?.day}</p><p>{decision?.text}</p></section>:<p>Historien tok slutt etter {gameOver.day} døgn. Se prestasjonene for det samfunnet rakk å bygge.</p>)}
     {tab==='achievements'&&<CampaignAchievements state={viewState}/>}
     {tab!=='overview'&&pages>1&&<div className="sz-zone-pagination"><button disabled={!page} onClick={()=>setPage(page-1)}>Forrige</button><span>{page+1} / {pages}</span><button disabled={page+1>=pages} onClick={()=>setPage(page+1)}>Neste</button></div>}
     <div className="rz-dialog-actions"><button onClick={onLibrary}>Gjennomspillinger · lagre og last</button><button className="rz-primary" onClick={onRestart}>Ny gjennomspilling</button></div>
