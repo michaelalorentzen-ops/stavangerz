@@ -18,6 +18,7 @@ export function DayPlan({ state, world, orders, onEdit, onRemove, onLocate, onRe
   const plan = prepareGearPlan(state, world, orders);
   const home = plannedHqCrew(state, world, orders);
   const missions = activeMissions(state);
+  const baseLabel = state.hq ? 'HQ' : 'leiren';
   const stock: Record<string, number> = {};
   for (const order of orders) {
     if (plan.orders.find(p => p.orderId === order.id)?.errors.length) continue;
@@ -30,7 +31,7 @@ export function DayPlan({ state, world, orders, onEdit, onRemove, onLocate, onRe
 
   return <div className="cmd-day-plan">
     <header className="cmd-intro"><p className="cmd-kicker">DAG {state.day} / KL. 07:00</p><h2>Dagsplanen</h2><p>Nye ordre starter når døgnet går. Pågående oppdrag fortsetter.</p></header>
-    <section className="cmd-card cmd-consequences" aria-label="Planens samlede konsekvenser"><div className="cmd-plan-stats"><div><HudIcon name="plan" /><b>{orders.length}</b><span>nye ordre</span></div><div><HudIcon name="route" /><b>{missions.length}</b><span>pågående</span></div><div><HudIcon name="shield" /><b>{home.length}</b><span>folk ved HQ i natt*</span></div></div><dl><div><dt>Reservert avreiselast · alle avreisesteder</dt><dd>{commandStock(stock)}</dd></div><div><dt>Navngitte folk ved HQ i natt*</dt><dd>{home.map(p => p.name).join(', ') || 'Ingen'}</dd></div></dl><p className="cmd-note">*Planlagt ved vellykket retur. Pågående oppdrag regnes som ute. Hendelser og forsinkelser kan endre hjemkomsten.</p></section>
+    <section className="cmd-card cmd-consequences cmd-plan-summary" aria-label="Planens samlede konsekvenser"><div className="cmd-plan-stats"><div><HudIcon name="plan" /><b>{orders.length}</b><span>nye ordre</span></div><div><HudIcon name="route" /><b>{missions.length}</b><span>pågående</span></div><div><HudIcon name="shield" /><b>{home.length}</b><span>ved {baseLabel} i natt*</span></div></div><details className="cmd-plan-details"><summary>Last og nattforsvar</summary><dl><div><dt>Reservert avreiselast · alle avreisesteder</dt><dd>{commandStock(stock)}</dd></div><div><dt>Navngitte folk ved {baseLabel} i natt*</dt><dd>{home.map(p => p.name).join(', ') || 'Ingen'}</dd></div></dl><p className="cmd-note">*Planlagt ved vellykket retur. Pågående oppdrag regnes som ute. Hendelser og forsinkelser kan endre hjemkomsten.</p></details></section>
     <section aria-labelledby="cmd-new-orders"><div className="cmd-section-title"><HudIcon name="plan" /><h3 id="cmd-new-orders">Nye ordre</h3><span>{orders.length}</span></div>
       {!orders.length && <div className="cmd-empty"><HudIcon name="compass" size={28} /><strong>En ny dag ligger foran dere</strong><p>Velg folk eller en sone på kartet for å planlegge et oppdrag.</p></div>}
       <div className="cmd-order-list">{orders.map((order, index) => {
