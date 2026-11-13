@@ -11,7 +11,7 @@
 .rz-piece-caption { position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); padding: 2px 5px; border-radius: 3px; background: #0b1a20e8; font: 10px/1.2 sans-serif; letter-spacing: .03em; color: #e4e9d7; border: 1px solid #8caf9d55; white-space: nowrap; }
 .rz-piece-caption:empty { display:none; }
 .has-model .rz-piece-fallback { opacity: 0; }
-.rz-world-piece.has-model:after { content:''; position:absolute; bottom: 12px; left: 5px; width: 30px; height: 8px; border-radius: 50%; background: #0005; z-index:-1; }
+.rz-world-piece.has-model:after { content:''; position:absolute; bottom: -3px; left: 5px; width: 30px; height: 8px; border-radius: 50%; background: #0005; z-index:-1; }
 .rz-map-targeting { position:absolute; top:18px; left:50%; transform:translateX(-50%); padding:10px 16px; border:1px solid #ffe08a; background:#152a28ed; color:#ffe5a6; z-index:4; border-radius:6px; font-size:12px; }
 .rz-map .rz-map-area-label { background:#15272bd9; border-color:#637f7b70; box-shadow:0 2px 8px #0006; }
 .rz-map .rz-command-level { color:#b2cbc7; letter-spacing:.04em; }
@@ -20,3 +20,5 @@
 .rz-world-overview .rz-geographic-poi { display: none; }
 
 .rz-world-threat .rz-piece-fallback { color: #ffd3b4; border-color: #ce6b4f; background: #402a25; }
+
+.has-model .rz-piece-caption { bottom: -16px; }
