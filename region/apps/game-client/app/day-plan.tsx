@@ -21,9 +21,9 @@ export function DayPlan({ state, world, orders, onEdit, onRemove, onLocate, onRe
   const stock: Record<string, number> = {};
   for (const order of orders) {
     if (plan.orders.find(p => p.orderId === order.id)?.errors.length) continue;
-    const { movement } = commandOrderPreview(state, world, orders, order, plan);
+    const { movement, radioReserved } = commandOrderPreview(state, world, orders, order, plan);
     for (const [id, amount] of Object.entries(movement.reservedCargo)) stock[id] = (stock[id] ?? 0) + amount;
-    if (order.communication?.radio) { stock.radio = (stock.radio ?? 0) + 1; stock.batteries = (stock.batteries ?? 0) + 1; }
+    if (radioReserved) { stock.radio = (stock.radio ?? 0) + 1; stock.batteries = (stock.batteries ?? 0) + 1; }
     if (movement.boatRequired) stock.boat = (stock.boat ?? 0) + 1;
   }
   const portraits = (ids: string[]) => <div className="cmd-plan-crew">{ids.map(id => { const person = state.survivors.find(p => p.id === id); return <span key={id}><CrewPortrait name={person?.name ?? '?'} /><span>{person?.name ?? 'Ukjent person'}</span></span>; })}</div>;

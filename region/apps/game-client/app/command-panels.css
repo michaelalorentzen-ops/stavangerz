@@ -17,3 +17,6 @@
 .cmd-composer .cmd-intro,.cmd-day-plan .cmd-intro{display:block;height:auto;min-height:0;padding:0;border:0;background:none;position:static}
 .cmd-composer .cmd-card>header,.cmd-day-plan .cmd-card>header{height:auto;min-height:0;padding:0;border:0;background:none;position:static;justify-content:flex-start}
 .cmd-composer *,.cmd-day-plan *{box-sizing:border-box}
+
+.cmd-composer .cmd-composer-heading{flex-shrink:0;margin:0 0 12px;padding:0 36px 12px 4px;border-bottom:1px solid var(--cmd-line)}
+.cmd-composer-heading h2{margin:0;font-size:24px}.cmd-composer-help{color:var(--cmd-muted);font-size:12px;margin:0 0 16px}
