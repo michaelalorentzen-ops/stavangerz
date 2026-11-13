@@ -1,6 +1,6 @@
 # v0.4 – situasjonsbasert HUD, kartobjekter og QA etter PR #27
 
-Status: **under implementering og faktisk nettlesertest**, ikke ferdig. Gren `feat/v04-situational-hud`, baseline `2737333` / draft #27. Eieren avviste den visuelle ferdigvurderingen og ba orkestratoren bygge en ferdig spillopplevelse med uavhengig vurdering og headless-agenter. Tallbalansering er fortsatt separat. Ingen main-merge eller deploy er autorisert.
+Status: **implementert og teknisk verifisert; klar for eierens spilltest**. Draft [PR #28](https://github.com/michaelalorentzen-ops/stavangerz/pull/28). Gren `feat/v04-situational-hud`, baseline `2737333` / draft #27. Eieren avviste den visuelle ferdigvurderingen og ba orkestratoren bygge en ferdig spillopplevelse med uavhengig vurdering og headless-agenter. Tallbalansering er fortsatt separat. Ingen main-merge eller deploy er autorisert.
 
 ## Uavhengig vurdering
 
@@ -28,24 +28,38 @@ Kilde: [Grok QA-kommentar](https://github.com/michaelalorentzen-ops/stavangerz/p
 
 | Funn | Behandling |
 | --- | --- |
-| F01 – forecast godkjenner last, resolver kaster | Blokkerende. Reprodusert Tananger202 dag95; samme kostnad, prospektive utstyr og avreiselast må valideres i én kontrakt. Offisiell 75-botkjøring skal fullføre uten ukastet unntak. |
-| F02 – regionale titler/lukkeknapp overlapper | Kontrolleres på 1280 og 390 i den nye overlayen; korrigeres med faktisk element-/skjermbildebevis. |
-| F03 – gammel rules-version | Aktiv regelversjon skal være v0.4; eldre saves skal fortsatt leses. |
-| F04 – mobile kartkontroller overlapper | Ny HUD separerer bunnhandling, kartlag og kreditering. Måles og inspiseres i nettleser. |
-| F05 – avkuttet Planlegg | Den gamle permanente arbeidskatalogen er erstattet av handlingsvalg og komponist. Bekreftelse må være synlig i alle testede størrelser. |
-| S2 – startkort/hendelse uenige om flukt | Deler seedet initialtilstand og faktisk rute; ingen tuning av barrikade/fluktutfall. |
-| S3 – anleggsadgang/cruise/vennskap | Skille botstrategi fra umulig crew-arbeid. D27 beholdes: vennskap gir eventuell tilgang, aldri gratis operativt anlegg. |
-| S4 – feil landemerkeankre/oppslag | Kontroller faktiske koordinater og polygoninnehold; ingen endring av verdensgrenser eller eldre lagrede holdings. Navn på grov L3 og faktisk sted må ikke blandes. |
-| S5 – tekst sier falt når zombier flyttes | Tekst/fakta skal beskrive faktisk fordrivelse og telle bare faktisk flyttede zombier; zombieledger bevares. |
+| F01 – forecast godkjenner last, resolver kaster | Rettet og regresjonstestet: kostnad, prospektivt utstyr og avreiselast valideres sammen. Radio og leverings-/transportbåter reserveres fysisk. 75 botspill fullført uten unntak; Tananger202/303 begge dag150. Se kandidatavgrensning nedenfor. |
+| F02 – regionale titler/lukkeknapp overlapper | Rettet og verifisert på1280/390 med faktiske tekst-ranges mot lukk; også lang POI-tittel er rettet. |
+| F03 – gammel rules-version | Rettet til region-0.4 for nye spill. Eldre versjonsfelt/saves leses fortsatt; regresjon grønn. |
+| F04 – mobile kartkontroller overlapper | Rettet. Faktisk måling1280/390: ingen overlapp eller blokkerte knapper; mobile kart-/døgnknapper44×44. Lukket søk nullstiller arvet sidebarhøyde. |
+| F05 – avkuttet Planlegg | Erstattet med handlingsvalg og fast bekreftelsesrad. Komponist/dagsplan er verifisert gjennom naturlige desktop-/mobilreiser. |
+| S2 – startkort/hendelse uenige om flukt | Rettet: valgt startkort deler seedet initialtilstand og faktisk rute med flukthendelsen. Alle andre kartsoner bruker fortsatt billig overslag. Ingen tuning av barrikade/fluktutfall. |
+| S3 – anleggsadgang/cruise/vennskap | Rettet reell fraksjonssperre og manglende zombieintel ved fraksjonsspeiding. Faktiske crew-døgn går discovered→secured→operational for alliert domkirke og separat cruiseskip. D27 beholdes; ingen gratis drift. |
+| S4 – feil landemerkeankre/oppslag | Rettet med Kartverket-punkter og polygoninnehold/hull. Verdensgrenser og eldre holdings beholdes. Eksisterende grove L3-navn stemmer fortsatt ikke med dagligtalens Mosterøy/Jåttåvågen; se docs34_PR27_STORY_QA.md. |
+| S5 – tekst sier falt når zombier flyttes | Rettet: beskriver faktisk fordrivelse, inkludert null når ingen lovlig mottakersone finnes. Zombieledger beholdes og er regresjonstestet. |
 | S8 og øvrig tallbalanse | Registrert, utsatt etter eierens tidligere instruks. Ikke forbedre bottall ved å endre krav eller gi gratis forsyninger. |
 
-## Verifikasjon som gjenstår før sluttvurdering
+## Sluttkontroll
 
-- Ferdig produksjonsbygg og typekontroll på integrert slutt-head.
-- Naturlig desktop-/mobilreise gjennom flere døgn med begge ordreveier, edit/cancel, gear, faktisk rapport og nøyaktig lagring.
-- Kritiske felt-/nattvalg kan ikke omgås med Skip/Escape og beholdes ved reload.
-- HQ/POI/ZA-bok/region-UI og fysiske leveranser gjennom de nye kontrollene, ikke bare gjennom motorkall.
-- Lastkrasj og offisiell 75-kjøring; eksisterende motor-/save-/stedregresjoner.
-- Sluttbilder vurderes mot den uavhengige vurderingen, ikke bare DOM-klikk. Mobil er Chromium touch-emulering; faktisk menneskelig langkampanje er ikke påstått utført.
+Produksjonsbygg, motorgate, naturlige desktop-/mobilreiser, obligatoriske felt-/nattvalg og kart/fallback er verifisert. Regional-/POI-/forsyningskontekstene passerer i begge bredder etter de siste mobilrettelsene. Se resultatene under; ingen menneskelig langkampanje er påstått utført.
 
 `vercel.json` sperrer automatisk Git-deploy for både den gamle completion-grenen og denne reviewgrenen før første push. Ingen ekstern publisering skal brukes som snarvei til testing.
+
+## Verifisert på integrert produksjonsbygg
+
+- TypeScript og produksjonsbygg grønt. Samlet `check:v04` kjører nå 18 tester, inkludert faktisk 29→31kg-utstyrslast, radio/transportbåt, savekompatibilitet, eksplisitt anleggsarbeid, zombieledger og stedskilder. Hendelser:117 registrerte,112 bygget over16 tilstander; de fem spesielle hendelsene krever egne situasjoner, ikke påstått generelt dekket.
+- `check:region-ui`: naturlig start med seed101, fire introtrinn og hovedpersonvalg; desktop1600×1000 gjennom8 døgn og mobil390×844 gjennom6. Ingen state-injeksjon. Begge ordreveier, rediger/fjern, auto-equip, HQ, bok, historisk dagsrapport og eksakt save/reload passerer. Kartstart bruker vanlig bevegelse; etter kartbildet brukes redusert bevegelse for resten av reisen i SwiftShader. Dette er testverktøyets valg, ikke en endring av spillerens standard.
+- `check:region-checkpoints-ui`: erklærte Hardcore-fixtures for reell felt-/nattpause. Med vanlig bevegelse finnes ingen Skip, Escape kan ikke lukke, døgnet er låst. Eksakt reload før/etter valg, deterministisk continuation og nattammo40→35 én gang passerer.
+- `check:region-map-ui`: fire faktiske crew-GLB-er på riktig kartnivå, klikkbare kjente POI-er, ingen punktfigur for ukjent/områdevakt, L2-aggregering, WebGL-tap→SVG→gjenopprettede GLB-er. Ingen JavaScript-feil.
+- `check:region-completion-ui`: erklært fase4-fixture, faktiske HQ-faner, POI-overlay, regionalt HQ og fysisk leveranse12mat/12vann/to voksne gjennom planlegger og ett døgn. Begge bredder1280/390 passerer etter rettelsene nedenfor.
+- Offisiell `region:bot 150 3 8`:75 spill,48 overlevende,0 seire, fasefordeling40/11/13/10/1, ingen kastet feil. Kjøringen lastet F01/S2/versjon/rutecache før siste S3-hook og egen leveringsbåtvalidering; derfor er dette stabilitetsbevis for lastkrasj-kandidaten, ikke en ny75-kjøring av eksakt slutt-head. De siste tilleggene har egne reelle endDay-/båtregresjoner i den grønne integrerte gaten. Ingen balansetuning.
+
+Testresultater lagres i [evidence/v04-hud](evidence/v04-hud). Tidligere mislykkede utviklingskjøringer holdes som lokale artifacts; bare eksplisitt beståtte resultater brukes som sluttbevis.
+
+## Konkrete feil funnet i slutt-QA
+
+Mobilens regionale overskrift og en lang POI-tittel traff lukk. POI-headeren har nå en gridkolonne som kan bryte teksten og plass til lukk. Regionaloverskriften arvet en horisontal toolbar; tekst traff lukk. Den har nå vertikal flyt og reservert plass til44px lukk. Lukket søk arvet `bottom` fra gammel sidebar og dekket et høyt kartfelt; ankeret nullstilles. Kartknapper får44×44 på mobil; tegnforklaring, kreditering, råd og kartkontroller har egne høyder. Faktiske tekst-ranges, mål og pekeradgang er bekreftet i det nye produksjonsbygget på1280/390.
+
+## Avgrensning før eierens spilltest
+
+Balanse/tuning, særlig vannøkonomi, rasjonering/barnearbeid og sen botprogresjon, er utsatt etter instruks. Det gjenstår menneskelig vurdering av lesbarhet, underholdning og langkampanjens rytme; automatiserte klikk og ekspertvurdering erstatter ikke dette. Modellene er en første original low-poly-pakke, ikke en ferdig karakterkunstproduksjon. Faktisk mobilmaskinvare og alle GPU-er er ikke testet; Chromium touch390 er testgrunnlaget. Verdensdata og gamle lagrede stedstilknytninger er ikke omtegnet for å samsvare med dagligtalens stedsnavn.

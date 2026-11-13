@@ -21,10 +21,12 @@
     "art:shotlist": "tsx scripts/art-shotlist.ts",
     "art:manifest": "node scripts/art-manifest.mjs",
     "region:basemap": "python -W ignore tools/zone-editor/zonebasemap.py",
-    "check:region-ui": "tsx scripts/check-region-ui.ts",
+    "check:region-ui": "tsx scripts/check-hud-journey.ts",
     "region:gear": "tsx scripts/check-v04-gear.ts",
     "check:v04": "node scripts/check-v04.mjs",
-    "check:region-completion-ui": "tsx scripts/check-v04-completion-ui.ts"
+    "check:region-completion-ui": "tsx scripts/check-hud-contexts.ts",
+    "check:region-checkpoints-ui": "tsx scripts/check-hud-checkpoints.ts",
+    "check:region-map-ui": "tsx scripts/check-world-map.ts"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",
