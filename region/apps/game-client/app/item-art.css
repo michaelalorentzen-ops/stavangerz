@@ -7,3 +7,5 @@
 @media(max-width:820px){.sz-game .ishelf-tile .ishelf-item-icon:has(.item-art){width:72px;height:72px}.sz-game .ishelf-tile .item-art{width:72px;height:72px}.sz-game .ishelf-tile:has(.item-art)>strong{font-size:17px;right:5px;top:5px;padding:2px 4px}.sz-game .ishelf-detail:has(.item-art){grid-template-columns:92px minmax(0,1fr)}.sz-game .ishelf-detail-icon:has(.item-art),.sz-game .ishelf-detail-icon .item-art{width:90px;height:90px}}
 .sz-game .ishelf-grid.ishelf-small-batch{grid-template-columns:repeat(3,minmax(0,1fr))}.sz-game .ishelf-small-batch .ishelf-tile{height:128px}.sz-game .ishelf-small-batch .ishelf-item-icon:has(.item-art),.sz-game .ishelf-small-batch .item-art{width:96px;height:96px}
 @media(max-width:820px){.sz-game .ishelf-small-batch .ishelf-tile{height:112px}.sz-game .ishelf-small-batch .ishelf-item-icon:has(.item-art),.sz-game .ishelf-small-batch .item-art{width:74px;height:74px}}
+
+.item-art[data-atlas="2"]{background-image:url('/art/items/inventory-atlas-2.png')}
