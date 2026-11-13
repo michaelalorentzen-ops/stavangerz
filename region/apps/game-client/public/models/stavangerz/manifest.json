@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "generator": "region/tools/blender/build_world_assets.py",
+  "units": "meters",
+  "up": "Y",
+  "blenderUp": "Z",
+  "fps": 24,
+  "loopClips": {
+    "Idle": 2,
+    "Walk": 1,
+    "Guard": 2
+  },
+  "assets": {
+    "crew-ingrid": {
+      "url": "/models/stavangerz/crew-ingrid.glb",
+      "scale": 1,
+      "meters": {
+        "width": 0.81,
+        "depth": 0.72,
+        "height": 1.755
+      },
+      "animations": [
+        "Idle",
+        "Walk",
+        "Guard"
+      ],
+      "triangles": 2196,
+      "meshes": 19,
+      "materials": 8,
+      "bytes": 190932,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; StavangerZ crew portrait color/identity reference"
+    },
+    "crew-marius": {
+      "url": "/models/stavangerz/crew-marius.glb",
+      "scale": 1,
+      "meters": {
+        "width": 0.847,
+        "depth": 0.767,
+        "height": 1.845
+      },
+      "animations": [
+        "Idle",
+        "Walk",
+        "Guard"
+      ],
+      "triangles": 2468,
+      "meshes": 19,
+      "materials": 8,
+      "bytes": 212140,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; StavangerZ crew portrait color/identity reference"
+    },
+    "crew-leila": {
+      "url": "/models/stavangerz/crew-leila.glb",
+      "scale": 1,
+      "meters": {
+        "width": 0.791,
+        "depth": 0.703,
+        "height": 1.719
+      },
+      "animations": [
+        "Idle",
+        "Walk",
+        "Guard"
+      ],
+      "triangles": 2768,
+      "meshes": 20,
+      "materials": 9,
+      "bytes": 235432,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; StavangerZ crew portrait color/identity reference"
+    },
+    "crew-tor": {
+      "url": "/models/stavangerz/crew-tor.glb",
+      "scale": 1,
+      "meters": {
+        "width": 0.856,
+        "depth": 0.761,
+        "height": 1.855
+      },
+      "animations": [
+        "Idle",
+        "Walk",
+        "Guard"
+      ],
+      "triangles": 2212,
+      "meshes": 20,
+      "materials": 8,
+      "bytes": 193452,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; StavangerZ crew portrait color/identity reference"
+    },
+    "zombie": {
+      "url": "/models/stavangerz/zombie.glb",
+      "scale": 1,
+      "meters": {
+        "width": 0.814,
+        "depth": 0.884,
+        "height": 1.774
+      },
+      "animations": [
+        "Idle",
+        "Walk",
+        "Guard"
+      ],
+      "triangles": 2536,
+      "meshes": 21,
+      "materials": 9,
+      "bytes": 217764,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; no external geometry or textures"
+    },
+    "hq": {
+      "url": "/models/stavangerz/hq.glb",
+      "scale": 1,
+      "meters": {
+        "width": 7.39,
+        "depth": 5.575,
+        "height": 5.2
+      },
+      "animations": [],
+      "triangles": 1708,
+      "meshes": 11,
+      "materials": 11,
+      "bytes": 121228,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; no external geometry or textures"
+    },
+    "barricade": {
+      "url": "/models/stavangerz/barricade.glb",
+      "scale": 1,
+      "meters": {
+        "width": 4.0,
+        "depth": 2.023,
+        "height": 2.906
+      },
+      "animations": [],
+      "triangles": 476,
+      "meshes": 6,
+      "materials": 6,
+      "bytes": 39308,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; no external geometry or textures"
+    },
+    "boat": {
+      "url": "/models/stavangerz/boat.glb",
+      "scale": 1,
+      "meters": {
+        "width": 1.95,
+        "depth": 5.258,
+        "height": 0.91
+      },
+      "animations": [],
+      "triangles": 638,
+      "meshes": 7,
+      "materials": 7,
+      "bytes": 49508,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; no external geometry or textures"
+    },
+    "supply-crates": {
+      "url": "/models/stavangerz/supply-crates.glb",
+      "scale": 1,
+      "meters": {
+        "width": 1.72,
+        "depth": 0.734,
+        "height": 1.312
+      },
+      "animations": [],
+      "triangles": 312,
+      "meshes": 5,
+      "materials": 5,
+      "bytes": 27520,
+      "facing": "+Z",
+      "pivot": "ground-center",
+      "provenance": "Original procedural Blender mesh; no external geometry or textures"
+    }
+  }
+}
