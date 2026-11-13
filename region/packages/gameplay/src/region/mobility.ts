@@ -9,11 +9,13 @@ export interface MobilityState {
   version: 1;
   depots: Record<string, Stock>;
   depotResidents?: Record<string, import('./types').Population>;
+  reservedAwayIds?: string[];
   legacyAway?: Record<string, { returnDay: number; returnZoneId: string; cargo: Stock }>;
   radios: Record<string, { carrierId: string; originZoneId: string; radio: number; batteries: number }>;
 }
 export interface MissionPreview { valid: boolean; errors: string[]; originZoneId: string; targetZoneId: string; returnZoneId: string; routeZoneIds: string[]; travelHours: number; workHours: number; capacity: number; returnsToday: boolean; boatRequired: boolean; reservedCargo: Stock; availableCapacity: number }
 export const MOBILITY_ACTIONS = ['travel', 'return', 'retrieve', 'supply', 'areaGuard'] as const;
+export const carriedGearWeight = (state: RegionState, crewIds: readonly string[]) => gearStateFor(state).items.filter(item => item.location.kind === 'carried' && crewIds.includes(item.location.survivorId)).reduce((sum, item) => sum + (GEAR_CATALOG[item.kind]?.weight ?? 1), 0);
 export const cargoWeight = (stock: Stock) => Object.entries(stock).reduce((n, [id, amount]) => n + amount * ({ ammo: .05, medicine: .2, antibiotics: .1, batteries: .3, radio: .5, boat: 0 }[id] ?? 1), 0);
 export function localStock(state: RegionState, zoneId: string): Stock {
   return zoneId === state.homeZoneId ? state.stock : state.mobility?.depots[zoneId] ?? {};
@@ -87,10 +89,10 @@ export function missionPreview(state: RegionState, world: RegionWorld, order: Re
   }
   const passengerWeight = passengers ? (passengers.adults + passengers.children + passengers.elderly) * 10 : 0;
   const gearWeight = (order.logistics?.gearIds ?? []).reduce((sum, id) => sum + (GEAR_CATALOG[state.gear?.items.find(i => i.id === id)?.kind ?? '']?.weight ?? 0), 0);
-  if (cargoWeight(cargo) + gearWeight + passengerWeight > capacity) errors.push('Forsendelsen overstiger lagets bærekapasitet.');
+  if (cargoWeight(cargo) + gearWeight + carriedGearWeight(state, order.survivorIds) + passengerWeight > capacity) errors.push('Forsendelsen overstiger lagets bærekapasitet.');
   const returnHours = Math.max(0, (back?.length ?? 1) - 1) * R.hopHours;
   const workHours = ['travel', 'return', 'retrieve', 'supply', 'areaGuard'].includes(order.action) ? 0 : Math.max(1, Math.min(R.workHours, 15 - travelHours - returnHours));
-  return { valid: !errors.length, errors, originZoneId: origin, targetZoneId: target, returnZoneId, routeZoneIds: route, travelHours, workHours, capacity, reservedCargo: missionStoreRequest(state, order, actionCosts), availableCapacity: Math.max(0, capacity - cargoWeight(missionStoreRequest(state, order, actionCosts)) - gearWeight - passengerWeight), returnsToday: travelHours + workHours + returnHours <= 15, boatRequired: route.some((id, i) => i > 0 && !landEdge(state, world, route[i - 1], id)) || (back ?? []).some((id, i, list) => i > 0 && !landEdge(state, world, list[i - 1], id)) };
+  return { valid: !errors.length, errors, originZoneId: origin, targetZoneId: target, returnZoneId, routeZoneIds: route, travelHours, workHours, capacity, reservedCargo: missionStoreRequest(state, order, actionCosts), availableCapacity: Math.max(0, capacity - cargoWeight(missionStoreRequest(state, order, actionCosts)) - gearWeight - carriedGearWeight(state, order.survivorIds) - passengerWeight), returnsToday: travelHours + workHours + returnHours <= 15, boatRequired: route.some((id, i) => i > 0 && !landEdge(state, world, route[i - 1], id)) || (back ?? []).some((id, i, list) => i > 0 && !landEdge(state, world, list[i - 1], id)) };
 }
 export function beginMission(state: RegionState, world: RegionWorld, order: RegionOrder): CrewMission {
   ensureMobility(state);
@@ -110,7 +112,7 @@ export function beginMission(state: RegionState, world: RegionWorld, order: Regi
 export function loadCargo(state: RegionState, mission: CrewMission, zoneId: string): void {
   const request = mission.order?.logistics;
   const stock = localStock(state, zoneId);
-  let room = mission.survivorIds.length * R.carryPerPerson - cargoWeight(mission.cargo ?? {});
+  let room = mission.survivorIds.length * R.carryPerPerson - cargoWeight(mission.cargo ?? {}) - carriedGearWeight(state, mission.survivorIds);
   if (mission.passengers) room -= (mission.passengers.adults + mission.passengers.children + mission.passengers.elderly) * 10;
   const requested = request?.cargo ?? (mission.action === 'retrieve' ? { ...stock } : {});
   for (const [id, amount] of Object.entries(requested).sort()) {
@@ -157,15 +159,22 @@ export function advanceTravel(state: RegionState, world: RegionWorld, mission: C
     mission.routeIndex = (mission.routeIndex ?? 0) + 1; remaining -= R.hopHours;
   }
   const index = mission.routeIndex ?? 0;
-  for (const id of mission.survivorIds) state.crewPositions![id] = index === route.length - 1
+  for (const id of mission.survivorIds.filter(id => state.survivors.some(p => p.id === id && p.alive && !p.left && p.health > 0))) state.crewPositions![id] = index === route.length - 1
     ? { kind: 'zone', zoneId: route[index] }
     : { kind: 'transit', fromZoneId: route[0], toZoneId: route.at(-1)!, routeZoneIds: route, atIndex: index, departedDay: mission.issuedDay, estimatedArrivalDay: state.day + Math.max(1, Math.ceil((route.length - 1 - index) * R.hopHours / 15)) };
   mission.elapsedHours = 15 - remaining;
   return remaining;
 }
 export function returnMission(state: RegionState, world: RegionWorld, mission: CrewMission, budget: number, lines: ReportLine[]): void {
+  const live = mission.survivorIds.filter(id => state.survivors.some(p => p.id === id && p.alive && !p.left && p.health > 0));
+  if (!live.length) return; // No surviving courier can deliver a dead party's cargo.
   const at = mission.routeZoneIds?.[mission.routeIndex ?? 0] ?? mission.targetZoneId;
   const destination = mission.returnZoneId ?? state.homeZoneId;
+  const capacity = Math.max(0, live.length * R.carryPerPerson - carriedGearWeight(state, live));
+  let excess = Math.max(0, cargoWeight(mission.cargo ?? {}) - capacity);
+  if (excess > 0) { const cache = state.mobility!.depots[at] ??= {}; for (const id of Object.keys(mission.cargo ?? {}).sort().reverse()) { const unit = cargoWeight({ [id]: 1 }); if (!unit || excess <= 0) continue; const amount = Math.min(mission.cargo![id], Math.ceil(excess / unit * 10) / 10); mission.cargo![id] -= amount; cache[id] = (cache[id] ?? 0) + amount; excess -= amount * unit; } }
+  const radio = state.mobility?.radios[mission.id];
+  if (radio && !live.includes(radio.carrierId)) radio.carrierId = live[0];
   const route = routeBetween(state, world, at, destination, !!mission.transportBoat);
   if (!route) { mission.status = 'returning'; return; }
   mission.routeZoneIds = route; mission.routeIndex = 0; mission.status = 'returning';
@@ -174,11 +183,10 @@ export function returnMission(state: RegionState, world: RegionWorld, mission: C
   const reported: string[] = [];
   unloadCargo(state, mission, destination, lines);
   mission.status = 'complete';
-  if (mission.survivorIds.some(id => state.survivors.some(p => p.id === id && p.alive && p.health > 0 && !p.left))) {
-    for (const [id, observation] of Object.entries(mission.observations ?? {})) if (state.zones[id]) { state.zones[id].status = observation.status; state.zones[id].intel = observation.intel; }
-  }
-  mission.observations = undefined;
+  if (destination === state.homeZoneId && state.mobility?.reservedAwayIds) state.mobility.reservedAwayIds = state.mobility.reservedAwayIds.filter(id => !mission.survivorIds.includes(id));
+  if (destination === state.homeZoneId) transmitMissionReports(state, mission, lines, false);
   for (const id of mission.survivorIds) {
+    if (!live.includes(id)) { delete state.crewPositions?.[id]; continue; }
     if (state.gear?.missions) delete state.gear.missions[id];
     for (const item of state.gear?.items ?? []) if (item.location.kind === 'carried' && item.location.survivorId === id && !mission.cargoGearIds?.includes(item.id)) {
       item.location = { ...item.location, missionId: undefined, returnDay: undefined, returnToZoneId: destination, atZoneId: destination };
@@ -218,7 +226,7 @@ export function reserveMissionStores(state: RegionState, mission: CrewMission, c
   if (mission.action === 'supply') return;
   const source = localStock(state, mission.originZoneId);
   const required = missionStoreRequest(state, mission.order!, costs);
-  if (cargoWeight(required) > mission.survivorIds.length * R.carryPerPerson) throw new Error('Oppdragslasten er for tung. Send flere bærere.');
+  if (cargoWeight(required) + carriedGearWeight(state, mission.survivorIds) > mission.survivorIds.length * R.carryPerPerson) throw new Error('Oppdragslasten er for tung. Send flere bærere.');
   for (const [id, amount] of Object.entries(required)) if ((source[id] ?? 0) < amount) throw new Error(`Avreisestedet mangler ${id}.`);
   for (const [id, amount] of Object.entries(required)) {
     source[id] = (source[id] ?? 0) - amount;
@@ -281,4 +289,25 @@ export function missionStoreRequest(state: RegionState, order: RegionOrder, cost
   }
   for (const [id, amount] of Object.entries(costs)) result[id] = Math.max(result[id] ?? 0, amount);
   return Object.fromEntries(Object.entries(result).filter(([, amount]) => amount > 0));
+}
+
+/** Knowledge travels with a living reporter or a verified radio; cargo never does. */
+export function transmitMissionReports(state: RegionState, mission: CrewMission, lines: ReportLine[], radioVerified: boolean): void {
+  const live = new Set(mission.survivorIds.filter(id => state.survivors.some(p => p.id === id && p.alive && !p.left && p.health > 0)));
+  if (!live.size) return;
+  const delivered = [...live].some(id => { const position = crewPositionFor(state, id); return position?.kind === 'zone' && position.zoneId === state.homeZoneId; });
+  if (!radioVerified && !delivered) return;
+  for (const entry of Object.values(state.crewMissions ?? {})) {
+    if (entry.status === 'failed' || !entry.survivorIds.some(id => live.has(id))) continue;
+    for (const [id, observation] of Object.entries(entry.observations ?? {})) if (state.zones[id]) { state.zones[id].status = observation.status; state.zones[id].intel = observation.intel; }
+    entry.observations = undefined;
+    for (const [id, observation] of Object.entries(entry.factionObservations ?? {})) { const faction = state.factions.find(f => f.id === id); if (faction) { faction.known = observation.known; faction.revealed = observation.revealed; } }
+    entry.factionObservations = undefined;
+    if (entry.privateLines?.length) lines.push(...entry.privateLines);
+    entry.privateLines = undefined;
+  }
+  for (const item of state.gear?.items ?? []) if (item.reported === false && item.location.kind === 'carried' && live.has(item.location.survivorId)) {
+    item.reported = true;
+    lines.push({ tone: 'good', category: 'loot', priority: 65, title: radioVerified ? 'Utstyr rapportert fra feltet' : 'Personlig utstyr funnet', text: `${GEAR_CATALOG[item.kind]?.name ?? item.kind}. ${radioVerified ? 'Fortsatt fysisk med laget; ikke i felleslageret.' : 'Rapportert av laget ved faktisk hjemkomst.'}` });
+  }
 }

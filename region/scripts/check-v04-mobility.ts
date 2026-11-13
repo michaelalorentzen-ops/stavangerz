@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { newRegionGame, startRegionDay, continueRegionDay, endDay, pendingTurnDecision, present } from '../packages/gameplay/src/region/engine';
 import { routeBetween, missionPreview, redirectMission, ensureMobility } from '../packages/gameplay/src/region/mobility';
 import { communicationsStatus } from '../packages/gameplay/src/region/communications';
-import { gearStateFor } from '../packages/gameplay/src/region/gear';
+import { gearStateFor, knownGearItems } from '../packages/gameplay/src/region/gear';
 import type { RegionWorld, RegionState, RegionOrder } from '../packages/gameplay/src/region/types';
 const original = JSON.parse(readFileSync('apps/game-client/public/world/region-v1.json', 'utf8')) as RegionWorld;
 const template = original.zones.find(z => z.level === 3)!;
@@ -73,4 +73,22 @@ const arrived=startRegionDay(people,world,[ferry]);assert.equal(arrived.state.po
 // Hardcore can persist the very first mandatory field prompt with a new receipt.
 const hc=newRegionGame(world,'z0',20,{hardcore:true,avatarId:'ingrid'});delete hc.event;hc.zones.z1.zombies=60;
 const hp=startRegionDay(hc,world,[personal]);assert.equal(hp.status,'paused');assert.ok((hp.state.campaign?.sequence??0)>(hc.campaign?.sequence??0));
+const unattended=fresh();unattended.stock.radio=2;unattended.stock.batteries=4;unattended.zones.z1.zombies=60;
+const allAway:RegionOrder={...call,survivorIds:unattended.survivors.map(p=>p.id)};
+assert.equal(startRegionDay(unattended,world,[allAway]).status,'complete','A radio at an empty HQ does not act as a staffed endpoint');
+const emptyManifest=missionPreview(fresh(),world,{...order('none','travel','z1'),logistics:{cargo:{food:0,water:0,ammo:0}}});
+assert.equal(emptyManifest.reservedCargo.food??0,0,'Explicit zero means none, rather than invisible auto provisions');
+assert.ok((missionPreview(fresh(),world,order('auto','travel','z1')).reservedCargo.food??0)>0);
+let fatalChecked=false;
+for(let seed=1;seed<=40&&!fatalChecked;seed++){
+ const doomed=fresh();doomed.seed=seed;doomed.zones.z1.zombies=70;doomed.zones.z1.loot={metal:100};doomed.survivors.find(p=>p.id==='marius')!.health=25;
+ const result=startRegionDay(doomed,world,[{...order('fatal-search','search','z1'),communication:{mandate:'bold'}}]);
+ if(result.state.survivors.find(p=>p.id==='marius')!.health>0)continue;
+ fatalChecked=true;assert.equal(result.state.stock.metal??0,0,'Dead couriers never deliver field cargo');
+ assert.ok((result.state.mobility!.depots.z1.metal??0)>0,'Dropped cargo remains physically at the field site');
+ assert.equal(knownGearItems(result.state).some(item=>item.provenance.kind==='search'),false,'Unreporting dead couriers do not reveal new gear');
+ assert.equal(result.state.reports.at(-1)?.lines.some(line=>line.title==='Søk i Sone 1'),false,'Private field logs do not become HQ reports after party death');
+ assert.equal(result.state.reports.at(-1)?.replay?.at(-1)?.mapSnapshot?.crewPositions.marius,undefined,'Dead crew do not reappear from a before-state marker');
+}
+assert.equal(fatalChecked,true,'The actual deterministic fatal-field scenario was exercised');
 console.log('PASS mobility: actual routes/multi-day return, depot retrieval/supply, serializable personal field choice and bound radio opt-in.');

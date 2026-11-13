@@ -74,6 +74,7 @@ export interface CrewMission {
   workHours?: number;
   cargo?: Stock;
   transportBoat?: number;
+  factionObservations?: Record<string, { known: boolean; revealed?: boolean }>;
   privateLines?: import('./types').ReportLine[];
   passengers?: Population;
   cargoGearIds?: string[];

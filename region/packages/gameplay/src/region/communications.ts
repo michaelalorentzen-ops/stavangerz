@@ -1,6 +1,8 @@
 /** D24: opt-in is insufficient without a physically reserved radio and a live path. */
 import type { RegionState, RegionWorld, RegionOrder } from './types';
 import type { CrewMission } from './location';
+import { centralAvailablePopulation } from './administration';
+import { crewPositionFor } from './location';
 import { ensureMobility, localStock, routeBetween } from './mobility';
 export function reserveMissionRadio(state: RegionState, mission: CrewMission): boolean {
   if (!mission.order?.communication?.radio) return false;
@@ -16,7 +18,11 @@ export function communicationsStatus(state: RegionState, world: RegionWorld, cre
   const mission = Object.values(state.crewMissions ?? {}).find(m => m.survivorIds.some(id => crewIds.includes(id)) && !['complete', 'failed'].includes(m.status));
   const radio = mission && state.mobility?.radios[mission.id];
   if (!radio || radio.radio < 1 || radio.batteries <= 0 || !state.survivors.some(p => p.id === radio.carrierId && p.alive && !p.left && p.health > 0)) return { connected: false, reason: 'Ingen fungerende radio følger dette laget.' };
-  const endpoint = ((state.stock.radio ?? 0) >= 1 || state.hq?.modules.includes('radioRoom')) && (state.stock.batteries ?? 0) > 0;
+  const staffed = centralAvailablePopulation(state).adults > 0 || state.survivors.some(person => {
+    const position = crewPositionFor(state, person.id);
+    return person.alive && !person.left && person.health >= 25 && !(person.awayUntil && person.awayUntil > state.day) && !state.mobility?.reservedAwayIds?.includes(person.id) && position?.kind === 'zone' && position.zoneId === state.homeZoneId;
+  });
+  const endpoint = staffed && ((state.stock.radio ?? 0) >= 1 || state.hq?.modules.includes('radioRoom')) && (state.stock.batteries ?? 0) > 0;
   if (!endpoint) return { connected: false, reason: 'HQ mangler en bemannet, strømført radioende.' };
   const zone = mission!.routeZoneIds?.[mission!.routeIndex ?? 0] ?? mission!.targetZoneId;
   const route = routeBetween(state, world, zone, state.homeZoneId);

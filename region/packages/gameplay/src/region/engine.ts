@@ -6,11 +6,11 @@ import { resolveDay, type Connection, type SimulationWorld } from '../../../simu
 import { CONTENT } from '../../../world-data/src/content';
 import type {
   ActionId, ChokepointState, RegionFaction, RegionOrder, RegionReplayStage, RegionReplayZoneChange, RegionReport,
-  RegionState, RegionSurvivor, RegionTurnDecision, RegionWorld, RegionZone, RegionZoneState, ReportLine, Stock, ZoneStatus,
+  RegionState, RegionMapSnapshot, RegionSurvivor, RegionTurnDecision, RegionWorld, RegionZone, RegionZoneState, ReportLine, Stock, ZoneStatus,
 } from './types';
 import { initializeCampaign, campaignAvatarId, enforceAvatarFate, advanceCampaignCommit, difficultyRules, type CampaignOptions } from './campaign';
 import { crewPositionFor, type CrewMission } from './location';
-import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions, completeLegacyReturns, localStock, missionStoreRequest } from './mobility';
+import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions, completeLegacyReturns, localStock, missionStoreRequest, transmitMissionReports, carriedGearWeight } from './mobility';
 import { reserveMissionRadio, communicationsStatus, shouldEscalateField, fieldMandate } from './communications';
 import { centralCommunity, centralAvailablePopulation, regionalDay, regionalWorkDay, regionalSurvivorIds, regionalGuardFor, regionalOverrun, regionalL1 } from './administration';
 import { observeDiscoveries, deliverDiscoveryReports, maintainDiscoveries, discoveryOrderPreview, executeDiscoveryOrder } from './discoveries';
@@ -593,6 +593,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
   const lines: ReportLine[] = previous?.lines ?? [];
   // Return reconciliation may follow an event ending an existing awayUntil errand.
   settleGearReturns(state, lines);
+  if (!context) state.mobility!.reservedAwayIds = [...new Set(orders0.filter(order => order.zoneId !== state.homeZoneId).flatMap(order => order.survivorIds))];
   const gearPlan = context ? undefined : prepareGearPlan(state, world, orders0);
   if (gearPlan) state.gear = gearPlan.gear;
   const activeOrders: RegionOrder[] = [];
@@ -671,6 +672,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
     const availableHours = Math.max(0, 15 - (mission.elapsedHours ?? 0));
     const hours = Math.min(preview.hours, (mission.workHours ?? R.workHours) * crew.length, availableHours * crew.length);
     if (hours <= 0 && !['travel', 'return', 'supply', 'retrieve', 'areaGuard'].includes(order.action)) { mission.operationDone = false; lines.push({ tone: 'info', category: 'travel', title: 'Arbeidet fortsetter neste døgn', text: 'Dagens operasjonsvindu gikk med til faktisk reise.', zoneId: order.zoneId }); continue; }
+    const factionsBefore = Object.fromEntries(state.factions.map(f => [f.id, { known: f.known, revealed: f.revealed }]));
     const intelBefore = Object.fromEntries(Object.entries(state.zones).map(([id, z]) => [id, { status: z.status, intel: z.intel ? { ...z.intel } : undefined }]));
     let headquartersStock = state.stock;
     const headquartersZone = state.homeZoneId;
@@ -679,6 +681,9 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
     if (!['rest', 'heal'].includes(order.action)) for (const s of crew) { s.fatigue = Math.min(100, s.fatigue + (18 + law.fatigue) * difficultyRules(state).fatigue); worked.add(s.id); }
     noise[order.zoneId] = (noise[order.zoneId] ?? 0) + ACTIONS[order.action].noise * crew.length
       + crew.reduce((sum, person) => sum + (equippedGear(state, person.id, 'tool')?.noise ?? 0), 0);
+    const operationLineStart = lines.length;
+    const radioVerified = communicationsStatus({ ...state, stock: headquartersStock }, world, order.survivorIds).connected;
+    const personalObservation = order.survivorIds.includes(options.avatarId ?? context?.avatarId ?? '');
     switch (order.action) {
       case 'travel': case 'return': break;
       case 'retrieve': loadCargo({ ...state, stock: headquartersStock }, mission, order.zoneId); break;
@@ -734,7 +739,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
         const searchAfter = Math.min(searchHoursTotal(zone), z.searched + hours);
         const gearFound = discoverSearchGear(state, zone.id, searchBefore, searchAfter, searchHoursTotal(zone), order);
         const gearWeight = gearFound.reduce((sum, item) => sum + (GEAR_CATALOG[item.kind]?.weight ?? 0), 0);
-        const found = searchZone(state, world, order.zoneId, hours, Math.max(0, crew.length * R.carryPerPerson - cargoWeight(state.stock) - gearWeight), rng);
+        const found = searchZone(state, world, order.zoneId, hours, Math.max(0, crew.length * R.carryPerPerson - cargoWeight(state.stock) - carriedGearWeight(state, order.survivorIds)), rng);
         const total = searchHoursTotal(zone);
         const danger = z.zombies / Math.max(1, crew.length * 4);
         hurt(state, crew, danger > 1 ? Math.min(35, danger * 6) : danger > .3 ? 3 : 0, rng, lines, zone.name);
@@ -847,6 +852,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
       case 'relocate': { state.stock = headquartersStock; relocate(state, world, order.zoneId, rng, lines); headquartersStock = state.stock; state.stock = mission.cargo ?? {}; mission.returnZoneId = state.homeZoneId; for (const person of present({ ...state, homeZoneId: headquartersZone })) state.crewPositions![person.id] = { kind: 'zone', zoneId: state.homeZoneId }; break; }
       case 'assault': assault(state, world, order.zoneId, crew, rng, lines); break;
     }
+    for (const line of lines.slice(operationLineStart)) { line.category ??= ['clear', 'assault'].includes(order.action) ? 'combat' : order.action === 'search' ? 'loot' : ['investigate', 'discoveryChoice'].includes(order.action) ? 'discovery' : order.action; line.priority ??= line.tone === 'bad' ? 90 : line.tone === 'warn' ? 75 : line.tone === 'good' ? 50 : 25; line.facts ??= { action: order.action, orderId: order.id, missionId: mission.id }; }
     mission.operationDone = true;
     mission.cargo = state.stock;
     if (headquartersZone !== state.homeZoneId && order.action !== 'relocate') {
@@ -858,14 +864,20 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
       mission.returnZoneId = state.homeZoneId;
     }
     state.stock = headquartersStock;
-    if (order.action === 'scout' && !communicationsStatus(state, world, order.survivorIds).connected) {
+    if (['scout', 'clear'].includes(order.action) && !radioVerified && !personalObservation) {
       mission.observations ??= {};
+      mission.factionObservations ??= {};
+      for (const faction of state.factions) { const before = factionsBefore[faction.id]; if (before && (faction.known !== before.known || faction.revealed !== before.revealed)) { mission.factionObservations[faction.id] = { known: faction.known, revealed: faction.revealed }; faction.known = before.known; faction.revealed = before.revealed; } }
       for (const [id, zone] of Object.entries(state.zones)) if (JSON.stringify(zone.intel) !== JSON.stringify(intelBefore[id]?.intel)) { mission.observations[id] = { status: zone.status, intel: zone.intel }; zone.status = intelBefore[id].status; zone.intel = intelBefore[id].intel; }
     }
     if (['scout', 'search'].includes(order.action)) {
       const linked = communicationsStatus(state, world, order.survivorIds).connected;
       observeDiscoveries(state, world, { source: order.action as 'scout' | 'search', zoneId: order.zoneId, reporterIds: order.survivorIds, delivery: linked ? 'radio' : 'none', radioVerified: linked }, lines);
     }
+    if (!radioVerified && !personalObservation && order.zoneId !== state.homeZoneId) {
+      (mission.privateLines ??= []).push(...lines.splice(operationLineStart));
+    }
+    if (radioVerified) transmitMissionReports(state, mission, lines, true);
     if (order.action === 'areaGuard') {
       const areaLevel = order.logistics?.areaLevel ?? 3;
       for (const id of order.survivorIds) state.crewPositions![id] = { kind: 'area-duty', areaLevel, areaZoneId: areaLevel === 2 ? zone.parentId! : zone.id, duty: 'guard' };
@@ -892,6 +904,9 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
   const operationsLineEnd = lines.length;
   const operationsZoneStatus = statusSnapshot(state);
   const operationsResources = mainResources();
+  const operationsMapSnapshot = mapSnapshot(state);
+  const operationsPositions = clone(state.crewPositions ?? {});
+  const operationsIntel = Object.fromEntries(Object.entries(state.zones).flatMap(([id, zone]) => zone.intel ? [[id, { ...zone.intel }]] : []));
 
   // Where people live makes noise too.
   noise[state.homeZoneId] = (noise[state.homeZoneId] ?? 0) + (Math.ceil(present(state).length / 3) + Math.ceil(Object.entries(centralAvailablePopulation(state)).filter(([key]) => key !== 'sick').reduce((n, [, count]) => n + count, 0) / 12) + (state.hq?.modules.includes('heavyWorkshop') ? 2 : 0)) * (tech(state, 'decoys') ? .6 : 1);
@@ -902,7 +917,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
   state.turnCheckpoint = {
     version: 1, day, worldVersion: world.worldVersion, stage: 'before-night-defence',
     lines, guards, guardPower: work.guardPower, killed, foodMade, crewResearch, migrated, moves,
-    initialZoneStatus, operationsLineEnd, operationsZoneStatus, operationsResources,
+    initialZoneStatus, operationsLineEnd, operationsZoneStatus, operationsResources, operationsMapSnapshot, operationsPositions, operationsIntel,
   };
   return state;
 }
@@ -994,6 +1009,7 @@ export function resumeRegionDay(
   const nightLineEnd = lines.length;
   const nightZoneStatus = statusSnapshot(state);
   const nightResources = mainResources();
+  const nightMapSnapshot = mapSnapshot(state);
 
   // Production, eating and what rots. The same flows the forecast shows.
   const flows = dailyFlows(state, world);
@@ -1043,6 +1059,7 @@ export function resumeRegionDay(
   consumePassengerMeals(state, lines);
   failEmptyMissions(state, lines);
   maintainDiscoveries(state, lines);
+  state.mobility!.reservedAwayIds = [];
   state.day = day + 1;
   for (const s of living(state)) if (s.awayUntil && s.awayUntil <= state.day) delete s.awayUntil;
   completeLegacyReturns(state);
@@ -1068,13 +1085,13 @@ export function resumeRegionDay(
   const replay: RegionReplayStage[] = [
     { phase: 'operations', from: { dayOffset: 0, clock: '07:00' }, to: { dayOffset: 0, clock: '22:00' },
       lines: lines.slice(0, operationsLineEnd), zoneChanges: zoneStatusChanges(initialZoneStatus, operationsZoneStatus),
-      mainResourcesAfter: operationsResources },
+      mainResourcesAfter: operationsResources, mapSnapshot: checkpoint.operationsMapSnapshot, crewPositions: checkpoint.operationsPositions, zoneIntel: checkpoint.operationsIntel },
     { phase: 'night', from: { dayOffset: 0, clock: '22:00' }, to: { dayOffset: 1, clock: '07:00' },
       lines: lines.slice(operationsLineEnd, nightLineEnd), zoneChanges: zoneStatusChanges(operationsZoneStatus, nightZoneStatus),
-      mainResourcesAfter: nightResources, moves },
+      mainResourcesAfter: nightResources, moves, mapSnapshot: nightMapSnapshot, crewPositions: nightMapSnapshot.crewPositions, zoneIntel: Object.fromEntries(Object.entries(nightMapSnapshot.zones).flatMap(([id, zone]) => zone.intel ? [[id, zone.intel]] : [])) },
     { phase: 'new-day', from: { dayOffset: 1, clock: '07:00' },
       lines: lines.slice(nightLineEnd), zoneChanges: zoneStatusChanges(nightZoneStatus, statusSnapshot(state)),
-      mainResourcesAfter: mainResources() },
+      mainResourcesAfter: mainResources(), mapSnapshot: mapSnapshot(state), crewPositions: clone(state.crewPositions ?? {}), zoneIntel: Object.fromEntries(Object.entries(state.zones).flatMap(([id, zone]) => zone.intel ? [[id, { ...zone.intel }]] : [])) },
   ];
   const report: RegionReport = { day: state.day, lines, food: { produced: Math.round(foodMade), eaten: Math.round(eaten), spoiled: Math.round(spoiled) }, water: { produced: Math.round(flows.water.produced), drunk: Math.round(drunk) }, zombiesMoved: migrated, killed, moves, replay };
   state.reports = [...state.reports.slice(-29), report];
@@ -1603,4 +1620,19 @@ function consumePassengerMeals(state: RegionState, lines: ReportLine[]): void {
 
 function patientsInZone(state: RegionState, zoneId: string): RegionSurvivor[] {
   return state.survivors.filter(person => { const position = crewPositionFor(state, person.id); return person.alive && !person.left && person.health < 80 && !(person.awayUntil && person.awayUntil > state.day) && position?.kind === 'zone' && position.zoneId === zoneId; });
+}
+
+/** A public presentation snapshot excludes hidden counts, private field reports and unobserved owners. */
+function mapSnapshot(state: RegionState): RegionMapSnapshot {
+  const zones: RegionMapSnapshot['zones'] = {};
+  for (const [id, zone] of Object.entries(state.zones)) if (zone.status !== 'unknown' || zone.intel) {
+    const ownerKnown = zone.owner && state.factions.some(f => f.id === zone.owner && f.known && !f.defeated);
+    zones[id] = { status: zone.status, ...(zone.intel ? { intel: { ...zone.intel } } : {}), ...(ownerKnown ? { owner: zone.owner } : {}) };
+  }
+  const crewMissions = Object.fromEntries(Object.entries(state.crewMissions ?? {}).filter(([, m]) => !['complete', 'failed'].includes(m.status) || m.issuedDay >= state.day - 1).map(([id, mission]) => {
+    const { cargo: _cargo, observations: _observations, factionObservations: _factions, privateLines: _private, order: _order, ...visible } = mission;
+    return [id, visible];
+  }));
+  const live = new Set(state.survivors.filter(p => p.alive && !p.left && p.health > 0).map(p => p.id));
+  return { zones, crewPositions: clone(Object.fromEntries(Object.entries(state.crewPositions ?? {}).filter(([id]) => live.has(id)))), crewMissions: clone(crewMissions) };
 }

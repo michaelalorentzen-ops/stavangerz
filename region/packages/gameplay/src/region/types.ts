@@ -94,7 +94,13 @@ export interface ReportLine { category?: string; priority?: number; facts?: Reco
  * presentation journal, NOT a resumable mid-turn simulation checkpoint.
  */
 export interface RegionReplayZoneChange { zoneId: string; before: ZoneStatus; after: ZoneStatus }
+export interface RegionMapSnapshot {
+  zones: Record<string, { status: ZoneStatus; intel?: { min: number; max: number; day: number }; owner?: string }>;
+  crewPositions: Record<string, CrewPosition>;
+  crewMissions: Record<string, CrewMission>;
+}
 export interface RegionReplayStage {
+  mapSnapshot?: RegionMapSnapshot;
   phase: 'operations' | 'night' | 'new-day';
   /** Relative to the resolved turn's start day (`report.day - 1`).
    * Explicit windows; new-day is an instantaneous 07:00 summary. */
@@ -154,6 +160,9 @@ export interface RegionNightCheckpoint {
   operationsLineEnd: number;
   operationsZoneStatus: Record<string, ZoneStatus>;
   operationsResources: { food: number; water: number };
+  operationsMapSnapshot?: RegionMapSnapshot;
+  operationsPositions?: Record<string, CrewPosition>;
+  operationsIntel?: Record<string, { min: number; max: number; day: number }>;
   /** Set only for an actual decision involving the avatar at the home zone. */
   decision?: {
     kind: 'hq-night-defence' | 'field-encounter';

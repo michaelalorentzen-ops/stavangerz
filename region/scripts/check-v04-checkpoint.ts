@@ -18,6 +18,8 @@ const orders: RegionOrder[] = [
   { id: 'home-guard', action: 'guard', zoneId: zone.id, survivorIds: ['tor'] },
 ];
 const initial = JSON.stringify(state);
+// Receipt ancestry records the manual checkpoint versus the atomic path; gameplay must still match exactly.
+const gameplay = <T extends { state: typeof state }>(result: T) => ({ ...result, state: { ...result.state, campaign: undefined } });
 
 const paused = startRegionDay(state, world, orders, { avatarId });
 assert.equal(paused.status, 'paused', 'An avatar physically at a threatened HQ must be asked');
@@ -42,7 +44,7 @@ assert.equal(hold.state.day, state.day + 1);
 assert.equal(hold.state.turnCheckpoint, undefined, 'Completed day consumes the checkpoint');
 assert.equal(hold.state.reports.at(-1)?.day, hold.state.day);
 assert.deepEqual(hold.report.replay?.map(stage => stage.phase), ['operations', 'night', 'new-day']);
-assert.deepEqual(hold, endDay(state, world, orders), 'Legacy atomic endDay remains equivalent to the hold/default path');
+assert.deepEqual(gameplay(hold), gameplay(endDay(state, world, orders)), 'Legacy atomic endDay remains equivalent to the hold/default path');
 
 const fire = resumeRegionDay(reloaded, world, 'fire');
 assert.equal(fire.state.day, hold.state.day);
@@ -65,7 +67,7 @@ assert.equal(JSON.stringify(paused.state), serialized, 'Failed calls and resume 
 
 const alone = startRegionDay(state, world, orders);
 assert.equal(alone.status, 'complete', 'No identified on-site avatar: no fabricated personal choice');
-if (alone.status === 'complete') assert.deepEqual(alone, { status: 'complete', ...endDay(state, world, orders) });
+if (alone.status === 'complete') assert.deepEqual(gameplay(alone), gameplay({ status: 'complete', ...endDay(state, world, orders) }));
 
 const radioCrew = structuredClone(state);
 radioCrew.stock.radio = 1;
