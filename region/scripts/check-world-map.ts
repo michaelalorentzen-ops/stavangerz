@@ -33,6 +33,8 @@ async function run() {
     await load(page, state);
     await page.waitForFunction(() => document.querySelectorAll('.rz-world-crew.has-model').length === 4);
     assert.equal(await page.locator('.rz-world-crew').count(), 4);
+    const crewCenters = await page.locator('.rz-world-crew').evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return box.x + box.width / 2; }));
+    assert(Math.max(...crewCenters) - Math.min(...crewCenters) < 180, 'Crew hit targets stay aligned with the GLB group regardless of CSS import order.');
     assert(requests.some(r => r.startsWith('200 ') && r.includes('crew-')));
     const knownPoiIds = new Set(world.pois.filter(p => state.zones[p.zoneId]?.status !== 'unknown').map(p => p.name));
     const shownPoiNames = await page.locator('.rz-marker').evaluateAll(elements => elements.map(e => e.getAttribute('aria-label')));
@@ -53,7 +55,7 @@ async function run() {
     assert((await page.locator('.rz-command-level').innerText()).includes('L2'));
     await page.screenshot({ path: `${output}/district-overview.png` });
     const fallback = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
-    await fallback.addInitScript(() => Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 1 }));
+    await fallback.addInitScript("Object.defineProperty(navigator, 'hardwareConcurrency', { get() { return 1; } });");
     const conservative = structuredClone(state);
     const area = index.byId.get(camp)!.parentId!;
     conservative.crewPositions![state.survivors[2].id] = { kind: 'area-duty', areaLevel: 2, areaZoneId: area, duty: 'guard' };
