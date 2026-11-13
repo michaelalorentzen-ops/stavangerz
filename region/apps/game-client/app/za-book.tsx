@@ -131,6 +131,7 @@ const MANUAL: { heading: string; description: string; entries: Note[] }[] = [
       { lead: 'Levende avsendere', body: 'En privat feltobservasjon blir ikke kjent fordi du avslutter dagen. En levende avsender må rapportere etter hjemkomst eller sende gjennom faktisk samband. En død speider som aldri rapporterte, fyller ikke ut feltguiden.' },
       { lead: 'Historier kan gå tapt', body: 'Noen spor er knyttet til én person. Mister dere personen, kan den valgfrie historien bli liggende ufullført. Verken vanlig utforsking, nødvendige funksjoner eller faseprogresjon krever at alle sidehistorier fullføres.' },
       { lead: 'Steder og fortellinger', body: 'Navngitte steder kommer fra verdenskartet. Hendelsene, notatene og hemmelighetene i historiene er fiksjon. Vanlig søk, et lokalt POI og et unikt anlegg er forskjellige typer innhold.' },
+      { lead: 'Unike anleggsoppdrag', body: 'Et nytt unikt sted går fra oppdaget til undersøkt og sikret, og deretter til operativt. Hvert trinn krever et faktisk crew-oppdrag på stedet. Først når grunnfunksjonen er klargjort, får samfunnet anleggseffektene. Videre utbygging følger etterpå. Allerede aktive anlegg i eldre lagringer beholder driften.' },
     ],
   },
   {

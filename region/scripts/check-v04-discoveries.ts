@@ -145,13 +145,14 @@ const neverMet = fresh(); neverMet.survivors.find(p => p.id === 'tor')!.alive = 
 observeDiscoveries(neverMet, world, { source: 'search', zoneId: workshop.zoneId, reporterIds: ['ingrid'], delivery: 'returned' }, lines);
 assert.deepEqual(visibleDiscoveries(neverMet), [], 'An unseen, dead-person story is not exposed in the journal');
 
-// Existing active unique places preserve their effects and old claim behavior until O06 is explicitly changed.
+// Existing active unique places preserve their effects; newly claimed sites follow D27 installation stages.
 const oldWonders = fresh();
 const cathedral = WONDERS.find(w => w.id === 'cathedral')!;
 const cathedralZone = wonderZone(world, cathedral)!;
 oldWonders.zones[cathedralZone].status = 'controlled';
 discoverWonders(oldWonders, world, lines);
 assert.equal(oldWonders.wonders!.cathedral.level, 0);
+delete (oldWonders.wonders!.cathedral as { installation?: unknown }).installation;
 const effects = wonderEffects(oldWonders), oldSave: DiscoveryRegionState = JSON.parse(JSON.stringify(oldWonders));
 maintainDiscoveries(oldSave, lines); deliverDiscoveryReports(oldSave, world, lines);
 assert.deepEqual(wonderEffects(oldSave), effects);
