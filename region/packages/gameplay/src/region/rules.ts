@@ -1,7 +1,7 @@
 /** Playtest numbers for the region game. Hypotheses to balance, kept out of the engine and the UI. */
 import type { ActionId, RegionSurvivor, Weapon } from './types';
 
-export const REGION_RULES_VERSION = 'region-0.3';
+export const REGION_RULES_VERSION = 'region-0.4';
 export const SAVE_KEY_REGION = 'stavanger-z.region.v2';
 
 export const R = {

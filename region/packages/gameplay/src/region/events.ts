@@ -12,7 +12,7 @@ import {
   leaves, loyalty, need, pay, pickCrew, pickOne, remember, schedule, seasonName, setFlag, totalPeople, unrest, zoneName,
   type EventDef,
 } from './kit';
-import { indexWorld } from './engine';
+import { indexWorld, escapeRoute } from './engine';
 import { EVENTS_PEOPLE } from './events-people';
 import { EVENTS_WORLD, bindWorld } from './events-world';
 import { EVENTS_FACTIONS } from './events-factions';
@@ -268,8 +268,7 @@ const CORE: EventDef[] = [
     make: (s, w) => {
       const index = indexWorld(w);
       const here = s.zones[s.homeZoneId].zombies;
-      const near = (index.adjacent.get(s.homeZoneId) ?? []).map(a => a.to).filter(id => !s.zones[id].owner).sort((a, b) => s.zones[a].zombies - s.zones[b].zombies);
-      const calm = near[0];
+      const calm = escapeRoute(s, w)?.zoneId;
       if (!calm) return null;
       const coast = index.coastal.has(s.homeZoneId);
       return event('Den første natta', `Det er om lag ${here} døde i gatene rundt dere i ${zoneName(w, s.homeZoneId)}. Dere kan ikke rydde dette med fire personer. ${zoneName(w, calm)} ser roligere ut, men dere må gjennom.`, [

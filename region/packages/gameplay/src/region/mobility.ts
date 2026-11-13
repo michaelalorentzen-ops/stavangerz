@@ -47,20 +47,55 @@ function seaNeighbours(world: RegionWorld, zoneId: string): string[] {
 function landEdge(state: RegionState, world: RegionWorld, a: string, b: string): boolean {
   return world.neighbours.some(edge => edge.a === a && edge.b === b || edge.a === b && edge.b === a) || world.links.some(edge => !['blown', 'flooded', 'blocked'].includes(state.chokepoints[edge.id] ?? 'open') && (edge.a === a && edge.b === b || edge.a === b && edge.b === a));
 }
+// Cache immutable topology; chokepoint availability stays stateful.
+const routeEdges = new WeakMap<RegionWorld, Map<string, { to: string; linkId?: string }[]>>();
+function routeNeighbours(world: RegionWorld) {
+  let graph = routeEdges.get(world);
+  if (!graph) {
+    graph = new Map();
+    const add = (from: string, to: string, linkId?: string) => { const list = graph!.get(from) ?? []; list.push({ to, linkId }); graph!.set(from, list); };
+    for (const edge of world.neighbours) { add(edge.a, edge.b); add(edge.b, edge.a); }
+    for (const edge of world.links) { add(edge.a, edge.b, edge.id); add(edge.b, edge.a, edge.id); }
+    routeEdges.set(world, graph);
+  }
+  return graph;
+}
 export function routeBetween(state: RegionState, world: RegionWorld, from: string, to: string, boat = (localStock(state, from).boat ?? 0) >= 1): string[] | undefined {
   if (!world.zones.some(z => z.id === from && z.level === 3) || !world.zones.some(z => z.id === to && z.level === 3)) return undefined;
   const queue: string[][] = [[from]], seen = new Set([from]);
   while (queue.length) {
     const route = queue.shift()!, here = route.at(-1)!;
     if (here === to) return route;
-    const edges = world.neighbours.flatMap(edge => edge.a === here ? [edge.b] : edge.b === here ? [edge.a] : []);
-    for (const link of world.links) if (!['blown', 'flooded', 'blocked'].includes(state.chokepoints[link.id] ?? 'open')) {
-      if (link.a === here) edges.push(link.b); else if (link.b === here) edges.push(link.a);
-    }
+    const edges = (routeNeighbours(world).get(here) ?? [])
+      .filter(edge => !edge.linkId || !['blown', 'flooded', 'blocked'].includes(state.chokepoints[edge.linkId] ?? 'open'))
+      .map(edge => edge.to);
     if (boat) edges.push(...seaNeighbours(world, here));
     for (const next of edges.sort()) if (!seen.has(next)) { seen.add(next); queue.push([...route, next]); }
   }
   return undefined;
+}
+/** Shared physical load ledger. Deliveries reserve before optional communications. */
+export function missionLoad(state: RegionState, order: RegionOrder, costs: Stock = {}) {
+  const position = crewPositionFor(state, order.survivorIds[0] ?? '');
+  const origin = position?.kind === 'zone' ? position.zoneId : state.homeZoneId;
+  const source = localStock(state, origin);
+  const cargo = missionStoreRequest(state, order, costs);
+  const radio = !!order.communication?.radio
+    && order.survivorIds.includes(order.communication.leaderId ?? order.survivorIds[0])
+    && (source.radio ?? 0) - (cargo.radio ?? 0) >= 1
+    && (source.batteries ?? 0) - (cargo.batteries ?? 0) >= 1;
+  const reservations = { ...cargo };
+  if (radio) { reservations.radio = (reservations.radio ?? 0) + 1; reservations.batteries = (reservations.batteries ?? 0) + 1; }
+  const pickup = order.action === 'retrieve' ? order.logistics?.cargo ?? {} : {};
+  const gearWeight = (order.logistics?.gearIds ?? []).reduce((sum, id) => {
+    const item = gearStateFor(state).items.find(i => i.id === id);
+    return sum + (item?.location.kind === 'stored' ? GEAR_CATALOG[item.kind]?.weight ?? 1 : 0);
+  }, 0);
+  const passengers = order.logistics?.passengers;
+  const passengerWeight = passengers ? (passengers.adults + passengers.children + passengers.elderly) * 10 : 0;
+  const weight = cargoWeight(reservations) + cargoWeight(pickup) + gearWeight + carriedGearWeight(state, order.survivorIds) + passengerWeight;
+  const capacity = order.survivorIds.length * R.carryPerPerson;
+  return { cargo, reservations, radio, weight, capacity, availableCapacity: Math.max(0, capacity - weight) };
 }
 export function missionPreview(state: RegionState, world: RegionWorld, order: RegionOrder, actionCosts: Stock = {}): MissionPreview {
   const errors: string[] = [];
@@ -87,16 +122,15 @@ export function missionPreview(state: RegionState, world: RegionWorld, order: Re
     const available = origin === state.homeZoneId ? centralAvailablePopulation(state) : state.mobility?.depotResidents?.[origin];
     for (const [kind, amount] of Object.entries(passengers)) if (!Number.isInteger(amount) || amount < 0 || amount > (available?.[kind as keyof typeof passengers] ?? 0)) errors.push('Passasjerene må være fysisk tilgjengelige ved avreisestedet.');
   }
-  const passengerWeight = passengers ? (passengers.adults + passengers.children + passengers.elderly) * 10 : 0;
-  const gearWeight = (order.logistics?.gearIds ?? []).reduce((sum, id) => sum + (GEAR_CATALOG[state.gear?.items.find(i => i.id === id)?.kind ?? '']?.weight ?? 0), 0);
-  if (cargoWeight(cargo) + gearWeight + carriedGearWeight(state, order.survivorIds) + passengerWeight > capacity) errors.push('Forsendelsen overstiger lagets bærekapasitet.');
+  const load = missionLoad(state, order, actionCosts);
+  if (load.weight > capacity) errors.push('Forsendelsen overstiger lagets bærekapasitet.');
   const returnHours = Math.max(0, (back?.length ?? 1) - 1) * R.hopHours;
   const workHours = ['travel', 'return', 'retrieve', 'supply', 'areaGuard'].includes(order.action) ? 0 : Math.max(1, Math.min(R.workHours, 15 - travelHours - returnHours));
-  return { valid: !errors.length, errors, originZoneId: origin, targetZoneId: target, returnZoneId, routeZoneIds: route, travelHours, workHours, capacity, reservedCargo: missionStoreRequest(state, order, actionCosts), availableCapacity: Math.max(0, capacity - cargoWeight(missionStoreRequest(state, order, actionCosts)) - gearWeight - carriedGearWeight(state, order.survivorIds) - passengerWeight), returnsToday: travelHours + workHours + returnHours <= 15, boatRequired: route.some((id, i) => i > 0 && !landEdge(state, world, route[i - 1], id)) || (back ?? []).some((id, i, list) => i > 0 && !landEdge(state, world, list[i - 1], id)) };
+  return { valid: !errors.length, errors, originZoneId: origin, targetZoneId: target, returnZoneId, routeZoneIds: route, travelHours, workHours, capacity, reservedCargo: load.cargo, availableCapacity: load.availableCapacity, returnsToday: travelHours + workHours + returnHours <= 15, boatRequired: route.some((id, i) => i > 0 && !landEdge(state, world, route[i - 1], id)) || (back ?? []).some((id, i, list) => i > 0 && !landEdge(state, world, list[i - 1], id)) };
 }
-export function beginMission(state: RegionState, world: RegionWorld, order: RegionOrder): CrewMission {
+export function beginMission(state: RegionState, world: RegionWorld, order: RegionOrder, costs: Stock = {}): CrewMission {
   ensureMobility(state);
-  const preview = missionPreview(state, world, order);
+  const preview = missionPreview(state, world, order, costs);
   if (!preview.valid) throw new Error(preview.errors.join(' '));
   const mission: CrewMission = { id: `mission:${state.day}:${order.id}`, orderId: order.id, action: order.action, survivorIds: [...order.survivorIds], originZoneId: preview.originZoneId, targetZoneId: order.zoneId, issuedDay: state.day, status: 'outbound', expectedReturnDay: state.day + Math.max(1, Math.ceil((preview.travelHours + preview.workHours + Math.max(0, (routeBetween(state, world, order.zoneId, preview.returnZoneId)?.length ?? 1) - 1) * R.hopHours) / 15)),
     order: JSON.parse(JSON.stringify(order)), routeZoneIds: preview.routeZoneIds, routeIndex: 0, elapsedHours: 0, returnZoneId: preview.returnZoneId, cargo: {}, cargoGearIds: [], workHours: preview.workHours };
@@ -113,6 +147,8 @@ export function loadCargo(state: RegionState, mission: CrewMission, zoneId: stri
   const request = mission.order?.logistics;
   const stock = localStock(state, zoneId);
   let room = mission.survivorIds.length * R.carryPerPerson - cargoWeight(mission.cargo ?? {}) - carriedGearWeight(state, mission.survivorIds);
+  const radio = state.mobility?.radios[mission.id];
+  room -= radio ? cargoWeight({ radio: radio.radio, batteries: radio.batteries }) : mission.action === 'supply' && missionLoad(state, mission.order!).radio ? cargoWeight({ radio: 1, batteries: 1 }) : 0;
   if (mission.passengers) room -= (mission.passengers.adults + mission.passengers.children + mission.passengers.elderly) * 10;
   const requested = request?.cargo ?? (mission.action === 'retrieve' ? { ...stock } : {});
   for (const [id, amount] of Object.entries(requested).sort()) {
@@ -225,8 +261,9 @@ export function redirectMission(state0: RegionState, world: RegionWorld, mission
 export function reserveMissionStores(state: RegionState, mission: CrewMission, costs: Stock): void {
   if (mission.action === 'supply') return;
   const source = localStock(state, mission.originZoneId);
-  const required = missionStoreRequest(state, mission.order!, costs);
-  if (cargoWeight(required) + carriedGearWeight(state, mission.survivorIds) > mission.survivorIds.length * R.carryPerPerson) throw new Error('Oppdragslasten er for tung. Send flere bærere.');
+  const load = missionLoad(state, mission.order!, costs);
+  const required = load.cargo;
+  if (load.weight > load.capacity) throw new Error('Oppdragslasten er for tung. Send flere bærere.');
   for (const [id, amount] of Object.entries(required)) if ((source[id] ?? 0) < amount) throw new Error(`Avreisestedet mangler ${id}.`);
   for (const [id, amount] of Object.entries(required)) {
     source[id] = (source[id] ?? 0) - amount;

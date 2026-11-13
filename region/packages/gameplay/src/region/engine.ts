@@ -10,7 +10,7 @@ import type {
 } from './types';
 import { initializeCampaign, campaignAvatarId, enforceAvatarFate, advanceCampaignCommit, difficultyRules, type CampaignOptions } from './campaign';
 import { crewPositionFor, type CrewMission } from './location';
-import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions, completeLegacyReturns, localStock, missionStoreRequest, transmitMissionReports, carriedGearWeight } from './mobility';
+import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions, completeLegacyReturns, localStock, missionStoreRequest, missionLoad, transmitMissionReports, carriedGearWeight } from './mobility';
 import { reserveMissionRadio, communicationsStatus, shouldEscalateField, fieldMandate } from './communications';
 import { centralCommunity, centralAvailablePopulation, regionalDay, regionalWorkDay, regionalSurvivorIds, regionalGuardFor, regionalOverrun, regionalL1 } from './administration';
 import { observeDiscoveries, deliverDiscoveryReports, maintainDiscoveries, discoveryOrderPreview, executeDiscoveryOrder } from './discoveries';
@@ -27,7 +27,7 @@ import { POP, REACTIONS, TIERS } from './systems';
 import { lawMods, societyDay, totalPeople, trimWork } from './society';
 import { checkPhase, checkVictory, mods, mutation, researchDay, researchRate, rot, tech } from './progress';
 import { dailyFlows } from './economy';
-import { discoverWonders, nextWonderLevel, WONDERS, wonderEffects, workOnWonder, wonderOperational, wonderOrderError, wonderWorkCost } from './wonders';
+import { discoverWonders, nextWonderLevel, WONDERS, wonderEffects, workOnWonder, wonderOperational, wonderCanAccess, wonderOrderError, wonderWorkCost } from './wonders';
 
 // ------------------------------------------------------------------ world index
 
@@ -135,7 +135,7 @@ function initialLoot(world: RegionWorld, zone: RegionZone): Stock {
 
 // ------------------------------------------------------------------ new game
 
-export function newRegionGame(world: RegionWorld, startZoneId: string, seed = 2026, options?: CampaignOptions): RegionState {
+function initialRegionGame(world: RegionWorld, startZoneId: string, seed = 2026, options?: CampaignOptions): RegionState {
   const index = indexWorld(world);
   if (!index.adjacent.has(startZoneId)) throw new Error(`Ukjent startsone ${startZoneId}`);
   const zones: Record<string, RegionZoneState> = {};
@@ -192,20 +192,41 @@ export function newRegionGame(world: RegionWorld, startZoneId: string, seed = 20
   };
   if (options) { initializeCampaign(state, options); for (const zone of Object.values(state.zones)) for (const id of Object.keys(zone.loot)) zone.loot[id] = Math.max(0, Math.round(zone.loot[id] * difficultyRules(state).loot)); }
   // Where the dead are many, the first choice is how to get out.
-  if (startDanger(world, startZoneId).score >= 45) state.event = forceEvent(state, world, 'escape');
   return state;
 }
 
+export function newRegionGame(world: RegionWorld, startZoneId: string, seed = 2026, options?: CampaignOptions): RegionState {
+  const state = initialRegionGame(world, startZoneId, seed, options);
+  if (startDangerForState(state, world).score >= 45) state.event = forceEvent(state, world, 'escape');
+  return state;
+}
+
+/** The actual unowned neighbour chosen after deterministic faction placement. */
+export function escapeRoute(state: RegionState, world: RegionWorld): StartDanger['escape'] {
+  return (indexWorld(world).adjacent.get(state.homeZoneId) ?? []).map(a => a.to)
+    .filter(id => !state.zones[id].owner)
+    .map(zoneId => ({ zoneId, zombies: state.zones[zoneId].zombies }))
+    .sort((a, b) => a.zombies - b.zombies)[0];
+}
+function startDangerForState(state: RegionState, world: RegionWorld): StartDanger {
+  const zombies = state.zones[state.homeZoneId].zombies;
+  const around = (indexWorld(world).adjacent.get(state.homeZoneId) ?? []).reduce((sum, edge) => sum + state.zones[edge.to].zombies, 0);
+  const score = zombies + around * .06;
+  return { score, level: dangerLevel(score), zombies, around, escape: escapeRoute(state, world) };
+}
+const dangerLevel = (score: number): StartDanger['level'] => score < 8 ? 'Rolig' : score < 20 ? 'Middels' : score < 45 ? 'Krevende' : score < 90 ? 'Svært krevende' : 'Nesten umulig';
+
 export interface StartDanger { score: number; level: 'Rolig' | 'Middels' | 'Krevende' | 'Svært krevende' | 'Nesten umulig'; zombies: number; around: number; escape?: { zoneId: string; zombies: number } }
-/** How hard a start is, from how many lived there and around it. No seed: the same for everyone. */
-export function startDanger(world: RegionWorld, zoneId: string): StartDanger {
+/** Without a seed: cheap map estimate. With a seed: exact initial state and escape route. */
+export function startDanger(world: RegionWorld, zoneId: string, seed?: number): StartDanger {
   const index = indexWorld(world);
   const zone = index.byId.get(zoneId);
   if (!zone) return { score: 0, level: 'Rolig', zombies: 0, around: 0 };
+  if (seed !== undefined) return startDangerForState(initialRegionGame(world, zoneId, seed), world);
   const zombies = residents(zone) * R.zombieShare * R.startZombieShare;
   const around = (index.adjacent.get(zoneId) ?? []).reduce((n, a) => n + residents(index.byId.get(a.to)!) * R.zombieShare, 0);
   const score = zombies + around * .06;
-  const level = score < 8 ? 'Rolig' : score < 20 ? 'Middels' : score < 45 ? 'Krevende' : score < 90 ? 'Svært krevende' : 'Nesten umulig';
+  const level = dangerLevel(score);
   const calm = (index.adjacent.get(zoneId) ?? []).map(a => ({ zoneId: a.to, zombies: Math.round(residents(index.byId.get(a.to)!) * R.zombieShare) })).sort((a, b) => a.zombies - b.zombies)[0];
   return { score, level, zombies: Math.round(zombies), around: Math.round(around), escape: calm };
 }
@@ -326,16 +347,16 @@ function fortifyTargets(state: RegionState, world: RegionWorld, zoneId: string) 
 /** Same planner powers UI reservation and authoritative departure. No mutation or LLM. */
 export function prepareGearPlan(state: RegionState, world: RegionWorld, orders: readonly RegionOrder[], preferences: GearPreferences = {}): GearPlan {
   const budgetState: RegionState = { ...state, stock: { ...state.stock }, mobility: state.mobility ? { ...state.mobility, depots: clone(state.mobility.depots) } : undefined };
-  return planGearForOrders(state, world, orders, preferences, order => {
+  return planGearForOrders(state, world, orders, preferences, (order, gear) => {
+    budgetState.gear = gear;
     const preview = previewOrder(budgetState, world, order, { gearPrepared: true });
     if (preview.errors.length) return preview.errors;
     const movement = missionPreview(budgetState, world, order, preview.costs);
     if (movement.errors.length) return movement.errors;
     const source = localStock(budgetState, movement.originZoneId);
-    const manifest = movement.reservedCargo;
+    const manifest = missionLoad(budgetState, order, preview.costs).reservations;
     for (const [id, amount] of Object.entries(manifest)) if ((source[id] ?? 0) < amount) return ['Tidligere ordre har allerede reservert denne lasten.'];
     for (const [id, amount] of Object.entries(manifest)) source[id] = (source[id] ?? 0) - amount;
-    if (order.communication?.radio && (source.radio ?? 0) >= 1 && (source.batteries ?? 0) >= 1) { source.radio -= 1; source.batteries -= 1; }
     if (movement.boatRequired) source.boat = Math.max(0, (source.boat ?? 0) - 1);
     return [];
   });
@@ -363,7 +384,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
   const faction = state.factions.find(f => f.zoneId === order.zoneId && !f.defeated);
   const wonderHere = Object.entries(state.wonders ?? {}).some(([id, w]) => w.zoneId === order.zoneId && WONDERS.find(d => d.id === id)?.found === 'event');
   if (hops === undefined && order.action === 'wonder' && wonderHere) { /* a ship or a plane is yours wherever it is */ }
-  if (faction && !['scout', 'assault'].includes(order.action)) errors.push('En annen gruppe holder denne sonen. Handle med dem, speid eller angrip.');
+  if (faction && !['scout', 'assault'].includes(order.action) && !(order.action === 'wonder' && wonderCanAccess(state, order.target ?? '', order.zoneId))) errors.push('En annen gruppe holder denne sonen. Handle med dem, speid eller angrip.');
   if (hops === undefined && !['rest', 'heal', 'craft', 'module', 'research'].includes(order.action) && !(order.action === 'wonder' && wonderHere)) errors.push('Sonen er utenfor rekkevidde. Ta over soner nærmere først.');
   if (!internal.field && !movement.valid) errors.push(...movement.errors);
   const travel = (hops ?? 0) * R.hopHours * 2;
@@ -546,7 +567,8 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
   }
-  if (!has(state.stock, costs)) errors.push(`Mangler: ${costText(Object.fromEntries(Object.entries(costs).filter(([id, n]) => (state.stock[id] ?? 0) < n)))}.`);
+  if (!internal.field) errors.push(...missionPreview(state, world, { ...order, id: 'preview-load' }, costs).errors.filter(error => !errors.includes(error)));
+  if (!has(internal.field ? state.stock : localStock(state, movement.originZoneId), costs)) errors.push(`Mangler: ${costText(Object.fromEntries(Object.entries(costs).filter(([id, n]) => (state.stock[id] ?? 0) < n)))}.`);
   if (hours <= 0 && !['rest', 'heal', 'relocate', 'travel', 'return', 'retrieve', 'supply', 'areaGuard'].includes(order.action)) errors.push('Ingen arbeidstid igjen etter reisen.');
   return { valid: !errors.length, errors, hours: Math.round(hours), costs, risk, text };
 }
@@ -640,9 +662,9 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
     const preview = previewOrder(mission ? { ...state, stock: mission.cargo ?? {} } : state, world, order, { gearPrepared: true, field: !!mission });
     if (!preview.valid) { lines.push({ tone: 'warn', title: `${ACTIONS[order.action].label} ble ikke gjort`, text: preview.errors.join(' '), zoneId: order.zoneId }); continue; }
     if (!mission) {
-      mission = beginMission(state, world, order);
-      reserveMissionRadio(state, mission);
+      mission = beginMission(state, world, order, preview.costs);
       reserveMissionStores(state, mission, preview.costs);
+      reserveMissionRadio(state, mission);
       departGear(state, order);
       for (const id of mission.survivorIds) {
         if (state.gear?.missions[id]) state.gear.missions[id].returnDay = 1e9;
@@ -704,6 +726,9 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
         const best = Math.max(...crew.map(s => s.skills.scouting + (equippedGear(state, s.id, 'tool')?.scouting ?? 0)));
         const faction = state.factions.find(f => f.zoneId === order.zoneId && !f.defeated);
         if (faction) {
+          // Scouting observes the actual grounds as well as the people holding them.
+          z.intel = { ...intelFor(z.zombies, best, rng), day };
+          if (z.status === 'unknown') z.status = 'scouted';
           faction.known = true;
           const sharp = crew.some(s => s.traits?.includes('suspicious')) ? .35 : 0;
           if (faction.intent === 'betray' && !faction.revealed && rng() < .3 + sharp + best * .03) {

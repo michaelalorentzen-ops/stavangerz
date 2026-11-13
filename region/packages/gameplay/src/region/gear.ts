@@ -155,7 +155,7 @@ export interface GearPlan {
 /** Pure reservation planner. The engine supplies its own authoritative order validator. */
 export function planGearForOrders(
   state: RegionState, _world: RegionWorld, orders: readonly RegionOrder[], preferences: GearPreferences = {},
-  validate: (order: RegionOrder) => string[] = () => [],
+  validate: (order: RegionOrder, gear: RegionGearState) => string[] = () => [],
 ): GearPlan {
   let gear = gearStateFor(state);
   const snapshot = { ...state, gear };
@@ -164,7 +164,7 @@ export function planGearForOrders(
   const used = new Set<string>();
   for (const order of orders) {
     const gearBeforeOrder = copy(gear);
-    const errors = [...validate(order)];
+    const errors: string[] = [];
     const field = true; // Every mission starts at its actual known origin, including idle field crews.
     // A deliberate HQ handover is transactional and precedes all same-crew picks.
     // This makes e.g. Marius' explicitly released rifle available to Tor in one order.
@@ -222,12 +222,8 @@ export function planGearForOrders(
       // Reserve immediately for the next person in this same crew, not just the next order.
       if (!unavailable) for (const item of Object.values(items)) reservations[item.id] = { orderId: order.id, survivorId };
     }
-    if (errors.length) {
-      for (const [id, reservation] of Object.entries(reservations)) if (reservation.orderId === order.id) delete reservations[id];
-      gear = gearBeforeOrder; snapshot.gear = gear;
-    } else {
+    if (!errors.length) {
       for (const { personId, loadout, preference } of staged) {
-        used.add(personId);
         gear.preferences[personId] = preference;
         // Replacement at camp is an actual handover. Nobody else's carried gear is pooled.
         for (const oldId of Object.values(gear.loadouts[personId] ?? {})) {
@@ -243,6 +239,11 @@ export function planGearForOrders(
         }
       }
     }
+    if (!errors.length) errors.push(...validate(order, gear));
+    if (errors.length) {
+      for (const [id, reservation] of Object.entries(reservations)) if (reservation.orderId === order.id) delete reservations[id];
+      gear = gearBeforeOrder; snapshot.gear = gear;
+    } else for (const { personId } of staged) used.add(personId);
     plans.push({ orderId: order.id, crew, errors });
   }
   return { items: gear.items.filter(item => item.reported !== false), gear, reservations, orders: plans, errors: plans.flatMap(order => order.errors) };
