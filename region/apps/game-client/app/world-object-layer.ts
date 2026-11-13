@@ -9,7 +9,7 @@ import type { RegionState, RegionWorld } from '../../../packages/gameplay/src/re
 
 type Asset = { url: string; meters?: number | { height?: number }; scale?: number; animations?: string[] };
 type Piece = { id: string; asset: string; at: [number, number]; title: string; animation: string; crew?: string; zone: string; offset?: number };
-type Instance = { object: THREE.Group; mixer?: THREE.AnimationMixer; asset: string; animation: string };
+type Instance = { object: THREE.Group; mixer?: THREE.AnimationMixer; asset: string; animation: string; layout?: { view: number; lng: number; lat: number; offset: number } };
 export interface WorldObjectController { update(state: RegionState): void; setReducedMotion(value: boolean): void; destroy(): void }
 export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-gl'), world: RegionWorld, initial: RegionState, select: { onCrew(id: string, zoneId: string): void; onZone(id: string): void }): WorldObjectController {
   const id = 'stavangerz-world-objects';
@@ -30,6 +30,11 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const lowPower = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2);
   const clock = new THREE.Clock();
+  // Camera and anchor geometry is static during idle animation. Reuse matrices
+  // and only project a piece again after the camera or its reported position moves.
+  const projection = new THREE.Matrix4(), translation = new THREE.Matrix4(), scaling = new THREE.Matrix4();
+  const rotation = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+  let viewRevision = 0, previousView: number[] = [];
   scene.add(new THREE.HemisphereLight(0xd9f3ff, 0x394b33, 2.3));
   const sun = new THREE.DirectionalLight(0xffe1af, 3.2); sun.position.set(-30, -60, 100); scene.add(sun);
   const disposeObject = (object: THREE.Object3D) => object.traverse(child => { if (child instanceof THREE.Mesh) { child.geometry.dispose(); const materials = Array.isArray(child.material) ? child.material : [child.material]; for (const material of materials) { for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose(); material.dispose(); } } });
@@ -108,9 +113,12 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         markers.forEach(marker => marker.getElement().classList.remove('has-model'));
         return;
       }
-      const projection = new THREE.Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
+      projection.fromArray(options.defaultProjectionData.mainMatrix);
       // Keep GPU coordinates near zero; global Mercator floats jitter at street zoom.
-      const origin = lib.MercatorCoordinate.fromLngLat(map.getCenter(), 0);
+      const center = map.getCenter(), canvas = map.getCanvas();
+      const view = [center.lng, center.lat, map.getZoom(), map.getPitch(), map.getBearing(), canvas.width, canvas.height];
+      if (view.some((value, i) => value !== previousView[i])) { previousView = view; viewRevision++; }
+      const origin = lib.MercatorCoordinate.fromLngLat(center, 0);
       const delta = Math.min(clock.getDelta(), .05);
       let animate = false;
       for (const piece of pieces) {
@@ -138,22 +146,26 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
           if (progress < 1) animate = true; else journeys.delete(piece.id);
           marker?.setLngLat(at);
         }
-        const point = map.project(at);
-        if (piece.crew) { point.x += 35 + (piece.offset ?? 0) * 42; point.y -= 8; } else { point.x += (piece.offset ?? 0) * 48; point.y += 8; }
-        const lngLat = map.unproject(point);
-        const anchor = lib.MercatorCoordinate.fromLngLat(lngLat, 0);
-        const metersPerPixel = 40075016.686 * Math.cos(lngLat.lat * Math.PI / 180) / (512 * 2 ** map.getZoom());
-        const upright = !!piece.crew || piece.asset === 'zombie';
-        const targetSize = piece.crew ? 43 : piece.asset === 'zombie' ? 34 : piece.asset === 'hq' ? 64 : 42;
-        const modelSize = upright ? template.height * Math.max(.25, Math.sin(map.getPitch() * Math.PI / 180)) : template.span;
-        const scale = anchor.meterInMercatorCoordinateUnits() * metersPerPixel * targetSize / modelSize;
-        instance.object.matrixAutoUpdate = false;
-        // glTF Y-up becomes map Z-up; reflection accounts for Mercator's south-positive Y.
-        instance.object.matrix.makeTranslation(anchor.x - origin.x, anchor.y - origin.y, anchor.z - origin.z).multiply(new THREE.Matrix4().makeScale(scale, -scale, scale)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+        const offset = piece.offset ?? 0;
+        if (!instance.layout || instance.layout.view !== viewRevision || instance.layout.lng !== at[0] || instance.layout.lat !== at[1] || instance.layout.offset !== offset) {
+          const point = map.project(at);
+          if (piece.crew) { point.x += 35 + offset * 42; point.y -= 8; } else { point.x += offset * 48; point.y += 8; }
+          const lngLat = map.unproject(point);
+          const anchor = lib.MercatorCoordinate.fromLngLat(lngLat, 0);
+          const metersPerPixel = 40075016.686 * Math.cos(lngLat.lat * Math.PI / 180) / (512 * 2 ** map.getZoom());
+          const upright = !!piece.crew || piece.asset === 'zombie';
+          const targetSize = piece.crew ? 43 : piece.asset === 'zombie' ? 34 : piece.asset === 'hq' ? 64 : 42;
+          const modelSize = upright ? template.height * Math.max(.25, Math.sin(map.getPitch() * Math.PI / 180)) : template.span;
+          const scale = anchor.meterInMercatorCoordinateUnits() * metersPerPixel * targetSize / modelSize;
+          instance.object.matrixAutoUpdate = false;
+          // glTF Y-up becomes map Z-up; reflection accounts for Mercator's south-positive Y.
+          instance.object.matrix.makeTranslation(anchor.x - origin.x, anchor.y - origin.y, anchor.z - origin.z).multiply(scaling.makeScale(scale, -scale, scale)).multiply(rotation);
+          instance.layout = { view: viewRevision, lng: at[0], lat: at[1], offset };
+        }
         marker?.getElement().classList.add('has-model');
         if (instance.mixer && !(reducedMotion ?? motion.matches)) { instance.mixer.update(delta); animate = true; }
       }
-      camera.projectionMatrix.copy(projection).multiply(new THREE.Matrix4().makeTranslation(origin.x, origin.y, origin.z));
+      camera.projectionMatrix.copy(projection).multiply(translation.makeTranslation(origin.x, origin.y, origin.z));
       renderer.resetState(); renderer.render(scene, camera); renderer.resetState();
       if (animate) map.triggerRepaint();
     },

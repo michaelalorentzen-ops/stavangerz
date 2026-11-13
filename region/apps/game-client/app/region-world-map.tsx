@@ -165,16 +165,16 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     const map = mapRef.current;
     if (!map || !ready || (overlay !== 'zombies' && !replayMoves) || !(replayMoves ?? state.reports.at(-1)?.moves ?? []).length || reducedMotion) return;
     const dash = [[0, 4, 3], [.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, .5], [3, 4, 0]];
-    let frame = 0, step = 0, last = 0;
-    const animate = (time: number) => {
-      if (time - last > 90 && map.getZoom() >= 12 && map.getLayer('moves')) {
-        map.setPaintProperty('moves', 'line-dasharray', dash[step++ % dash.length]); last = time;
-      }
-      frame = requestAnimationFrame(animate);
-    };
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, [ready, replayMoves, state.reports, overlay, reducedMotion]);
+    let timer: ReturnType<typeof setInterval> | undefined, step = 0;
+    const visible = () => !document.hidden && map.getZoom() >= 12 && !!map.getLayer('moves');
+    const stop = () => { if (timer !== undefined) clearInterval(timer); timer = undefined; };
+    const tick = () => { if (!visible()) { stop(); return; } map.setPaintProperty('moves', 'line-dasharray', dash[step++ % dash.length]); };
+    const sync = () => { if (!visible()) stop(); else if (timer === undefined) { tick(); timer = setInterval(tick, 90); } };
+    // Paint changes already request a MapLibre frame. A second 60Hz RAF loop
+    // was unnecessary, including while this layer was outside its zoom range.
+    map.on('zoomend', sync); document.addEventListener('visibilitychange', sync); sync();
+    return () => { stop(); map.off('zoomend', sync); document.removeEventListener('visibilitychange', sync); };
+  }, [ready, styleRevision, replayMoves, state.reports, overlay, reducedMotion]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
