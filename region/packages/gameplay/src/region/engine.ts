@@ -765,7 +765,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
         hurt(state, crew, danger > 1.5 ? Math.min(40, (danger - 1) * 8) : danger > .8 ? 4 : 0, rng, lines, zone.name);
         const samples = Math.floor(kills / R.samplesPerKills + rng());
         if (samples) add(state.stock, 'samples', samples);
-        lines.push({ tone: kills ? 'good' : 'info', title: `${kills} zombier drept i ${zone.name}`, text: `${names}${ammo ? `, ${ammo} patroner brukt` : ''}. ${z.zombies ? `Om lag ${z.zombies} igjen.` : 'Sonen ser tom ut.'}${samples ? ` ${samples} prøver tatt med hjem.` : ''}`, zoneId: zone.id });
+        lines.push({ tone: kills ? 'good' : 'info', facts: { action: 'clear', killed: kills, remainingMin: z.intel.min, remainingMax: z.intel.max }, title: `${kills} zombier drept i ${zone.name}`, text: `${names}${ammo ? `, ${ammo} patroner brukt` : ''}. ${z.zombies ? `Om lag ${z.zombies} igjen.` : 'Sonen ser tom ut.'}${samples ? ` ${samples} prøver tatt med hjem.` : ''}`, zoneId: zone.id });
         break;
       }
       case 'search': {
@@ -778,7 +778,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
         const danger = z.zombies / Math.max(1, crew.length * 4);
         hurt(state, crew, danger > 1 ? Math.min(35, danger * 6) : danger > .3 ? 3 : 0, rng, lines, zone.name);
         if (z.zombies && danger > .2) { const lost = Math.min(z.zombies, Math.round(crew.length * rng() * 2)); z.zombies -= lost; killed += lost; }
-        lines.push({ tone: 'good', title: `Søk i ${zone.name}`, text: `${names} fant ${stockText(found) || 'lite av verdi'}. ${Math.round(z.searched / total * 100)} % gjennomsøkt.`, zoneId: zone.id });
+        lines.push({ tone: 'good', facts: { action: 'search', searchBefore, searchAfter: z.searched, searchTotal: total }, title: `Søk i ${zone.name}`, text: `${names} fant ${stockText(found) || 'lite av verdi'}. ${Math.round(z.searched / total * 100)} % gjennomsøkt.`, zoneId: zone.id });
         if ((zone.measures?.homes ?? 0) > 5 && rng() < hours * R.recruitChancePerSearchHour) recruit(state, lines, `${names} fant noen som gjemte seg i ${zone.name}.`, rng, { zoneId: zone.id, missionId: mission.id });
         break;
       }
