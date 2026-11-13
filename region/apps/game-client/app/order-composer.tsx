@@ -6,8 +6,8 @@ import { prepareGearPlan, previewOrder, resourceName } from '../../../packages/g
 import { ACTIONS, R } from '../../../packages/gameplay/src/region/rules';
 import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
 import { localStock, missionLoad, missionPreview, routeBetween } from '../../../packages/gameplay/src/region/mobility';
-import { gearItemName, type GearPlan } from '../../../packages/gameplay/src/region/gear';
-import CrewEquipment, { equipmentDraftOrders } from './crew-equipment';
+import type { GearPlan } from '../../../packages/gameplay/src/region/gear';
+import CrewEquipment, { CompactCrewGear, equipmentDraftOrders } from './crew-equipment';
 import { MissionOptions } from './mission-controls';
 import { HudIcon } from './hud-icons';
 import './command-panels.css';
@@ -64,15 +64,15 @@ export interface OrderComposerProps {
   state: RegionState; world: RegionWorld; orders: RegionOrder[]; draft: RegionOrder;
   targetOptions?: { id: string; label: string }[];
   onChange: (order: RegionOrder) => void; onConfirm: (order: RegionOrder) => void;
-  onCancel: () => void; onPickTarget: () => void;
+  onCancel: () => void; onPickTarget: () => void; onHelp?: (topic: string) => void;
 }
 
-export function OrderComposer({ state, world, orders, draft, targetOptions, onChange, onConfirm, onCancel, onPickTarget }: OrderComposerProps) {
+export function OrderComposer({ state, world, orders, draft, targetOptions, onChange, onConfirm, onCancel, onPickTarget, onHelp }: OrderComposerProps) {
   const id = useId();
   const planned = useMemo(() => equipmentDraftOrders(orders, draft), [orders, draft]);
   const plan = useMemo(() => prepareGearPlan(state, world, planned), [state, world, planned]);
   const ownPlan = plan.orders.find(o => o.orderId === draft.id);
-  const { budget, preview, movement, radioReserved } = commandOrderPreview(state, world, planned, draft, plan);
+  const { budget, preview, movement, reservations } = commandOrderPreview(state, world, planned, draft, plan);
   const allowSea = (localStock(budget, movement.originZoneId).boat ?? 0) >= 1;
   const returnRoute = routeBetween(budget, world, draft.zoneId, movement.returnZoneId, allowSea);
   const returnHours = returnRoute ? Math.max(0, returnRoute.length - 1) * R.hopHours : undefined;
@@ -81,7 +81,11 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
   const home = plannedHqCrew(state, world, planned);
   const editing = orders.some(o => o.id === draft.id);
   const baseLabel = state.hq ? 'HQ' : 'leiren';
-  const reservedManifest = commandStock(movement.reservedCargo);
+  const reservedManifest = commandStock(reservations);
+  const hasCrew = draft.survivorIds.length > 0;
+  const zoneIntel = state.zones[draft.zoneId];
+  const risk = !hasCrew || (!zoneIntel?.intel && zoneIntel?.status !== 'controlled') ? 'Ukjent' : String(preview.risk);
+  const riskClass = risk === 'Høy' ? 'high' : risk === 'Middels' ? 'medium' : risk === 'Lav' ? 'low' : 'unknown';
   const selectedOrigin = draft.survivorIds.map(personId => crewPositionFor(state, personId)).find(p => p?.kind === 'zone');
   const remainingOrders = orders.filter(o => o.id !== draft.id);
   const toggle = (personId: string) => {
@@ -93,18 +97,18 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
   return <div className="cmd-composer">
     <header className="cmd-intro cmd-composer-heading">
       <p className="cmd-kicker">{editing ? 'JUSTER DAGENS PLAN' : 'NY ORDRE'} / DAG {state.day}</p>
-      <div className="cmd-heading-main"><div><h2>{ACTIONS[draft.action].label}</h2><p className="cmd-heading-place"><HudIcon name="location" size={16} />{commandZone(world, draft.zoneId)}</p></div><button type="button" onClick={onPickTarget}>Velg på kartet <HudIcon name="map" size={16} /></button></div>
+      <div className="cmd-heading-main"><div><h2>{ACTIONS[draft.action].label}<span className={`cmd-risk cmd-risk-${riskClass}`}>{risk} risiko</span></h2><p className="cmd-heading-place"><HudIcon name="location" size={16} />{commandZone(world, draft.zoneId)}</p></div><button type="button" onClick={onPickTarget}>Velg på kartet <HudIcon name="map" size={16} /></button>{onHelp && <button type="button" className="cmd-help" aria-label="Hjelp om oppdrag" onClick={() => onHelp(draft.action)}><HudIcon name="book" size={18} /></button>}</div>
     </header>
     <div className="cmd-scroll">
       <section className="cmd-mission-brief" aria-label="Oppdrag og tidsplan">
         {!!targetOptions?.length && <label className="cmd-target">Velg mål<select value={draft.target ?? ''} onChange={event => onChange({ ...draft, target: event.target.value })}><option value="" disabled>Velg et mål</option>{targetOptions.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>}
-        <div className="cmd-mission-result"><p>{preview.text}</p><span className={`cmd-risk cmd-risk-${preview.risk === 'Høy' ? 'high' : preview.risk === 'Middels' ? 'medium' : 'low'}`}>{preview.risk} risiko</span></div>
+        <div className="cmd-mission-result"><p aria-live="polite">{hasCrew ? `${draft.survivorIds.length} ${draft.survivorIds.length === 1 ? 'person' : 'personer'} · ${preview.text}` : 'Velg folk'}</p></div>
         <ol className="cmd-timeline" aria-label="Planlagt reise, arbeid og retur">
-          <li className={movement.travelHours === 0 ? 'is-local' : ''}><span><HudIcon name="route" size={15} />Reise</span><b>{movement.travelHours ? `${commandNumber(movement.travelHours)} t` : 'På stedet'}</b></li>
-          <li><span><HudIcon name="work" size={15} />Arbeid</span><b>{commandNumber(movement.workHours)} t</b></li>
-          <li className={returnHours === 0 ? 'is-local' : ''}><span><HudIcon name="navigation" size={15} />Retur</span><b>{returnHours === undefined ? 'Ukjent rute' : returnHours ? `${commandNumber(returnHours)} t` : 'Samme sted'}</b></li>
+          <li className={movement.travelHours === 0 ? 'is-local' : ''}><span><HudIcon name="route" size={15} />Reise</span><b>{!hasCrew ? '—' : movement.travelHours ? `${commandNumber(movement.travelHours)} t` : 'På stedet'}</b></li>
+          <li><span><HudIcon name="work" size={15} />Arbeid</span><b>{hasCrew ? `${commandNumber(movement.workHours)} t` : '—'}</b></li>
+          <li className={returnHours === 0 ? 'is-local' : ''}><span><HudIcon name="navigation" size={15} />Retur</span><b>{!hasCrew ? '—' : returnHours === undefined ? 'Ukjent rute' : returnHours ? `${commandNumber(returnHours)} t` : 'Samme sted'}</b></li>
         </ol>
-        <p className="cmd-return-plan">Fra {commandZone(world, movement.originZoneId)} → {commandZone(world, movement.returnZoneId)} · {movement.returnsToday ? 'planlagt før natt' : returnHours === undefined ? 'returtid ukjent' : `ca. ${Math.max(1, Math.ceil((movement.travelHours + movement.workHours + returnHours) / 15))} døgn, laget er bundet`}</p>
+        <p className="cmd-return-plan">{hasCrew ? <>Fra {commandZone(world, movement.originZoneId)} → {commandZone(world, movement.returnZoneId)} · {movement.returnsToday ? 'planlagt før natt' : returnHours === undefined ? 'returtid ukjent' : `ca. ${Math.max(1, Math.ceil((movement.travelHours + movement.workHours + returnHours) / 15))} døgn, laget er bundet`}</> : 'Velg mannskap for å beregne reise og retur.'}</p>
       </section>
       <section className="cmd-crew-section" aria-labelledby={`${id}-crew`}><header><HudIcon name="crew" /><h3 id={`${id}-crew`}>Folk</h3><span>{draft.survivorIds.length} valgt</span></header><div className="cmd-crew-list">{state.survivors.filter(p => p.alive && !p.left).map(person => {
         const selected = draft.survivorIds.includes(person.id);
@@ -117,14 +121,14 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
         const differentOrigin = !selected && selectedOrigin?.kind === 'zone' && position?.kind === 'zone' && position.zoneId !== selectedOrigin.zoneId;
         const reason = unavailable ?? (differentOrigin ? 'Et annet avreisested enn laget' : undefined);
         const place = position?.kind === 'zone' ? commandZone(world, position.zoneId) : reason ?? 'Ukjent sted';
-        return <label key={person.id} className={`cmd-person ${selected ? 'is-selected' : ''} ${reason && !selected ? 'is-unavailable' : ''}`}><input type="checkbox" checked={selected} disabled={!!reason && !selected} onChange={() => toggle(person.id)} /><CrewPortrait name={person.name} /><span className="cmd-person-identity"><strong>{person.name}<small>{person.role}</small></strong><small>{reason ?? place}</small></span><span className="cmd-person-condition"><span>Helse <b>{person.health}</b></span><span>Utm. <b>{person.fatigue}</b></span></span></label>;
+        const gearPerson = ownPlan?.crew.find(p => p.survivorId === person.id) ?? probe;
+        return <div key={person.id} className={`cmd-person ${selected ? 'is-selected' : ''} ${reason && !selected ? 'is-unavailable' : ''}`}><input id={`${id}-${person.id}`} aria-label={person.name} type="checkbox" checked={selected} disabled={!!reason && !selected} onChange={() => toggle(person.id)} /><CrewPortrait name={person.name} /><span className="cmd-person-identity"><label htmlFor={`${id}-${person.id}`}><strong>{person.name}</strong></label><small className={reason ? 'cmd-person-status' : 'cmd-person-location'}>{reason ?? place}</small></span><span className="cmd-person-condition"><span>Helse <b>{person.health}</b></span><span>Utm. <b>{person.fatigue}</b></span></span>{gearPerson && <CompactCrewGear state={state} plan={plan} person={gearPerson} order={draft} disabled={!selected || !!reason} onChange={onChange} />}</div>;
       })}</div>
       </section>
-      <details className="cmd-cost-details"><summary><HudIcon name="stock" size={17} />Last og oppdragskostnad</summary><section className="cmd-consequences" aria-labelledby={`${id}-consequences`}><header><HudIcon name="plan" /><h3 id={`${id}-consequences`}>Dette binder planen</h3></header><dl><div><dt>Kostnad for oppdraget</dt><dd>{commandStock(preview.costs)}</dd></div><div><dt>Faktisk reservert avreiselast</dt><dd>{commandStock(movement.reservedCargo)}</dd></div>{!!draft.logistics?.gearIds?.length && <div><dt>Løst utstyr i leveransen</dt><dd>{draft.logistics.gearIds.map(id => state.gear?.items.find(item => item.id === id)).filter((item): item is NonNullable<typeof item> => !!item).map(gearItemName).join(' · ') || 'Ingen registrerte gjenstander'}</dd></div>}{draft.logistics?.passengers && <div><dt>Folk i transporten</dt><dd>{draft.logistics.passengers.adults} voksne · {draft.logistics.passengers.children} barn · {draft.logistics.passengers.elderly} eldre · {draft.logistics.passengers.sick} syke</dd></div>}{draft.communication?.radio && <div><dt>Sambandsutstyr i tillegg</dt><dd>{radioReserved ? '1 radio · 1 batteri' : 'Ingen reservasjon · radio eller batteri mangler etter planlagt last'}</dd></div>}{movement.boatRequired && <div><dt>Transport bundet</dt><dd>1 båt</dd></div>}<div><dt>Ledig bærekapasitet etter last</dt><dd>{commandNumber(movement.availableCapacity)} av {commandNumber(movement.capacity)}</dd></div><div><dt>Navngitte folk ved {baseLabel} til natten</dt><dd><b>{home.length}</b> · {home.map(p => p.name).join(', ') || 'Ingen'}</dd></div><div><dt>Feltmandat</dt><dd>{draft.communication?.mandate === 'cautious' ? 'Forsiktig' : draft.communication?.mandate === 'bold' ? 'Dristig' : 'Avveid'} · {draft.communication?.contactOnCritical ? 'Be om valg ved kritiske møter når samband finnes' : 'Feltlederen avgjør møter'}</dd></div></dl><p className="cmd-note">Tallet ved {baseLabel} gjelder navngitte folk og hele dagsplanen ved vellykket retur. Pågående oppdrag regnes som ute; forventet retur kan bli forsinket.</p></section></details>
-      <details className="cmd-details"><summary><HudIcon name="gear" />Utstyr og mandat <span>Auto equip, manuelle låser, proviant og retur</span></summary><CrewEquipment state={state} world={world} orders={orders} draftOrder={draft} onChange={onChange} /><MissionOptions state={budget} world={world} order={draft} onChange={onChange} /></details>
-      {!!errors.length && <div className="cmd-errors" id={`${id}-errors`} role="status"><strong>Ordren kan ikke legges i planen ennå</strong><ul>{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}
+      <details className="cmd-details"><summary><HudIcon name="settings" />Avansert <span>Auto equip, mandat, leder og retursted</span></summary><CrewEquipment state={state} world={world} orders={orders} draftOrder={draft} onChange={onChange} /><MissionOptions state={budget} world={world} order={draft} onChange={onChange} /></details>
+      {hasCrew && !!errors.length && <div className="cmd-errors" id={`${id}-errors`} role="status"><strong>Ordren kan ikke legges i planen ennå</strong><ul>{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}
     </div>
-    <footer className="cmd-confirm"><div className="cmd-confirm-facts" aria-label="Planlagte konsekvenser ved vellykket retur"><div className="cmd-confirm-return" title={`Retur til ${commandZone(world, movement.returnZoneId)} · ${movement.returnsToday ? 'før natt' : 'flere døgn'}`}><HudIcon name="route" size={14} /><span>Retur {movement.returnsToday ? 'før natt' : 'flere døgn'} · {commandZone(world, movement.returnZoneId)}</span></div><div className="cmd-confirm-home"><HudIcon name="crew" size={15} /><span><b>Ved {baseLabel} til natten:</b> {home.map(p => p.name).join(', ') || 'Ingen navngitte folk'}<small>Planlagt ved vellykket retur · kan bli forsinket</small></span></div><div className="cmd-confirm-load"><HudIcon name="stock" size={14} /><span title={`Faktisk reservert last: ${reservedManifest}`}>Last: {reservedManifest}</span><b>{commandNumber(movement.availableCapacity)}/{commandNumber(movement.capacity)} ledig</b></div></div><div className="cmd-confirm-actions"><button type="button" onClick={onCancel}>Avbryt</button><button type="button" className="cmd-primary" disabled={!valid} aria-describedby={errors.length ? `${id}-errors` : undefined} onClick={() => { if (valid) onConfirm(draft); }}><HudIcon name="check" />{editing ? 'Oppdater ordren' : 'Legg i dagsplanen'}</button></div></footer>
+    <footer className="cmd-confirm"><div className="cmd-confirm-facts" aria-label="Planlagte konsekvenser ved vellykket retur"><div className="cmd-confirm-return" title={`Retur til ${commandZone(world, movement.returnZoneId)} · ${movement.returnsToday ? 'før natt' : 'flere døgn'}`}><HudIcon name="route" size={14} /><span>{hasCrew ? `Retur ${movement.returnsToday ? 'før natt' : 'flere døgn'} · ${commandZone(world, movement.returnZoneId)}` : 'Velg folk for å beregne reisen'}</span></div><div className="cmd-confirm-home"><HudIcon name="crew" size={15} /><span><b>Ved {baseLabel} til natten:</b> {home.map(p => p.name).join(', ') || 'Ingen navngitte folk'}<small>Planlagt ved vellykket retur · kan bli forsinket</small></span></div><div className="cmd-confirm-load"><HudIcon name="stock" size={14} /><span title={`Faktisk reservert last: ${reservedManifest}`}>Last: {reservedManifest}</span><b>{commandNumber(movement.availableCapacity)}/{commandNumber(movement.capacity)} ledig</b></div></div><div className="cmd-confirm-actions"><button type="button" onClick={onCancel}>Avbryt</button><button type="button" className="cmd-primary" disabled={!valid} aria-describedby={hasCrew && errors.length ? `${id}-errors` : undefined} onClick={() => { if (valid) onConfirm(draft); }}><HudIcon name="check" />{editing ? 'Oppdater ordren' : 'Legg i dagsplanen'}</button></div></footer>
   </div>;
 }
 
