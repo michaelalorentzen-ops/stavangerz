@@ -1,0 +1,55 @@
+'use client';
+import { useState } from 'react';
+import type { RegionOrder, RegionState, RegionWorld, Stock, Population } from '../../../packages/gameplay/src/region/types';
+import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
+import { communicationsStatus } from '../../../packages/gameplay/src/region/communications';
+import { localStock, missionPreview } from '../../../packages/gameplay/src/region/mobility';
+import { centralPopulation } from '../../../packages/gameplay/src/region/administration';
+import { GEAR_CATALOG } from '../../../packages/gameplay/src/region/gear';
+import { resourceName } from '../../../packages/gameplay/src/region/engine';
+const count = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits: 1 });
+export function MissionOptions({ state, world, order, onChange }: { state: RegionState; world: RegionWorld; order: RegionOrder; onChange: (order: RegionOrder) => void }) {
+  const preview = missionPreview(state, world, order);
+  const source = localStock(state, preview.originZoneId);
+  const link = communicationsStatus(state, world, order.survivorIds);
+  const logistics = (change: Partial<NonNullable<RegionOrder['logistics']>>) => onChange({ ...order, logistics: { ...order.logistics, ...change } });
+  const communication = (change: Partial<NonNullable<RegionOrder['communication']>>) => onChange({ ...order, communication: { ...order.communication, ...change } });
+  return <section className="rz-mission-options"><h3>Reise og mandat</h3>
+    <p>{preview.routeZoneIds.length} soner i ruten · {count(preview.travelHours)} t ut · {count(preview.workHours)} t arbeid · kapasitet {preview.capacity}.</p>
+    <p>{preview.returnsToday ? 'Planlagt fremme ved returstedet samme døgn.' : 'Reise og oppdrag fortsetter over flere døgn. Laget er bundet til det er tilbake.'}</p>
+    {!['travel', 'return', 'areaGuard'].includes(order.action) && <label><input type="checkbox" checked={order.logistics?.stay ?? false} onChange={e => logistics({ stay: e.target.checked, destinationZoneId: e.target.checked ? order.zoneId : state.homeZoneId })} /> Bli i målsonen etter oppdraget</label>}
+    <label>Retursted <select value={order.logistics?.destinationZoneId ?? preview.returnZoneId} onChange={e => logistics({ destinationZoneId: e.target.value })}>{world.zones.filter(z => z.level === 3 && (z.id === state.homeZoneId || z.id === order.zoneId || state.zones[z.id]?.status === 'controlled' || state.mobility?.depots[z.id])).map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
+    {!['supply', 'retrieve'].includes(order.action) && <fieldset><legend>Feltproviant fra avreisestedet</legend>{['food', 'water'].map(id => <label key={id}>{resourceName(id)} · {count(source[id] ?? 0)} tilgjengelig <input type="number" min="0" max={source[id] ?? 0} value={order.logistics?.cargo?.[id] ?? 0} onChange={e => logistics({ cargo: { ...order.logistics?.cargo, [id]: Math.max(0, Number(e.target.value) || 0) } })} /></label>)}<p className="rz-small">Brukes på reisen og under områdevakt. Ubrukt proviant blir med til returstedet og tar bærekapasitet fra funn.</p></fieldset>}
+    <label>Lagets leder <select value={order.communication?.leaderId ?? order.survivorIds[0] ?? ''} onChange={e => communication({ leaderId: e.target.value })}>{order.survivorIds.map(id => <option key={id} value={id}>{state.survivors.find(p => p.id === id)?.name}</option>)}</select></label>
+    <label>Mandat <select value={order.communication?.mandate ?? 'balanced'} onChange={e => communication({ mandate: e.target.value as 'cautious' | 'balanced' | 'bold' })}><option value="cautious">Forsiktig · trekk dere ved fare</option><option value="balanced">Avveid · følg planen</option><option value="bold">Dristig · aksepter risiko</option></select></label>
+    <label><input type="checkbox" checked={order.communication?.radio ?? false} onChange={e => communication({ radio: e.target.checked })} /> Ta med radio og batterier fra avreisestedet</label>
+    <label><input type="checkbox" checked={order.communication?.contactOnCritical ?? false} onChange={e => communication({ contactOnCritical: e.target.checked })} /> Be meg avgjøre kritiske møter hvis faktisk samband finnes</label>
+    <p className="rz-small">Samband nå: {link.connected ? 'kontakt' : 'ingen kontakt'} · {link.reason}. Radio formidler beskjeder; last må fortsatt fraktes.</p>
+    {!!preview.errors.length && <p className="rz-errors">{preview.errors.join(' ')}</p>}
+  </section>;
+}
+export function LogisticsPanel({ state, world, zoneId, crewIds, initialCargo, onOrder }: { state: RegionState; world: RegionWorld; zoneId: string; crewIds: string[]; initialCargo?: Stock; onOrder: (order: RegionOrder) => void }) {
+  const [action, setAction] = useState<'travel' | 'return' | 'retrieve' | 'supply' | 'areaGuard'>(initialCargo ? 'supply' : 'travel');
+  const [cargo, setCargo] = useState<Stock>(initialCargo ?? {});
+  const [passengers, setPassengers] = useState<Population>({ adults: 0, children: 0, elderly: 0, sick: 0 });
+  const [gearIds, setGearIds] = useState<string[]>([]);
+  const [areaLevel, setAreaLevel] = useState<2 | 3>(3);
+  const origin = crewIds.length ? crewPositionFor(state, crewIds[0]) : undefined;
+  const sourceZoneId = origin?.kind === 'zone' ? origin.zoneId : undefined;
+  const availablePopulation = sourceZoneId === state.homeZoneId ? centralPopulation(state) : state.mobility?.depotResidents?.[sourceZoneId ?? ''] ?? { adults: 0, children: 0, elderly: 0, sick: 0 };
+  const stock = localStock(state, sourceZoneId ?? state.homeZoneId);
+  const order: RegionOrder = { id: `o${state.day}-${action}-${zoneId}-${crewIds.join('.')}`, action, zoneId: action === 'return' ? state.homeZoneId : zoneId, survivorIds: crewIds,
+    logistics: { sourceZoneId, cargo: action === 'supply' ? cargo : undefined, passengers: action === 'supply' ? passengers : undefined, gearIds: action === 'supply' ? gearIds : undefined, areaLevel } };
+  const preview = missionPreview(state, world, order);
+  return <section className="rz-logistics"><h3>Reise og forsyninger</h3>
+    <p className="rz-small">Send et samlet lag fra stedet de faktisk befinner seg. Avreise, last og retur avgjøres av motoren når døgnet går.</p>
+    <label>Oppdrag <select value={action} onChange={e => setAction(e.target.value as typeof action)}><option value="travel">Reis hit og bli</option><option value="return">Reis tilbake til leiren</option><option value="retrieve">Hent lager og løst utstyr her</option><option value="supply">Lever forsyninger hit</option><option value="areaGuard">Hold vakt i denne sonen</option></select></label>
+    {action === 'supply' && <fieldset><legend>Last fra {world.zones.find(z => z.id === sourceZoneId)?.name ?? 'avreisestedet'}</legend>{[...new Set([...Object.keys(stock).filter(id => stock[id] > 0), ...Object.keys(cargo).filter(id => cargo[id] > 0)])].map(id => [id, stock[id] ?? 0] as const).map(([id, amount]) => <label key={id}>{resourceName(id)} · {count(amount)} tilgjengelig <input type="number" min="0" max={amount} step="1" value={cargo[id] ?? 0} onChange={e => setCargo({ ...cargo, [id]: Math.max(0, Number(e.target.value) || 0) })} /></label>)}</fieldset>}
+    {action === 'supply' && <fieldset><legend>Løst utstyr som skal leveres</legend>{(state.gear?.items ?? []).filter(item => item.reported !== false && item.location.kind === 'stored' && item.location.zoneId === sourceZoneId).map(item => <label key={item.id}><input type="checkbox" checked={gearIds.includes(item.id)} onChange={e => setGearIds(e.target.checked ? [...gearIds, item.id] : gearIds.filter(id => id !== item.id))} />{GEAR_CATALOG[item.kind]?.name ?? item.kind}</label>)}<p className="rz-small">Leveres i målsonens lager. Budets eget oppdragsutstyr følger budet tilbake.</p></fieldset>}
+    {action === 'areaGuard' && <label>Vaktområde<select value={areaLevel} onChange={e => setAreaLevel(Number(e.target.value) as 2 | 3)}><option value="3">Denne lokale sonen</option><option value="2">Hele distriktet · fordelt dekning</option></select></label>}
+    {action === 'supply' && <fieldset><legend>Folk som skal følge transporten</legend><p className="rz-small">Folk i et regionalt samfunn må først frigjøres i Regionale ledere. De bruker mat og vann også på reisen.</p>{(Object.entries({ adults: 'Voksne', children: 'Barn', elderly: 'Eldre', sick: 'Syke' }) as [keyof Population, string][]).map(([key, label]) => <label key={key}>{label} · {availablePopulation[key]} tilgjengelige<input type="number" min="0" step="1" max={availablePopulation[key]} value={passengers[key]} onChange={e => setPassengers({ ...passengers, [key]: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} /></label>)}</fieldset>}
+    <p className="rz-small">{crewIds.length ? `${count(preview.travelHours)} t reise ut · ${preview.capacity} bærekapasitet${preview.returnsToday ? ' · innen ett døgn' : ' · flere døgn'}` : 'Velg mannskap først.'}</p>
+    <button disabled={!crewIds.length || !preview.valid} onClick={() => onOrder(order)}>Legg {action === 'supply' ? 'forsendelse' : 'reiseoppdrag'} i dagsplanen</button>
+    {crewIds.length > 0 && !preview.valid && <p className="rz-errors">{preview.errors.join(' ')}</p>}
+  </section>;
+}

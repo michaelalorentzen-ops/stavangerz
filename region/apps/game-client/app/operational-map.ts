@@ -1,0 +1,95 @@
+import type { Map as LibreMap, GeoJSONSource, Marker } from 'maplibre-gl';
+import type { RegionState, RegionWorld, RegionZone } from '../../../packages/gameplay/src/region/types';
+import { crewPositionFor, knownCrewL3Zone } from '../../../packages/gameplay/src/region/location';
+
+/** Zoom changes the geographic command level; it never grants ownership. */
+export function commandLevel(zoom: number): 1 | 2 | 3 { return zoom < 10.5 ? 1 : zoom < 12 ? 2 : 3; }
+export function areaLeaves(world: RegionWorld, areaId: string): RegionZone[] {
+  const byId = new Map(world.zones.map(z => [z.id, z]));
+  return world.zones.filter(z => {
+    if (z.level !== 3) return false;
+    let next: RegionZone | undefined = z;
+    while (next) { if (next.id === areaId) return true; next = byId.get(next.parentId ?? ''); }
+    return false;
+  });
+}
+export interface OperationalMapController { update(state: RegionState): void; destroy(): void }
+/** One bounded overlay, fed only by the canonical placement register. */
+export function attachOperationalMap(map: LibreMap, lib: typeof import('maplibre-gl'), world: RegionWorld, initial: RegionState, onSelect: (id: string) => void, onLevel: (level: 1 | 2 | 3) => void): OperationalMapController {
+  let state = initial;
+  let markers: Marker[] = [];
+  const byId = new Map(world.zones.map(z => [z.id, z]));
+  const empty: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+  map.addSource('crew-routes', { type: 'geojson', data: empty });
+  map.addSource('crew-coverage', { type: 'geojson', data: empty });
+  map.addLayer({ id: 'crew-routes', type: 'line', source: 'crew-routes', minzoom: 12, paint: { 'line-color': '#a2d9e4', 'line-width': 2, 'line-dasharray': [3, 2], 'line-opacity': .85 } });
+  map.addLayer({ id: 'crew-coverage-fill', type: 'fill', source: 'crew-coverage', paint: { 'fill-color': '#9edbe7', 'fill-opacity': .09 } });
+  map.addLayer({ id: 'crew-coverage-line', type: 'line', source: 'crew-coverage', paint: { 'line-color': '#9edbe7', 'line-width': 2, 'line-dasharray': [2, 2] } });
+  const ancestor = (id: string, level: number) => {
+    let zone = byId.get(id);
+    while (zone && zone.level > level) zone = byId.get(zone.parentId ?? '');
+    return zone;
+  };
+  const render = () => {
+    const level = commandLevel(map.getZoom());
+    onLevel(level);
+    markers.forEach(m => m.remove()); markers = [];
+    const groups = new Map<string, { zone: RegionZone; names: string[]; transit: boolean; area: boolean }>();
+    const routes: GeoJSON.Feature[] = [];
+    const coverage: GeoJSON.Feature[] = [];
+    for (const person of state.survivors) {
+      const position = crewPositionFor(state, person.id);
+      if (!position || position.kind === 'away-unknown') continue;
+      if (position.kind === 'area-duty') {
+        const zone = byId.get(position.areaZoneId);
+        if (zone?.geometry) coverage.push({ type: 'Feature', properties: {}, geometry: zone.geometry as GeoJSON.Geometry });
+        // A whole-area assignment is always shown as area coverage, never as a
+        // guessed crew coordinate within a leaf zone.
+        if (zone && level <= zone.level) {
+          const parent = ancestor(zone.id, level) ?? zone;
+          const key = `area:${parent.id}`;
+          const group = groups.get(key) ?? { zone: parent, names: [], transit: false, area: true };
+          group.names.push(person.name); groups.set(key, group);
+        }
+        continue;
+      }
+      const leaf = knownCrewL3Zone(position);
+      const zone = leaf ? ancestor(leaf, level) : undefined;
+      if (!zone) continue;
+      const group = groups.get(zone.id) ?? { zone, names: [], transit: false, area: false };
+      group.names.push(person.name); group.transit ||= position.kind === 'transit'; groups.set(zone.id, group);
+      if (position.kind === 'transit' && routes.length < 20) {
+        const coordinates = position.routeZoneIds.map(id => byId.get(id)?.at).filter((at): at is [number, number] => !!at);
+        if (coordinates.length > 1) routes.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } });
+      }
+    }
+    (map.getSource('crew-routes') as GeoJSONSource).setData({ type: 'FeatureCollection', features: routes });
+    (map.getSource('crew-coverage') as GeoJSONSource).setData({ type: 'FeatureCollection', features: coverage });
+    const label = (zone: RegionZone, text: string, title: string, crew = false) => {
+      if (!zone.at || !map.getBounds().contains(zone.at) || markers.length >= 100) return;
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = crew ? 'rz-map-unit' : 'rz-map-area-label';
+      button.textContent = text; button.title = title; button.setAttribute('aria-label', title);
+      button.addEventListener('click', event => { event.stopPropagation(); onSelect(zone.id); });
+      markers.push(new lib.Marker({ element: button, anchor: crew ? 'bottom-left' : 'center' }).setLngLat(zone.at).addTo(map));
+    };
+    for (const { zone, names, transit, area } of groups.values()) label(zone,
+      `${area ? '▱' : transit ? '→' : '●'} ${names.length === 1 && level === 3 ? names[0].split(' ')[0] : `${names.length} crew`}`,
+      `${names.join(', ')} · ${area ? 'områdevakt i' : transit ? 'på reise ved' : 'ved'} ${zone.name}`, true);
+    if (level < 3) for (const area of world.zones.filter(z => z.level === level)) {
+      const leaves = areaLeaves(world, area.id);
+      const known = leaves.filter(z => state.zones[z.id]?.status !== 'unknown');
+      if (!known.length) continue;
+      const own = leaves.filter(z => state.zones[z.id]?.status === 'controlled').length;
+      label(area, `${area.name} · ${own}/${leaves.length}`, `${area.name}: ${own} av ${leaves.length} soner kontrollert. ${known.length} kjent. Åpne område.`);
+    }
+
+  };
+  map.on('moveend', render);
+  render();
+  return { update(next) { state = next; render(); }, destroy() {
+    map.off('moveend', render); markers.forEach(m => m.remove());
+    for (const id of ['crew-routes', 'crew-coverage-fill', 'crew-coverage-line']) if (map.getLayer(id)) map.removeLayer(id);
+    for (const id of ['crew-routes', 'crew-coverage']) if (map.getSource(id)) map.removeSource(id);
+  } };
+}

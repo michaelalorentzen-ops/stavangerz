@@ -1,6 +1,6 @@
 # StavangerZ v0.4 – beslutningslogg
 
-**Sist gjennomgått:** 12.11.2026. **Eier:** Mikki.  
+**Sist gjennomgått:** 13.11.2026. **Eier:** Mikki.  
 **Kilde:** Samtale om v0.4 11.–12.11.2026 og verifisert v0.3-grunnlag i repoet.
 
 Dette dokumentet skiller **LÅST** (produktbeslutning godkjent av eier) fra **ÅPEN** (krever senere avklaring) og **HYPOTESE** (kan prøves i implementasjon uten å gjøre den til bindende design). Full regeltekst finnes i [27_V04_MASTER_SPEC.md](27_V04_MASTER_SPEC.md).
@@ -36,6 +36,9 @@ Dette dokumentet skiller **LÅST** (produktbeslutning godkjent av eier) fra **Å
 | D25 | LÅST | Fase 2 kan åpnes med et forsvarbart, sammenhengende kjerneområde rundt HQ og tilstrekkelig overlevelseskapasitet, selv om ikke hele hjemmets L2 er sikret. Å sikre hele L2 er fortsatt en større prestasjon, ikke et absolutt krav. | Fase 1 er en lærings-/etableringsfase som ikke skal bli tvungen repetisjon i vanskelige L2. Fase 2 kan bære mer ekspansjon. Godkjent av Mikki 12.11.2026. |
 | D26 | LÅST | Første gear-versjon har tre kategorier per person: våpen, beskyttelse og oppdragsverktøy. Auto equip er på som standard, og manuelle låser respekteres. Bakoverkompatible utstyrsfelt og faktisk reservasjon/retur implementeres. | Mikki svarte «Ja, bygg disse tre kategoriene» 12.11.2026 på konkret O05-spørsmål under videreutviklingen. Dette låser kategoriene og retningen, ikke eksakte slots, effekter, drops eller transportbalanse. |
 
+| D27 | LÅST | Nye landemerker går gjennom oppdaget → undersøkt/sikret → operativt via eksplisitte crew-oppdrag. De seks eksisterende wonders overføres til denne regelen for nye funn; allerede aktive landemerker i gamle saves beholder status og effekter. | Mikki svarte «Ja, bruk eksplisitt anleggsoppdrag» 13.11.2026 på O06-forslaget. Kostnader/tid er balansehypoteser. |
+| D28 | LÅST | Regionalt HQ etableres i en kontrollert sone med en eksisterende navngitt overlevende som lokal leder, lokalt fysisk lager, budsjett og mandat forsvar/balanse/vekst. Lederen utfører lokale rutiner; krig, diplomati og lover forblir spillervalg. Forsyninger transporteres fysisk. | Mikki svarte «Ja, bruk denne rammen» 13.11.2026 på O09/O10-forslaget. Ingen automatisk strategisk krig eller lovgivning. Numeriske kostnader og fordeling kan tunes senere. |
+
 ## Åpne produkt- og balansevalg
 
 Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når disse trenger svar, **ikke** alle på én gang.
@@ -47,11 +50,11 @@ Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når 
 | O03 | ÅPEN | Arbeidstid, hvile, reisehastighet, nattskift, transportkapasitet og utmattelsesformler. | Før faktiske motorregler; prototypen kan bruke tydelig merket hypotese. |
 | O04 | AVKLART (D24) | Grunnregelen for automatisk/delegert beslutning og radioeskalering er låst. Eksakte hendelseskategorier og terskler er teknisk/balanseringsarbeid, ikke grunnleggende valg om hvem som bestemmer. | Kan implementeres inkrementelt og prøves med scenariotester. |
 | O05 | DELVIS AVKLART (D26) | Våpen, beskyttelse og oppdragsverktøy, auto-equip med manuelle låser og faktisk reservasjon/retur er godkjent. Eksakt slot-antall, score, effekter, lootmengder og separat forsyningstransport er fortsatt balanse-/detaljvalg. | En liten gear-loop kan bygges med eksplisitte hypoteser; ny transportmodell krever fortsatt avklaring. |
-| O06 | ÅPEN | Hvilke konkrete steder får unike POI-scenarier og hvordan eksisterende seks wonders skal overføres fra automatisk «sonen er vår» til «anlegget er i drift». | Før POI-revisjon av eksisterende innhold. |
+| O06 | AVKLART RAMME (D27) | Hvilke konkrete steder får unike POI-scenarier og hvordan eksisterende seks wonders skal overføres fra automatisk «sonen er vår» til «anlegget er i drift». | Før POI-revisjon av eksisterende innhold. |
 | O07 | ÅPEN | ZA-bokas endelige kapittelnavn, forfatter/fortelleramme, konkrete tekstsider og hvor mye som er forhåndsskrevet kontra spillerens feltnotater. | Før produksjon av endelig narrativt innhold. |
 | O08 | ÅPEN | Antall slutter, tilstandsaksene som avgjør dem, og hvilke sluttscener som er kuraterte. | Før finale-/ending-innhold. |
-| O09 | ÅPEN | Region-HQ-kostnad, hvilke L1 som kan få guvernør, depotplassering, ressursflyt, forsyningspolicy og etterfølgelse ved lederdød. | Før regional styring programmeres. |
-| O10 | ÅPEN | Exakt policy/mandat for styreformene; hvilke operative handlinger regionale ledere kan starte selv. | Før delegert region-AI. |
+| O09 | AVKLART RAMME (D28) | Region-HQ-kostnad, hvilke L1 som kan få guvernør, depotplassering, ressursflyt, forsyningspolicy og etterfølgelse ved lederdød. | Før regional styring programmeres. |
+| O10 | AVKLART RAMME (D28) | Exakt policy/mandat for styreformene; hvilke operative handlinger regionale ledere kan starte selv. | Før delegert region-AI. |
 | O11 | ÅPEN | Numeriske skiller mellom de tre vanskelighetsgradene, hjelpemekanismer på Story, og lagrings-/krasjregler for Hardcore. | Før lanseringsbalanse og settings. |
 | O12 | ÅPEN | Endelig visuell stil, timing på animasjoner, antall faste pins/varsler og mobile breakpoints. | Før UI-polering; prototyper kan testes. |
 | O13 | ÅPEN | Hvilke historielinjer kan forsvinne helt ved persondød, og hvilke viktige mekanikker krever alternative kilder? | Før sidehistorier knyttes til irreversibel dødelighet. |
@@ -67,7 +70,7 @@ Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når 
 - **H07:** Første reelle nattcheckpoint trigges ved minst åtte faktiske zombier i kontrollert HQ mens hovedpersonen er til stede. Fem patroner gir ti ekstra forsvarspoeng. Begge tall er testbare balansehypoteser, ikke låste krav.
 - **H08:** Første fasegate-prototype må måle *sammenhengende kontroll* rundt HQ, faktisk mat-/vannutholdenhet og forsvarsevne. Tall og metode for å måle vedvarende forsvar er bevisst åpne for bot-/spilltesting. En fullført L2 kan inngå som en alternativ, mer ambisiøs territoriell vei, men ikke frita fra alle grunnbehov.
 
-- **H09:** Første D26-utstyrsslice prøver ett slot per kategori, deterministisk auto-score, små katalogbaserte verne-/verktøybonuser og tre endelige søkecaches per sone. Vanlige dagsoppdrag binder folk/utstyr til neste 07; `awayUntil` og eksplisitt lokasjon respekteres. Dette er ikke endelig slot-, loot- eller transportbalanse. Se [31_V04_GEAR_PLAYTEST.md](31_V04_GEAR_PLAYTEST.md).
+- **H09:** Første D26-utstyrsslice prøver ett slot per kategori, deterministisk auto-score, små katalogbaserte verne-/verktøybonuser og tre endelige søkecaches per sone. Den tidligere slicen bandt vanlige dagsoppdrag til neste 07; fullføringsarbeidet erstatter dette med faktisk rute/arbeid/retur etter D11/D27/D28; `awayUntil` og eksplisitt lokasjon respekteres. Dette er ikke endelig slot-, loot- eller transportbalanse. Se [31_V04_GEAR_PLAYTEST.md](31_V04_GEAR_PLAYTEST.md).
 
 ## Ny beslutning – fremgangsmåte
 
@@ -80,3 +83,7 @@ Når en utvikler oppdager et hull:
 5. Ved godkjent endring: oppdater denne loggen med ID, status, dato, begrunnelse, og speil regelen i master spec og aktuelle tester **før** underagenter implementerer den.
 
 **Merk:** Balansegrenser og tekniske detaljer kan foreslås i PR uten å opphøyes til «låst» produktvalg. En byggende agent kan ikke selv omklassifisere ÅPEN til LÅST.
+
+## Arbeidshypoteser for ferdigstillelse 13.11.2026
+
+Mikki har uttrykkelig utsatt tallbalansering og bedt om resten av v0.4. Tre eksisterende seiersveier (kur, allianse, bærekraftig samfunn) og eksisterende bokkapitler/forteller beholdes. Modusenes tall, endelige caches, radiosambandets rekkevidde, reisetid/bæring, POI-arbeid og regionbudsjetter er konfigurerte hypoteser, ikke nye låste balansemål. Ved ledertap kreves eksplisitt bekreftelse av ny regional leder; den godkjente rammen gir ikke fullmakt til automatisk strategisk etterfølgelse.
