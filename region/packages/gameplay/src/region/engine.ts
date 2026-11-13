@@ -398,7 +398,9 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
     case 'claim': {
-      const nearOwned = controlled(state).length === 0 ? order.zoneId === state.homeZoneId : (hops ?? 9) <= 1;
+      // Territorial continuity follows controlled territory, not where this particular crew stands.
+      const territoryHops = reach(state, world).get(order.zoneId);
+      const nearOwned = controlled(state).length === 0 ? order.zoneId === state.homeZoneId : (territoryHops ?? 9) <= 1;
       if (!nearOwned) errors.push(controlled(state).length ? 'Sonen må grense til en sone dere eier.' : 'Den første sonen dere tar over, må være der leiren er. Flytt leiren først om dere vil et annet sted.');
       if (isControlled) errors.push('Sonen er allerede deres.');
       const known = z.intel ? z.intel.max : 99;
