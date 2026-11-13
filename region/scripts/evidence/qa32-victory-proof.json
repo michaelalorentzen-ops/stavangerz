@@ -1,0 +1,45 @@
+{
+  "kind": "natural canonical-policy victory proof",
+  "start": {
+    "zoneId": "z3-0274",
+    "name": "Fåhagen, Finnøy",
+    "seed": 303,
+    "difficulty": "survival",
+    "hardcore": false
+  },
+  "policy": "unmodified botPlay / botManage / botPlanDay / botTrade / botChooseEvent",
+  "rulesVersion": "region-0.4",
+  "worldVersion": "region-v1-20261111",
+  "worldSha256": "d54a151a54be8967aaa82961ba458ab17ba5bde9945fc971e22a2a49967cf198",
+  "trace": [
+    {
+      "cap": 150,
+      "day": 150,
+      "phase": 5,
+      "phaseDay": 149,
+      "stableDays": 2,
+      "researchCompleted": 21,
+      "morale": 77.85988746445176,
+      "discontent": 14.533685846460319,
+      "won": false
+    },
+    {
+      "cap": 450,
+      "day": 194,
+      "phase": 5,
+      "phaseDay": 149,
+      "stableDays": 30,
+      "researchCompleted": 21,
+      "morale": 60.22841178773129,
+      "discontent": 24.208545458144897,
+      "won": true,
+      "endingType": "stable",
+      "reason": "Tretti dager med mat, håp og ro. Dere har bygd et samfunn som varer."
+    }
+  ],
+  "uninterrupted194ExactStateMatch": true,
+  "mutations": "none outside canonical simulation",
+  "finalStateArtifact": "artifacts/qa32-natural-victory-state.json",
+  "reproduce": "cd region && node --import tsx scripts/prove-campaign-victory.ts",
+  "limitations": "One proven natural win. 75-run/150-day benchmark remains 0 wins; balance and policy quality are not certified."
+}
