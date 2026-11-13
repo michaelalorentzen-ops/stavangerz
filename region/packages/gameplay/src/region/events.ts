@@ -16,6 +16,8 @@ import { indexWorld } from './engine';
 import { EVENTS_PEOPLE } from './events-people';
 import { EVENTS_WORLD, bindWorld } from './events-world';
 import { EVENTS_FACTIONS } from './events-factions';
+import { enforceAvatarFate, advanceCampaignCommit } from './campaign';
+import { registerLegacyAbsences } from './mobility';
 import { communicationsStatus } from './communications';
 import { EVENTS_WONDERS, createDiscoveryEvents } from './events-wonders';
 
@@ -422,6 +424,7 @@ export function resolveEvent(state0: RegionState, world: RegionWorld, choiceId: 
   bindWorld(world);
   const previousWeapons = new Map(state.survivors.map(p => [p.id, p.weapon]));
   def.resolve(state, world, choiceId, random(state.seed, state.day, `choice:${ev.id}`), lines);
+  registerLegacyAbsences(state);
   // Legacy events still own disarmament, including melee-base people carrying a found gun.
   for (const person of state.survivors) if (previousWeapons.get(person.id) !== person.weapon && person.weapon === 'melee'
     || ev.id === 'coward' && choiceId === 'shame' && person.id === String(ev.data?.who)) confiscateGearWeapon(state, person.id);
@@ -440,6 +443,8 @@ export function resolveEvent(state0: RegionState, world: RegionWorld, choiceId: 
   state.counters[`event:${ev.id}`] = (state.counters[`event:${ev.id}`] ?? 0) + 1;
   const last = state.reports.at(-1);
   if (last) last.lines.push(...lines);
+  enforceAvatarFate(state);
+  advanceCampaignCommit(state, `event:${ev.id}:${choiceId}`);
   void recruit; void chance;
   return { state, lines };
 }

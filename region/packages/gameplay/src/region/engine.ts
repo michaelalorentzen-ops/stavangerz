@@ -10,9 +10,9 @@ import type {
 } from './types';
 import { initializeCampaign, campaignAvatarId, enforceAvatarFate, advanceCampaignCommit, difficultyRules, type CampaignOptions } from './campaign';
 import { crewPositionFor, type CrewMission } from './location';
-import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions } from './mobility';
+import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions, completeLegacyReturns, localStock, missionStoreRequest } from './mobility';
 import { reserveMissionRadio, communicationsStatus, shouldEscalateField, fieldMandate } from './communications';
-import { centralCommunity, centralAvailablePopulation, regionalDay, regionalWorkDay, regionalSurvivorIds, regionalGuardFor } from './administration';
+import { centralCommunity, centralAvailablePopulation, regionalDay, regionalWorkDay, regionalSurvivorIds, regionalGuardFor, regionalOverrun, regionalL1 } from './administration';
 import { observeDiscoveries, deliverDiscoveryReports, maintainDiscoveries, discoveryOrderPreview, executeDiscoveryOrder } from './discoveries';
 import {
   GEAR_CATALOG, crewGearAway, departGear, discoverSearchGear, equippedGear, gearDamageMultiplier, gearWeapon, gearWorkMultiplier,
@@ -27,7 +27,7 @@ import { POP, REACTIONS, TIERS } from './systems';
 import { lawMods, societyDay, totalPeople, trimWork } from './society';
 import { checkPhase, checkVictory, mods, mutation, researchDay, researchRate, rot, tech } from './progress';
 import { dailyFlows } from './economy';
-import { discoverWonders, nextWonderLevel, WONDERS, wonderEffects, workOnWonder } from './wonders';
+import { discoverWonders, nextWonderLevel, WONDERS, wonderEffects, workOnWonder, wonderOperational, wonderOrderError, wonderWorkCost } from './wonders';
 
 // ------------------------------------------------------------------ world index
 
@@ -325,8 +325,20 @@ function fortifyTargets(state: RegionState, world: RegionWorld, zoneId: string) 
 
 /** Same planner powers UI reservation and authoritative departure. No mutation or LLM. */
 export function prepareGearPlan(state: RegionState, world: RegionWorld, orders: readonly RegionOrder[], preferences: GearPreferences = {}): GearPlan {
-  return planGearForOrders(state, world, orders, preferences,
-    order => previewOrder(state, world, order, { gearPrepared: true }).errors);
+  const budgetState: RegionState = { ...state, stock: { ...state.stock }, mobility: state.mobility ? { ...state.mobility, depots: clone(state.mobility.depots) } : undefined };
+  return planGearForOrders(state, world, orders, preferences, order => {
+    const preview = previewOrder(budgetState, world, order, { gearPrepared: true });
+    if (preview.errors.length) return preview.errors;
+    const movement = missionPreview(budgetState, world, order, preview.costs);
+    if (movement.errors.length) return movement.errors;
+    const source = localStock(budgetState, movement.originZoneId);
+    const manifest = movement.reservedCargo;
+    for (const [id, amount] of Object.entries(manifest)) if ((source[id] ?? 0) < amount) return ['Tidligere ordre har allerede reservert denne lasten.'];
+    for (const [id, amount] of Object.entries(manifest)) source[id] = (source[id] ?? 0) - amount;
+    if (order.communication?.radio && (source.radio ?? 0) >= 1 && (source.batteries ?? 0) >= 1) { source.radio -= 1; source.batteries -= 1; }
+    if (movement.boatRequired) source.boat = Math.max(0, (source.boat ?? 0) - 1);
+    return [];
+  });
 }
 
 export function previewOrder(state0: RegionState, world: RegionWorld, order: Omit<RegionOrder, 'id'>, internal: { gearPrepared?: boolean; field?: boolean } = {}): OrderPreview {
@@ -414,6 +426,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
     }
     case 'establishHq': {
       if (state.hq) errors.push('Dere har allerede et HQ.');
+      if (Object.values(state.administration?.regions ?? {}).some(region => region.hqZoneId === order.zoneId)) errors.push('Velg et annet hoved-HQ eller omorganiser regionen først.');
       if (!isControlled) errors.push('Ta over sonen først.');
       costs = { building: 6 };
       const poi = (index.poisByZone.get(order.zoneId) ?? []).find(p => p.role === 'hq');
@@ -480,7 +493,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
     case 'rest': text = 'Mindre utmattelse, litt bedre helse.'; break;
-    case 'heal': costs = { medicine: Math.max(1, present(state).filter(s => s.health < 80).length) }; text = 'Behandler alle skadde i leiren.'; break;
+    case 'heal': costs = { medicine: Math.max(1, patientsInZone(state, order.zoneId).length) }; text = 'Behandler skadde som faktisk er i denne sonen.'; break;
     case 'craft': {
       const recipe = craftRecipes(state).find(r => r.id === order.target);
       if (!recipe) errors.push('Ingen oppskrift tilgjengelig. Bygg ammoverksted, laboratorium eller forsk.');
@@ -511,9 +524,10 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       const def = WONDERS.find(d => d.id === order.target);
       if (!w || !def) { errors.push('Dere har ikke dette stedet.'); break; }
       if (w.zoneId !== order.zoneId) errors.push('Arbeidet gjøres der stedet er.');
-      if (def.found === 'claim' && !isControlled) errors.push('Sonen må være deres.');
+      const installationError = wonderOrderError(state, order.target ?? '', order.zoneId);
+      if (installationError) errors.push(installationError);
       if (!next) { errors.push('Stedet er ferdig utbygd.'); break; }
-      costs = w.progress ? {} : next.cost;
+      costs = wonderWorkCost(state, order.target ?? '');
       text = `«${next.name}»: ${Math.round(w.progress)} av ${next.hours} timer. ${next.text}`;
       break;
     }
@@ -618,7 +632,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
     if (!mission && gearOrder?.errors.length) { lines.push({ tone: 'warn', title: `${ACTIONS[order.action].label} ble ikke gjort`, text: gearOrder.errors.join(' '), zoneId: order.zoneId }); continue; }
     const crew = crewOf(state, order.survivorIds, true).filter(s => !used.has(s.id));
     if (crew.length !== order.survivorIds.length) { lines.push({ tone: 'warn', title: `${ACTIONS[order.action].label} ble ikke gjort`, text: 'Noen var allerede satt på et annet oppdrag eller er borte.' }); continue; }
-    const preview = previewOrder(state, world, order, { gearPrepared: true, field: !!mission });
+    const preview = previewOrder(mission ? { ...state, stock: mission.cargo ?? {} } : state, world, order, { gearPrepared: true, field: !!mission });
     if (!preview.valid) { lines.push({ tone: 'warn', title: `${ACTIONS[order.action].label} ble ikke gjort`, text: preview.errors.join(' '), zoneId: order.zoneId }); continue; }
     if (!mission) {
       mission = beginMission(state, world, order);
@@ -805,16 +819,19 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
         break;
       }
       case 'farm': { const food = farmYield(state, zone, crew.length, hours); add(state.stock, 'food', food); foodMade += food; break; }
-      case 'fish': { const food = fishYield(state, z, crew.length); add(state.stock, 'food', food); foodMade += food; if (rng() < .03) { add(state.stock, 'boat', -1); lines.push({ tone: 'bad', title: 'En båt gikk tapt', text: 'Været snudde mens dere var ute.' }); } break; }
-      case 'rest': for (const s of crew) { s.fatigue = Math.max(0, s.fatigue - 50); s.health = Math.min(100, s.health + (state.hq?.modules.includes('medbay') ? 10 : 5)); } break;
+      case 'fish': { const food = fishYield(mission.transportBoat ? { ...state, stock: { ...state.stock, boat: (state.stock.boat ?? 0) + mission.transportBoat } } : state, z, crew.length); add(state.stock, 'food', food); foodMade += food; if (rng() < .03) { if (mission.transportBoat) mission.transportBoat -= 1; else add(state.stock, 'boat', -1); lines.push({ tone: 'bad', title: 'En båt gikk tapt', text: 'Været snudde mens dere var ute.' }); } break; }
+      case 'rest': for (const s of crew) { s.fatigue = Math.max(0, s.fatigue - 50); s.health = Math.min(100, s.health + (state.hq?.zoneId === order.zoneId && state.hq.modules.includes('medbay') ? 10 : 5)); } break;
       case 'heal': {
-        const patients = crew.filter(s => s.health < 80);
+        const patients = patientsInZone(state, order.zoneId);
         const medic = Math.max(...crew.map(s => s.skills.medical + (equippedGear(state, s.id, 'tool')?.medical ?? 0)));
         add(state.stock, 'medicine', -Math.max(1, patients.length));
-        for (const p of patients) p.health = Math.min(100, p.health + (10 + medic * 4) * (state.hq?.modules.includes('medbay') ? 1.5 : 1) * (tech(state, 'fieldSurgery') ? 1.4 : 1));
+        for (const p of patients) p.health = Math.min(100, p.health + (10 + medic * 4) * (state.hq?.zoneId === order.zoneId && state.hq.modules.includes('medbay') ? 1.5 : 1) * (tech(state, 'fieldSurgery') ? 1.4 : 1));
         // A medic also works through the sick among the many.
-        const cured = Math.min(state.population.sick, Math.floor(medic * 1.5));
-        state.population.sick -= cured;
+        const region = Object.values(state.administration?.regions ?? {}).find(r => r.hqZoneId === order.zoneId);
+        const localPopulation = order.zoneId === state.homeZoneId ? centralAvailablePopulation(state) : region?.residents ?? state.mobility?.depotResidents?.[order.zoneId];
+        const cured = Math.min(localPopulation?.sick ?? 0, Math.floor(medic * 1.5));
+        state.population.sick = Math.max(0, state.population.sick - cured);
+        if (order.zoneId !== state.homeZoneId && localPopulation) localPopulation.sick = Math.max(0, localPopulation.sick - cured);
         lines.push({ tone: 'good', title: 'Skadde behandlet', text: `${patients.map(p => p.name).join(', ') || 'Ingen i crewet'} fikk behandling.${cured ? ` ${cured} syke ble friske.` : ''}` });
         break;
       }
@@ -877,8 +894,9 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
   const operationsResources = mainResources();
 
   // Where people live makes noise too.
-  noise[state.homeZoneId] = (noise[state.homeZoneId] ?? 0) + (Math.ceil(living(state).length / 3) + Math.ceil(totalPeople(state) / 12) + (state.hq?.modules.includes('heavyWorkshop') ? 2 : 0)) * (tech(state, 'decoys') ? .6 : 1);
+  noise[state.homeZoneId] = (noise[state.homeZoneId] ?? 0) + (Math.ceil(present(state).length / 3) + Math.ceil(Object.entries(centralAvailablePopulation(state)).filter(([key]) => key !== 'sick').reduce((n, [, count]) => n + count, 0) / 12) + (state.hq?.modules.includes('heavyWorkshop') ? 2 : 0)) * (tech(state, 'decoys') ? .6 : 1);
 
+  for (const region of Object.values(state.administration?.regions ?? {})) { const people = region.residents.adults + region.residents.children + region.residents.elderly; noise[region.hqZoneId] = (noise[region.hqZoneId] ?? 0) + Math.ceil(people / 12); }
   // Zombie migration, then night.
   const { moved: migrated, moves } = migrate(state, world, noise, lines);
   state.turnCheckpoint = {
@@ -1001,8 +1019,8 @@ export function resumeRegionDay(
     state.morale += R.morale.hunger * short;
     state.counters.hungerStreak = (state.counters.hungerStreak ?? 0) + 1;
     state.counters.hungryDays = (state.counters.hungryDays ?? 0) + 1;
-    if ((state.counters.hungerStreak ?? 0) >= 3 && state.population.children + state.population.elderly > 0) {
-      const kind = state.population.elderly ? 'elderly' : 'children';
+    if ((state.counters.hungerStreak ?? 0) >= 3 && centralAvailablePopulation(state).children + centralAvailablePopulation(state).elderly > 0) {
+      const kind = centralAvailablePopulation(state).elderly ? 'elderly' : 'children';
       state.population[kind] -= 1;
       lines.push({ tone: 'bad', title: kind === 'elderly' ? 'En gammel døde av sult' : 'Et barn døde av sult', text: 'Det er ikke mat nok.' });
     }
@@ -1022,11 +1040,14 @@ export function resumeRegionDay(
   state.morale = Math.max(0, Math.min(100, state.morale));
 
   consumeFieldMeals(state, lines, regionalFed);
+  consumePassengerMeals(state, lines);
   failEmptyMissions(state, lines);
   maintainDiscoveries(state, lines);
   state.day = day + 1;
   for (const s of living(state)) if (s.awayUntil && s.awayUntil <= state.day) delete s.awayUntil;
+  completeLegacyReturns(state);
   settleGearReturns(state, lines);
+  deliverDiscoveryReports(state, world, lines);
   updateFactions(state, world, lines);
   checkMilestones(state, world, lines, foodMade);
   checkPhase(state, world, lines);
@@ -1209,7 +1230,7 @@ export function workDay(state: RegionState, world: RegionWorld, rng: () => numbe
     if (state.hq?.building) { const h = Math.min(buildHours, MODULE_COST[state.hq.building.id].hours - state.hq.building.hours); state.hq.building.hours += h; buildHours -= h; finishModule(state, lines); }
     for (const [id, z] of Object.entries(state.zones)) if (z.building && buildHours > 0) { const h = Math.min(buildHours, UPGRADE_COST[z.building.id].hours - z.building.hours); z.building.hours += h; buildHours -= h; finishZoneBuilding(state, world, id, lines); }
     for (const key of Object.keys(state.counters)) if ((key.startsWith('network:') || key.startsWith('repair:')) && buildHours > 0) { const h = Math.min(buildHours, 10); state.counters[key] += h; buildHours -= h; }
-    for (const [id, w] of Object.entries(state.wonders ?? {})) if (w.progress > 0 && buildHours > 0) { const next = nextWonderLevel(state, id); if (!next) continue; const h = Math.min(buildHours, next.hours - w.progress); buildHours -= h; workOnWonder(state, id, h, lines, () => undefined); moveShip(state, world); }
+    for (const [id, w] of Object.entries(state.wonders ?? {})) if (w.progress > 0 && buildHours > 0 && wonderOperational(w)) { const next = nextWonderLevel(state, id); if (!next) continue; const h = Math.min(buildHours, next.hours - w.progress); buildHours -= h; workOnWonder(state, id, h, lines, () => undefined, 'population'); moveShip(state, world); }
     finishNetworks(state, world, lines); finishRepairs(state, world, lines);
     for (const [id, d] of Object.entries(state.barricades)) {
       if (buildHours <= 0) break;
@@ -1393,9 +1414,10 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     if (tech(state, 'spikes')) defense += borders.length * 2;
     defense += borders.filter(a => (state.barricadeTier[a.connId] ?? 1) >= 4).length * 4;
     if (id === state.homeZoneId) defense += homeCombat + homeDefenseBonus;
-    for (const [wid, w] of Object.entries(state.wonders ?? {})) if (w.zoneId === id) defense += WONDERS.find(d => d.id === wid)?.levels[w.level]?.effect.defense ?? 0;
+    for (const [wid, w] of Object.entries(state.wonders ?? {})) if (w.zoneId === id && wonderOperational(w)) defense += WONDERS.find(d => d.id === wid)?.levels[w.level]?.effect.defense ?? 0;
     if (state.hq?.zoneId === id) for (const m of state.hq.modules) defense += MODULE_COST[m]?.defense ?? 0;
-    const fromPool = Math.min(pool, Math.max(0, z.zombies - defense));
+    const delegated = Object.values(state.administration?.regions ?? {}).some(region => region.l1Id === regionalL1(world, id));
+    const fromPool = delegated ? 0 : Math.min(pool, Math.max(0, z.zombies - defense));
     pool -= fromPool; defense += fromPool;
     defense += regionalGuardFor(state, world, id);
     const sneak = Math.floor(z.zombies * dig);
@@ -1403,6 +1425,7 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     z.zombies -= k; killed += k;
     if (!z.zombies) continue;
     const name = index.byId.get(id)!.name;
+    if (id !== state.homeZoneId) regionalOverrun(state, world, id, z.zombies, lines, rng);
     if (id === state.homeZoneId) {
       // A random sort comparator is not transitive: JS runtimes may call it in
       // different orders, consuming different RNG draws. Fisher-Yates is explicit.
@@ -1412,13 +1435,15 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
         [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
       }
       const victims = candidates.slice(0, Math.min(3, Math.ceil(z.zombies / 4)));
-      for (const v of victims) { v.health -= Math.round(Math.min(45, z.zombies * R.injuryPerExcessZombie) * gearDamageMultiplier(state, v.id)); if (z.zombies > 4 && rng() < .1 && v.bitten === undefined) v.bitten = state.day + 2; }
-      const many = state.population.adults + state.population.children + state.population.elderly;
+      for (const v of victims) { v.health -= Math.round(Math.min(45, z.zombies * R.injuryPerExcessZombie) * gearDamageMultiplier(state, v.id) * difficultyRules(state).damage); if (z.zombies > 4 && rng() < .1 && v.bitten === undefined) v.bitten = state.day + 2; }
+      const localPopulation = centralAvailablePopulation(state);
+      const many = localPopulation.adults + localPopulation.children + localPopulation.elderly;
       const dead = many ? Math.min(many, Math.floor(z.zombies / 3 * rng() + (z.zombies > 6 ? 1 : 0))) : 0;
-      for (let i = 0; i < dead; i++) { const kind = state.population.elderly && rng() < .3 ? 'elderly' : state.population.children && rng() < .3 ? 'children' : state.population.adults ? 'adults' : 'children'; if (state.population[kind] > 0) state.population[kind] -= 1; }
+      for (let i = 0; i < dead; i++) { const kind = localPopulation.elderly && rng() < .3 ? 'elderly' : localPopulation.children && rng() < .3 ? 'children' : localPopulation.adults ? 'adults' : 'children'; if (localPopulation[kind] > 0) { localPopulation[kind] -= 1; state.population[kind] -= 1; } }
       state.morale -= 4 + dead;
       lines.push({ tone: 'bad', title: `Angrep i natt i ${name}`, text: `${z.zombies} zombier kom gjennom forsvaret. ${victims.map(v => v.name).join(', ') || 'Ingen i crewet'} ble skadet${dead ? `, og ${dead} i leiren døde` : ''}.`, zoneId: id });
-      z.zombies = Math.max(0, z.zombies - victims.length * 2 - Math.ceil(many / 10));
+      const repelled = Math.min(z.zombies, victims.length * 2 + Math.ceil(many / 10));
+      z.zombies -= repelled; killed += repelled;
     } else if (z.zombies > 6) {
       z.status = 'scouted';
       z.intel = { min: z.zombies - 2, max: z.zombies + 3, day: state.day };
@@ -1547,8 +1572,9 @@ function consumeFieldMeals(state: RegionState, lines: ReportLine[], regionalFed:
     let short = false;
     for (const resource of ['food', 'water']) {
       const need = difficultyRules(state).foodWater;
-      const carried = Math.min(mission?.cargo?.[resource] ?? 0, need);
-      if (mission?.cargo) mission.cargo[resource] = Math.max(0, (mission.cargo[resource] ?? 0) - carried);
+      const carriedPantry = mission?.cargo ?? state.mobility?.legacyAway?.[person.id]?.cargo;
+      const carried = Math.min(carriedPantry?.[resource] ?? 0, need);
+      if (carriedPantry) carriedPantry[resource] = Math.max(0, (carriedPantry[resource] ?? 0) - carried);
       const nearby = Math.min(local?.[resource] ?? 0, need - carried);
       if (local) local[resource] = Math.max(0, (local[resource] ?? 0) - nearby);
       const amount = carried + nearby;
@@ -1556,4 +1582,25 @@ function consumeFieldMeals(state: RegionState, lines: ReportLine[], regionalFed:
     }
     if (short) lines.push({ tone: 'warn', title: `${person.name} mangler forsyninger i felt`, text: 'Lokalt lager og båret last dekker ikke behovet. Send faktiske forsyninger til laget.' });
   }
+}
+
+function consumePassengerMeals(state: RegionState, lines: ReportLine[]): void {
+  const groups: Array<{ people: RegionState['population']; stock: Stock; zoneId?: string }> = [];
+  for (const mission of Object.values(state.crewMissions ?? {})) if (!['complete', 'failed'].includes(mission.status) && mission.passengers) groups.push({ people: mission.passengers, stock: mission.cargo ??= {} });
+  for (const [zoneId, people] of Object.entries(state.mobility?.depotResidents ?? {})) if (zoneId !== state.homeZoneId && !Object.values(state.administration?.regions ?? {}).some(r => r.hqZoneId === zoneId)) groups.push({ people, stock: state.mobility!.depots[zoneId] ??= {}, zoneId });
+  for (const group of groups) {
+    const count = group.people.adults + group.people.children + group.people.elderly;
+    if (!count) continue;
+    let shortage = false;
+    for (const id of ['food', 'water']) { const need = count * difficultyRules(state).foodWater; const used = Math.min(group.stock[id] ?? 0, need); group.stock[id] = (group.stock[id] ?? 0) - used; if (used + .01 < need) shortage = true; }
+    if (shortage) {
+      group.people.sick = Math.min(count, group.people.sick + 1);
+      state.population.sick = Math.min(state.population.adults + state.population.children + state.population.elderly, state.population.sick + 1);
+      lines.push({ tone: 'warn', category: 'supply', priority: 85, title: 'Forsyningsmangel hos reisende eller lokalt depot', text: 'Gruppen bruker bare mat og vann som faktisk er ved dem.', zoneId: group.zoneId });
+    }
+  }
+}
+
+function patientsInZone(state: RegionState, zoneId: string): RegionSurvivor[] {
+  return state.survivors.filter(person => { const position = crewPositionFor(state, person.id); return person.alive && !person.left && person.health < 80 && !(person.awayUntil && person.awayUntil > state.day) && position?.kind === 'zone' && position.zoneId === zoneId; });
 }

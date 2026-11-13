@@ -73,6 +73,8 @@ export interface CrewMission {
   returnZoneId?: string;
   workHours?: number;
   cargo?: Stock;
+  transportBoat?: number;
+  privateLines?: import('./types').ReportLine[];
   passengers?: Population;
   cargoGearIds?: string[];
   encounterResolved?: boolean;

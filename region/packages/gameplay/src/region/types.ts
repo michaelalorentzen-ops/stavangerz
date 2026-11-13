@@ -2,6 +2,7 @@
 import type { ZoneMeasures } from '../../../world-data/src/model';
 import type { CrewMission, CrewPosition } from './location';
 import type { GearPreferences, RegionGearState } from './gear';
+import type { WonderInstallation } from './wonders';
 import type { AdministrationState } from './administration';
 import type { CampaignState } from './campaign';
 import type { DiscoveryState } from './discoveries';
@@ -203,7 +204,7 @@ export interface RegionState {
   chokepoints: Record<string, ChokepointState>;
   hq?: RegionHq;
   /** Unique places you hold: level 0 is found, higher levels are built. */
-  wonders?: Record<string, { level: number; zoneId: string; progress: number }>;
+  wonders?: Record<string, { level: number; zoneId: string; progress: number; installation?: WonderInstallation }>;
   /** Networks built per L2 zone. */
   networks: Record<string, string[]>;
   factions: RegionFaction[];

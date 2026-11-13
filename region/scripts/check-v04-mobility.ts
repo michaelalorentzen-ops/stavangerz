@@ -53,4 +53,24 @@ const changing=fresh();changing.zones.z1.status='controlled';changing.stock.buil
 const established=startRegionDay(changing,world,[order('newhq','establishHq','z1',['tor'])]);
 assert.equal(established.state.homeZoneId,'z1');assert.equal(established.state.stock.metal??0,0,'Changing HQ address cannot teleport uncarried stock');
 assert.equal(established.state.mobility!.depots.z0.metal,73);
+// A stationary travel arrival releases the transport, then accepts new local work.
+next=structuredClone(second.state);delete next.event;
+assert.equal(startRegionDay(next,world,[order('local-scout','scout','z20')]).status,'complete');
+// Legacy absence is unknown while away and returns through its finite saved provision ledger.
+const legacy=fresh();legacy.survivors.find(p=>p.id==='ingrid')!.awayUntil=2;
+let absent=startRegionDay(legacy,world,[]);assert.equal(absent.state.crewPositions?.ingrid.kind,'away-unknown');
+next=absent.state;delete next.event;absent=startRegionDay(next,world,[]);assert.deepEqual(absent.state.crewPositions?.ingrid,{kind:'zone',zoneId:'z0'});
+// Sea routes require an actual available/reserved boat and return that same boat.
+const seaWorld:RegionWorld={...world,zones:world.zones.slice(0,2).map((z,i)=>({...z,at:[5.7+i*.005,59],measures:{...z.measures!,coastM:1000}})),neighbours:[]};
+const sailor=newRegionGame(seaWorld,'z0',91);delete sailor.event;sailor.stock.boat=1;for(const z of Object.values(sailor.zones)){z.zombies=0;z.status='scouted';}
+assert.deepEqual(routeBetween(sailor,seaWorld,'z0','z1'),['z0','z1']);
+const island=startRegionDay(sailor,seaWorld,[order('island','scout','z1')]);assert.equal(island.state.stock.boat,1);assert.equal(island.state.crewPositions?.marius.kind,'zone');
+const noBoat=structuredClone(sailor);noBoat.stock.boat=0;assert.equal(missionPreview(noBoat,seaWorld,order('blocked','scout','z1')).valid,false);
+// Aggregate passengers and their supplies move once to a local depot, never allocate twice.
+const people=fresh();people.population.adults=4;
+const ferry=order('passengers','supply','z2',['marius','tor']);ferry.logistics={cargo:{food:12,water:12},passengers:{adults:2,children:0,elderly:0,sick:0}};
+const arrived=startRegionDay(people,world,[ferry]);assert.equal(arrived.state.population.adults,4);assert.equal(arrived.state.mobility!.depotResidents!.z2.adults,2);assert.equal(arrived.state.crewMissions!['mission:0:passengers'].passengers,undefined);
+// Hardcore can persist the very first mandatory field prompt with a new receipt.
+const hc=newRegionGame(world,'z0',20,{hardcore:true,avatarId:'ingrid'});delete hc.event;hc.zones.z1.zombies=60;
+const hp=startRegionDay(hc,world,[personal]);assert.equal(hp.status,'paused');assert.ok((hp.state.campaign?.sequence??0)>(hc.campaign?.sequence??0));
 console.log('PASS mobility: actual routes/multi-day return, depot retrieval/supply, serializable personal field choice and bound radio opt-in.');
