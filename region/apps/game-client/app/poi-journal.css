@@ -1,0 +1,28 @@
+.rz-poi-journal { color: #d7ddd6; line-height: 1.55; }
+.rz-poi-journal > p { max-width: 70ch; color: #aebbb5; }
+.rz-poi-journal-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
+.rz-poi-journal-tabs button[aria-pressed="true"] { color: #f5e2ac; border-color: #9a8650; background: #302f23; }
+.rz-poi-journal-entry { padding: 20px; margin: 14px 0; border: 1px solid #46534d; border-radius: 10px; background: #151f20; }
+.rz-poi-journal-entry header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: #a7b2ad; }
+.rz-poi-journal-entry h3 { margin: 12px 0 6px; color: #eee6cf; }
+.rz-poi-journal-status { border: 1px solid #71694c; border-radius: 4px; color: #e2cd91; padding: 2px 8px; font-size: 12px; }
+.rz-poi-journal-resolved .rz-poi-journal-status { color: #9fd1ae; border-color: #4e7960; }
+.rz-poi-journal-lost .rz-poi-journal-status { color: #dfa49d; border-color: #915a54; }
+.rz-poi-journal-place { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-weight: 600; }
+.rz-poi-journal-place button { font-size: 12px; font-weight: 400; }
+.rz-poi-journal-source, .rz-poi-journal-fiction { font-size: 12px; color: #a3b4ad; }
+.rz-poi-journal-entry details { margin-top: 16px; }
+.rz-poi-journal-entry summary { min-height: 32px; cursor: pointer; color: #d6cbab; }
+.rz-poi-journal-entry li { padding-left: 4px; margin: 12px 0; }
+.rz-poi-journal-entry li small { color: #b3c1b9; }
+.rz-poi-journal-entry li p { margin-top: 2px; }
+.rz-poi-journal-person { padding-left: 12px; border-left: 2px solid #a28e57; color: #d6c6a0; }
+.rz-poi-journal-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; margin: 18px 0; }
+.rz-poi-journal-action { padding: 14px; border-radius: 6px; background: #0f191b; border: 1px solid #354c48; }
+.rz-poi-journal-action button { min-height: 44px; width: 100%; }
+.rz-poi-journal-action p { margin: 10px 0; font-size: 13px; color: #c7d0c9; }
+.rz-poi-journal-action small { display: block; font-size: 12px; color: #a7b6ae; }
+.rz-poi-journal-empty { padding: 18px; border: 1px dashed #4d6156; border-radius: 8px; }
+.rz-poi-journal-inline .rz-poi-journal-entry { padding: 14px; }
+.rz-poi-journal button:focus-visible, .rz-poi-journal summary:focus-visible { outline: 2px solid #e9c87f; outline-offset: 3px; }
+@media (max-width: 600px) { .rz-poi-journal-entry { padding: 14px; } .rz-poi-journal-entry header { align-items: flex-start; flex-direction: column; } }

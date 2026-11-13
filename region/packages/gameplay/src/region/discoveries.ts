@@ -116,7 +116,11 @@ function receive(state: DiscoveryRegionState, observation: DiscoveryObservation,
   const delivered = evidence.delivery === 'returned' && livingReporters.some(id => home(state, id))
     || evidence.delivery === 'radio' && evidence.radioVerified === true;
   if (delivered) publish(state, observation, lines);
-  else if (!registry(state).pending.some(p => p.id === observation.id)) registry(state).pending.push(observation);
+  else {
+    const existing = registry(state).pending.find(p => p.id === observation.id);
+    if (existing) existing.reporterIds = [...new Set([...existing.reporterIds, ...observation.reporterIds])];
+    else registry(state).pending.push(observation);
+  }
 }
 /** Observe locally after successful scout/search, or from a real rumor/radio source. */
 export function observeDiscoveries(state: DiscoveryRegionState, world: RegionWorld, evidence: DiscoveryEvidence, lines: ReportLine[]) {
