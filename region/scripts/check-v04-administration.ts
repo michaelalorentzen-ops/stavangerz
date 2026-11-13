@@ -134,6 +134,35 @@ if (typeof integratedWorkDay === 'function') {
   assert.equal(completed.state.day, originalDay + 1);
   assert.equal(administrations(completed.state)[0].ledger?.day, originalDay, 'Regional settlement is actually part of the day transaction');
   assert.ok((regionalStock(completed.state, administrations(completed.state)[0]).food ?? 0) < 100, 'Real complete-day path consumes the local depot');
+  const receiptStart = applyAdministrationCommand(fresh(), world, { kind: 'establish', hqZoneId: remote.id, leaderId: legacy.survivors[1].id }) as AdministrationGame;
+  const receiptRegion = administrations(receiptStart)[0]; receiptStart.population.adults = 100; receiptRegion.residents.adults = 80;
+  receiptStart.mobility!.depots[remote.id] = { food: 500, water: 500 };
+  receiptStart.zones[remote.id].loot = { wood: 1000 }; receiptStart.zones[remote.id].searched = 0;
+  for (const z of Object.values(receiptStart.zones)) z.zombies = 0;
+  receiptStart.zones[home].status = 'controlled'; receiptStart.zones[home].zombies = 500; receiptStart.factions = []; receiptStart.scheduled = [];
+  const paused = engine.startRegionDay(receiptStart, world, [], { avatarId: receiptStart.survivors[0].id });
+  assert.equal(paused.status, 'paused');
+  if (paused.status === 'paused') {
+    const persisted = JSON.parse(JSON.stringify(paused.state)) as RegionState;
+    const pendingRegion = administrations(persisted)[0];
+    assert.equal(pendingRegion.workDoneDay, receiptStart.day);
+    const woodBeforeResume = regionalStock(persisted, pendingRegion).wood ?? 0;
+    const searchedBeforeResume = persisted.zones[remote.id].searched;
+    assert.ok(woodBeforeResume > 0);
+    const resumed = engine.resumeRegionDay(persisted, world, 'hold');
+    const replayed = engine.resumeRegionDay(JSON.parse(JSON.stringify(paused.state)) as RegionState, world, 'hold');
+    assert.deepEqual(resumed, replayed, 'JSON pause/resume reproduces regional settlement exactly');
+    assert.equal(resumed.state.zones[remote.id].searched, searchedBeforeResume, 'Resume cannot search finite local loot again');
+    assert.equal(regionalStock(resumed.state, administrations(resumed.state)[0]).wood, woodBeforeResume, 'Resume cannot duplicate delivered local wood');
+  }
+  const attacked = applyAdministrationCommand(fresh(), world, { kind: 'establish', hqZoneId: remote.id, leaderId: legacy.survivors[1].id }) as AdministrationGame;
+  const attackedRegion = administrations(attacked)[0]; attackedRegion.residents.adults = 8;
+  attacked.mobility!.depots[remote.id] = { food: 100, water: 100 }; attacked.factions = []; attacked.scheduled = [];
+  for (const z of Object.values(attacked.zones)) z.zombies = 0;
+  attacked.zones[remote.id].zombies = 500;
+  const attackedNext = engine.endDay(attacked, world, []);
+  assert.ok(administrations(attackedNext.state)[0].residents.adults < 8, 'Authoritative night path applies local siege casualties');
+  assert.ok(attackedNext.state.survivors[1].health < attacked.survivors[1].health, 'Authoritative night path injures only the local named leader');
   console.log('Regional work integration: finite scavenging, local construction and physical depot delivery passed.');
 } else console.log('Regional work integration deferred: groundwork branch does not yet export core workDay. Use REQUIRE_REGIONAL_WORK=1 on integration.');
 console.log('v0.4 administration: commands, legacy, physical people/stock, disjoint flows/work, budgets, idempotence and leader loss passed.');
