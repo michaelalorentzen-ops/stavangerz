@@ -1,7 +1,6 @@
 /** Regional delegation. Population is an allocation of empire totals; stock exists only in physical depots. */
 import type { Population, RegionState, RegionWorld, ReportLine, Stock, WorkId } from './types';
-import { indexWorld } from './engine';
-import * as engine from './engine';
+import { indexWorld, workDay } from './engine';
 import { researchDay, tech } from './progress';
 import { POP } from './systems';
 import { R } from './rules';
@@ -255,8 +254,7 @@ export function regionalWorkDay(state: RegionState, world: RegionWorld, lines: R
     local.networks = Object.fromEntries(Object.entries(state.networks).filter(([id]) => regionalL1(world, id) === region.l1Id));
     const beforePopulation = { ...local.population };
     const beforeWorkStock = { ...local.stock };
-    const workDay = (engine as typeof engine & { workDay?: (state: RegionState, world: RegionWorld, rng: () => number, lines: ReportLine[]) => unknown }).workDay;
-    if (workDay) workDay(local, regionalWorld, rng, lines);
+    workDay(local, regionalWorld, rng, lines);
     if (region.work.research) researchDay(local, region.work.research * lawMods(local).researchMult, lines);
     for (const key of Object.keys(region.residents) as (keyof Population)[]) {
       const delta = local.population[key] - beforePopulation[key];
