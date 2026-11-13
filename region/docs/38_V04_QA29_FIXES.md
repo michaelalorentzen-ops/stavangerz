@@ -22,8 +22,13 @@ Mellomrom åpner samme dagsplan/bekreftelse som døgnknappen. Tast gjentas ikke,
 
 Produksjonsbygg og TypeScript passerer. Integrert `check:region-start-ui` passerer 1280×800, 1920×1080 og 390×844: alle 17 forslag, lastet kart og faktisk Story+Hardcore-kampanje. `check:region-completion-ui` passerer 1280/390 med alle fase-4-ressurser tilgjengelige, uklippede HQ-faner og faktisk levering av last og to mennesker. `check:region-clarity-ui` passerer 1280/390 med rutineleveranser skjult i sammendrag og beholdt i logg, trygg Mellomrom, deaktivering av hurtigtast, reelt volumvalg og persistens etter reload. Ingen sidefeil, ingen horisontalt overløp; alle målte PC-flater passer uten scroll.
 
-Naturlig fler-døgnsreise og bilder registreres ved ferdig kontroll. Tidligere QA sine 75-botresultater beskriver samme uendrede motor; ny botbalanse er ikke hevdet forbedret.
+Naturlig `check:region-ui` passerer åtte faktiske døgn på PC og seks på mobil: begge ordreganger, rediger/avbryt, gear, HQ, rapportarkiv og eksakt save-reload. Sluttkontrollen fanget manglende oppfølging av endret systemvalg for redusert bevegelse; dette er rettet og reisen kjørt på nytt. Tidligere QA sine 75-botresultater beskriver samme uendrede motor; ny botbalanse er ikke hevdet forbedret.
 
 ## Fortsatt ikke erklært ferdig
 
 Tallbalanse, seierstakt og sult er utsatt av eieren. QA sine øvrige premium-gap rundt større lydproduksjon, flere lagringsslott, kunstnerisk variasjon, all småtypografi og målt ytelse på fysisk maskinvare er ikke lukket av disse rettelsene. Eksisterende nedlasting av save beholdes.
+
+
+## Bevis
+
+[Start 1280×800](evidence/qa29-fixes/start-1280.png), [mobilressurser](evidence/qa29-fixes/resources-390.png), [uklippede HQ-faner](evidence/qa29-fixes/hq-tabs-390.png), [rapport](evidence/qa29-fixes/report-1280.png), [innstillinger](evidence/qa29-fixes/settings-1280.png), [startmålinger](evidence/qa29-fixes/start-results.json), [siste interaksjons- og vindusmålinger](evidence/qa29-fixes/interaction-results.json) og [naturlig reise](evidence/qa29-fixes/journey-results.json). Fixture-ressurser er deklarerte testdata; den naturlige reisen simulerer faktiske døgn fra ny start.
