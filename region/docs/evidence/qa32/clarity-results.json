@@ -1,0 +1,250 @@
+[
+  {
+    "width": 1280,
+    "label": "map",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "settings",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "settings-large",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "settings-controls",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "zone",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "three-person-order",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "context-help",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "day-plan",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "community",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "inventory",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "daily-report",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "report-log",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "hq",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "hq-work",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "hq-research",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "hq-inventory",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "phase-goals",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "person",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "label": "book-chapter",
+    "overflow": []
+  },
+  {
+    "width": 1280,
+    "result": "PASS",
+    "errors": []
+  },
+  {
+    "width": 390,
+    "label": "map",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "settings",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "settings-large",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "settings-controls",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "zone",
+    "overflow": [
+      {
+        "class": "sz-drawer-body",
+        "client": 496,
+        "scroll": 519
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "label": "three-person-order",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "context-help",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "day-plan",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "community",
+    "overflow": [
+      {
+        "class": "rz-dialog rz-wide-dialog sz-modal sz-modal-community",
+        "client": 822,
+        "scroll": 958
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "label": "inventory",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "daily-report",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "report-log",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "hq",
+    "overflow": [
+      {
+        "class": "rz-dialog rz-wide-dialog sz-modal sz-modal-hq",
+        "client": 822,
+        "scroll": 1465
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "label": "hq-work",
+    "overflow": [
+      {
+        "class": "rz-dialog rz-wide-dialog sz-modal sz-modal-hq",
+        "client": 822,
+        "scroll": 1437
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "label": "hq-research",
+    "overflow": [
+      {
+        "class": "rz-dialog rz-wide-dialog sz-modal sz-modal-hq",
+        "client": 822,
+        "scroll": 1356
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "label": "hq-inventory",
+    "overflow": [
+      {
+        "class": "rz-dialog rz-wide-dialog sz-modal sz-modal-hq",
+        "client": 822,
+        "scroll": 1052
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "label": "phase-goals",
+    "overflow": []
+  },
+  {
+    "width": 390,
+    "label": "person",
+    "overflow": [
+      {
+        "class": "rz-dialog rz-wide-dialog sz-modal sz-modal-crew-profile",
+        "client": 822,
+        "scroll": 1188
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "label": "book-chapter",
+    "overflow": [
+      {
+        "class": "rz-dialog rz-wide-dialog sz-modal sz-modal-book",
+        "client": 822,
+        "scroll": 1081
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "result": "PASS",
+    "errors": []
+  }
+]

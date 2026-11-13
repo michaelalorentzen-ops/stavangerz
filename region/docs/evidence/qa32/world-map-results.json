@@ -1,0 +1,21 @@
+{
+  "glbResponses": [
+    "200 http://127.0.0.1:3000/models/stavangerz/crew-ingrid.glb",
+    "200 http://127.0.0.1:3000/models/stavangerz/crew-marius.glb",
+    "200 http://127.0.0.1:3000/models/stavangerz/crew-leila.glb",
+    "200 http://127.0.0.1:3000/models/stavangerz/supply-crates.glb",
+    "200 http://127.0.0.1:3000/models/stavangerz/crew-tor.glb",
+    "200 http://127.0.0.1:3000/models/stavangerz/hq.glb",
+    "200 http://127.0.0.1:3000/models/stavangerz/zombie.glb"
+  ],
+  "errors": [],
+  "knownPoiCount": 4,
+  "assertions": [
+    "4 real GLB crew at local zoom",
+    "known POI accessible buttons",
+    "WebGL context loss uses SVG and restoration restores GLB",
+    "no local models at L2",
+    "area-duty and unknown never have point pieces",
+    "low-power SVG fallback"
+  ]
+}

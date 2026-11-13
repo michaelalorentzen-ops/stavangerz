@@ -1,0 +1,99 @@
+{
+  "scope": "Real game map, cloud SwiftShader only; no physical GPU evidence.",
+  "results": [
+    {
+      "schema": "stavangerz-map-benchmark-v1",
+      "timestamp": "2026-11-13T19:42:36.544Z",
+      "durationMs": 10182.899999999998,
+      "warmupMs": 2000,
+      "scene": {
+        "phase": 1,
+        "knownZones": 7,
+        "controlledZones": 0,
+        "zoom": 14.2,
+        "pitch": 40,
+        "bearing": 0
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 800,
+        "dpr": 1,
+        "canvasWidth": 1280,
+        "canvasHeight": 800
+      },
+      "graphics": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "classification": "software"
+      },
+      "assets": {
+        "styleLoaded": true,
+        "tilesLoaded": true,
+        "mapLoaded": true,
+        "modelMarkers": 13
+      },
+      "frames": {
+        "samples": 26,
+        "averageMs": 390.3730769230769,
+        "p95Ms": 433.2999999999993,
+        "rafFps": 2.5616520685340456,
+        "mapRenders": 26,
+        "mapRendersPerSecond": 2.5533001404315083
+      },
+      "limitations": [
+        "Foreground requestAnimationFrame intervals, not GPU timer queries.",
+        "Only the current scene and resolution; no camera movement.",
+        "Renderer strings are browser reports, not proof of physical hardware.",
+        "Tile/style readiness is reported; model marker count does not prove every asset loaded."
+      ]
+    },
+    {
+      "schema": "stavangerz-map-benchmark-v1",
+      "timestamp": "2026-11-13T19:42:55.236Z",
+      "durationMs": 10132.8,
+      "warmupMs": 2000,
+      "scene": {
+        "phase": 1,
+        "knownZones": 7,
+        "controlledZones": 0,
+        "zoom": 14.2,
+        "pitch": 40,
+        "bearing": 0
+      },
+      "viewport": {
+        "width": 390,
+        "height": 800,
+        "dpr": 1,
+        "canvasWidth": 390,
+        "canvasHeight": 800
+      },
+      "graphics": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "classification": "software"
+      },
+      "assets": {
+        "styleLoaded": true,
+        "tilesLoaded": true,
+        "mapLoaded": true,
+        "modelMarkers": 13
+      },
+      "frames": {
+        "samples": 49,
+        "averageMs": 203.05102040816323,
+        "p95Ms": 250,
+        "rafFps": 4.924870596512388,
+        "mapRenders": 49,
+        "mapRendersPerSecond": 4.83578083057003
+      },
+      "limitations": [
+        "Foreground requestAnimationFrame intervals, not GPU timer queries.",
+        "Only the current scene and resolution; no camera movement.",
+        "Renderer strings are browser reports, not proof of physical hardware.",
+        "Tile/style readiness is reported; model marker count does not prove every asset loaded."
+      ]
+    }
+  ]
+}

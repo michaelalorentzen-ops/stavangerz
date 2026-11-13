@@ -1,0 +1,20 @@
+/** Natural canonical-policy proof. No resources, phases, people or flags are injected. */
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {botPlay,newRegionGame,type RegionWorld,type RegionState} from '../packages/gameplay/src/region';
+import {campaignFor} from '../packages/gameplay/src/region/campaign';
+const worldFile='apps/game-client/public/world/region-v1.json';
+const worldText=readFileSync(worldFile,'utf8'),world=JSON.parse(worldText) as RegionWorld;
+const startZoneId='z3-0274',seed=303;
+const snapshot=(state:RegionState)=>({day:state.day,phase:state.phase,phaseDay:state.phaseDay,stableDays:state.counters.stable??0,researchCompleted:state.research.done.length,morale:state.morale,discontent:state.discontent,won:!!state.gameOver?.won,endingType:state.campaign?.ending?.kind,reason:state.gameOver?.reason});
+const initial=newRegionGame(world,startZoneId,seed);
+const at150=botPlay(world,initial,150),checkpoint=snapshot(at150);
+const final=botPlay(world,at150,450);
+assert.equal(final.gameOver?.won,true);assert.equal(final.gameOver?.day,194);assert.equal(final.counters.stable,30);
+mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/qa32-natural-victory-state.json',JSON.stringify(final));
+console.log('Natural150→450 cap won day194; full final state saved. Checking uninterrupted canonical194…');
+const uninterrupted=botPlay(world,newRegionGame(world,startZoneId,seed),194);
+assert.deepEqual(uninterrupted,final,'150-day segmentation must not alter final gameplay state');
+const summary={kind:'natural canonical-policy victory proof',start:{zoneId:startZoneId,name:world.starts.find(start=>start.zoneId===startZoneId)?.name,seed,difficulty:campaignFor(initial).difficulty,hardcore:campaignFor(initial).hardcore},policy:'unmodified botPlay / botManage / botPlanDay / botTrade / botChooseEvent',rulesVersion:initial.rulesVersion,worldVersion:initial.worldVersion,worldSha256:createHash('sha256').update(worldText).digest('hex'),trace:[{cap:150,...checkpoint},{cap:450,...snapshot(final)}],uninterrupted194ExactStateMatch:true,mutations:'none outside canonical simulation',finalStateArtifact:'artifacts/qa32-natural-victory-state.json',reproduce:'cd region && node --import tsx scripts/prove-campaign-victory.ts',limitations:'One proven natural win. 75-run/150-day benchmark remains 0 wins; balance and policy quality are not certified.'};
+mkdirSync('scripts/evidence',{recursive:true});writeFileSync('scripts/evidence/qa32-victory-proof.json',JSON.stringify(summary,null,2)+'\n');console.log(JSON.stringify(summary,null,2));

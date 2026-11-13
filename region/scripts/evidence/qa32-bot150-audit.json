@@ -1,0 +1,13 @@
+{
+  "kind": "natural canonical-policy gate audit",
+  "gameplayBaseCommit": "dbd00a8",
+  "days": 150,
+  "seeds": [101, 202, 303],
+  "extraDenseStarts": 8,
+  "runs": 75,
+  "wins": 0,
+  "phases": {"1": 45, "2": 8, "3": 10, "4": 11, "5": 1},
+  "missingCurrentGate": {"districts3": 10, "pop50": 9, "district": 9, "phaseOneCore": 45, "phaseOneSupplies": 34, "zones6": 8, "hq": 7, "phaseOneDefense": 9, "pop12": 2, "pop30": 4, "win": 1, "tech6": 1},
+  "interpretation": "74 runs have not reached phase 5, where all three victory paths unlock. The sole phase-five run enters that phase on day 149 and has only two stable days at the benchmark cap. Its unchanged-policy continuation wins naturally on day 194; see qa32-victory-proof.json. Unmet gate counts overlap and do not establish impossible player progression or certify balance.",
+  "reproduce": "cd region && node --import tsx scripts/audit-campaign-victory.ts 150 3 8"
+}

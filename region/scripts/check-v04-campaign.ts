@@ -135,7 +135,9 @@ try {
   storage.setItem(SAVE_KEY_REGION, '{broken');
   assert.throws(() => loadRegionSave(storage), (error: unknown) => error instanceof RegionSaveError && error.code === 'invalid');
   assert.equal(storage.getItem(SAVE_KEY_REGION), '{broken', 'A corrupt save is reported, never silently overwritten');
-  clearRegionSave(storage);
+  assert.throws(() => clearRegionSave(storage), (error: unknown) => error instanceof RegionSaveError && error.code === 'invalid');
+  assert.equal(storage.getItem(SAVE_KEY_REGION), '{broken', 'Leaving a run cannot erase corrupt data');
+  storage.removeItem(SAVE_KEY_REGION); // Explicit test cleanup, not automatic recovery.
   assert.equal(loadRegionSave(storage), null);
 } finally { rmSync(directory, { recursive: true, force: true }); }
 console.log('PASS v0.4 campaign: real mode supplies/flows/day, permanent HC death, explicit succession, fixed away-avatar, three derived endings, disk reload/checkpoint and HC rewind/divergence/write-failure rejection.');

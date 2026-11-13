@@ -4,11 +4,13 @@ import { useCallback, useEffect, useRef } from 'react';
 
 export type GameAudioPreferences = { masterVolume: number; musicVolume: number; effectsVolume: number };
 /** Result cues require a real observed outcome; the score itself never reads world state. */
-export type GameSound = 'order' | 'day' | 'event' | 'confirm' | 'combat' | 'night' | 'discovery' | 'claim';
+export type GameSound = 'order' | 'day' | 'event' | 'confirm' | 'combat' | 'night' | 'discovery' | 'claim' | 'victory' | 'defeat';
+export type GameAmbience = 'camp' | 'harbor' | 'night';
+type SampleName = GameSound | `ambient-${GameAmbience}`;
 const clamp = (n: number) => Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
 type Voice = { source: AudioScheduledSourceNode; nodes: AudioNode[] };
 
-/** Original procedural soundscape. No recorded samples, remote assets or gameplay RNG. */
+/** Local CC0 Foley arrangements + original accompaniment. See public/audio/README.md. */
 class CampAudio {
   private context: AudioContext;
   private music: GainNode;
@@ -19,7 +21,11 @@ class CampAudio {
   private echo: GainNode;
   private feedback: GainNode;
   private echoFilter: BiquadFilterNode;
-  private noise: AudioBuffer;
+  private samples = new Map<SampleName, Promise<AudioBuffer | undefined>>();
+  private requests = new AbortController();
+  private ambience: GameAmbience;
+  private epoch = 0;
+  private ambientVersion = 0;
   private voices = new Set<Voice>();
   private wind: Voice | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -27,8 +33,8 @@ class CampAudio {
   private preferences: GameAudioPreferences;
   private disposed = false;
   private lastCue: Partial<Record<GameSound, number>> = {};
-  constructor(preferences: GameAudioPreferences) {
-    this.preferences = preferences;
+  constructor(preferences: GameAudioPreferences, ambience: GameAmbience) {
+    this.preferences = preferences; this.ambience = ambience;
     this.context = new AudioContext();
     this.master = this.context.createGain();
     this.music = this.context.createGain();
@@ -45,18 +51,32 @@ class CampAudio {
     this.echoFilter = this.context.createBiquadFilter(); this.echoFilter.type = 'lowpass'; this.echoFilter.frequency.value = 1700;
     this.music.connect(this.delay); this.delay.connect(this.echoFilter); this.echoFilter.connect(this.echo); this.echo.connect(this.master);
     this.echoFilter.connect(this.feedback); this.feedback.connect(this.delay);
-    this.noise = this.createNoise();
     this.setPreferences(preferences);
   }
-  private createNoise() {
-    const buffer = this.context.createBuffer(1, 24000 * 6, 24000), samples = buffer.getChannelData(0);
-    // Local deterministic texture, unrelated to the simulation's seed or outcomes.
-    let seed = 314159, smoothed = 0;
-    for (let i = 0; i < samples.length; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; smoothed = .965 * smoothed + .035 * (seed / 2147483648 - 1); samples[i] = smoothed * 4; }
-    return buffer;
+  private load(name: SampleName): Promise<AudioBuffer | undefined> {
+    let pending = this.samples.get(name);
+    if (!pending) {
+      pending = fetch(`/audio/${name}.mp3`, { cache: 'force-cache', signal: this.requests.signal })
+        .then(response => { if (!response.ok) throw new Error('Unavailable local audio'); return response.arrayBuffer(); })
+        .then(bytes => this.disposed ? undefined : this.context.decodeAudioData(bytes))
+        .catch(() => undefined);
+      this.samples.set(name, pending);
+    }
+    return pending;
+  }
+  setAmbience(ambience: GameAmbience) {
+    if (this.disposed || this.ambience === ambience) return;
+    this.ambience = ambience; this.ambientVersion++;
+    if (this.wind) {
+      const envelope = this.wind.nodes[0] as GainNode, t = this.context.currentTime;
+      envelope.gain.cancelScheduledValues(t); envelope.gain.setValueAtTime(envelope.gain.value, t); envelope.gain.linearRampToValueAtTime(0, t + .6);
+      this.wind.source.stop(t + .65); this.wind = undefined;
+    }
+    this.syncAmbience();
   }
   setPreferences(preferences: GameAudioPreferences) {
     if (this.disposed) return;
+    if ((preferences.masterVolume <= 0 && this.preferences.masterVolume > 0) || (preferences.effectsVolume <= 0 && this.preferences.effectsVolume > 0)) this.epoch++;
     this.preferences = preferences;
     const t = this.context.currentTime;
     this.master.gain.setTargetAtTime(clamp(preferences.masterVolume), t, .06);
@@ -78,18 +98,16 @@ class CampAudio {
     envelope.gain.setValueAtTime(0, at); envelope.gain.linearRampToValueAtTime(gain, at + Math.min(options.attack ?? .012, duration / 3)); envelope.gain.exponentialRampToValueAtTime(.0001, at + duration);
     tone.connect(envelope); envelope.connect(pan); pan.connect(bus); this.track(tone, [envelope, pan]); tone.start(at); tone.stop(at + duration + .02);
   }
-  private texture(at: number, duration: number, gain: number, frequency: number, bus: GainNode, attack = .02) {
-    const source = this.context.createBufferSource(), filter = this.context.createBiquadFilter(), envelope = this.context.createGain();
-    source.buffer = this.noise; source.loop = true; filter.type = 'bandpass'; filter.frequency.value = frequency; filter.Q.value = .65;
-    envelope.gain.setValueAtTime(0, at); envelope.gain.linearRampToValueAtTime(gain, at + Math.min(attack, duration / 3)); envelope.gain.exponentialRampToValueAtTime(.0001, at + duration);
-    source.connect(filter); filter.connect(envelope); envelope.connect(bus); this.track(source, [filter, envelope]); source.start(at); source.stop(at + duration + .02);
-  }
   private startWind() {
     if (this.wind) return;
-    const source = this.context.createBufferSource(), filter = this.context.createBiquadFilter(), envelope = this.context.createGain();
-    source.buffer = this.noise; source.loop = true; filter.type = 'bandpass'; filter.frequency.value = 640; filter.Q.value = .4;
-    const t = this.context.currentTime; envelope.gain.setValueAtTime(0, t); envelope.gain.linearRampToValueAtTime(.13, t + 2.5);
-    source.connect(filter); filter.connect(envelope); envelope.connect(this.music); this.wind = this.track(source, [filter, envelope]); source.start();
+    const version = this.ambientVersion, epoch = this.epoch, name = this.ambience;
+    void this.load(`ambient-${name}`).then(buffer => {
+      if (!buffer || this.disposed || this.wind || version !== this.ambientVersion || epoch !== this.epoch || this.context.state !== 'running' || this.preferences.musicVolume <= 0 || this.preferences.masterVolume <= 0) return;
+      const source = this.context.createBufferSource(), envelope = this.context.createGain();
+      source.buffer = buffer; source.loop = true;
+      const t = this.context.currentTime; envelope.gain.setValueAtTime(0, t); envelope.gain.linearRampToValueAtTime(.65, t + 1.6);
+      source.connect(envelope); envelope.connect(this.music); this.wind = this.track(source, [envelope]); source.start();
+    });
   }
   private score = () => {
     if (this.disposed || this.context.state !== 'running' || this.preferences.musicVolume <= 0 || this.preferences.masterVolume <= 0) return;
@@ -97,7 +115,6 @@ class CampAudio {
     // Open D minor / B-flat / F / C voicings: no alarm-like pulse or implied enemies.
     const chords = [[146.83, 220, 349.23], [116.54, 174.61, 293.66], [174.61, 261.63, 440], [130.81, 196, 329.63]];
     const step = this.bar++, chord = chords[step % chords.length];
-    if (this.wind) (this.wind.nodes[0] as BiquadFilterNode).frequency.setTargetAtTime(420 + (step % 4) * 140, t, 2);
     chord.forEach((frequency, i) => {
       this.note(frequency, t + i * .3, 8.5, .023, this.music, { type: 'triangle', attack: 1.8, detune: i % 2 ? 3 : -3, pan: (i - 1) * .35 });
       this.note(frequency * 1.003, t + .35 + i * .3, 7.7, .014, this.music, { attack: 2.1, pan: (1 - i) * .35 });
@@ -107,7 +124,7 @@ class CampAudio {
   };
   private syncAmbience() {
     const audible = !this.disposed && this.context.state === 'running' && this.preferences.musicVolume > 0 && this.preferences.masterVolume > 0;
-    if (audible && !this.timer) { this.startWind(); this.score(); this.timer = setInterval(this.score, 12000); }
+    if (audible) { this.startWind(); if (!this.timer) { this.score(); this.timer = setInterval(this.score, 12000); } }
     if (!audible) { clearInterval(this.timer); this.timer = undefined; if (this.wind) { this.stop(this.wind); this.wind = undefined; } }
   }
   async resume() {
@@ -116,6 +133,7 @@ class CampAudio {
     if (!this.disposed) this.syncAmbience();
   }
   suspend() {
+    this.epoch++; this.ambientVersion++;
     clearInterval(this.timer); this.timer = undefined; this.wind = undefined;
     // Hidden-tab sounds are discarded, so an old combat cue cannot resume hours later.
     [...this.voices].forEach(voice => this.stop(voice));
@@ -124,43 +142,36 @@ class CampAudio {
   play(sound: GameSound) {
     if (this.disposed || this.context.state !== 'running' || this.preferences.effectsVolume <= 0 || this.preferences.masterVolume <= 0) return;
     const now = this.context.currentTime;
-    // UI double-clicks must not stack the same notification into a loud burst.
-    if (now - (this.lastCue[sound] ?? -Infinity) < .12) return;
-    this.lastCue[sound] = now; const t = now + .012;
-    const bell = (frequency: number, at: number, gain = .075, duration = .8) => { this.note(frequency, at, duration, gain, this.effects); this.note(frequency * 2.01, at, duration * .42, gain * .16, this.effects); };
-    if (sound === 'order' || sound === 'confirm') {
-      this.texture(t, .09, .065, 1100, this.effects); this.note(sound === 'order' ? 392 : 493.88, t + .025, .25, .055, this.effects, { type: 'triangle' }); return;
-    }
-    if (sound === 'combat') {
-      // Short material impacts rather than gunfire: combat may have used melee equipment.
-      [0, .18].forEach((offset, i) => { this.texture(t + offset, .19, .24, 500 + i * 350, this.effects); this.note(155 - i * 15, t + offset, .21, .1, this.effects, { type: 'triangle', endFrequency: 70 }); }); return;
-    }
-    if (sound === 'night') {
-      this.texture(t, 2.8, .085, 480, this.effects, .8); this.note(220, t + .08, 2.3, .045, this.effects, { attack: .6, pan: -.2 }); this.note(293.66, t + .4, 2.1, .032, this.effects, { attack: .6, pan: .2 }); return;
-    }
-    if (sound === 'discovery') { [523.25, 659.25, 783.99].forEach((frequency, i) => bell(frequency, t + i * .17, .06, 1.15)); this.texture(t, .8, .035, 1800, this.effects, .2); return; }
-    if (sound === 'claim') { [293.66, 440, 587.33, 698.46].forEach((frequency, i) => bell(frequency, t + i * .16, .06, 1.4)); this.texture(t, 1.1, .06, 1000, this.effects, .3); return; }
-    if (sound === 'event') { this.texture(t, .12, .1, 800, this.effects); bell(392, t + .035, .055, .8); bell(523.25, t + .19, .04, .75); return; }
-    // Day result: a warm, restrained resolution. Other cues are chosen by actual outcome.
-    [261.63, 329.63, 392].forEach((frequency, i) => this.note(frequency, t + i * .11, 1.2, .055, this.effects, { type: 'triangle', attack: .08, pan: (i - 1) * .25 }));
+    if (now - (this.lastCue[sound] ?? -Infinity) < .18) return;
+    this.lastCue[sound] = now;
+    const epoch = this.epoch, requested = performance.now();
+    void this.load(sound).then(buffer => {
+      // Never replay an old command after a slow load, hidden tab, mute or campaign teardown.
+      if (!buffer || this.disposed || epoch !== this.epoch || performance.now() - requested > 1500 || this.context.state !== 'running' || this.preferences.effectsVolume <= 0 || this.preferences.masterVolume <= 0) return;
+      const source = this.context.createBufferSource(), envelope = this.context.createGain();
+      const levels: Record<GameSound, number> = { order: .55, confirm: .5, combat: .65, night: .6, discovery: .65, claim: .7, event: .55, day: .55, victory: .75, defeat: .65 };
+      source.buffer = buffer; envelope.gain.value = levels[sound];
+      source.connect(envelope); envelope.connect(this.effects); this.track(source, [envelope]); source.start();
+    });
   }
   dispose() {
     if (this.disposed) return;
-    this.disposed = true; this.suspend();
+    this.disposed = true; this.requests.abort(); this.suspend(); this.samples.clear();
     [this.music, this.effects, this.master, this.limiter, this.delay, this.echo, this.feedback, this.echoFilter].forEach(node => node.disconnect());
     void this.context.close().catch(() => {});
   }
 }
 
 /** Call play only for accepted actions / actual observed results, never during render or save restoration. */
-export function useGameAudio(preferences: GameAudioPreferences) {
-  const engine = useRef<CampAudio | null>(null), latest = useRef(preferences);
+export function useGameAudio(preferences: GameAudioPreferences, ambience: GameAmbience = 'camp') {
+  const engine = useRef<CampAudio | null>(null), latest = useRef(preferences), latestAmbience = useRef(ambience);
   useEffect(() => { latest.current = preferences; engine.current?.setPreferences(preferences); }, [preferences]);
+  useEffect(() => { latestAmbience.current = ambience; engine.current?.setAmbience(ambience); }, [ambience]);
   useEffect(() => {
     let disposed = false;
     const unlock = (event: Event) => {
       if (!event.isTrusted || disposed || typeof AudioContext === 'undefined') return;
-      if (!engine.current) { try { engine.current = new CampAudio(latest.current); } catch { return; } }
+      if (!engine.current) { try { engine.current = new CampAudio(latest.current, latestAmbience.current); } catch { return; } }
       if (document.visibilityState === 'visible') void engine.current.resume().catch(() => {});
     };
     const visibility = () => { if (document.hidden) engine.current?.suspend(); else if (engine.current) void engine.current.resume().catch(() => {}); };

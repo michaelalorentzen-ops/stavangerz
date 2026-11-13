@@ -1,0 +1,147 @@
+{
+  "downloaded": "2026-11-13",
+  "sources": [
+    {
+      "file": "source/kenney-rpg/beltHandle1.ogg",
+      "original_file": "Audio/beltHandle1.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "2ef665bd8b65dbe669f4560be38a6d8f04a162e618b15a49e3e71b58e558aab0"
+    },
+    {
+      "file": "source/kenney-rpg/cloth1.ogg",
+      "original_file": "Audio/cloth1.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "ddb93a3671233f95da0e0b10367f082f7eb42fa6caaddcf776410aa8833c747d"
+    },
+    {
+      "file": "source/kenney-rpg/bookOpen.ogg",
+      "original_file": "Audio/bookOpen.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "953390534377222bee89ac8cd9e60a58fdc037c71a4d7c18c43cd647c7f34ba8"
+    },
+    {
+      "file": "source/kenney-rpg/bookClose.ogg",
+      "original_file": "Audio/bookClose.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "81e976532565f4372abd14e83d2684195fa548d0a28d345de221e56052454f32"
+    },
+    {
+      "file": "source/kenney-rpg/creak1.ogg",
+      "original_file": "Audio/creak1.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "8a346186fd297254248cab8e8117060a52a5cf2a84f603153a762108550ea95e"
+    },
+    {
+      "file": "source/kenney-rpg/metalLatch.ogg",
+      "original_file": "Audio/metalLatch.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "ba9ba60b172b3ebc131a940f25793cd2e207aca7af73dc80d637277f060f1708"
+    },
+    {
+      "file": "source/kenney-rpg/handleCoins.ogg",
+      "original_file": "Audio/handleCoins.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "8a91f969e932df709df80ee124d86a51389eed9b67f22e5e716bc2bbf60d8dab"
+    },
+    {
+      "file": "source/kenney-rpg/footstep00.ogg",
+      "original_file": "Audio/footstep00.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "6fe61ef1fc3bcf0e253bf2eb64759db6cb69e2fe452f4d88cc597ecf78a3d601"
+    },
+    {
+      "file": "source/kenney-rpg/footstep01.ogg",
+      "original_file": "Audio/footstep01.ogg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "313472dba31fd0c855376069fa368bb5a198c27251cc8398ef464578b7047a4c"
+    },
+    {
+      "file": "source/kenney-impact/impactWood_heavy_002.ogg",
+      "original_file": "Audio/impactWood_heavy_002.ogg",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "ce1e06f2a05f2634c645cb72f6a1623e64bc2d92be34917430a61031fb6597d4"
+    },
+    {
+      "file": "source/kenney-impact/impactMetal_medium_003.ogg",
+      "original_file": "Audio/impactMetal_medium_003.ogg",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "2a185e2e57211d02c1bdd33b872d6b6a2fe83e6c14f4e56f426a95e717acf08e"
+    },
+    {
+      "file": "source/kenney-impact/impactBell_heavy_001.ogg",
+      "original_file": "Audio/impactBell_heavy_001.ogg",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "9df61e3ae9a83dc65e5a1fd3ed19d480876f3b22b963a1b9ef6fa293592dcec4"
+    },
+    {
+      "file": "source/kenney-impact/footstep_grass_001.ogg",
+      "original_file": "Audio/footstep_grass_001.ogg",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "fb28781bd22b2eefdc14077f1adf5c94d7fe9c3a130194633b55f3e0d39d9f04"
+    },
+    {
+      "file": "source/kenney-impact/footstep_wood_000.ogg",
+      "original_file": "Audio/footstep_wood_000.ogg",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "5f1c252942a220d658121bd9417448cd19649ded9fff2ff15f6e50899373ce8e"
+    }
+  ],
+  "packs": [
+    {
+      "id": "kenney-rpg",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "license_file": "source/kenney-rpg/LICENSE.txt",
+      "license_sha256": "5735dfd72cb64cbbceda4ebc00c380c41ca680edb82ff153aa7c9ab97614c539",
+      "downloaded_archive_sha256": "6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b"
+    },
+    {
+      "id": "kenney-impact",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "license_file": "source/kenney-impact/LICENSE.txt",
+      "license_sha256": "b49aa9c56b04528b95913de13e506a0f7c5e807b9925db9bfef86af1f91120db",
+      "downloaded_archive_sha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+    }
+  ]
+}

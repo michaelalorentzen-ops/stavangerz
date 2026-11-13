@@ -12,6 +12,10 @@ import {
 import { CONTENT } from '../../../packages/world-data/src/content';
 import ZaBook from './za-book';
 import StartScreen from './start-screen';
+import { CampaignLibrary } from './campaign-library';
+import { CampaignProgress, CampaignAchievements } from './campaign-progress';
+import PerformanceBenchmark from './performance-benchmark';
+import { actionForKeyboardEvent, displayShortcut, type ShortcutAction } from './shortcut-bindings';
 import CrewEquipment, { GearInventory, OrderGearSummary, equipmentDraftOrders } from './crew-equipment';
 import { attachTerritoryCaptureEffects, territoryShifts, type TerritoryCaptureController } from './territory-capture-effects';
 import { CampaignModeInfo, CampaignHelp, CampaignEndingView } from './campaign-controls';
@@ -52,7 +56,8 @@ import './expedition-presentation.css';
 import './detail-presentation.css';
 import './item-art.css';
 
-const HUD_SHORTCUTS:Record<string,string>={crew:'C',book:'B',settings:'I',hq:'H'};
+const HUD_SHORTCUT_ACTIONS:Record<string,ShortcutAction>={crew:'crew',book:'book',settings:'settings',hq:'hq'};
+const shortcutAria = (code: string) => code.startsWith('Key') ? code.slice(3) : code.startsWith('Digit') ? code.slice(5) : code;
 function reportSound(report:RegionReport):GameSound {
   if(report.lines.some(line=>line.tone==='bad'))return 'event';
   if(report.replay?.some(stage=>stage.zoneChanges.some(change=>change.before!=='controlled'&&change.after==='controlled')))return 'claim';
@@ -90,9 +95,11 @@ function useDialogFocus() {
   useEffect(() => {
     let active: HTMLElement | null = null;
     let returnTo: HTMLElement | null = null;
-    const focusable = () => active ? [...active.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]')].filter(el => el.getClientRects().length > 0) : [];
+    const focusable = () => active ? [...active.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]')].filter(el => el.getClientRects().length > 0 && !el.closest('[inert]')) : [];
     const sync = () => {
-      const next = [...document.querySelectorAll<HTMLElement>('[role="dialog"]')].at(-1) ?? null;
+      const native = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1);
+      const scope = native ?? document;
+      const next = [...scope.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]')].filter(el => el.getClientRects().length > 0 && !el.closest('[inert]')).at(-1) ?? native ?? null;
       if (next === active) return;
       if (!active && next) returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       active = next;
@@ -102,7 +109,7 @@ function useDialogFocus() {
       } else if (returnTo?.isConnected && returnTo.getClientRects().length) returnTo.focus();
     };
     const trap = (event: KeyboardEvent) => {
-      if (!active || event.key !== 'Tab') return;
+      if (!active || event.key !== 'Tab' || active instanceof HTMLDialogElement) return; // The native top layer already traps its own focus.
       const candidates = focusable();
       const first = candidates[0] ?? active;
       const last = candidates.at(-1) ?? active;
@@ -111,7 +118,7 @@ function useDialogFocus() {
       }
     };
     const observer = new MutationObserver(sync);
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'inert', 'aria-hidden'] });
     document.addEventListener('keydown', trap);
     sync();
     return () => { observer.disconnect(); document.removeEventListener('keydown', trap); };
@@ -124,6 +131,10 @@ export default function RegionGame() {
   const [state, setState] = useState<RegionState | null>(null);
   const [saved, setSaved] = useState<RegionState | null>(null);
   const [intro, setIntro] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [playSession, setPlaySession] = useState(0);
+  const acceptLoaded = (next: RegionState) => { setState(next); setSaved(next); setSaveError(''); setIntro(false); setPlaySession(value => value + 1); };
+  const library = libraryOpen && <CampaignLibrary current={state ?? saved} onLoad={acceptLoaded} onClose={() => setLibraryOpen(false)}/>;
   const [error, setError] = useState('');
   const [saveError, setSaveError] = useState('');
   const acceptState = (next: RegionState, replace = false) => {
@@ -138,9 +149,10 @@ export default function RegionGame() {
   }, []);
   if (error) return <main className="rz-shell rz-center"><p>{error}</p></main>;
   if (!world) return <main className="rz-shell rz-center"><p>Laster kartet over Stavanger …</p></main>;
-  if (!state) return <><StartScreen world={world} saved={saved} onStart={(s, fresh) => { try { acceptState(s, fresh); setSaved(s); setIntro(fresh); } catch { /* Error stays visible; the previous save is retained. */ } }} />{saveError && <div className="rz-save-error" role="alert">{saveError}</div>}</>;
+  if (!state) return <><StartScreen world={world} saved={saved} onLibrary={() => setLibraryOpen(true)} onStart={(s, fresh) => { try { acceptState(s, fresh); setSaved(s); setIntro(fresh); } catch { /* Error stays visible; the previous save is retained. */ } }} />{library}{saveError && <div className="rz-save-error" role="alert">{saveError}</div>}</>;
   return <>
-    <Play world={world} state={state} setState={acceptState} onQuit={quit} onRestart={restart} />
+    <Play key={playSession} world={world} state={state} setState={acceptState} onQuit={quit} onRestart={restart} onLibrary={() => setLibraryOpen(true)} />
+    {library}
     {saveError && <div className="rz-save-error" role="alert">{saveError}</div>}
     {intro && <Intro world={world} state={state} onDone={() => setIntro(false)} />}
   </>;
@@ -173,21 +185,31 @@ function Intro({ world, state, onDone }: { world: RegionWorld; state: RegionStat
 
 // ------------------------------------------------------------------ play
 
-function Play({ world, state: committedState, setState, onQuit, onRestart }: { world: RegionWorld; state: RegionState; setState: (s: RegionState) => void; onQuit: () => void; onRestart: () => void }) {
+function Play({ world, state: committedState, setState, onQuit, onRestart, onLibrary }: { world: RegionWorld; state: RegionState; setState: (s: RegionState) => void; onQuit: () => void; onRestart: () => void; onLibrary: () => void }) {
   const {preferences,updatePreferences} = useGamePreferences();
-  const playSound = useGameAudio(preferences);
   const inputModality=useRef<'pointer'|'keyboard'>('pointer');
-  const shortcutSpaceDown=useRef(false);
+  const shortcutKeyDown=useRef<string | null>(null);
   useEffect(()=>{
     const pointer=()=>{inputModality.current='pointer';};
-    const keyDown=(event:KeyboardEvent)=>{if(event.key==='Tab')inputModality.current='keyboard';if(event.code==='Space'&&shortcutSpaceDown.current&&event.repeat)event.preventDefault();};
-    const keyUp=(event:KeyboardEvent)=>{if(event.code==='Space'&&shortcutSpaceDown.current){shortcutSpaceDown.current=false;event.preventDefault();event.stopPropagation();}};
-    const blur=()=>{shortcutSpaceDown.current=false;};
+    const keyDown=(event:KeyboardEvent)=>{if(event.key==='Tab')inputModality.current='keyboard';if(event.code===shortcutKeyDown.current&&event.repeat)event.preventDefault();};
+    const keyUp=(event:KeyboardEvent)=>{if(event.code===shortcutKeyDown.current){shortcutKeyDown.current=null;event.preventDefault();event.stopPropagation();}};
+    const blur=()=>{shortcutKeyDown.current=null;};
     window.addEventListener('pointerdown',pointer,true);window.addEventListener('keydown',keyDown,true);window.addEventListener('keyup',keyUp,true);window.addEventListener('blur',blur);
     return()=>{window.removeEventListener('pointerdown',pointer,true);window.removeEventListener('keydown',keyDown,true);window.removeEventListener('keyup',keyUp,true);window.removeEventListener('blur',blur);};
   },[]);
   const [replay, setReplay] = useState<DayReplaySession | null>(null);
   const [replayStep, setReplayStep] = useState(-1);
+  const audibleState = replay?.before ?? committedState;
+  const knownHarbor = audibleState.zones[audibleState.homeZoneId]?.status !== 'unknown' && world.pois.some(poi => poi.zoneId === audibleState.homeZoneId && poi.siteType === 'marina');
+  const playSound = useGameAudio(preferences, replay && replayStep === 0 ? 'night' : knownHarbor ? 'harbor' : 'camp');
+  const previousEnding = useRef(committedState.gameOver);
+  useEffect(() => {
+    if (replay) return;
+    if (!previousEnding.current && committedState.gameOver) playSound(committedState.gameOver.won ? 'victory' : 'defeat');
+    previousEnding.current = committedState.gameOver;
+  }, [committedState.gameOver, playSound, replay]);
+  const binding = (action: ShortcutAction) => preferences.shortcutBindings[action];
+  const shortcutLabel = (action: ShortcutAction) => displayShortcut(binding(action));
   const [reportAfterEvent, setReportAfterEvent] = useState<RegionReport | null>(null);
   // Save the authoritative result immediately, but do not render any of its
   // information until the journal reaches that point in the day.
@@ -403,25 +425,34 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   const placement = (id: string) => { const p = crewPositionFor(state, id); return p?.kind === 'zone' ? `ved ${index.byId.get(p.zoneId)?.name ?? p.zoneId}` : p?.kind === 'transit' ? `på reise mot ${index.byId.get(p.toZoneId)?.name ?? p.toZoneId}` : p?.kind === 'area-duty' ? `områdevakt i ${index.byId.get(p.areaZoneId)?.name ?? p.areaZoneId}` : 'sted ikke rapportert'; };
   const showPhase = state.phase > phaseShown && !state.event && modal !== 'report';
   useEffect(()=>{const key=(event:KeyboardEvent)=>{
-    if(event.repeat||event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||!preferences.keyboardShortcuts)return;
+    if(event.repeat||event.defaultPrevented||!preferences.keyboardShortcuts)return;
+    const action=actionForKeyboardEvent(event,preferences.shortcutBindings);
+    if(!action)return;
     const target=event.target instanceof Element?event.target:null;
-    if(target?.closest('input,textarea,select,[contenteditable=true]')||document.querySelector('[role=dialog]')||modal||confirmEnd||replay||committedState.event||committedState.turnCheckpoint||state.gameOver||!activeAvatar||avatarNeedsSelection||showPhase||targeting)return;
-    if(event.code==='Space'){
-      const interactive=target?.closest('button,a,summary,[role=button]');
-      // Mouse users retain button focus. Tab users retain native Space activation.
-      if(interactive&&(inputModality.current==='keyboard'||!interactive.closest('.sz-top,.sz-nav,.sz-command-bar,.rz-map-tools')))return;
-      event.preventDefault();shortcutSpaceDown.current=true;if(orders.length)setModal('plan');else setConfirmEnd(true);return;
+    if(target?.closest('input,textarea,select,[contenteditable=true]')||document.querySelector('dialog[open]')||replay||committedState.event||committedState.turnCheckpoint||state.gameOver||!activeAvatar||avatarNeedsSelection||showPhase||targeting)return;
+    if(action==='endDay'&&(confirmEnd||modal==='plan')){
+      // The opening press never confirms. Only a fresh press on the focused primary review action can proceed.
+      const review=document.activeElement instanceof HTMLButtonElement&&document.activeElement.matches('[data-end-day-review]')?document.activeElement:null;
+      if(!review||review.disabled)return;
+      if(event.code==='Space')return; // Native Space activates this focused button on keyup.
+      event.preventDefault();shortcutKeyDown.current=event.code;review.click();return;
     }
-    const shortcut=event.key.toLowerCase();
-    if(!['b','c','p','h','i','home'].includes(shortcut))return;
-    event.preventDefault();
-    if(shortcut==='c')setDrawer(previous=>previous==='crew'?null:'crew');
-    else if(shortcut==='b'){setBookTopic(undefined);setBookReturn(null);setModal('book');}
-    else if(shortcut==='p')setModal('plan');
-    else if(shortcut==='h')setModal(state.hq?'hq':'community');
-    else if(shortcut==='i')setModal('settings');
+    if(document.querySelector('[role=dialog]')||modal||confirmEnd)return;
+    if(event.code==='Space'&&inputModality.current==='keyboard'&&target?.closest('button,a,summary,[role=button]'))return;
+    if(action==='endDay'){
+      const interactive=target?.closest('button,a,summary,[role=button]');
+      // Tab users retain native Space activation, while pointer-focused HUD buttons allow the global shortcut.
+      if(event.code==='Space'&&interactive&&(inputModality.current==='keyboard'||!interactive.closest('.sz-top,.sz-nav,.sz-command-bar,.rz-map-tools')))return;
+      event.preventDefault();shortcutKeyDown.current=event.code;if(orders.length)setModal('plan');else setConfirmEnd(true);return;
+    }
+    event.preventDefault();shortcutKeyDown.current=event.code;
+    if(action==='crew')setDrawer(previous=>previous==='crew'?null:'crew');
+    else if(action==='book'){setBookTopic(undefined);setBookReturn(null);setModal('book');}
+    else if(action==='plan')setModal('plan');
+    else if(action==='hq')setModal(state.hq?'hq':'community');
+    else if(action==='settings')setModal('settings');
     else setMapFocus({zoneId:state.homeZoneId,key:Date.now()});
-  };window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[preferences.keyboardShortcuts,modal,confirmEnd,replay,committedState.event,committedState.turnCheckpoint,state.gameOver,state.homeZoneId,state.hq,activeAvatar,avatarNeedsSelection,showPhase,targeting,orders.length]);
+  };window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[preferences.keyboardShortcuts,preferences.shortcutBindings,modal,confirmEnd,replay,committedState.event,committedState.turnCheckpoint,state.gameOver,state.homeZoneId,state.hq,activeAvatar,avatarNeedsSelection,showPhase,targeting,orders.length]);
   const selectZone = (id: string) => {
     setTerritoryList(false);
     setMapSelectionTouched(true);
@@ -467,7 +498,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
       <div className="sz-date"><strong>DAG {state.day}<small>07:00</small></strong><span>{dateText(state.day)} · {s.name}</span></div>
       <button className="sz-phase" onClick={()=>setModal('goals')}><span>FASE {state.phase}</span><strong>{phase.name}</strong><HudIcon name="chevron" size={15}/></button>
     </header>
-    <nav className="sz-nav" aria-label="Kommandomeny">{navItems.map(item=><button key={item.id} data-testid={`nav-${item.id}`} aria-label={item.label} aria-pressed={item.active} aria-keyshortcuts={preferences.keyboardShortcuts?HUD_SHORTCUTS[item.id]:undefined} title={preferences.keyboardShortcuts&&HUD_SHORTCUTS[item.id]?`${item.label} (${HUD_SHORTCUTS[item.id]})`:item.label} onClick={item.action}><HudIcon name={item.icon} size={23}/><span>{item.id==='hq'?'HQ':item.label}</span>{!!item.count&&<b>{item.count}</b>}</button>)}<i/><button aria-label="Dagsrapporter" title="Dagsrapporter" disabled={!state.reports.length} onClick={()=>{setReport(state.reports.at(-1)??null);setModal('report');}}><HudIcon name="report" size={22}/><span>Rapport</span></button><button aria-label="Flere oversikter" title="Flere oversikter" onClick={()=>setModal('menu')}><HudIcon name="settings" size={22}/><span>Mer</span></button></nav>
+    <nav className="sz-nav" aria-label="Kommandomeny">{navItems.map(item=><button key={item.id} data-testid={`nav-${item.id}`} aria-label={item.label} aria-pressed={item.active} aria-keyshortcuts={preferences.keyboardShortcuts&&HUD_SHORTCUT_ACTIONS[item.id]?shortcutAria(binding(HUD_SHORTCUT_ACTIONS[item.id])):undefined} title={preferences.keyboardShortcuts&&HUD_SHORTCUT_ACTIONS[item.id]?`${item.label} (${shortcutLabel(HUD_SHORTCUT_ACTIONS[item.id])})`:item.label} onClick={item.action}><HudIcon name={item.icon} size={23}/><span>{item.id==='hq'?'HQ':item.label}</span>{!!item.count&&<b>{item.count}</b>}</button>)}<i/><button aria-label="Dagsrapporter" title="Dagsrapporter" disabled={!state.reports.length} onClick={()=>{setReport(state.reports.at(-1)??null);setModal('report');}}><HudIcon name="report" size={22}/><span>Rapport</span></button><button aria-label="Flere oversikter" title="Flere oversikter" onClick={()=>setModal('menu')}><HudIcon name="settings" size={22}/><span>Mer</span></button></nav>
     {!targeting&&!drawer&&<button className="sz-territory-button" onClick={fitTerritory} aria-label={`Vis ditt område: ${ownedCount} soner`}><HudIcon name="claim" size={20}/><span><strong>{ownedCount?`${ownedCount} ${ownedCount===1?'sone':'soner'}`:'Ingen soner sikret'}</strong><small>{ownedCount?'Ditt område':'Leiren er ikke overtatt'}</small></span><HudIcon name="expand" size={16}/></button>}
     {!targeting&&<details className="sz-search rz-nearby"><summary><HudIcon name="search" size={17}/><span>Finn et sted</span></summary><div><label><span className="sz-sr-only">Søk etter sone</span><input aria-label="Søk etter sone" placeholder="Søk i Stavanger …" value={zoneQuery} onChange={e=>setZoneQuery(e.target.value)}/></label><button onClick={()=>focusZone(state.homeZoneId)}><HudIcon name="hq"/>{index.byId.get(state.homeZoneId)?.name} · leiren</button>{(zoneQuery.trim()?index.l3.filter(z=>z.name.toLocaleLowerCase('nb').includes(zoneQuery.toLocaleLowerCase('nb'))).slice(0,10).map(z=>z.id):(index.adjacent.get(state.homeZoneId)??[]).map(e=>e.to)).map(id=><button key={id} data-zone-id={id} onClick={()=>focusZone(id)}><HudIcon name="location" size={15}/>{index.byId.get(id)?.name}<small>{STATUS_LABEL[state.zones[id].status]}</small></button>)}</div></details>}
     {!targeting&&!drawer&&!modal&&!briefHidden&&<div className="sz-brief-wrap"><TodayBrief state={state} world={world} flows={flows} onZone={focusZone} onReport={()=>{setReport(state.reports.at(-1)??null);setModal('report');}} onWork={()=>setModal('community')} onGoals={()=>setModal('goals')} onCrew={()=>setDrawer('crew')} onRegions={()=>setModal('administration')} onStock={()=>{setStockResource(flows.water.daysLeft!==null&&flows.water.daysLeft<3?'water':'food');setModal('stock');}}/><button className="sz-brief-close" aria-label="Skjul dagens råd" onClick={()=>setBriefHidden(true)}><HudIcon name="close" size={14}/></button></div>}
@@ -479,9 +510,9 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
       {drawer==='poi'&&<PoiProfile state={state} world={world} poiId={poiId} crewIds={crew} onSelectZone={focusZone} onOrder={(action,zid,target)=>addOrder(action,target,zid)} onJournal={()=>setModal('discoveries')}/>}
     </div></aside>}
     {!drawer&&!targeting&&<PinnedCards state={state} world={world} flows={flows} pins={pinned.pins} toggle={pinned.toggle} onCrew={()=>setDrawer('crew')} onStock={()=>{setStockResource(flows.water.daysLeft!==null&&flows.water.daysLeft<3?'water':'food');setModal('stock');}}/>}
-    <footer className="sz-command-bar"><CrewDock state={state} world={world} orders={orders} onPerson={openProfile}/><div className="sz-command-context">{attentionCount>0?<button className="sz-alert" onClick={()=>setModal('attention')}><HudIcon name="warning"/><b>{attentionCount}</b><span>Saker å følge opp</span></button>:<span className="sz-ready"><HudIcon name="check" size={16}/>{state.phase>=4?'Regionene venter på din plan':`${freeCrew.length} ledige i mannskapet`}</span>}</div><button className="sz-plan-button" onClick={()=>setModal('plan')} data-testid="open-plan" aria-keyshortcuts={preferences.keyboardShortcuts?'P':undefined} title={preferences.keyboardShortcuts?'Dagsplan (P)':'Dagsplan'}><HudIcon name="plan"/><span>Dagsplan</span><b>{orders.length}</b></button><button className="sz-end-day" data-testid="end-day" aria-keyshortcuts={preferences.keyboardShortcuts?'Space':undefined} title={preferences.keyboardShortcuts?'La døgnet gå (Mellomrom)':'La døgnet gå'} disabled={!!state.event||!!state.gameOver||!!replay||!!state.turnCheckpoint||!activeAvatar||targeting} onClick={()=>orders.length?setModal('plan'):setConfirmEnd(true)}><HudIcon name="sun" size={19}/><span>La døgnet gå</span>{preferences.keyboardShortcuts&&<kbd aria-hidden="true">Mellomrom</kbd>}<HudIcon name="arrow" size={18}/></button></footer>
+    <footer className="sz-command-bar"><CrewDock state={state} world={world} orders={orders} onPerson={openProfile}/><div className="sz-command-context">{attentionCount>0?<button className="sz-alert" onClick={()=>setModal('attention')}><HudIcon name="warning"/><b>{attentionCount}</b><span>Saker å følge opp</span></button>:<span className="sz-ready"><HudIcon name="check" size={16}/>{state.phase>=4?'Regionene venter på din plan':`${freeCrew.length} ledige i mannskapet`}</span>}</div><button className="sz-plan-button" onClick={()=>setModal('plan')} data-testid="open-plan" aria-keyshortcuts={preferences.keyboardShortcuts?shortcutAria(binding('plan')):undefined} title={preferences.keyboardShortcuts?`Dagsplan (${shortcutLabel('plan')})`:'Dagsplan'}><HudIcon name="plan"/><span>Dagsplan</span><b>{orders.length}</b></button><button className="sz-end-day" data-testid="end-day" aria-keyshortcuts={preferences.keyboardShortcuts?shortcutAria(binding('endDay')):undefined} title={preferences.keyboardShortcuts?`La døgnet gå (${shortcutLabel('endDay')})`:'La døgnet gå'} disabled={!!state.event||!!state.gameOver||!!replay||!!state.turnCheckpoint||!activeAvatar||targeting} onClick={()=>orders.length?setModal('plan'):setConfirmEnd(true)}><HudIcon name="sun" size={19}/><span>La døgnet gå</span>{preferences.keyboardShortcuts&&<kbd aria-hidden="true">{shortcutLabel('endDay')}</kbd>}<HudIcon name="arrow" size={18}/></button></footer>
     {message&&<div className="sz-toast" role="status"><HudIcon name="check" size={16}/>{message}<button aria-label="Lukk melding" onClick={()=>setMessage('')}><HudIcon name="close" size={14}/></button></div>}
-    {confirmEnd && <div className="rz-overlay"><section className="rz-dialog" role="dialog" aria-modal="true" aria-label="Ingen planlagte oppdrag"><h2>En rolig dag i leiren?</h2><p>Ingen nye oppdrag er planlagt. Pågående reiser og vakter fortsetter. Ledige folk blir der de er, og alle trenger mat og vann.</p><div className="rz-dialog-actions"><button onClick={() => setConfirmEnd(false)}>Tilbake til planen</button><button className="rz-primary" autoFocus data-initial-focus onClick={() => { setConfirmEnd(false); finishDay(); }}>La døgnet gå uten oppdrag <kbd aria-hidden="true">↵ / Mellomrom</kbd></button></div></section></div>}
+    {confirmEnd && <div className="rz-overlay"><section className="rz-dialog" role="dialog" aria-modal="true" aria-label="Ingen planlagte oppdrag"><h2>En rolig dag i leiren?</h2><p>Ingen nye oppdrag er planlagt. Pågående reiser og vakter fortsetter. Ledige folk blir der de er, og alle trenger mat og vann.</p><div className="rz-dialog-actions"><button onClick={() => setConfirmEnd(false)}>Tilbake til planen</button><button className="rz-primary" autoFocus data-initial-focus data-end-day-review onClick={() => { setConfirmEnd(false); finishDay(); }}>La døgnet gå uten oppdrag <kbd aria-hidden="true">↵{preferences.keyboardShortcuts?` / ${shortcutLabel('endDay')}`:''}</kbd></button></div></section></div>}
     {state.event && <div className="rz-overlay"><section className="rz-dialog rz-event" role="dialog" aria-label={state.event.title}>
       <Art path={`events/${state.event.id}`} className="rz-art rz-art-wide" />
       <p className="rz-kicker">{state.event.kicker ?? `HENDELSE · DAG ${state.day}`}</p><h2>{state.event.title}</h2><p>{state.event.text}</p>
@@ -516,15 +547,13 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
       <p><b>Mål:</b> {phase.goals.map(g => g.text).join(' ')}</p>
       <button className="rz-primary" onClick={() => setPhaseShown(state.phase)}>Videre</button>
     </section></div>}
-    {state.gameOver && <div className="rz-overlay"><section className="rz-dialog" role="dialog" aria-modal="true" aria-label="Gjennomspillingen er over"><Art path={`end/${state.gameOver.won ? 'win' : 'lose'}`} className="rz-art rz-art-wide" /><p className="rz-kicker">{state.gameOver.won ? 'SEIER' : 'SLUTT'}</p><h2>{state.gameOver.won ? 'Dere klarte det' : `Slutt etter ${state.gameOver.day} dager`}</h2><p>{state.gameOver.reason}</p>
-      <p>Fase {state.phase}, {controlled(state).length} soner, {totalPeople(state)} mennesker, {state.research.done.length} oppfinnelser, {state.counters.killed ?? 0} zombier drept.</p>
-      <CampaignEndingView state={state} /><button className="rz-primary" onClick={onRestart}>Ny gjennomspilling</button></section></div>}
+    {state.gameOver && <CampaignConclusion state={state} onRestart={onRestart} onLibrary={onLibrary}/>}
     {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}><section className={`rz-dialog rz-wide-dialog sz-modal sz-modal-${modal}${modal === 'equipment' ? ' rz-equipment-dialog' : ''}`} role="dialog" aria-modal="true" aria-label={modal === 'report' ? `Dagsrapport for dag ${report?.day ?? state.day}` : modal === 'book' ? 'ZA-boka' : modal === 'equipment' ? 'Utstyr til oppdraget' : modal === 'command' ? 'Planlegg oppdrag' : modal === 'plan' ? 'Dagsplan' : modal === 'crew-profile' ? 'Persondetaljer' : modal === 'hq' ? 'Hovedkvarter' : modal === 'resources' ? 'Alle ressurser' : modal === 'settings' ? 'Innstillinger' : 'Spilloversikt'}>
       <button className="rz-close" aria-label="Lukk" autoFocus={modal!=='plan'} onClick={closeModal}>×</button>
-      {modal === 'settings' && <GameSettings value={preferences} onChange={updatePreferences} onTestSound={()=>playSound('confirm')}/>}
+      {modal === 'settings' && <GameSettings value={preferences} onChange={updatePreferences} onTestSound={()=>playSound('confirm')} performancePanel={<PerformanceBenchmark/>}/>}
       {modal === 'resources' && <><p className="rz-kicker">SAMFUNNET</p><h2>Alle ressurser</h2><div className="sz-resource-overview">{resourceCards.map(r=><button key={r.id} data-resource-detail={r.id} onClick={()=>{if(r.id==='people'){setModal('community');return;}setStockResource(r.id);setModal('stock');}}><HudIcon name={r.icon} size={25}/><span>{r.label}<strong>{number(r.value)}</strong></span>{r.net!==undefined&&<small>{signed(r.net)} / døgn</small>}</button>)}</div></>}
       {modal === 'command' && commandDraft && <OrderComposer state={state} world={world} orders={orders} draft={commandDraft} targetOptions={taskTargets(commandDraft.action,commandDraft.zoneId)} onChange={setCommandDraft} onConfirm={queueCommand} onHelp={openHelp} onCancel={()=>{setModal(orders.some(o=>o.id===commandDraft.id)?'plan':null);setCommandDraft(null);setTargeting(false);}} onPickTarget={()=>{setModal(null);setDrawer(null);setTargeting(true);}}/>}
-      {modal === 'plan' && <><DayPlan state={state} world={world} orders={orders} onEdit={id=>{setCommandDraft(structuredClone(orders.find(o=>o.id===id)!));setModal('command');}} onRemove={id=>setOrders(orders.filter(o=>o.id!==id))} onLocate={id=>{setModal(null);focusZone(id);}} onRedirect={id=>apply(()=>redirectMission(state,world,id,state.homeZoneId),false,`redirect:${id}`)}/><div className="sz-plan-footer"><button onClick={()=>setModal(null)}><HudIcon name="back"/>Tilbake til kartet</button><button className="sz-primary" autoFocus data-initial-focus disabled={!!gearPlan.errors.length||!!state.event||!!state.turnCheckpoint||!activeAvatar} onClick={()=>{setModal(null);finishDay();}}><HudIcon name="sun"/>Gjennomfør døgnet<HudIcon name="arrow"/></button></div></>}
+      {modal === 'plan' && <><DayPlan state={state} world={world} orders={orders} onEdit={id=>{setCommandDraft(structuredClone(orders.find(o=>o.id===id)!));setModal('command');}} onRemove={id=>setOrders(orders.filter(o=>o.id!==id))} onLocate={id=>{setModal(null);focusZone(id);}} onRedirect={id=>apply(()=>redirectMission(state,world,id,state.homeZoneId),false,`redirect:${id}`)}/><div className="sz-plan-footer"><button onClick={()=>setModal(null)}><HudIcon name="back"/>Tilbake til kartet</button><button className="sz-primary" autoFocus data-initial-focus data-end-day-review disabled={!!gearPlan.errors.length||!!state.event||!!state.turnCheckpoint||!activeAvatar} onClick={()=>{setModal(null);finishDay();}}><HudIcon name="sun"/>Gjennomfør døgnet<HudIcon name="arrow"/></button></div></>}
       {modal === 'crew-profile' && <CrewProfile onHelp={openHelp} state={state} world={world} personId={personId} onAssign={id=>{setCrew([id]);setModal(null);setDrawer('crew');}} onLocate={id=>{setModal(null);focusZone(id);}} onEquipment={id=>{setCrew([id]);const position=crewPositionFor(state,id);addOrder('rest',undefined,position?.kind==='zone'?position.zoneId:selected,{id:commandId('rest',position?.kind==='zone'?position.zoneId:selected,[id]),action:'rest',zoneId:position?.kind==='zone'?position.zoneId:selected,survivorIds:[id]});}}/>}
       {modal === 'poi' && <PoiProfile state={state} world={world} poiId={poiId} crewIds={crew} onSelectZone={id=>{setModal(null);focusZone(id);}} onOrder={(action,zid,target)=>addOrder(action,target,zid)} onJournal={()=>setModal('discoveries')}/>}
       {modal === 'hq' && <HQManagement activeTab={hqTab} onTab={setHqTab} state={state} world={world} onSelectZone={id=>{setModal(null);focusZone(id);}} onOpen={view=>{if(view==='construction'){setSelected(state.hq?.zoneId??state.homeZoneId);setSelectedArea(null);setZoneTab('develop');setDrawer('zone');setModal(null);}else setModal(view==='society'?'community':view);}} construction={<section className="sz-hq-development"><p className="sz-eyebrow">UTVIKLE BASEN</p><h3>Hva trenger hovedkvarteret?</h3><TaskPalette actions={['module',...(state.phase>=2?['build' as const]:[]),...(state.phase>=3?['network' as const]:[]),'fortify','craft']} disabled={(['module','build','network','craft'] as ActionId[]).filter(action=>!taskTargets(action,state.hq?.zoneId??state.homeZoneId).length)} onTask={action=>addOrder(action,undefined,state.hq?.zoneId??state.homeZoneId)}/></section>} society={communityView} research={<ResearchView state={state} apply={apply} message={message} onHelp={openHelp}/>} stock={stockView}/>}
@@ -543,14 +572,36 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
       {modal === 'chronicle' && <><h2>Krønike</h2><ol className="rz-chronicle">{[...state.memory].reverse().map((m, i) => <li key={i}><b>Dag {m.day}</b> {m.text}</li>)}</ol></>}
       {modal === 'stock' && stockView}
       {modal === 'menu' && <><p className="rz-kicker">KOMMANDOSENTRAL</p><h2>Oversikter</h2><div className="rz-overviews">{([['settings', 'Innstillinger'], ['attention', 'Åpne saker'], ['report', 'Dagsrapporter'], ['goals', 'Faser og mål'], ['book', 'ZA-boka'], ['community', 'Leiren og arbeidsfordeling'], ...(state.phase >= 4 ? [['administration', 'Regionale ledere']] : []), ['research', 'Forskning'], ['trade', 'Grupper og handel'], ['wonders', 'Unike steder'], ['discoveries', 'Oppdagelser og spor'], ['stock', 'Lager'], ['chronicle', 'Krønike']] as [Exclude<Modal, null>, string][]).map(([id, label]) => <button key={id} disabled={id === 'report' && !state.reports.length} onClick={() => { if(id==='book'){setBookTopic(undefined);setBookReturn(null);} if(id==='stock')setStockResource(null); if (id === 'report') setReport(state.reports.at(-1) ?? null); setModal(id); }}>{label} <span>→</span></button>)}</div>
+        <button onClick={() => { setModal(null); onLibrary(); }}>Gjennomspillinger · lagre og last</button>
         <CampaignModeInfo state={state} /><p>Frø {state.seed} · Regler {state.rulesVersion} · Verden {state.worldVersion}</p>
         <button onClick={() => { const blob = new Blob([JSON.stringify(state)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `stavanger-z-dag-${state.day}.json`; a.click(); URL.revokeObjectURL(a.href); }}>Last ned lagring</button>
         <button onClick={onQuit}>Til startskjermen</button>
-        <button onClick={() => { if (confirm('Avslutte og starte på nytt? Lagringen slettes.')) { onRestart(); } }}>Ny gjennomspilling</button>
+        <button onClick={() => { if (confirm('Til startskjermen for en ny gjennomspilling? Den aktive lagres på en ledig plass. Er alle plassene fulle, må du først åpne Gjennomspillinger.')) { onRestart(); } }}>Ny gjennomspilling</button>
 </>}
     </section></div>}
     {replay && <DayReplay session={replay} step={replayStep} onSkip={closeReplay} />}
   </main>;
+}
+
+/** Endings are paged presentation only; the full ending and history stay in the save. */
+function CampaignConclusion({state,onRestart,onLibrary}:{state:RegionState;onRestart:()=>void;onLibrary:()=>void}) {
+  const [tab,setTab]=useState<'overview'|'story'|'achievements'>('overview'),[page,setPage]=useState(0);
+  const ending=state.campaign?.ending, gameOver=state.gameOver!;
+  const epiloguePages=Math.max(1,Math.ceil((ending?.epilogue.length??0)/2));
+  const researchPages=Math.ceil((ending?.facts.research.length??0)/6);
+  const decisionPages=ending?.facts.decisions.length??0;
+  const pages=tab==='story'?epiloguePages+researchPages+decisionPages:Math.max(1,Math.ceil(state.milestones.length/4));
+  const decision=ending?.facts.decisions[page-epiloguePages-researchPages];
+  const viewState:RegionState={...state,milestones:state.milestones.slice(page*4,page*4+4),campaign:state.campaign&&{...state.campaign,ending:ending&&{...ending,epilogue:ending.epilogue.slice(page*2,page*2+2),facts:{...ending.facts,decisions:[],research:[]}}}};
+  return <div className="rz-overlay"><section className="rz-dialog" role="dialog" aria-modal="true" aria-label="Gjennomspillingen er over">
+    <p className="rz-kicker">{gameOver.won?'SEIER':'SLUTT'} · DAG {gameOver.day}</p>
+    <nav className="sz-context-tabs sz-ending-tabs" aria-label="Avslutningen">{([['overview','Oversikt'],['story','Historien'],['achievements','Prestasjoner']]as const).map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setPage(0);}}>{label}</button>)}</nav>
+    {tab==='overview'&&<><Art path={`end/${gameOver.won?'win':'lose'}`} className="rz-art rz-art-wide"/><h2>{gameOver.won?'Dere klarte det':`Slutt etter ${gameOver.day} dager`}</h2><p>{gameOver.reason}</p><p>Fase {state.phase} · {controlled(state).length} soner · {totalPeople(state)} mennesker · {state.research.done.length} oppfinnelser</p></>}
+    {tab==='story'&&(ending?page<epiloguePages?<CampaignEndingView state={viewState}/>:page<epiloguePages+researchPages?<section><h2>Kunnskapen dere etterlater</h2><ul>{ending.facts.research.slice((page-epiloguePages)*6,(page-epiloguePages+1)*6).map((name,index)=><li key={index}>{name}</li>)}</ul></section>:<section><h2>Valgene som formet samfunnet</h2><p className="rz-kicker">Dag {decision?.day}</p><p>{decision?.text}</p></section>:<p>Historien tok slutt etter {gameOver.day} døgn. Se prestasjonene for det samfunnet rakk å bygge.</p>)}
+    {tab==='achievements'&&<CampaignAchievements state={viewState}/>}
+    {tab!=='overview'&&pages>1&&<div className="sz-zone-pagination"><button disabled={!page} onClick={()=>setPage(page-1)}>Forrige</button><span>{page+1} / {pages}</span><button disabled={page+1>=pages} onClick={()=>setPage(page+1)}>Neste</button></div>}
+    <div className="rz-dialog-actions"><button onClick={onLibrary}>Gjennomspillinger · lagre og last</button><button className="rz-primary" onClick={onRestart}>Ny gjennomspilling</button></div>
+  </section></div>;
 }
 
 /** A presentation of settled journal entries, not a minute-based simulation. */
@@ -782,9 +833,10 @@ function ResearchView({state,apply,message,onHelp}:{state:RegionState;apply:(fn:
 // ------------------------------------------------------------------ goals, report and trade
 
 function GoalsView({world,state}:{world:RegionWorld;state:RegionState}) {
- const [tab,setTab]=useState<'phase'|'milestones'|'knowledge'>('phase'),[phaseId,setPhaseId]=useState(state.phase),[page,setPage]=useState(0);
+ const [tab,setTab]=useState<'phase'|'milestones'|'knowledge'|'victory'>('phase'),[phaseId,setPhaseId]=useState(state.phase),[page,setPage]=useState(0);
  const phase=PHASES.find(p=>p.id===phaseId)??PHASES[0];
- return <div className="sz-goals-view"><p className="sz-eyebrow">FREMGANG</p><h2>Neste steg</h2><nav className="sz-context-tabs" aria-label="Fremgangsoversikt">{([['phase','Faser'],['milestones','Milepæler'],['knowledge','Zombiekunnskap']]as const).map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setPage(0);}}>{label}</button>)}</nav>
+ return <div className="sz-goals-view"><p className="sz-eyebrow">FREMGANG</p><h2>Neste steg</h2><nav className="sz-context-tabs" aria-label="Fremgangsoversikt">{([['phase','Faser'],['victory','Seiersveier'],['milestones','Milepæler'],['knowledge','Zombiekunnskap']]as const).map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setPage(0);}}>{label}</button>)}</nav>
+ {tab==='victory'&&<CampaignProgress state={state} world={world}/>}
  {tab==='phase'&&<><div className="sz-phase-selector">{PHASES.map(p=><button key={p.id} aria-pressed={phase.id===p.id} onClick={()=>setPhaseId(p.id)}><HudIcon name={p.id<state.phase?'check':p.id===state.phase?'goals':'lock'}/>Fase {p.id}</button>)}</div><h3>{phase.name}</h3>{phase.id===1&&state.phase===1?<PhaseOneGoals world={world} state={state}/>:<ul className="sz-goal-checks">{phase.goals.map(g=><li key={g.id}><HudIcon name={phase.id<state.phase||phase.id===state.phase&&goalMet(state,world,g.id)?'check':'target'}/>{g.text}</li>)}</ul>}</>}
  {tab==='milestones'&&<><ul className="sz-goal-checks">{MILESTONES.slice(page*4,page*4+4).map(m=><li key={m.id}><HudIcon name={state.milestones.includes(m.id)?'check':'goals'}/><span><strong>{m.title}</strong><small>{m.text}</small></span></li>)}</ul><div className="sz-zone-pagination"><button disabled={!page} onClick={()=>setPage(page-1)}>Forrige</button><span>{page+1}/{Math.max(1,Math.ceil(MILESTONES.length/4))}</span><button disabled={(page+1)*4>=MILESTONES.length} onClick={()=>setPage(page+1)}>Neste</button></div></>}
  {tab==='knowledge'&&<><ul className="sz-goal-checks">{state.mutations.slice(page*4,page*4+4).map(m=><li key={m.id}><HudIcon name={m.known?'research':'help'}/>{m.known?`${MUTATIONS.find(x=>x.id===m.id)?.name}: ${MUTATIONS.find(x=>x.id===m.id)?.text}`:'Ukjent mutasjon · undersøk zombiene'}</li>)}</ul>{!state.mutations.length&&<p>Ingen mutasjoner er registrert.</p>}{state.mutations.length>4&&<div className="sz-zone-pagination"><button disabled={!page} onClick={()=>setPage(page-1)}>Forrige</button><button disabled={(page+1)*4>=state.mutations.length} onClick={()=>setPage(page+1)}>Neste</button></div>}</>}
