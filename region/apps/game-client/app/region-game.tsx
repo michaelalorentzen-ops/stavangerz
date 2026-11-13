@@ -173,7 +173,15 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   const {preferences,updatePreferences} = useGamePreferences();
   const playSound = useGameAudio(preferences);
   const inputModality=useRef<'pointer'|'keyboard'>('pointer');
-  useEffect(()=>{const pointer=()=>{inputModality.current='pointer';};const tab=(event:KeyboardEvent)=>{if(event.key==='Tab')inputModality.current='keyboard';};window.addEventListener('pointerdown',pointer,true);window.addEventListener('keydown',tab,true);return()=>{window.removeEventListener('pointerdown',pointer,true);window.removeEventListener('keydown',tab,true);};},[]);
+  const shortcutSpaceDown=useRef(false);
+  useEffect(()=>{
+    const pointer=()=>{inputModality.current='pointer';};
+    const keyDown=(event:KeyboardEvent)=>{if(event.key==='Tab')inputModality.current='keyboard';if(event.code==='Space'&&shortcutSpaceDown.current&&event.repeat)event.preventDefault();};
+    const keyUp=(event:KeyboardEvent)=>{if(event.code==='Space'&&shortcutSpaceDown.current){shortcutSpaceDown.current=false;event.preventDefault();event.stopPropagation();}};
+    const blur=()=>{shortcutSpaceDown.current=false;};
+    window.addEventListener('pointerdown',pointer,true);window.addEventListener('keydown',keyDown,true);window.addEventListener('keyup',keyUp,true);window.addEventListener('blur',blur);
+    return()=>{window.removeEventListener('pointerdown',pointer,true);window.removeEventListener('keydown',keyDown,true);window.removeEventListener('keyup',keyUp,true);window.removeEventListener('blur',blur);};
+  },[]);
   const [replay, setReplay] = useState<DayReplaySession | null>(null);
   const [replayStep, setReplayStep] = useState(-1);
   const [reportAfterEvent, setReportAfterEvent] = useState<RegionReport | null>(null);
@@ -398,7 +406,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
       const interactive=target?.closest('button,a,summary,[role=button]');
       // Mouse users retain button focus. Tab users retain native Space activation.
       if(interactive&&(inputModality.current==='keyboard'||!interactive.closest('.sz-top,.sz-nav,.sz-command-bar,.rz-map-tools')))return;
-      event.preventDefault();if(orders.length)setModal('plan');else setConfirmEnd(true);return;
+      event.preventDefault();shortcutSpaceDown.current=true;if(orders.length)setModal('plan');else setConfirmEnd(true);return;
     }
     const shortcut=event.key.toLowerCase();
     if(!['b','c','p','h','i','home'].includes(shortcut))return;
