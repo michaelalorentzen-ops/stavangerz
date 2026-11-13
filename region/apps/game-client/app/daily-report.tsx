@@ -12,7 +12,7 @@ export interface DailyReportProps {
 type Outcome = ReportLine & { key: string; originalIndex?: number };
 const count = (value: number) => value.toLocaleString('nb-NO', { maximumFractionDigits: 1 });
 const signed = (value: number) => `${value > 0 ? '+' : ''}${count(value)}`;
-const routine = (line: ReportLine) => !['bad', 'warn'].includes(line.tone) && /^(utstyr levert ved hjemkomst|utstyr tilbake|tilbake på lager|forsyninger levert|laget er tilbake|hjemme igjen)/i.test(line.title);
+const routine = (line: ReportLine) => !['bad', 'warn'].includes(line.tone) && /^(utstyr levert ved hjemkomst|utstyr tilbake|tilbake på lager|forsyninger levert|leveransen er fremme|lokalt depot fylt|laget er tilbake|hjemme igjen)/i.test(line.title);
 function priority(line: ReportLine) {
   let result = { bad: 1000, warn: 500, good: 180, info: 50 }[line.tone] + (line.priority ?? 0);
   if (/er død|mistet|gikk tapt|kom ikke|skadet|bitt|mislyktes|sult|tørst/i.test(line.title)) result += 180;

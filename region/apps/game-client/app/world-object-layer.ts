@@ -10,7 +10,7 @@ import type { RegionState, RegionWorld } from '../../../packages/gameplay/src/re
 type Asset = { url: string; meters?: number | { height?: number }; scale?: number; animations?: string[] };
 type Piece = { id: string; asset: string; at: [number, number]; title: string; animation: string; crew?: string; zone: string; offset?: number };
 type Instance = { object: THREE.Group; mixer?: THREE.AnimationMixer; asset: string; animation: string };
-export interface WorldObjectController { update(state: RegionState): void; destroy(): void }
+export interface WorldObjectController { update(state: RegionState): void; setReducedMotion(value: boolean): void; destroy(): void }
 export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-gl'), world: RegionWorld, initial: RegionState, select: { onCrew(id: string, zoneId: string): void; onZone(id: string): void }): WorldObjectController {
   const id = 'stavangerz-world-objects';
   const scene = new THREE.Scene();
@@ -26,6 +26,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
   let assets: Record<string, Asset> = {}, pieces: Piece[] = [], state = initial, disposed = false, lost = false;
   let renderer: THREE.WebGLRenderer | undefined;
   const abort = new AbortController();
+  let reducedMotion: boolean | undefined;
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const lowPower = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2);
   const clock = new THREE.Clock();
@@ -125,13 +126,13 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         if (instance.animation !== piece.animation) {
           instance.mixer?.stopAllAction();
           const clip = template.clips.find(c => c.name.toLowerCase() === piece.animation.toLowerCase());
-          if (clip && !motion.matches) instance.mixer?.clipAction(clip).play();
+          if (clip && !(reducedMotion ?? motion.matches)) instance.mixer?.clipAction(clip).play();
           instance.animation = piece.animation;
         }
         // Screen-space offset separates pieces sharing the same authoritative zone anchor.
         const journey = journeys.get(piece.id);
         let at = piece.at;
-        if (journey && !motion.matches) {
+        if (journey && !(reducedMotion ?? motion.matches)) {
           const progress = Math.min(1, (performance.now() - journey.started) / 650);
           at = [journey.from[0] + (journey.to[0] - journey.from[0]) * progress, journey.from[1] + (journey.to[1] - journey.from[1]) * progress];
           if (progress < 1) animate = true; else journeys.delete(piece.id);
@@ -150,7 +151,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         // glTF Y-up becomes map Z-up; reflection accounts for Mercator's south-positive Y.
         instance.object.matrix.makeTranslation(anchor.x - origin.x, anchor.y - origin.y, anchor.z - origin.z).multiply(new THREE.Matrix4().makeScale(scale, -scale, scale)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
         marker?.getElement().classList.add('has-model');
-        if (instance.mixer && !motion.matches) { instance.mixer.update(delta); animate = true; }
+        if (instance.mixer && !(reducedMotion ?? motion.matches)) { instance.mixer.update(delta); animate = true; }
       }
       camera.projectionMatrix.copy(projection).multiply(new THREE.Matrix4().makeTranslation(origin.x, origin.y, origin.z));
       renderer.resetState(); renderer.render(scene, camera); renderer.resetState();
@@ -182,7 +183,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
       if (from && to && map.getZoom() >= 12 && map.getBounds().contains(to)) journeys.set(person.id, { from, to, started: performance.now() });
     }
     state = next; refresh();
-  }, destroy() {
+  }, setReducedMotion(value) { reducedMotion = value; journeys.clear(); for(const instance of instances.values()) { instance.mixer?.stopAllAction(); instance.animation = ''; } map.triggerRepaint(); }, destroy() {
     disposed = true; abort.abort(); journeys.clear(); map.off('moveend', refresh); map.off('style.load', restoreLayer);
     map.getCanvas().removeEventListener('webglcontextlost', contextLost); map.getCanvas().removeEventListener('webglcontextrestored', contextRestored);
     markers.forEach(m => m.remove()); markers.clear();
