@@ -1,6 +1,7 @@
 /** Physical late-game community: one population and depot ledger. */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import * as engine from '../packages/gameplay/src/region/engine';
 import { newRegionGame } from '../packages/gameplay/src/region/engine';
 import type { Population, RegionState, RegionWorld, ReportLine } from '../packages/gameplay/src/region/types';
 import { applyAdministrationCommand, administrations, centralAvailablePopulation, centralCommunity, regionalCommunity, regionalDay, regionalL1, regionalMandate, regionalStock, regionalSupplyRequest, type AdministrationGame } from '../packages/gameplay/src/region/administration';
@@ -90,4 +91,22 @@ for (const [difficulty, multiplier] of [['story', .85], ['survival', 1], ['reali
   const baseLocal = dailyFlows(regionalCommunity(state, world, administrations(state)[0]), world);
   assert.ok(Math.abs(localVariant.food.eaten - baseLocal.food.eaten * multiplier) < .00001, 'Regional settlement inherits the same difficulty rules');
 }
+const integratedWorkDay = (engine as typeof engine & { workDay?: unknown }).workDay;
+if (process.env.REQUIRE_REGIONAL_WORK === '1') assert.equal(typeof integratedWorkDay, 'function', 'Full integration must expose the existing workDay');
+if (typeof integratedWorkDay === 'function') {
+  const productive = applyAdministrationCommand(fresh(), world, { kind: 'establish', hqZoneId: remote.id, leaderId: legacy.survivors[1].id }) as AdministrationGame;
+  const productiveRegion = administrations(productive)[0];
+  productive.population.adults = 100; productiveRegion.residents.adults = 80;
+  productive.zones[remote.id].loot = { wood: 1000 }; productive.zones[remote.id].searched = 0;
+  productive.zones[remote.id].building = { id: 'field', hours: 0 };
+  productive.mobility!.depots[remote.id] = { food: 500, water: 500 };
+  const woodBefore = productive.stock.wood ?? 0;
+  regionalDay(productive, world, [], () => .5);
+  assert.ok(productive.zones[remote.id].loot.wood < 1000, 'Regional scavengers consume the real finite zone loot');
+  assert.ok((regionalStock(productive, productiveRegion).wood ?? 0) > 0, 'Found resources arrive in the regional physical depot');
+  assert.equal(productive.stock.wood ?? 0, woodBefore, 'Regional finds never teleport to central stock');
+  assert.ok((productive.zones[remote.id].building?.hours ?? 0) > 0 || productive.zones[remote.id].upgrades.includes('field'), 'Regional builders advance actual local construction');
+  assert.ok((productiveRegion.ledger?.produced.wood ?? 0) > 0, 'Actual delegated loot appears in the local ledger');
+  console.log('Regional work integration: finite scavenging, local construction and physical depot delivery passed.');
+} else console.log('Regional work integration deferred: groundwork branch does not yet export core workDay. Use REQUIRE_REGIONAL_WORK=1 on integration.');
 console.log('v0.4 administration: commands, legacy, physical people/stock, disjoint flows/work, budgets, idempotence and leader loss passed.');
