@@ -72,3 +72,32 @@
   .zab-foot{flex-wrap:wrap;font-size:9px}
 }
 @media(max-width:360px){.zab .zab-tabs button{padding:10px 8px;font-size:12px}.zab-paper{padding-left:13px;padding-right:13px}}
+/* Context links land on a short page in the existing handbook. */
+.zab-manual{align-items:start}
+.zab-manual-select{display:none}
+.zab-manual-nav{max-height:min(46dvh,420px);overflow-y:auto;overscroll-behavior:contain;padding:2px 4px 3px 0}
+.zab .zab-manual-nav button{min-height:38px;font-size:12px;padding:8px 10px}
+.zab-manual-nav svg{flex-shrink:0}
+.zab-manual-paper{display:flex;flex-direction:column;min-height:340px}
+.zab-manual-paper .zab-intro{margin-bottom:15px}
+.zab-manual-paper .zab-handwriting{gap:16px;padding-top:16px}
+.zab-manual-paper .zab-handwriting p{line-height:1.7}
+.zab-topic-focus{border-left:2px solid #acbf80;padding-left:12px;margin-left:-14px}
+.zab-advanced-note{margin:0 0 15px;padding:9px 11px;border-left:2px solid #70835e;background:#17221b;color:#b5c4a6;font-size:11px;line-height:1.65}
+.zab-page-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:20px}
+.zab-page-controls>span{color:#aebd9e;font:10px/1.5 ui-monospace,monospace;white-space:nowrap}
+.zab .zab-page-controls button{display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 9px;min-height:36px;background:#1a281f;border-color:#4c5e43;color:#d8e3c6;font-size:11px}
+.zab .zab-page-controls button:disabled{opacity:.4}
+@media(max-width:620px){
+  .zab-manual{gap:12px}
+  .zab-manual-nav{display:none}
+  .zab-manual-select{display:grid;gap:5px;color:#abbc9c;font-size:11px}
+  .zab .zab-manual-select select{width:100%;min-height:40px;background:#1c2a21;border:1px solid #54674a;border-radius:4px;padding:8px 10px;color:#e0e7d2;font-size:13px}
+  .zab-manual-paper{min-height:0;padding-top:19px}
+  .zab-manual-paper .zab-eyebrow{font-size:9px}
+  .zab-manual-paper h3{font-size:25px;margin-bottom:9px}
+  .zab-manual-paper .zab-intro{font-size:12px;margin-bottom:13px}
+  .zab-manual-paper .zab-handwriting h4{font-size:13px}
+  .zab-manual-paper .zab-handwriting p{font-size:12px;line-height:1.7}
+  .zab-page-controls{padding-top:18px}
+}
