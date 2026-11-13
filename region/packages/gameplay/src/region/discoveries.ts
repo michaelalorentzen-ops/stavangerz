@@ -47,7 +47,7 @@ export const DISCOVERY_WORK = {
   followupCost: { parts: 2 },
 } as const;
 
-function alive(state: RegionState, id: string) { return state.survivors.some(p => p.id === id && p.alive && !p.left); }
+function alive(state: RegionState, id: string) { return state.survivors.some(p => p.id === id && p.alive && p.health > 0 && !p.left); }
 function home(state: RegionState, id: string) {
   const p = crewPositionFor(state, id);
   return p?.kind === 'zone' && (p.zoneId === state.homeZoneId || p.zoneId === state.hq?.zoneId);
@@ -115,7 +115,10 @@ function receive(state: DiscoveryRegionState, observation: DiscoveryObservation,
   if (!livingReporters.length) return;
   const delivered = evidence.delivery === 'returned' && livingReporters.some(id => home(state, id))
     || evidence.delivery === 'radio' && evidence.radioVerified === true;
-  if (delivered) publish(state, observation, lines);
+  if (delivered) {
+    if (evidence.delivery === 'radio') observation.entry.sources = [...new Set([...observation.entry.sources, 'radio' as const])];
+    publish(state, observation, lines);
+  }
   else {
     const existing = registry(state).pending.find(p => p.id === observation.id);
     if (existing) existing.reporterIds = [...new Set([...existing.reporterIds, ...observation.reporterIds])];
