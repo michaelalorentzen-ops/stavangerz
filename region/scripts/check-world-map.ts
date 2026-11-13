@@ -37,6 +37,8 @@ async function run() {
     const knownPoiIds = new Set(world.pois.filter(p => state.zones[p.zoneId]?.status !== 'unknown').map(p => p.name));
     const shownPoiNames = await page.locator('.rz-marker').evaluateAll(elements => elements.map(e => e.getAttribute('aria-label')));
     for (const name of knownPoiIds) assert(shownPoiNames.includes(name), `Known POI is selectable: ${name}`);
+    const shownIds = await page.locator('[data-poi-id]').evaluateAll(elements => elements.map(e => (e as HTMLElement).dataset.poiId));
+    for (const poiId of shownIds) assert.notEqual(state.zones[world.pois.find(p => p.id === poiId)!.zoneId]?.status, 'unknown', `Unknown active POI must remain hidden: ${poiId}`);
     await page.screenshot({ path: `${output}/coastal-crew-glb.png` });
     await page.locator('.rz-map').screenshot({ path: `${output}/coastal-map-detail.png` });
     for (let i = 0; i < 3; i++) { await page.getByRole('button', { name: 'Zoom ut', exact: true }).click(); await page.waitForTimeout(400); }

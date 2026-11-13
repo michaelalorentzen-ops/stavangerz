@@ -3,6 +3,7 @@ import type { Map as LibreMap, Marker, CustomLayerInterface } from 'maplibre-gl'
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone } from 'three/addons/utils/SkeletonUtils.js';
+import { indexWorld } from '../../../packages/gameplay/src/region/engine';
 import { crewPositionFor, knownCrewL3Zone } from '../../../packages/gameplay/src/region/location';
 import type { RegionState, RegionWorld } from '../../../packages/gameplay/src/region/types';
 
@@ -20,7 +21,8 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
   const pending = new Set<string>();
   const journeys = new Map<string, { from: [number, number]; to: [number, number]; started: number }>();
   const markers = new Map<string, Marker>();
-  const zones = new Map(world.zones.map(z => [z.id, z]));
+  const index = indexWorld(world);
+  const zones = index.byId;
   let assets: Record<string, Asset> = {}, pieces: Piece[] = [], state = initial, disposed = false, lost = false;
   let renderer: THREE.WebGLRenderer | undefined;
   const abort = new AbortController();
@@ -54,7 +56,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         if (!at || !zoneId || !map.getBounds().contains(at)) continue;
         const offset = perZone.get(zoneId) ?? 0; perZone.set(zoneId, offset + 1);
         const identity = ['ingrid', 'marius', 'leila', 'tor'].find(name => `${person.id} ${person.name}`.toLowerCase().includes(name)) ?? 'ingrid';
-        visible.push({ id: person.id, asset: `crew-${identity}`, at, title: `${person.name} · ${zones.get(zoneId)?.name}`, animation: position?.kind === 'transit' ? 'Walk' : 'Idle', crew: person.id, zone: zoneId, offset });
+        visible.push({ id: person.id, asset: `crew-${identity}`, at, title: `${person.name} · ${zones.get(zoneId)?.name}`, animation: position?.kind === 'transit' ? 'Walk' : Object.values(state.crewMissions ?? {}).some(m => m.survivorIds.includes(person.id) && m.status === 'working' && ['guard', 'hold'].includes(m.action)) ? 'Guard' : 'Idle', crew: person.id, zone: zoneId, offset });
       }
       const home = zones.get(state.homeZoneId)?.at;
       if (home && map.getBounds().contains(home)) {
@@ -65,7 +67,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
       for (const zone of world.zones) {
         const known = state.zones[zone.id];
         if (!zone.at || !known || !map.getBounds().contains(zone.at) || known.status === 'unknown') continue;
-        if (known.status === 'controlled' && known.upgrades.some(u => /barricade|fence|wall|fort/i.test(u))) visible.push({ id: `defence-${zone.id}`, asset: 'barricade', at: zone.at, title: 'Forsvarsverk', animation: 'Idle', zone: zone.id });
+        if (known.status === 'controlled' && (known.upgrades.some(u => /barricade|fence|wall|fort/i.test(u)) || (index.adjacent.get(zone.id) ?? []).some(edge => (state.barricades[edge.connId] ?? 0) > 0))) visible.push({ id: `defence-${zone.id}`, asset: 'barricade', at: zone.at, title: 'Forsvarsverk', animation: 'Idle', zone: zone.id, offset: 1 });
         // One representative per reported threat, independent of secret counts.
         if (known.status !== 'controlled' && known.intel && known.intel.max > 0) visible.push({ id: `threat-${zone.id}`, asset: 'zombie', at: zone.at, title: `Rapportert trussel · ${known.intel.min}–${known.intel.max}`, animation: 'Idle', zone: zone.id });
       }
@@ -94,6 +96,8 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
     onAdd(_map, gl) {
       renderer = new THREE.WebGLRenderer({ canvas: map.getCanvas(), context: gl, antialias: true });
       renderer.autoClear = false;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
     },
     render(_gl, options) {
       if (!renderer || disposed || lost || lowPower || map.getZoom() < 12) return;

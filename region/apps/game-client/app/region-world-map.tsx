@@ -37,13 +37,14 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
       libRef.current = lib;
       lib.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
       const home = index.byId.get(state.homeZoneId)?.at ?? [5.73, 58.97];
-      map = new lib.Map({ container: ref.current, center: home, zoom: 14, pitch: 35, minZoom: 9, maxZoom: 17.5, maxPitch: 60, dragRotate: true, attributionControl: false, style: gameStyle() });
+      map = new lib.Map({ container: ref.current, canvasContextAttributes: { antialias: true }, center: home, zoom: 14, pitch: 35, minZoom: 9, maxZoom: 17.5, maxPitch: 60, dragRotate: true, attributionControl: false, style: gameStyle() });
       map.addControl(new lib.AttributionControl({ compact: true, customAttribution: MAP_ATTRIBUTION }));
       map.addControl(new lib.NavigationControl({ visualizePitch: true, showZoom: false }), 'bottom-right');
       map.on('load', () => {
         attachBuildings(map!);
         const l3 = world.zones.filter(z => z.level === 3 && z.geometry).map(z => ({ type: 'Feature' as const, id: z.id, properties: { id: z.id }, geometry: z.geometry as GeoJSON.Geometry }));
         const outlines = (level: number) => world.zones.filter(z => z.level === level && z.geometry).map(z => ({ type: 'Feature' as const, properties: { id: z.id }, geometry: z.geometry as GeoJSON.Geometry }));
+        map!.on('zoom', () => ref.current?.classList.toggle('rz-world-overview', map!.getZoom() < 12));
         map!.addSource('l3', { type: 'geojson', data: { type: 'FeatureCollection', features: l3 }, promoteId: 'id' });
         map!.addSource('l2', { type: 'geojson', data: { type: 'FeatureCollection', features: outlines(2) } });
         map!.addSource('l1', { type: 'geojson', data: { type: 'FeatureCollection', features: outlines(1) } });
@@ -124,22 +125,23 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     if (shifts.length) void captureRef.current?.play(shifts.map(change => ({ ...change, entry: index.byId.get(change.zoneId)?.at })), 650);
     for (const l of world.links) map.setFeatureState({ source: 'links', id: l.id }, { c: state.chokepoints[l.id] });
     // Heat only where you have looked.
-    const heat = index.l3.filter(z => state.zones[z.id].intel && state.zones[z.id].status !== 'controlled' && z.at).map(z => ({ type: 'Feature' as const, properties: { n: (state.zones[z.id].intel!.min + state.zones[z.id].intel!.max) / 2 }, geometry: { type: 'Point' as const, coordinates: z.at! } }));
+    const heat = index.l3.filter(z => state.zones[z.id].intel && state.zones[z.id].status === 'scouted' && z.at).map(z => ({ type: 'Feature' as const, properties: { n: (state.zones[z.id].intel!.min + state.zones[z.id].intel!.max) / 2 }, geometry: { type: 'Point' as const, coordinates: z.at! } }));
     (map.getSource('heat') as GeoJSONSource).setData({ type: 'FeatureCollection', features: heat });
     map.setPaintProperty('heat', 'heatmap-opacity', overlay === 'food' ? 0 : .55);
     const moves = (replayMoves ?? state.reports.at(-1)?.moves ?? []).filter(m => index.byId.get(m.from)?.at && index.byId.get(m.to)?.at).map(m => ({ type: 'Feature' as const, properties: { n: m.n }, geometry: { type: 'LineString' as const, coordinates: [index.byId.get(m.from)!.at!, index.byId.get(m.to)!.at!] } }));
     (map.getSource('moves') as GeoJSONSource).setData({ type: 'FeatureCollection', features: moves });
     // All known geographic POIs remain selectable; unknown active sites stay hidden.
     markersRef.current.forEach(m => m.remove()); markersRef.current = [];
-    const add = (at: [number, number] | undefined, kind: Parameters<typeof markerElement>[0], title: string, select: () => void, label?: string) => {
+    const add = (at: [number, number] | undefined, kind: Parameters<typeof markerElement>[0], title: string, select: () => void, label?: string, poiId?: string) => {
       if (!at) return;
       const element = markerElement(kind, title);
-      if (label) element.textContent = label;
+      if (poiId) element.dataset.poiId = poiId;
+      if (label) { element.textContent = label; element.classList.add('rz-geographic-poi'); }
       element.addEventListener('click', event => { event.stopPropagation(); select(); });
       markersRef.current.push(new lib.Marker({ element }).setLngLat(at).addTo(map));
     };
-    for (const p of world.pois.filter(p => state.zones[p.zoneId]?.status !== 'unknown')) {
-      add(p.at, p.role === 'hq' ? 'hq' : 'wonder', p.name, () => { onSelectRef.current(p.zoneId); callbacksRef.current.onSelectPoi?.(p.id); }, p.role === 'hq' ? '⌂' : p.kind.includes('water') ? '≈' : p.role === 'resource' ? '▧' : '◇');
+    for (const p of world.pois.filter(p => ['controlled', 'scouted'].includes(state.zones[p.zoneId]?.status))) {
+      add(p.at, p.role === 'hq' ? 'hq' : 'wonder', p.name, () => { onSelectRef.current(p.zoneId); callbacksRef.current.onSelectPoi?.(p.id); }, p.role === 'hq' ? '⌂' : p.kind.includes('water') ? '≈' : p.role === 'resource' ? '▧' : '◇', p.id);
     }
     for (const d of WONDERS) { const zid = state.wonders?.[d.id]?.zoneId ?? (d.found === 'claim' ? wonderZone(world, d) : undefined); if (zid && (state.wonders?.[d.id] || state.zones[zid]?.status !== 'unknown')) add(index.byId.get(zid)?.at, 'wonder', `${d.name}${state.wonders?.[d.id] ? wonderOperational(state.wonders[d.id]) ? ' (operativt)' : ' (kjent)' : ''}`, () => onSelectRef.current(zid)); }
     for (const f of state.factions.filter(f => f.known && !f.defeated && state.zones[f.zoneId]?.status !== 'controlled')) add(index.byId.get(f.zoneId)?.at, f.hostile ? 'enemy' : 'faction', f.name, () => onSelectRef.current(f.zoneId));

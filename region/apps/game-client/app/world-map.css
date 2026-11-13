@@ -16,3 +16,5 @@
 .rz-map .rz-map-area-label { background:#15272bd9; border-color:#637f7b70; box-shadow:0 2px 8px #0006; }
 .rz-map .rz-command-level { color:#b2cbc7; letter-spacing:.04em; }
 @media (prefers-reduced-motion:reduce) { .rz-world-piece * { animation:none!important; transition:none!important; } }
+
+.rz-world-overview .rz-geographic-poi { display: none; }
