@@ -5,7 +5,7 @@ import { newRegionGame } from '../packages/gameplay/src/region/engine';
 import type { RegionState, RegionWorld, ReportLine, Stock } from '../packages/gameplay/src/region/types';
 import { WONDERS, WONDER_INSTALLATIONS, gainWonder, discoverWonders, wonderEffects, nextWonderLevel, wonderHolding, wonderOperational, wonderWorkCost, wonderOrderError, wonderZone, workOnWonder } from '../packages/gameplay/src/region/wonders';
 import { observeDiscoveries, deliverDiscoveryReports, maintainDiscoveries, transmitDiscoveryReports, type DiscoveryRegionState } from '../packages/gameplay/src/region/discoveries';
-import { EVENTS_WONDERS } from '../packages/gameplay/src/region/events-wonders';
+import { createDiscoveryEvents, EVENTS_WONDERS } from '../packages/gameplay/src/region/events-wonders';
 const world = JSON.parse(readFileSync('apps/game-client/public/world/region-v1.json', 'utf8')) as RegionWorld;
 const lines: ReportLine[] = [];
 const fresh = (): DiscoveryRegionState => { const s = newRegionGame(world, world.starts[0].zoneId, 743); delete s.event; s.crewPositions = Object.fromEntries(s.survivors.map(p => [p.id, { kind: 'zone' as const, zoneId: s.homeZoneId }])); return s; };
@@ -73,7 +73,11 @@ const dead = structuredClone(scout); dead.survivors.find(p => p.id === 'ingrid')
 maintainDiscoveries(dead, lines); deliverDiscoveryReports(dead, world, lines); transmitDiscoveryReports(dead, world, ['ingrid'], true, lines);
 assert.equal(dead.wonders?.tower, undefined);
 transmitDiscoveryReports(scout, world, ['ingrid'], false, lines); assert.equal(scout.wonders?.tower, undefined);
-transmitDiscoveryReports(scout, world, ['ingrid'], true, lines); assert.equal(wonderHolding(scout, 'tower')?.installation?.status, 'discovered');
+const siteRadioEvent = createDiscoveryEvents(() => true).find(event => event.id === 'fieldRadioReport')!;
+assert.equal(siteRadioEvent.when(scout, world), true, 'A unique-site observation also has a real radio-event path');
+scout.event = { id: siteRadioEvent.id, ...siteRadioEvent.make(scout, world, () => .5)! };
+siteRadioEvent.resolve(scout, world, 'receive', () => .5, lines);
+assert.equal(wonderHolding(scout, 'tower')?.installation?.status, 'discovered');
 
 // New wonder events supply clues, not remote combat/people/resources. Saved old event promises remain active.
 for (const [id, choice, wonderId] of [['cruiseShip', 'board', 'cruise'], ['planeFound', 'take', 'plane']] as const) {

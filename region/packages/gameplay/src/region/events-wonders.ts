@@ -22,7 +22,8 @@ export function createDiscoveryEvents(connected: (state: RegionState, world: Reg
     return !entries['emergency-cupboard'] ? sites.ordinary
       : !entries['tor-repair-notes'] && living(s).some(p => p.id === 'tor') ? sites.tor : undefined;
   };
-  const radioReport = (s: RegionState, w: RegionWorld) => (s as DiscoveryRegionState).discoveries?.pending
+  const privateReports = (s: RegionState) => [...((s as DiscoveryRegionState).discoveries?.pending ?? []), ...((s as DiscoveryRegionState).discoveries?.wonderObservations ?? [])];
+  const radioReport = (s: RegionState, w: RegionWorld) => privateReports(s)
     .find(observation => observation.reporterIds.some(id => living(s).some(p => p.id === id)) && connected(s, w, observation.reporterIds));
   return [
     {
@@ -56,7 +57,7 @@ export function createDiscoveryEvents(connected: (state: RegionState, world: Reg
       },
       resolve: (s, w, choice, _rng, lines) => {
         if (choice !== 'receive') return;
-        const observation = (s as DiscoveryRegionState).discoveries?.pending.find(p => p.id === s.event?.data?.observationId);
+        const observation = privateReports(s).find(p => p.id === s.event?.data?.observationId);
         if (!observation) return;
         const verified = connected(s, w, observation.reporterIds);
         if (!verified) { lines.push({ tone: 'warn', title: 'Sambandet brøt sammen', text: 'Ingen nye feltnotater kom fram. Laget beholder notatet til hjemkomst eller et nytt fungerende samband.' }); return; }
