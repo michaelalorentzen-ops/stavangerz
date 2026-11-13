@@ -88,10 +88,12 @@ export function gearStateFor(state: RegionState): RegionGearState {
 }
 
 /** Only stored equipment at the current depot or this person's own real inventory. */
-function canUse(state: RegionState, item: GearItem, survivorId: string): boolean {
+function canUse(state: RegionState, item: GearItem, survivorId: string, field = false): boolean {
   const person = livingPerson(state, survivorId);
-  if (item.reported === false || !person || (person.awayUntil && person.awayUntil > state.day) || crewGearAway(state, survivorId)) return false;
-  if (item.location.kind === 'stored') return item.location.zoneId === state.homeZoneId && person.health >= 25 && physicallyHome(state, survivorId);
+  if (item.reported === false || !person || (person.awayUntil && person.awayUntil > state.day) || (!field && crewGearAway(state, survivorId))) return false;
+  const actual = crewPositionFor(state, survivorId);
+  const origin = field && actual?.kind === 'zone' ? actual.zoneId : state.homeZoneId;
+  if (item.location.kind === 'stored') return item.location.zoneId === origin && person.health >= 25 && (field ? actual?.kind === 'zone' : physicallyHome(state, survivorId));
   return item.location.kind === 'carried' && item.location.survivorId === survivorId && !item.location.missionId;
 }
 export const knownGearItems = (state: RegionState): GearItem[] => gearStateFor(state).items.filter(item => item.reported !== false);
@@ -163,6 +165,7 @@ export function planGearForOrders(
   for (const order of orders) {
     const gearBeforeOrder = copy(gear);
     const errors = [...validate(order)];
+    const field = true; // Every mission starts at its actual known origin, including idle field crews.
     // A deliberate HQ handover is transactional and precedes all same-crew picks.
     // This makes e.g. Marius' explicitly released rifle available to Tor in one order.
     for (const personId of order.survivorIds) {
@@ -188,14 +191,16 @@ export function planGearForOrders(
       const items: GearCrewPlan['items'] = {};
       const available: GearItem[] = [];
       let unavailable: string | undefined;
-      if (!person || (person.awayUntil && person.awayUntil > state.day) || crewGearAway(state, survivorId)) unavailable = 'Personen er borte eller utilgjengelig.';
+      const physical = crewPositionFor(state, survivorId);
+      const bound = Object.values(state.crewMissions ?? {}).some(m => !['complete', 'failed'].includes(m.status) && m.survivorIds.includes(survivorId));
+      if (physical?.kind !== 'zone' || bound || !person || (person.awayUntil && person.awayUntil > state.day) || (!field && crewGearAway(state, survivorId))) unavailable = 'Personen er borte eller utilgjengelig.';
       else if (used.has(survivorId)) unavailable = 'Personen er allerede reservert i en tidligere ordre.';
       else if (person.health < 25 && !['rest', 'heal'].includes(order.action)) unavailable = 'Personen er for skadet til oppdrag.';
       if (unavailable) errors.push(`${person?.name ?? survivorId}: ${unavailable}`);
       for (const slot of GEAR_SLOTS) {
         const hasLock = Object.prototype.hasOwnProperty.call(preference.locks ?? {}, slot);
         const lockedId = preference.locks?.[slot];
-        const candidates = gear.items.filter(item => !reservations[item.id] && canUse(snapshot, item, survivorId) && GEAR_CATALOG[item.kind]?.slot === slot);
+        const candidates = gear.items.filter(item => !reservations[item.id] && canUse(snapshot, item, survivorId, field) && GEAR_CATALOG[item.kind]?.slot === slot);
         available.push(...copy(candidates));
         let item: GearItem | undefined;
         if (hasLock) {

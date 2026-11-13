@@ -16,7 +16,8 @@ import { indexWorld } from './engine';
 import { EVENTS_PEOPLE } from './events-people';
 import { EVENTS_WORLD, bindWorld } from './events-world';
 import { EVENTS_FACTIONS } from './events-factions';
-import { EVENTS_WONDERS } from './events-wonders';
+import { communicationsStatus } from './communications';
+import { EVENTS_WONDERS, createDiscoveryEvents } from './events-wonders';
 
 const CORE: EventDef[] = [
   {
@@ -353,7 +354,7 @@ const CORE: EventDef[] = [
   },
 ];
 
-const EVENTS: EventDef[] = [...CORE, ...EVENTS_PEOPLE, ...EVENTS_WORLD, ...EVENTS_FACTIONS, ...EVENTS_WONDERS];
+const EVENTS: EventDef[] = [...CORE, ...EVENTS_PEOPLE, ...EVENTS_WORLD, ...EVENTS_FACTIONS, ...EVENTS_WONDERS, ...createDiscoveryEvents((s, w, ids) => communicationsStatus(s, w, ids).connected)];
 export const EVENT_IDS = EVENTS.map(e => e.id);
 
 function eligible(def: EventDef, state: RegionState, world: RegionWorld) {
