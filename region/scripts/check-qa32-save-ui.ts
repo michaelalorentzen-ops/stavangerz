@@ -13,7 +13,7 @@ const world = JSON.parse(readFileSync('apps/game-client/public/world/region-v1.j
 const camp = world.starts.find(s => s.name.startsWith('Lundsneset'))!.zoneId;
 const output = 'artifacts/qa32-save-ui'; mkdirSync(output, { recursive: true });
 async function main() {
- const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] });
+ const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
  try { for (const width of [1280, 390]) {
   const context = await browser.newContext({ viewport: { width, height: width === 1280 ? 800 : 844 }, reducedMotion: 'reduce' });
   const page = await context.newPage(), errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
