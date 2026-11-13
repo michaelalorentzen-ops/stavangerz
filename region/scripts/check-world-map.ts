@@ -33,6 +33,7 @@ async function run() {
     await load(page, state);
     await page.waitForFunction(() => document.querySelectorAll('.rz-world-crew.has-model').length === 4);
     assert.equal(await page.locator('.rz-world-crew').count(), 4);
+    assert.equal(await page.locator('[data-asset="hq"]').count(), 1, 'An established HQ has its own actual model.');
     const crewCenters = await page.locator('.rz-world-crew').evaluateAll(elements => elements.map(element => { const box = element.getBoundingClientRect(); return box.x + box.width / 2; }));
     assert(Math.max(...crewCenters) - Math.min(...crewCenters) < 180, 'Crew hit targets stay aligned with the GLB group regardless of CSS import order.');
     assert(requests.some(r => r.startsWith('200 ') && r.includes('crew-')));
@@ -57,12 +58,14 @@ async function run() {
     const fallback = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
     await fallback.addInitScript("Object.defineProperty(navigator, 'hardwareConcurrency', { get() { return 1; } });");
     const conservative = structuredClone(state);
+    conservative.hq = undefined;
     const area = index.byId.get(camp)!.parentId!;
     conservative.crewPositions![state.survivors[2].id] = { kind: 'area-duty', areaLevel: 2, areaZoneId: area, duty: 'guard' };
     conservative.crewPositions![state.survivors[3].id] = { kind: 'away-unknown' };
     await load(fallback, conservative);
     await fallback.waitForFunction(() => document.querySelectorAll('.rz-world-crew').length === 2);
     assert.equal(await fallback.locator('.rz-world-crew.has-model').count(), 0);
+    assert.equal(await fallback.locator('[data-asset="hq"]').count(), 0, 'A temporary camp is not shown as an established HQ.');
     assert.equal(await fallback.locator('.rz-world-crew svg').count(), 2);
     await fallback.screenshot({ path: `${output}/low-power-coverage-fallback.png` });
     assert.deepEqual(errors, []);

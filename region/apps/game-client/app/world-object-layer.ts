@@ -61,10 +61,11 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
       }
       const home = zones.get(state.homeZoneId)?.at;
       if (home && map.getBounds().contains(home)) {
-        visible.push({ id: 'camp', asset: 'hq', at: home, title: 'Leiren', animation: 'Idle', zone: state.homeZoneId });
         if (Object.values(state.stock).some(n => n > 0)) visible.push({ id: 'camp-supplies', asset: 'supply-crates', at: home, title: 'Leirlager', animation: 'Idle', zone: state.homeZoneId, offset: -1 });
         if ((state.stock.boat ?? 0) > 0) visible.push({ id: 'camp-boat', asset: 'boat', at: home, title: 'Båt ved leiren', animation: 'Idle', zone: state.homeZoneId, offset: -2 });
       }
+      const hqAt = state.hq ? zones.get(state.hq.zoneId)?.at : undefined;
+      if (state.hq && hqAt && map.getBounds().contains(hqAt)) visible.push({ id: 'headquarters', asset: 'hq', at: hqAt, title: 'Hovedkvarter', animation: 'Idle', zone: state.hq.zoneId });
       for (const zone of world.zones) {
         const known = state.zones[zone.id];
         if (!zone.at || !known || !map.getBounds().contains(zone.at) || known.status === 'unknown') continue;
@@ -81,6 +82,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
       if (!markers.has(piece.id)) {
         const button = document.createElement('button'); button.type = 'button';
         button.className = `rz-world-piece ${piece.crew ? 'rz-world-crew' : 'rz-world-prop'} ${piece.asset === 'zombie' ? 'rz-world-threat' : ''}`;
+        button.dataset.asset = piece.asset;
         button.title = piece.title; button.setAttribute('aria-label', piece.title);
         const silhouette = piece.crew ? '<circle cx="16" cy="8" r="4"/><path d="M11 15h10l3 10h-5v7h-6v-7H8z"/>' : piece.asset === 'zombie' ? '<path d="M16 4 30 30H2z"/><path d="M16 12v8m0 4v2" stroke="#17302c" stroke-width="3"/>' : piece.asset === 'hq' ? '<path d="m2 16 14-12 14 12h-4v16H6V16zm11 7v9h6v-9z"/>' : '<path d="M3 10h26v20H3zM3 10l8-6h12l6 6M16 10v20" stroke="currentColor" stroke-width="2" fill="none"/>';
         button.innerHTML = `<span class="rz-piece-fallback" aria-hidden="true"><svg viewBox="0 0 32 36" width="26" height="30" fill="currentColor">${silhouette}</svg></span><span class="rz-piece-caption"></span>`;
