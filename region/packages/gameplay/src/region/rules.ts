@@ -57,7 +57,7 @@ export const ACTIONS: Record<ActionId, { label: string; help: string; noise: num
   investigate: { label: 'Undersøk spor', help: 'Undersøk et oppdaget lokalt spor.', noise: 0 },
   discoveryChoice: { label: 'Følg opp funn', help: 'Gjennomfør et valg ved et undersøkt sted.', noise: 0 },
   scout: { label: 'Speid', help: 'Se hvor mange zombier som er der, og hva som kan finnes. Lite støy.', noise: 0 },
-  clear: { label: 'Rydd', help: 'Drep zombier. Skytevåpen dreper flere, men bruker ammunisjon og lager støy som trekker andre til.', noise: 1 },
+  clear: { label: 'Bekjemp zombier', help: 'Drep zombier. Skytevåpen dreper flere, men bruker ammunisjon og lager støy som trekker andre til.', noise: 1 },
   search: { label: 'Søk', help: 'Gå gjennom bygg og hent det som finnes. Kan gi nye overlevende.', noise: 1 },
   claim: { label: 'Overta', help: 'Gjør sonen til deres. Krever at den er nesten tom for zombier.', noise: 0 },
   fortify: { label: 'Sperr grensene', help: 'Bygg sperringer mot nabosoner dere ikke eier. Zombier må slite dem ned for å komme inn.', noise: 1 },

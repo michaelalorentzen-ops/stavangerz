@@ -312,7 +312,7 @@ export function assaultOdds(state: RegionState, crew: RegionSurvivor[], faction:
 
 // ------------------------------------------------------------------ previews
 
-export interface OrderPreview { valid: boolean; errors: string[]; hours: number; costs: Record<string, number>; risk: 'Lav' | 'Middels' | 'Høy'; text: string }
+export interface OrderPreview { valid: boolean; errors: string[]; hours: number; costs: Record<string, number>; risk: 'Lav' | 'Middels' | 'Høy' | 'Ukjent'; text: string }
 
 export function hqModules(state: RegionState): string[] {
   if (!state.hq) return [];
@@ -406,16 +406,19 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
     case 'clear': {
       const kills = estimateKills(state, crew, hours);
       text = `Kan drepe om lag ${Math.round(kills.kills)} zombier${kills.ammo ? ` og bruker om lag ${Math.ceil(kills.ammo)} patroner` : ''}.`;
-      const known = z.intel ? (z.intel.min + z.intel.max) / 2 : z.zombies;
-      risk = known > kills.kills * 2 ? 'Høy' : known > kills.kills ? 'Middels' : 'Lav';
+      if (z.status === 'unknown' || !z.intel) risk = 'Ukjent';
+      else {
+        const known = (z.intel.min + z.intel.max) / 2;
+        risk = known > kills.kills * 2 ? 'Høy' : known > kills.kills ? 'Middels' : 'Lav';
+      }
       break;
     }
     case 'search': {
       const left = Math.max(0, total - z.searched);
       text = left ? `Gjennomsøker om lag ${Math.round(Math.min(100, hours / total * 100))} % av sonen. ${Math.round(z.searched / total * 100)} % er gjort.` : 'Sonen er allerede gjennomsøkt.';
       if (!left) errors.push('Ingenting igjen å søke gjennom.');
-      const known = z.intel ? z.intel.max : z.zombies;
-      risk = known > crew.length * 6 ? 'Høy' : known > crew.length * 2 ? 'Middels' : 'Lav';
+      if (z.status === 'unknown' || !z.intel) risk = 'Ukjent';
+      else risk = z.intel.max > crew.length * 6 ? 'Høy' : z.intel.max > crew.length * 2 ? 'Middels' : 'Lav';
       break;
     }
     case 'claim': {
@@ -441,6 +444,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
     case 'build': {
+      if (state.phase < 2) errors.push('Soneutbygging åpnes i fase 2.');
       if (!isControlled) errors.push('Bygg bare i soner dere eier.');
       const u = UPGRADE_COST[order.target ?? ''];
       if (!u || !upgradesFor(state, world, order.zoneId).some(x => x.id === order.target)) errors.push('Kan ikke bygges her.');
@@ -464,6 +468,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
     case 'network': {
+      if (state.phase < 3) errors.push('Områdenettverk åpnes i fase 3.');
       const l2 = zone.parentId ?? '';
       const n = NETWORK_COST[order.target ?? ''];
       if (!n) { errors.push('Ukjent nett.'); break; }
@@ -1458,8 +1463,15 @@ function migrate(state: RegionState, world: RegionWorld, noise: Record<string, n
   }
   // NPC groups clear their own ground.
   for (const f of state.factions) if (!f.defeated) state.zones[f.zoneId].zombies = 0;
-  const intoOwned = result.movements.filter(mv => state.zones[mv.toId].status === 'controlled').reduce((n, mv) => n + mv.count, 0);
-  if (intoOwned) lines.push({ tone: 'warn', title: `${intoOwned} zombier kom inn i områdene deres`, text: 'Lyd trekker dem til. Sperr grensene eller hold vakt.' });
+  // Report actual destinations before the map animation's forty-move cap.
+  const incoming = new Map<string, number>();
+  for (const move of result.movements) if (move.count > 0 && state.zones[move.toId].status === 'controlled') incoming.set(move.toId, (incoming.get(move.toId) ?? 0) + move.count);
+  const totalIncoming = [...incoming.values()].reduce((sum, count) => sum + count, 0);
+  for (const [zoneId, count] of [...incoming].sort(([a], [b]) => a.localeCompare(b))) lines.push({
+    tone: 'warn', category: 'migration', zoneId, facts: { count, totalIncoming, destinationCount: incoming.size },
+    title: `${count} zombier kom inn i ${index.byId.get(zoneId)!.name}`,
+    text: 'Lyd trekker dem til. Sperr grensene eller hold vakt.',
+  });
   const seen = (id: string) => state.zones[id]?.status !== 'unknown';
   const moves = result.movements.filter(mv => mv.count > 0 && (seen(mv.fromId) || seen(mv.toId))).sort((a, b) => b.count - a.count).slice(0, 40)
     .map(mv => ({ from: mv.fromId, to: mv.toId, n: mv.count }));
