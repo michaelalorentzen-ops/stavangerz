@@ -33,6 +33,7 @@
 .zab .zab-goal-note button{margin-top:12px;border-color:#7b8f5e;background:#2c3d29;color:#dbe5bf;font-size:12px;padding:9px 12px;min-height:40px;text-align:left}
 .zab .zab-manual-nav button{display:flex;justify-content:space-between;gap:10px;min-height:44px;align-items:center;text-align:left;border:1px solid #344239;background:#19241e;padding:10px 12px;color:var(--book-muted)}
 .zab .zab-manual-nav button.active{border-color:#92a36a;background:#2b3929;color:#e1e7cd}
+.zab .zab-journal-link{margin-top:16px;min-height:44px;border-color:#718451;background:#263623;color:#dbe5bf}
 .zab-field{display:grid;gap:12px;padding:20px 0}
 .zab-field-card{padding:20px;border:1px solid var(--book-line);border-radius:4px;background:#1c2821}
 .zab-field-card h3{font-size:25px;margin-bottom:10px}
