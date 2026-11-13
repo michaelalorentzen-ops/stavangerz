@@ -76,6 +76,22 @@ const passengerEdge = { ...radioEdge, communication: undefined, logistics: { car
 state.population.adults = 1;
 assert.equal(missionLoad(state, passengerEdge).weight, 31, 'Passenger and existing weapon share capacity');
 assert.equal(missionPreview(state, world, passengerEdge).valid, false);
+// Cargo boats and the transport boat are separate physical reservations.
+const coast = world.zones.find(z => z.id === home)!;
+const seaWorld: RegionWorld = { ...world, pois: [], starts: [], neighbours: [], links: [], zones: [
+  { ...coast, id: 'sea-a', at: [5.7, 58.9], measures: { ...coast.measures!, coastM: 1000 } },
+  { ...coast, id: 'sea-b', at: [5.71, 58.9], measures: { ...coast.measures!, coastM: 1000 } },
+] };
+for (const boats of [1, 2]) {
+  const s = newRegionGame(seaWorld, 'sea-a', 202); s.event = undefined; ensureMobility(s);
+  s.stock.boat = boats;
+  const o: RegionOrder = { id: 'boat-delivery', action: 'supply', zoneId: 'sea-b', survivorIds: ['tor'], logistics: { cargo: { boat: 1 }, stay: true } };
+  assert.equal(missionPreview(s, seaWorld, o).valid, boats === 2);
+  if (boats === 2) {
+    const m = beginMission(s, seaWorld, o);
+    assert.equal(m.transportBoat, 1); assert.equal(m.cargo!.boat, 1); assert.equal(s.stock.boat, 0);
+  }
+}
 // New version only describes new games; reading/planning old region-2 state never rewrites it.
 assert.equal(newRegionGame(world, home, 202).rulesVersion, 'region-0.4');
 const legacy = fresh(); legacy.rulesVersion = 'region-0.3';

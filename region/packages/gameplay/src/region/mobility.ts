@@ -124,9 +124,11 @@ export function missionPreview(state: RegionState, world: RegionWorld, order: Re
   }
   const load = missionLoad(state, order, actionCosts);
   if (load.weight > capacity) errors.push('Forsendelsen overstiger lagets bærekapasitet.');
+  const boatRequired = route.some((id, i) => i > 0 && !landEdge(state, world, route[i - 1], id)) || (back ?? []).some((id, i, list) => i > 0 && !landEdge(state, world, list[i - 1], id));
+  if (boatRequired && (localStock(state, origin).boat ?? 0) < (load.cargo.boat ?? 0) + 1) errors.push('Avreisestedet trenger en egen transportbåt i tillegg til båtene i lasten.');
   const returnHours = Math.max(0, (back?.length ?? 1) - 1) * R.hopHours;
   const workHours = ['travel', 'return', 'retrieve', 'supply', 'areaGuard'].includes(order.action) ? 0 : Math.max(1, Math.min(R.workHours, 15 - travelHours - returnHours));
-  return { valid: !errors.length, errors, originZoneId: origin, targetZoneId: target, returnZoneId, routeZoneIds: route, travelHours, workHours, capacity, reservedCargo: load.cargo, availableCapacity: load.availableCapacity, returnsToday: travelHours + workHours + returnHours <= 15, boatRequired: route.some((id, i) => i > 0 && !landEdge(state, world, route[i - 1], id)) || (back ?? []).some((id, i, list) => i > 0 && !landEdge(state, world, list[i - 1], id)) };
+  return { valid: !errors.length, errors, originZoneId: origin, targetZoneId: target, returnZoneId, routeZoneIds: route, travelHours, workHours, capacity, reservedCargo: load.cargo, availableCapacity: load.availableCapacity, returnsToday: travelHours + workHours + returnHours <= 15, boatRequired };
 }
 export function beginMission(state: RegionState, world: RegionWorld, order: RegionOrder, costs: Stock = {}): CrewMission {
   ensureMobility(state);
