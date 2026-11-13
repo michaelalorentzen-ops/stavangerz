@@ -79,7 +79,8 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         const button = document.createElement('button'); button.type = 'button';
         button.className = `rz-world-piece ${piece.crew ? 'rz-world-crew' : 'rz-world-prop'}`;
         button.title = piece.title; button.setAttribute('aria-label', piece.title);
-        button.innerHTML = `<span class="rz-piece-fallback" aria-hidden="true">${piece.crew ? '●' : piece.asset === 'zombie' ? '⚠' : piece.asset === 'hq' ? '⌂' : '▥'}</span><span class="rz-piece-caption"></span>`;
+        const silhouette = piece.crew ? '<circle cx="16" cy="8" r="4"/><path d="M11 15h10l3 10h-5v7h-6v-7H8z"/>' : piece.asset === 'zombie' ? '<path d="M16 4 30 30H2z"/><path d="M16 12v8m0 4v2" stroke="#17302c" stroke-width="3"/>' : piece.asset === 'hq' ? '<path d="m2 16 14-12 14 12h-4v16H6V16zm11 7v9h6v-9z"/>' : '<path d="M3 10h26v20H3zM3 10l8-6h12l6 6M16 10v20" stroke="currentColor" stroke-width="2" fill="none"/>';
+        button.innerHTML = `<span class="rz-piece-fallback" aria-hidden="true"><svg viewBox="0 0 32 36" width="26" height="30" fill="currentColor">${silhouette}</svg></span><span class="rz-piece-caption"></span>`;
         button.querySelector('.rz-piece-caption')!.textContent = piece.crew ? piece.title.split(' ')[0] : '';
         button.onclick = event => { event.stopPropagation(); const current = pieces.find(p => p.id === piece.id); if (!current) return; if (current.crew) select.onCrew(current.crew, current.zone); else select.onZone(current.zone); };
         markers.set(piece.id, new lib.Marker({ element: button, anchor: 'bottom', offset: [piece.crew ? 35 + (piece.offset ?? 0) * 42 : (piece.offset ?? 0) * 48, piece.crew ? -8 : 8] }).setLngLat(piece.at).addTo(map));
@@ -97,6 +98,8 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
     render(_gl, options) {
       if (!renderer || disposed || lost || lowPower || map.getZoom() < 12) return;
       const projection = new THREE.Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
+      // Keep GPU coordinates near zero; global Mercator floats jitter at street zoom.
+      const origin = lib.MercatorCoordinate.fromLngLat(map.getCenter(), 0);
       const delta = Math.min(clock.getDelta(), .05);
       let animate = false;
       for (const piece of pieces) {
@@ -132,11 +135,11 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         const scale = anchor.meterInMercatorCoordinateUnits() * metersPerPixel * (piece.crew ? 45 : piece.asset === 'hq' ? 64 : 36) / template.height;
         instance.object.matrixAutoUpdate = false;
         // glTF Y-up becomes map Z-up; reflection accounts for Mercator's south-positive Y.
-        instance.object.matrix.makeTranslation(anchor.x, anchor.y, anchor.z).multiply(new THREE.Matrix4().makeScale(scale, -scale, scale)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
+        instance.object.matrix.makeTranslation(anchor.x - origin.x, anchor.y - origin.y, anchor.z - origin.z).multiply(new THREE.Matrix4().makeScale(scale, -scale, scale)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
         marker?.getElement().classList.add('has-model');
         if (instance.mixer && !motion.matches) { instance.mixer.update(delta); animate = true; }
       }
-      camera.projectionMatrix.copy(projection);
+      camera.projectionMatrix.copy(projection).multiply(new THREE.Matrix4().makeTranslation(origin.x, origin.y, origin.z));
       renderer.resetState(); renderer.render(scene, camera); renderer.resetState();
       if (animate) map.triggerRepaint();
     },
