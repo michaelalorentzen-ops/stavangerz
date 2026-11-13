@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import * as engine from '../packages/gameplay/src/region/engine';
 import { newRegionGame } from '../packages/gameplay/src/region/engine';
 import type { Population, RegionState, RegionWorld, ReportLine } from '../packages/gameplay/src/region/types';
-import { applyAdministrationCommand, administrations, centralAvailablePopulation, centralCommunity, regionalCommunity, regionalDay, regionalL1, regionalMandate, regionalStock, regionalSupplyRequest, type AdministrationGame } from '../packages/gameplay/src/region/administration';
+import { applyAdministrationCommand, administrations, centralAvailablePopulation, centralCommunity, regionalCommunity, regionalDay, regionalGuardFor, regionalOverrun, regionalL1, regionalMandate, regionalStock, regionalSupplyRequest, type AdministrationGame } from '../packages/gameplay/src/region/administration';
 import { dailyFlows } from '../packages/gameplay/src/region/economy';
 import { initializeCampaign } from '../packages/gameplay/src/region/campaign';
 import { societyDay, workforce } from '../packages/gameplay/src/region/society';
@@ -91,6 +91,21 @@ for (const [difficulty, multiplier] of [['story', .85], ['survival', 1], ['reali
   const baseLocal = dailyFlows(regionalCommunity(state, world, administrations(state)[0]), world);
   assert.ok(Math.abs(localVariant.food.eaten - baseLocal.food.eaten * multiplier) < .00001, 'Regional settlement inherits the same difficulty rules');
 }
+// Regional patrol strength is a conserved allocation across its land, not replicated per zone.
+const defending = applyAdministrationCommand(fresh(), world, { kind: 'establish', hqZoneId: remote.id, leaderId: legacy.survivors[1].id }) as AdministrationGame;
+const defendingRegion = administrations(defending)[0]; defendingRegion.residents.adults = 8;
+const sibling = world.zones.find(z => z.level === 3 && z.id !== remote.id && regionalL1(world, z.id) === defendingRegion.l1Id)!;
+const oneZoneDefense = regionalGuardFor(defending, world, remote.id);
+defending.zones[sibling.id].status = 'controlled';
+assert.ok(Math.abs(regionalGuardFor(defending, world, remote.id) + regionalGuardFor(defending, world, sibling.id) - oneZoneDefense) < .00001, 'Expanding territory cannot replicate the guard budget');
+const centralBeforeAttack = centralAvailablePopulation(defending).adults;
+const homeHealth = defending.survivors[0].health;
+regionalOverrun(defending, world, remote.id, 500, [], () => .9);
+assert.equal(defendingRegion.residents.adults, 0);
+assert.equal(centralAvailablePopulation(defending).adults, centralBeforeAttack, 'Local attack cannot kill central residents');
+assert.equal(defending.survivors[0].health, homeHealth, 'Local attack only injures crew physically there');
+assert.ok(defending.survivors[1].health < legacy.survivors[1].health);
+assert.equal(regionalOverrun(defending, world, home, 500, [], () => .9), false);
 const integratedWorkDay = (engine as typeof engine & { workDay?: unknown }).workDay;
 if (process.env.REQUIRE_REGIONAL_WORK === '1') assert.equal(typeof integratedWorkDay, 'function', 'Full integration must expose the existing workDay');
 if (typeof integratedWorkDay === 'function') {

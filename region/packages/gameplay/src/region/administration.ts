@@ -2,8 +2,11 @@
 import type { Population, RegionState, RegionWorld, ReportLine, Stock, WorkId } from './types';
 import { indexWorld } from './engine';
 import * as engine from './engine';
-import { researchDay } from './progress';
+import { researchDay, tech } from './progress';
 import { POP } from './systems';
+import { R } from './rules';
+import { gearDamageMultiplier } from './gear';
+import { difficultyRules } from './campaign';
 import { crewPositionFor } from './location';
 import { dailyFlows } from './economy';
 import { lawMods } from './society';
@@ -290,7 +293,7 @@ export function regionalDay(state: RegionState, world: RegionWorld, lines: Repor
     consume('food', flows.food.eaten + flows.food.upkeep); consume('water', flows.water.drunk); consume('fuel', flows.fuel.used); consume('food', Math.min(stock.food ?? 0, flows.food.spoiled));
     for (const person of local.survivors) {
       handled.push(person.id);
-      if ((shortages.food ?? 0) > .01 || (shortages.water ?? 0) > .01) { person.health = Math.max(0, person.health - ((shortages.food ?? 0) > .01 ? REGIONAL_RULES.foodDamage : 0) - ((shortages.water ?? 0) > .01 ? REGIONAL_RULES.waterDamage : 0)); if (person.health <= 0) { person.alive = false; lines.push({ tone: 'bad', title: `${person.name} døde ved regionalt HQ`, text: 'Lokale forsyninger strakk ikke til.', zoneId: region.hqZoneId }); } }
+      if ((shortages.food ?? 0) > .01 || (shortages.water ?? 0) > .01) { person.health = Math.max(0, person.health - ((shortages.food ?? 0) > .01 ? REGIONAL_RULES.foodDamage : 0) - ((shortages.water ?? 0) > .01 ? REGIONAL_RULES.waterDamage : 0)); if (person.health <= 0) { person.alive = false; state.morale += R.morale.death; state.counters[`deaths:${Math.floor(state.day / 14)}`] = (state.counters[`deaths:${Math.floor(state.day / 14)}`] ?? 0) + 1; lines.push({ tone: 'bad', title: `${person.name} døde ved regionalt HQ`, text: 'Lokale forsyninger strakk ikke til.', zoneId: region.hqZoneId }); } }
     }
     if ((shortages.food ?? 0) > .01 || (shortages.water ?? 0) > .01) {
       region.alerts.push('Lokalt underskudd på mat eller vann. Send en fysisk forsyning.');
@@ -308,10 +311,47 @@ export function regionalDay(state: RegionState, world: RegionWorld, lines: Repor
   }
   return handled;
 }
-/** Local guards defend their own L1; they are never available to central workDay. */
+/** A finite patrol allocation: each controlled L3 receives one share, never the entire regional force. */
 export function regionalGuardFor(state: RegionState, world: RegionWorld, zoneId: string) {
   const region = administrations(state).find(r => r.l1Id === regionalL1(world, zoneId));
-  const leader = state.survivors.find(s => s.id === region?.leaderId && s.alive && !s.left);
-  return region && leader && atHq(state, leader.id, region.hqZoneId) && state.zones[region.hqZoneId]?.status === 'controlled'
-    ? regionalWork(state, world, region).guard * lawMods(state).guardMult : 0;
+  const leader = state.survivors.find(s => s.id === region?.leaderId && s.alive && !s.left && s.health > 0);
+  if (!region || !leader || !atHq(state, leader.id, region.hqZoneId) || state.zones[region.hqZoneId]?.status !== 'controlled') return 0;
+  const localZones = Object.keys(state.zones).filter(id => state.zones[id].status === 'controlled' && regionalL1(world, id) === region.l1Id).length;
+  const power = regionalWork(state, world, region).guard * POP.work.guard * lawMods(state).guardMult
+    * (tech(state, 'watchRoutine') ? 1.4 : 1) * (tech(state, 'drill') ? 1.5 : 1);
+  const locals = state.survivors.filter(s => s.alive && !s.left && s.health > 0 && atHq(state, s.id, region.hqZoneId)
+    && !Object.values(state.crewMissions ?? {}).some(m => m.survivorIds.includes(s.id) && !['complete', 'failed'].includes(m.status)));
+  const crewDefense = zoneId === region.hqZoneId ? locals.reduce((n, person) => n + person.skills.combat * (person.health > 40 ? 1.5 : .5), 0) : 0;
+  return power / Math.max(1, localZones) + crewDefense;
+}
+/** Consequences at the actual regional HQ, using the main HQ's injury/casualty rules and finite local people. */
+export function regionalOverrun(state: RegionState, world: RegionWorld, zoneId: string, zombies: number, lines: ReportLine[], rng: () => number): boolean {
+  const region = administrations(state).find(r => r.hqZoneId === zoneId);
+  if (!region || zombies <= 0) return false;
+  const locals = state.survivors.filter(s => s.alive && !s.left && s.health > 0 && atHq(state, s.id, zoneId));
+  // Seeded Fisher–Yates matches the cross-runtime discipline used at the main HQ.
+  for (let i = locals.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [locals[i], locals[j]] = [locals[j], locals[i]]; }
+  const victims = locals.slice(0, Math.min(3, Math.ceil(zombies / 4)));
+  for (const person of victims) {
+    person.health = Math.max(0, person.health - Math.round(Math.min(45, zombies * R.injuryPerExcessZombie) * gearDamageMultiplier(state, person.id) * difficultyRules(state).damage));
+    if (zombies > 4 && rng() < .1 && person.bitten === undefined) person.bitten = state.day + 2;
+    if (person.health <= 0) {
+      person.alive = false; state.morale += R.morale.death;
+      state.counters[`deaths:${Math.floor(state.day / 14)}`] = (state.counters[`deaths:${Math.floor(state.day / 14)}`] ?? 0) + 1;
+      lines.push({ tone: 'bad', title: `${person.name} døde ved regionalt HQ`, text: 'Angrepet brøt gjennom det lokale forsvaret.', zoneId });
+    }
+  }
+  const many = region.residents.adults + region.residents.children + region.residents.elderly;
+  const dead = many ? Math.min(many, Math.floor(zombies / 3 * rng() + (zombies > 6 ? 1 : 0))) : 0;
+  for (let i = 0; i < dead; i++) {
+    const p = region.residents;
+    const kind = p.elderly && rng() < .3 ? 'elderly' : p.children && rng() < .3 ? 'children' : p.adults ? 'adults' : p.elderly ? 'elderly' : 'children';
+    p[kind] -= 1; state.population[kind] = Math.max(0, state.population[kind] - 1);
+  }
+  const oldSick = region.residents.sick;
+  region.residents.sick = Math.min(oldSick, many - dead); state.population.sick = Math.max(0, state.population.sick - oldSick + region.residents.sick);
+  if (dead) state.counters[`deaths:${Math.floor(state.day / 14)}`] = (state.counters[`deaths:${Math.floor(state.day / 14)}`] ?? 0) + dead;
+  state.morale -= 4 + dead;
+  lines.push({ tone: 'bad', title: `Angrep ved regionalt HQ i ${indexWorld(world).byId.get(zoneId)?.name ?? zoneId}`, text: `${zombies} zombier kom gjennom. ${victims.length} navngitte ble skadet; ${dead} lokale innbyggere døde.`, zoneId });
+  return true;
 }
