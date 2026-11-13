@@ -275,3 +275,15 @@
 @media(max-width:820px){.rz-attention-link{font-size:11px;padding:6px;min-width:50px}.rz-command:has(.rz-attention-link) .rz-plan-link{display:none}}
 
 .rz-map-area-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.rz-pin-chooser { margin: 16px 0; border-top: 1px solid var(--line); padding-top: 12px; }
+.rz-pin-chooser summary { cursor: pointer; min-height: 32px; color: #d9cfaa; }
+.rz-pin-chooser>div { display: grid; gap: 5px; }
+.rz-pin-chooser button { min-height: 44px; text-align: left; }
+.rz-pin-chooser button[aria-pressed=true] { border-color: #c2b86d; color: #e6d998; }
+.rz-pinned { position: absolute; bottom: 76px; left: 16px; z-index: 6; display: grid; gap: 6px; max-width: min(230px, calc(100% - 32px)); pointer-events: none; }
+.rz-pinned-card { position: relative; background: #142326f2; border: 1px solid #667c73; border-radius: 5px; box-shadow: 0 3px 12px #0005; pointer-events: auto; }
+.rz-pin-open { display: grid; gap: 3px; width: 100%; border: 0; background: transparent; text-align: left; padding: 9px 36px 9px 10px; }
+.rz-pin-open strong { color: #e3dfbb; font-size: 12px; }.rz-pin-open span,.rz-pin-open small { color: #b7c8c2; font-size: 10px; }
+.rz-pin-remove { position: absolute; top: 0; right: 0; width: 30px; height: 30px; border: 0; padding: 0; background: transparent; }
+@media(max-width:820px){.rz-pinned{bottom:70px;left:10px;max-width:190px}.rz-panel-crew .rz-pinned,.rz-panel-zone .rz-pinned{display:none}.rz-pin-remove{min-height:36px;width:32px}}

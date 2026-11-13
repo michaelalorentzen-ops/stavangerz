@@ -22,6 +22,7 @@ import { attachOperationalMap, areaLeaves, type OperationalMapController } from 
 import { AdministrativeView } from './administrative-view';
 import { applyAdministrationCommand, administrations } from '../../../packages/gameplay/src/region/administration';
 import { PoiJournal, DiscoveryZonePanel } from './poi-journal';
+import { usePinnedInfo, PinChooser, PinnedCards } from './pinned-info';
 import { WondersOperations } from './wonders-operations';
 import { wonderOperational, wonderStatus } from '../../../packages/gameplay/src/region/wonders';
 import { MissionOptions, LogisticsPanel } from './mission-controls';
@@ -239,6 +240,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   // information until the journal reaches that point in the day.
   const state = replay?.before ?? committedState;
   const index = indexWorld(world);
+  const pinned = usePinnedInfo(committedState);
   const [selected, setSelected] = useState(state.homeZoneId);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [crew, setCrew] = useState<string[]>([]);
@@ -457,6 +459,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
         <button aria-label="Fjern oppdrag" onClick={() => setOrders(orders.filter(x => x.id !== o.id))}>×</button></div></div>)}
       {gearPlan.errors.length > 0 && <p className="rz-message" role="alert">{gearPlan.errors.join(' ')} Åpne Utstyr eller fjern oppdraget.</p>}
       <p className="rz-small">Oppdrag løses samlet når du lar døgnet gå. Fjern et oppdrag for å velge folkene på nytt.</p>
+      <PinChooser state={state} pins={pinned.pins} toggle={pinned.toggle} />
       <CampaignHelp state={state} />
     </aside>
     <div className="rz-map-stage">
@@ -468,6 +471,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
         <div className="rz-brief-actions"><button onClick={() => { setPanel('crew'); window.requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.rz-person:not(:disabled)')?.focus()); }}>1 · Velg folk</button><button onClick={() => setPanel('zone')}>2 · Gi oppdrag</button><button className="rz-link" onClick={() => setModal('book')}>Les ZA-boka ↗</button></div>
       </>}
     </section>
+    <PinnedCards state={state} world={world} flows={flows} pins={pinned.pins} toggle={pinned.toggle} onCrew={() => setPanel('crew')} onStock={() => setModal('stock')} />
     <details className="rz-nearby"><summary>Finn en sone</summary><div><input aria-label="Søk etter sone" placeholder="Søk i kartet …" value={zoneQuery} onChange={e => setZoneQuery(e.target.value)} /><button onClick={() => focusZone(state.homeZoneId)}>⌂ {index.byId.get(state.homeZoneId)?.name} · leiren</button>{(zoneQuery.trim() ? index.l3.filter(z => z.name.toLocaleLowerCase('nb').includes(zoneQuery.toLocaleLowerCase('nb'))).slice(0, 12).map(z => z.id) : (index.adjacent.get(state.homeZoneId) ?? []).map(a => a.to)).map(id => <button key={id} data-zone-id={id} onClick={() => focusZone(id)}>{index.byId.get(id)?.name} · {STATUS_LABEL[state.zones[id].status]}</button>)}</div></details>
     </div>
     <aside ref={zonePanelRef} className="rz-right" aria-label="Valgt sone"><div className="rz-panel-heading"><span>VALGT SONE</span><button onClick={() => setPanel('map')} aria-label="Lukk sone">×</button></div>
@@ -476,7 +480,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
     </aside>
     <footer className="rz-command">
       <nav className="rz-mobile-panels" aria-label="Arbeidsflater"><button aria-pressed={panel === 'crew'} onClick={() => setPanel(panel === 'crew' ? 'map' : 'crew')}>Folk {crew.length ? `(${crew.length})` : ''}</button><button aria-pressed={panel === 'map'} onClick={() => setPanel('map')}>Kart</button><button aria-pressed={panel === 'zone'} onClick={() => setPanel(panel === 'zone' ? 'map' : 'zone')}>Sone</button></nav>
-      <div className="rz-command-status" aria-live="polite">{message || urgent || `${freeCrew.length} ledige · ${orders.length} planlagte oppdrag`}</div>
+      <div className="rz-command-status" aria-live="polite">{message || urgent || `${attentionCount ? `${attentionCount} saker trenger oppfølging.` : 'Ingen kritiske avvik meldt.'}`}</div>
       {attentionCount > 0 && <button className="rz-attention-link" onClick={() => setModal('attention')}>Saker <b>{attentionCount}</b></button>}
       <button className="rz-plan-link" onClick={() => setPanel('crew')}>Dagsplan <b>{orders.length}</b></button>
       {(urgent || message) && <p className="rz-mobile-message" role="status">{message || urgent}</p>}

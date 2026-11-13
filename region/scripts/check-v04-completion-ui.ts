@@ -81,6 +81,7 @@ async function main() {
     const beforeStock = (await read(page)).state.stock.food;
     await page.getByTestId('end-day').click(); await closeReport(page);
     const delivered = (await read(page)).state;
+    assert(delivered.survivors.filter(p => p.alive && !p.left).every(p => delivered.crewPositions?.[p.id]), 'Newly arrived local recruits have a real registered location.');
     assert(delivered.stock.food < beforeStock, 'Transport and ordinary consumption reduce central stock.');
     assert((delivered.mobility?.depots[neighbor]?.food ?? 0) > 0, 'Supply really arrived at the remote depot.');
     assert.equal(administrations(delivered)[0].residents.adults + (delivered.mobility?.depotResidents?.[neighbor]?.adults ?? 0), 2, 'Passengers physically arrived and joined the local community.');
@@ -91,6 +92,9 @@ async function main() {
     assert.equal(administrations((await read(page)).state)[0].residents.adults, 1);
     assert.equal((await read(page)).state.mobility?.depotResidents?.[neighbor]?.adults, 1, 'Released local residents remain physically at that depot.');
     await page.keyboard.press('Escape');
+    await page.locator('.rz-pin-chooser summary').click();
+    await page.locator('.rz-pin-chooser').getByRole('button', { name: 'Fest Tor', exact: true }).click();
+    assert((await page.locator('.rz-pinned-card').innerText()).includes('Tor'));
     for (let i = 0; i < 3; i++) { await page.getByRole('button', { name: 'Zoom ut', exact: true }).click(); await page.waitForTimeout(350); }
     await page.waitForTimeout(700);
     assert((await page.locator('.rz-command-level').innerText()).includes('L2'));
@@ -102,6 +106,7 @@ async function main() {
     await page.reload(); await page.getByRole('button', { name: /Fortsett dag/ }).click();
     await page.waitForFunction(() => !!(window as unknown as { __szRegion?: unknown }).__szRegion);
     assert.deepEqual((await read(page)).state, committed, 'Regional decisions survive exact reload.');
+    assert((await page.locator('.rz-pinned-card').innerText()).includes('Tor'), 'Pinned presentation survives reload without changing campaign history.');
     assert.deepEqual(errors, []);
     results.push({ scenario: 'regional UI', day: committed.day, deliveredDepot: delivered.mobility?.depots[neighbor], residents: administrations(committed)[0].residents, errors });
     await context.close();
@@ -157,10 +162,11 @@ async function main() {
     observeDiscoveries(story, world, { source: 'rumor', zoneId: site.zoneId, reporterIds: ['ingrid'], delivery: 'returned' }, []);
     await fixture(sp, story);
     for (const [turn, target] of [[0, 'emergency-cupboard'], [1, 'emergency-cupboard:rations']] as const) {
-      await sp.getByRole('navigation', { name: 'Arbeidsflater' }).getByRole('button', { name: /^Folk/ }).click();
+      const folk = sp.getByRole('navigation', { name: 'Arbeidsflater' }).getByRole('button', { name: /^Folk/ });
+      if (await folk.getAttribute('aria-pressed') !== 'true') await folk.click();
       await sp.locator('.rz-person').filter({ hasText: 'Ingrid' }).click();
       await sp.getByRole('button', { name: 'Oversikter', exact: true }).click(); await sp.getByRole('button', { name: /^Oppdagelser og spor/ }).click();
-      await sp.getByTestId(`discovery-${target}`).click();
+      await sp.getByRole('dialog').getByTestId(`discovery-${target}`).click();
       assert.equal((await read(sp)).orders.length, 1);
       await sp.getByTestId('end-day').click(); await closeReport(sp);
       const entries = visibleDiscoveries((await read(sp)).state);
@@ -222,11 +228,11 @@ async function main() {
       ending.event = undefined;
       if (won) { ending.phase = 5; ending.research.done.push('cure'); ending.memory.push({ day: 0, text: 'Dere delte vann med naboene.' }); checkVictory(ending, 0); }
       else { ending.survivors.find(p => p.id === 'ingrid')!.alive = false; enforceAvatarFate(ending); }
-      assert.equal(ending.gameOver?.won, won);
+      assert(ending.gameOver); assert.equal(!!ending.gameOver.won, won);
       await fixture(ep, ending);
       await ep.getByRole('dialog', { name: 'Gjennomspillingen er over', exact: true }).waitFor();
-      assert(await ep.locator('.cmp-ending').isVisible());
-      assert((await ep.locator('.cmp-ending').innerText()).includes(ending.campaign!.ending!.title));
+      if (won) { assert(await ep.locator('.cmp-ending').isVisible()); assert((await ep.locator('.cmp-ending').innerText()).includes(ending.campaign!.ending!.title)); }
+      else { assert((await ep.getByRole('dialog', { name: 'Gjennomspillingen er over', exact: true }).innerText()).includes('Hardcore-gjennomspillingen er avsluttet')); assert.equal(await ep.locator('.rz-avatar-choice').count(), 0, 'Hardcore never offers a successor.'); assert.equal(await ep.locator('.cmp-ending').count(), 0, 'Death does not retain a victory epilogue.'); }
       await ep.screenshot({ path: `${output}/mobile-ending-${won ? 'win' : 'hardcore-loss'}.png` });
       assert.deepEqual(endingErrors, []); results.push({ scenario: won ? 'derived victory epilogue UI' : 'permanent HC death UI', errors: endingErrors });
       await endingContext.close();
