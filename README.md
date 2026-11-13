@@ -1,12 +1,12 @@
 # Stavanger Z
 
-> **Regionspillet v0.4:** designet og agent-orkestreringen ligger i [`region/docs/27_V04_MASTER_SPEC.md`](region/docs/27_V04_MASTER_SPEC.md), [`28_V04_DECISIONS.md`](region/docs/28_V04_DECISIONS.md) og [`29_V04_IMPLEMENTATION.md`](region/docs/29_V04_IMPLEMENTATION.md). v0.4 er foreløpig dokumentert, ikke implementert.
+> **Regionspillet v0.4:** designet og agent-orkestreringen ligger i [`region/docs/27_V04_MASTER_SPEC.md`](region/docs/27_V04_MASTER_SPEC.md), [`28_V04_DECISIONS.md`](region/docs/28_V04_DECISIONS.md) og [`29_V04_IMPLEMENTATION.md`](region/docs/29_V04_IMPLEMENTATION.md). v0.4 er implementert og teknisk verifisert for spilltest; tallbalansering gjenstår. Se [leveranse og testbevis](region/docs/35_V04_HUD_AND_QA.md).
 
 Et turbasert zombie-overlevelsesspill i nettleseren, på et ekte (men stilisert) kart over Stavanger. Litt Civ, mye lokal humor.
 
 Du starter på Buøy en tirsdag morgen. Bybrua er stengt, Rosenberg er overkjørt, og det regner. Samle et crew blant naboene, klarer øya sektor for sektor, let etter utstyr og bygg sperringer før natta tar dere.
 
-**Status:** fase 1 (Buøy) er spillbar. Regionspillet (v0.2) for hele Stavanger-regionen ligger i [region/](region/README.md). Fase 2–5 er planlagt. Spillreglene står i [docs/spilldesign.md](docs/spilldesign.md).
+**Status:** fase 1 (Buøy) er spillbar. Regionspillet (v0.4) for hele Stavanger-regionen ligger i [region/](region/README.md). Fase 2–5 er planlagt. Spillreglene står i [docs/spilldesign.md](docs/spilldesign.md).
 
 ## Spill det
 

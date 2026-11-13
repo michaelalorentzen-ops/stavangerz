@@ -1,6 +1,6 @@
 # Regionspillet v0.3 (QA)
 
-> **v0.4 under planlegging, ikke implementert:** [Master spec](docs/27_V04_MASTER_SPEC.md), [låste og åpne beslutninger](docs/28_V04_DECISIONS.md) og [orkestrert implementeringsplan](docs/29_V04_IMPLEMENTATION.md). Disse har forrang som fremtidig design; informasjonen nedenfor beskriver den faktiske v0.3-koden.
+> **v0.4 klar for spilltest:** Kartbasert HUD, animerte kartfigurer, personlig utstyr, fysisk logistikk og regional styring er implementert. Se [leveranse, testbevis og avgrensninger](docs/35_V04_HUD_AND_QA.md). Tallbalansering og menneskelig langspilltest gjenstår. [Master spec](docs/27_V04_MASTER_SPEC.md), [beslutningslogg](docs/28_V04_DECISIONS.md) og [implementeringsplan](docs/29_V04_IMPLEMENTATION.md) beskriver den godkjente rammen.
 
 Dette er regionspillet: hele Stavanger-regionen med 663 soner. Det er en egen kodebase ved siden av Buøy-spillet i rotmappen.
 - **Start:** du kan starte hvor du vil, også steder som er nesten umulige å holde.
