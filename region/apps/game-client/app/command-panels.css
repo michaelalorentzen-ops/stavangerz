@@ -171,3 +171,40 @@
 @media(min-width:800px){.cmd-composer{height:auto;max-height:min(760px,calc(100dvh - 48px))}}
 
 @media(max-width:650px){.cmd-composer .cmd-heading-main .cmd-help{display:inline-flex;min-width:44px;max-width:44px}}
+/* Daily plan: one page of four orders; equipment and cargo stay available on demand. */
+.cmd-day-plan-compact{min-height:0;overflow:auto;flex:1;padding-bottom:4px}
+.cmd-day-plan-compact .cmd-intro{margin-bottom:10px;padding-right:40px}
+.cmd-day-plan-compact .cmd-intro h2{font-size:24px;margin:0}
+.cmd-day-plan-compact .cmd-plan-summary{padding:0 0 8px;margin:0;border:0;border-bottom:1px solid var(--cmd-line);background:none}
+.cmd-day-plan-compact .cmd-plan-stats{display:flex;justify-content:flex-start;gap:24px;margin:0}
+.cmd-day-plan-compact .cmd-plan-stats>div{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.cmd-day-plan-compact .cmd-plan-stats b{font-size:20px}.cmd-day-plan-compact .cmd-plan-stats span{font-size:12px;width:auto}
+.cmd-day-plan-compact .cmd-plan-details{border:0;margin:2px 0 0;padding:0}
+.cmd-day-plan-compact .cmd-plan-details>summary{display:inline-flex;align-items:center;min-height:36px;font-size:12px}
+.cmd-day-plan-compact .cmd-plan-details>summary:before{content:'+';margin-right:7px}.cmd-day-plan-compact .cmd-plan-details[open]>summary:before{content:'−'}
+.cmd-day-plan-compact .cmd-plan-details dl{margin:0;font-size:12px}.cmd-day-plan-compact .cmd-plan-details dt{color:var(--cmd-muted)}.cmd-day-plan-compact .cmd-plan-details dd{margin:2px 0 8px}
+.cmd-day-plan-compact .cmd-plan-views{display:flex;gap:8px;margin:10px 0 12px}
+.cmd-day-plan-compact .cmd-plan-views button{min-height:44px;padding:7px 12px;font-size:12px;background:none;border-color:transparent;color:var(--cmd-muted)}
+.cmd-day-plan-compact .cmd-plan-views button[aria-pressed=true]{border-color:var(--cmd-teal);background:#203a33;color:var(--cmd-ink)}
+.cmd-day-plan-compact .cmd-order-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cmd-day-plan-compact .cmd-order{min-width:0;padding:12px;border:1px solid var(--cmd-line);border-radius:8px;background:#172b28;margin:0}
+.cmd-day-plan-compact .cmd-order.has-errors{border-color:#b38c62}
+.cmd-day-plan-compact .cmd-order>header{display:flex;align-items:center;justify-content:space-between;gap:8px;height:auto;min-height:0;padding:0;margin:0;border:0;background:none}
+.cmd-day-plan-compact .cmd-order h4{font-size:14px;line-height:1.3;margin:0}
+.cmd-day-plan-compact .cmd-risk,.cmd-day-plan-compact .cmd-active-status{font-size:12px!important;background:none;padding:0;text-transform:none;letter-spacing:0;color:var(--cmd-muted)}
+.cmd-day-plan-compact .cmd-order .cmd-locate{display:flex;justify-content:flex-start;min-height:32px;padding:2px 0;font-size:12px;border:0;background:none;line-height:1.3;text-align:left}
+.cmd-day-plan-compact .cmd-plan-crew{margin:4px 0;gap:6px 10px}.cmd-day-plan-compact .cmd-plan-crew>span{font-size:12px}.cmd-day-plan-compact .cmd-plan-crew .cmd-portrait{width:22px;height:25px}
+.cmd-day-plan-compact .cmd-order-return{font-size:12px;line-height:1.4;margin:5px 0;color:var(--cmd-muted)}
+.cmd-day-plan-compact .cmd-order-invalid{font-size:12px;color:#e0b28c;margin:3px 0}
+.cmd-day-plan-compact .cmd-order-bottom{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-top:7px;border-top:1px solid var(--cmd-line);padding-top:7px}
+.cmd-day-plan-compact .cmd-order-details{font-size:12px;min-width:0}
+.cmd-day-plan-compact .cmd-order-details>summary{display:flex;align-items:center;min-height:44px;cursor:pointer;color:var(--cmd-muted);gap:5px}
+.cmd-day-plan-compact .cmd-order-details>summary:before{content:'+'}.cmd-day-plan-compact .cmd-order-details[open]>summary:before{content:'−'}
+.cmd-day-plan-compact .cmd-order-details[open]{flex:1}.cmd-day-plan-compact .cmd-order-details p{font-size:12px;overflow-wrap:anywhere;margin:5px 0}
+.cmd-day-plan-compact .cmd-order-actions{display:flex;gap:6px;margin:0;padding:0;border:0;flex:none}
+.cmd-day-plan-compact .cmd-order-actions button{min-height:44px;padding:6px 9px;font-size:12px}
+.cmd-day-plan-compact .cmd-plan-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:12px;color:var(--cmd-muted)}
+.cmd-day-plan-compact .cmd-plan-pagination button{min-height:44px;font-size:12px}
+.cmd-day-plan-compact button:disabled{opacity:.4;cursor:not-allowed}
+.cmd-day-plan-compact summary:focus-visible{outline:2px solid var(--cmd-amber);outline-offset:2px}
+@media(max-width:650px){.cmd-day-plan-compact .cmd-order-list{grid-template-columns:1fr}.cmd-day-plan-compact .cmd-plan-stats{gap:12px;flex-wrap:wrap}.cmd-day-plan-compact .cmd-plan-stats>div{gap:4px}.cmd-day-plan-compact .cmd-plan-stats span{font-size:12px}.cmd-day-plan-compact .cmd-order-actions button{padding-inline:8px}}
