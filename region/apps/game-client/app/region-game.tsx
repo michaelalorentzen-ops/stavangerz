@@ -31,6 +31,11 @@ import { redirectMission } from '../../../packages/gameplay/src/region/mobility'
 import RegionWorldMap from './region-world-map';
 import { HudIcon, type HudIconName } from './hud-icons';
 import { CrewContext, ZoneContext, TodayBrief, TaskPalette, actionIcon } from './hud-context';
+import { CrewDock, TerritoryOverview, ResourceFocus, DailyResourceFlow } from './command-overview';
+import { InventoryShelf } from './inventory-shelf';
+import { DailyReport } from './daily-report';
+import { CommunityWork } from './community-work';
+import './territory-hud.css';
 import { CrewProfile } from './crew-profile';
 import { PoiProfile } from './poi-profile';
 import { HQManagement } from './hq-management';
@@ -38,6 +43,7 @@ import { OrderComposer } from './order-composer';
 import { DayPlan } from './day-plan';
 import './region.css';
 import './situational-hud.css';
+import './game-identity.css';
 
 const WORLD_URL = '/world/region-v1.json';
 const CORE = ['medicine', 'fuel', 'ammo', 'building'];
@@ -47,7 +53,7 @@ const number = (n: number) => Math.round(n).toLocaleString('nb-NO');
 const decimal = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits: 1 });
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${decimal(Math.abs(Math.round(n * 10) / 10))}`;
 
-type Modal = null | 'report' | 'trade' | 'goals' | 'menu' | 'stock' | 'society' | 'research' | 'chronicle' | 'wonders' | 'book' | 'equipment' | 'discoveries' | 'administration' | 'attention' | 'crew-profile' | 'hq' | 'plan' | 'command' | 'poi';
+type Modal = null | 'report' | 'trade' | 'goals' | 'menu' | 'stock' | 'society' | 'research' | 'chronicle' | 'wonders' | 'book' | 'equipment' | 'discoveries' | 'administration' | 'attention' | 'crew-profile' | 'hq' | 'plan' | 'command' | 'poi' | 'community';
 type DayReplaySession = { before: RegionState; report: RegionReport; pendingEvent: boolean };
 
 // ------------------------------------------------------------------ art
@@ -130,13 +136,15 @@ export default function RegionGame() {
 // ------------------------------------------------------------------ start
 
 function StartScreen({ world, saved, onStart }: { world: RegionWorld; saved: RegionState | null; onStart: (s: RegionState, fresh: boolean) => void }) {
-  const index = indexWorld(world);
+  const index = useMemo(() => indexWorld(world), [world]);
   const [choice, setChoice] = useState(world.starts.find(s => s.name.startsWith('Lundsneset'))?.zoneId ?? world.starts[0]?.zoneId ?? '');
   const [campaignOptions, setCampaignOptions] = useState<CampaignOptions>({ difficulty: 'survival', hardcore: false });
   const [seed, setSeed] = useState(() => 1 + Math.floor(Math.random() * 9999));
-  const dangers = useMemo(() => Object.fromEntries(index.l3.map(z => [z.id, startDanger(world, z.id)])), [world, index]);
+  const estimates = useMemo(() => Object.fromEntries(index.l3.map(z => [z.id, startDanger(world, z.id)])), [world, index]);
+  const seededStarts = useMemo(() => Object.fromEntries(world.starts.map(start => [start.zoneId, startDanger(world, start.zoneId, seed)])), [world, seed]);
   const zone = index.byId.get(choice);
-  const d = useMemo(() => choice ? startDanger(world, choice, seed) : undefined, [world, choice, seed]);
+  const d = useMemo(() => choice ? seededStarts[choice] ?? startDanger(world, choice, seed) : undefined, [world, choice, seed, seededStarts]);
+  const dangers = useMemo(() => ({ ...estimates, ...seededStarts, ...(choice && d ? { [choice]: d } : {}) }), [estimates, seededStarts, choice, d]);
   const l2 = index.byId.get(zone?.parentId ?? '');
   const hqNear = [choice, ...(index.adjacent.get(choice) ?? []).map(a => a.to)].flatMap(id => (index.poisByZone.get(id) ?? []).filter(p => p.role === 'hq')).map(p => `${p.name} (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
   return <main className="rz-shell rz-start">
@@ -180,7 +188,7 @@ function StartMap({ world, dangers, selected, onSelect }: { world: RegionWorld; 
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LibreMap | null>(null);
   const [ready, setReady] = useState(false);
-  const index = indexWorld(world);
+  const index = useMemo(() => indexWorld(world), [world]);
   useEffect(() => {
     let map: LibreMap | null = null;
     let cancelled = false;
@@ -193,7 +201,7 @@ function StartMap({ world, dangers, selected, onSelect }: { world: RegionWorld; 
         const l3 = world.zones.filter(z => z.level === 3 && z.geometry).map(z => ({ type: 'Feature' as const, id: z.id, properties: { id: z.id, c: DANGER_COLOR[dangers[z.id]?.level ?? 'Rolig'] }, geometry: z.geometry as GeoJSON.Geometry }));
         map!.addSource('l3', { type: 'geojson', data: { type: 'FeatureCollection', features: l3 }, promoteId: 'id' });
         attachBuildings(map!);
-        map!.addLayer({ id: 'fill', type: 'fill', source: 'l3', paint: { 'fill-color': ['get', 'c'], 'fill-opacity': .42 } });
+        map!.addLayer({ id: 'fill', type: 'fill', source: 'l3', paint: { 'fill-color': ['coalesce', ['feature-state', 'danger'], ['get', 'c']], 'fill-opacity': .42 } });
         map!.addLayer({ id: 'line', type: 'line', source: 'l3', paint: { 'line-color': '#0c1416', 'line-width': .5 } });
         map!.addLayer({ id: 'sel', type: 'line', source: 'l3', filter: ['==', ['get', 'id'], ''], paint: { 'line-color': '#ffe08a', 'line-width': 3 } });
         map!.on('click', 'fill', (e: MapLayerMouseEvent) => { const id = e.features?.[0]?.properties?.id as string | undefined; if (id) onSelect(id); });
@@ -208,12 +216,16 @@ function StartMap({ world, dangers, selected, onSelect }: { world: RegionWorld; 
   }, [world]);
   useEffect(() => {
     if (!ready || !mapRef.current) return;
+    for (const [id, danger] of Object.entries(dangers)) mapRef.current.setFeatureState({ source: 'l3', id }, { danger: DANGER_COLOR[danger.level] });
+  }, [dangers, ready]);
+  useEffect(() => {
+    if (!ready || !mapRef.current) return;
     mapRef.current.setFilter('sel', ['==', ['get', 'id'], selected]);
     const at = index.byId.get(selected)?.at;
     if (at) mapRef.current.easeTo({ center: at, zoom: Math.max(mapRef.current.getZoom(), 11.5) });
   }, [selected, ready, index]);
   return <div className="rz-start-canvas" aria-busy={!ready}><div ref={ref} className="rz-map-canvas" />
-    <div className="rz-legend">{Object.entries(DANGER_COLOR).map(([k, c]) => <span key={k}><i style={{ background: c }} />{k}</span>)}<span>Klikk en sone for å starte der</span></div></div>;
+    <div className="rz-legend">{Object.entries(DANGER_COLOR).map(([k, c]) => <span key={k}><i style={{ background: c }} />{k}</span>)}<span>Startforslag og valgt sted følger frøet · øvrige farger er anslag</span></div></div>;
 }
 
 // ------------------------------------------------------------------ intro
@@ -257,12 +269,17 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   const [orders, setOrders] = useState<RegionOrder[]>([]);
   const [equipmentDraft, setEquipmentDraft] = useState<RegionOrder | null>(null);
   const [modal, setModal] = useState<Modal>(null);
+  const [hqTab,setHqTab]=useState<'overview'|'construction'|'society'|'research'|'stock'>('overview');
+  const [bookTopic, setBookTopic] = useState<string | undefined>();
+  const [bookReturn, setBookReturn] = useState<Modal>(null);
+  const openHelp=(topic:string)=>{setBookReturn(modal);setBookTopic(topic.startsWith('resource:')?'supplies':topic);setModal('book');};
+  const closeModal=()=>{if(modal==='book'&&bookReturn){setModal(bookReturn);setBookReturn(null);}else setModal(null);};
   const [report, setReport] = useState<RegionReport | null>(null);
   const [message, setMessage] = useState('');
   const [drawer, setDrawer] = useState<'crew' | 'zone' | 'poi' | null>(null);
   const [personId, setPersonId] = useState(state.survivors[0]?.id ?? '');
   const [poiId, setPoiId] = useState('');
-  const [zoneTab, setZoneTab] = useState<'overview' | 'develop' | 'logistics'>('overview');
+  const [zoneTab, setZoneTab] = useState<'overview' | 'places' | 'develop' | 'logistics'>('overview');
   const [commandDraft, setCommandDraft] = useState<RegionOrder | null>(null);
   const [targeting, setTargeting] = useState(false);
   const [briefHidden, setBriefHidden] = useState(false);
@@ -272,8 +289,10 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   const zonePanelRef = useRef<HTMLElement>(null);
   useEffect(() => { zonePanelRef.current?.scrollTo({ top: 0 }); }, [selected, selectedArea]);
   const [confirmEnd, setConfirmEnd] = useState(false);
-  const [mapFocus, setMapFocus] = useState<{ zoneId: string; key: number } | null>(null);
-  const [overlay, setOverlay] = useState<'zombies' | 'food'>('zombies');
+  const [mapFocus, setMapFocus] = useState<{ zoneId: string; key: number; scope?: 'territory' } | null>(null);
+  const [overlay, setOverlay] = useState<'territory' | 'zombies' | 'food'>('territory');
+  const [territoryList, setTerritoryList] = useState(false);
+  const [stockResource, setStockResource] = useState<string | null>(null);
   const [phaseShown, setPhaseShown] = useState(state.phase);
   useEffect(() => {
     if (!message) return;
@@ -352,10 +371,10 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   }, [reportAfterEvent, replay, committedState.event, committedState.reports]);
   useEffect(() => {
     if (!modal && !confirmEnd) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setModal(null); setConfirmEnd(false); } };
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') { closeModal(); setConfirmEnd(false); } };
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [modal, confirmEnd]);
+  }, [modal, confirmEnd, bookReturn]);
   useEffect(()=>{const close=(e:KeyboardEvent)=>{if(e.key!=='Escape'||replay||committedState.event||committedState.turnCheckpoint)return;if(targeting){setTargeting(false);setModal(commandDraft?'command':null);}else if(!modal)setDrawer(null);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[targeting,modal,replay,committedState.event,committedState.turnCheckpoint,commandDraft]);
   const busy = new Set(orders.flatMap(o => o.survivorIds));
   const people = living(state);
@@ -392,7 +411,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
     const plan = prepareGearPlan(state,world,next);
     const errors = [...preview.errors, ...(plan.orders.find(o=>o.orderId===order.id)?.errors ?? [])];
     if (errors.length) { setMessage([...new Set(errors)].join(' ')); return; }
-    setOrders(next); setCrew([]); setCommandDraft(null); setTargeting(false); setModal(null); setDrawer(null); setMessage(`${ACTIONS[order.action].label} lagt i dagsplanen.`);
+    setOrders(next); setCrew([]); setCommandDraft(null); setTargeting(false); setModal(orders.some(o=>o.id===input.id)?'plan':null); setSelected(order.zoneId); setSelectedArea(null); setTerritoryList(false); setZoneTab('overview'); setDrawer(orders.some(o=>o.id===input.id)?null:'zone'); setMessage(`${ACTIONS[order.action].label} lagt i dagsplanen.`);
   };
   const openProfile = (id: string) => { setPersonId(id); setModal('crew-profile'); };
   const chooseCrewTask = (action: ActionId) => {
@@ -451,6 +470,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   const placement = (id: string) => { const p = crewPositionFor(state, id); return p?.kind === 'zone' ? `ved ${index.byId.get(p.zoneId)?.name ?? p.zoneId}` : p?.kind === 'transit' ? `på reise mot ${index.byId.get(p.toZoneId)?.name ?? p.toZoneId}` : p?.kind === 'area-duty' ? `områdevakt i ${index.byId.get(p.areaZoneId)?.name ?? p.areaZoneId}` : 'sted ikke rapportert'; };
   const showPhase = state.phase > phaseShown && !state.event && modal !== 'report';
   const selectZone = (id: string) => {
+    setTerritoryList(false);
     setMapSelectionTouched(true);
     if (index.byId.get(id)?.level !== 3) { setSelectedArea(id); setDrawer('zone'); return; }
     setSelected(id); setSelectedArea(null);
@@ -473,26 +493,30 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
   ];
   const navItems: {id:string;icon:HudIconName;label:string;active:boolean;action:()=>void;count?:number}[] = [
     {id:'crew',icon:'crew',label:'Mannskap',active:drawer==='crew',action:()=>setDrawer(drawer==='crew'?null:'crew')},
-    {id:'zone',icon:'zone',label:'Områder',active:drawer==='zone',action:()=>setDrawer(drawer==='zone'?null:'zone')},
-    {id:'plan',icon:'plan',label:'Dagsplan',active:modal==='plan',action:()=>setModal('plan'),count:orders.length},
-    {id:'book',icon:'book',label:'ZA-boka',active:modal==='book',action:()=>setModal('book')},
+    ...(state.population.adults+state.population.children+state.population.elderly>0?[{id:'community',icon:'work' as const,label:'Leiren',active:modal==='community',action:()=>setModal('community'),count:Math.max(0,workforce(state)-assigned(state))}]:[]),
+    {id:'zone',icon:'zone',label:'Mine områder',active:drawer==='zone',action:()=>{setTerritoryList(true);setDrawer(drawer==='zone'?null:'zone');}},
+    {id:'book',icon:'book',label:'ZA-boka',active:modal==='book',action:()=>{setBookTopic(undefined);setBookReturn(null);setModal('book');}},
     ...(state.hq?[{id:'hq',icon:'hq' as const,label:'Hovedkvarter',active:modal==='hq',action:()=>setModal('hq')}]:[]),
     ...(state.phase>=4?[{id:'regions',icon:'compass' as const,label:'Regioner',active:modal==='administration',action:()=>setModal('administration'),count:regionalAlerts.length}]:[]),
   ];
-  const drawerTitle = drawer==='crew'?'Mannskap':drawer==='poi'?world.pois.find(p=>p.id===poiId)?.name: index.byId.get(selectedArea??selected)?.name;
-  const stockView = <><h2>Lager</h2><div className="rz-stock-grid">{[...CONTENT.resources.filter(r=>r.layer!=='capacity').map(r=>r.id),'samples'].map(id=><span key={id}><b>{number(state.stock[id]??0)}</b>{resourceName(id)}</span>)}</div><h3>Personlig utstyr</h3><GearInventory state={state} world={world} plan={gearPlan} open/></>;
-  const zoneContent = <ZoneContext state={state} world={world} zoneId={selected} areaId={selectedArea} tab={zoneTab} onTab={setZoneTab} onLevel={changeAreaLevel} onZone={focusZone} onTask={action=>addOrder(action)} onPoi={selectPoi} onHq={()=>setModal('hq')}/>;
+  const drawerTitle = drawer==='crew'?'Mannskap':drawer==='poi'?world.pois.find(p=>p.id===poiId)?.name:territoryList?'Ditt område':index.byId.get(selectedArea??selected)?.name;
+  const stockView=stockResource?<><ResourceFocus state={state} world={world} orders={orders} resource={stockResource} onSearch={()=>addOrder('search',undefined,state.homeZoneId)} onWork={()=>setModal('community')}/><DailyResourceFlow flows={flows} resource={stockResource}/><button className="sz-wide-action" onClick={()=>setStockResource(null)}><HudIcon name="stock"/>Åpne ikonlageret<HudIcon name="arrow"/></button></>:<InventoryShelf state={state} world={world} plan={gearPlan} onHelp={openHelp}/>;
+  const communityView=<CommunityWork state={state} world={world} onWork={allocation=>apply(()=>setWork(state,allocation),false,'work-allocation')} onAdvanced={()=>setModal('society')} onHelp={openHelp}/>;
+  const ownedCount=Object.values(state.zones).filter(z=>z.status==='controlled').length;
+  const fitTerritory=()=>{setOverlay('territory');setMapFocus({zoneId:state.homeZoneId,key:Date.now(),scope:'territory'});};
+  const zoneContent = territoryList?<TerritoryOverview state={state} world={world} onZone={focusZone}/>:<ZoneContext key={selectedArea??selected} state={state} world={world} zoneId={selected} areaId={selectedArea} tab={zoneTab} onTab={setZoneTab} onLevel={changeAreaLevel} onZone={focusZone} onTask={action=>addOrder(action)} onPoi={selectPoi} onHq={()=>setModal('hq')} onHelp={openHelp}/>;
   return <main className={`rz-shell sz-game ${drawer?'has-drawer':''} ${targeting?'is-targeting':''}`}>
     <div className="sz-map-stage"><RegionWorldMap focus={mapFocus} world={world} state={mapState} flows={flows} overlay={replay?'zombies':overlay} selected={mapSelectionTouched?selectedArea??selected:''} hops={hops} replayMoves={replayMoves} onSelect={selectZone} onOverlay={setOverlay} onSelectPoi={selectPoi} onSelectCrew={id=>{const position=crewPositionFor(state,id);if(targeting&&position?.kind==='zone')selectZone(position.zoneId);else openProfile(id);}} targeting={targeting&&commandDraft?{action:commandDraft.action,crewIds:commandDraft.survivorIds}:undefined}/></div>
     <header className="sz-top" aria-label="Samfunnets status">
-      <div className="sz-brand-group"><button className="sz-brand" onClick={()=>setModal('menu')} aria-label="Spillmeny"><span className="sz-brand-mark"><HudIcon name="compass" size={25}/></span><span>STAVANGER<em>Z</em></span></button><button className="sz-home-location" onClick={()=>focusZone(state.homeZoneId)}><HudIcon name="location" size={10}/><span>{state.hq?'HQ':'Leiren'} · {index.byId.get(state.homeZoneId)?.name}</span></button></div>
-      <div className="sz-resources">{resourceCards.map(r=><button className={`sz-resource ${r.days!==undefined&&r.days!==null&&r.days<3?'is-critical':''}`} key={r.id} onClick={()=>setModal('stock')} aria-label={`${r.label}: ${number(r.value)}${r.days!==undefined?`, ${r.days===null?'dekker forbruket':Math.floor(r.days)+' døgn igjen'}`:''}`} title={`${r.label}${r.net!==undefined?' · '+signed(r.net)+' per døgn':''}`}><HudIcon name={r.icon} size={20}/><span><strong>{number(r.value)}</strong><small>{r.days!==undefined?r.days===null?'i balanse':`${Math.floor(r.days)} døgn`:r.label}</small></span></button>)}</div>
+      <div className="sz-brand-group"><button className="sz-brand" onClick={()=>setModal('menu')} aria-label="Spillmeny"><span className="sz-brand-mark"><HudIcon name="compass" size={25}/></span><span>STAVANGER<em>Z</em></span></button><button className="sz-home-location" onClick={()=>setModal(state.hq?'hq':'community')}><HudIcon name="location" size={10}/><span>Leiren · {index.byId.get(state.homeZoneId)?.name}</span></button></div>
+      <div className="sz-resources">{resourceCards.map(r=><button className={`sz-resource ${r.days!==undefined&&r.days!==null&&r.days<3?'is-critical':''}`} key={r.id} data-resource={r.id} onClick={()=>{if(r.id==='people'){setModal('community');return;}setStockResource(r.id);setModal('stock');}} aria-label={`${r.label}: ${number(r.value)}${r.days!==undefined?`, ${r.days===null?'dekker forbruket':Math.floor(r.days)+' døgn igjen'}`:''}`} title={`${r.label}${r.net!==undefined?' · '+signed(r.net)+' per døgn':''}`}><HudIcon name={r.icon} size={20}/><span><small className="sz-resource-name">{r.label}</small><strong>{number(r.value)}</strong></span>{r.net!==undefined&&<span className="sz-resource-rate"><b>{signed(r.net)}<small>/d</small></b><small>{r.days===null?'dekker forbruk':`${Math.floor(r.days??0)} døgn igjen`}</small></span>}</button>)}</div>
       <div className="sz-date"><strong>DAG {state.day}<small>07:00</small></strong><span>{dateText(state.day)} · {s.name}</span></div>
       <button className="sz-phase" onClick={()=>setModal('goals')}><span>FASE {state.phase}</span><strong>{phase.name}</strong><HudIcon name="chevron" size={15}/></button>
     </header>
-    <nav className="sz-nav" aria-label="Kommandomeny">{navItems.map(item=><button key={item.id} data-testid={`nav-${item.id}`} aria-label={item.label} aria-pressed={item.active} title={item.label} onClick={item.action}><HudIcon name={item.icon} size={23}/><span>{item.label}</span>{!!item.count&&<b>{item.count}</b>}</button>)}<i/><button aria-label="Dagsrapporter" title="Dagsrapporter" disabled={!state.reports.length} onClick={()=>{setReport(state.reports.at(-1)??null);setModal('report');}}><HudIcon name="report" size={22}/><span>Rapport</span></button><button aria-label="Flere oversikter" title="Flere oversikter" onClick={()=>setModal('menu')}><HudIcon name="settings" size={22}/><span>Mer</span></button></nav>
+    <nav className="sz-nav" aria-label="Kommandomeny">{navItems.map(item=><button key={item.id} data-testid={`nav-${item.id}`} aria-label={item.label} aria-pressed={item.active} title={item.label} onClick={item.action}><HudIcon name={item.icon} size={23}/><span>{item.id==='hq'?'HQ':item.label}</span>{!!item.count&&<b>{item.count}</b>}</button>)}<i/><button aria-label="Dagsrapporter" title="Dagsrapporter" disabled={!state.reports.length} onClick={()=>{setReport(state.reports.at(-1)??null);setModal('report');}}><HudIcon name="report" size={22}/><span>Rapport</span></button><button aria-label="Flere oversikter" title="Flere oversikter" onClick={()=>setModal('menu')}><HudIcon name="settings" size={22}/><span>Mer</span></button></nav>
+    {!targeting&&!drawer&&<button className="sz-territory-button" onClick={fitTerritory} aria-label={`Vis ditt område: ${ownedCount} soner`}><HudIcon name="claim" size={20}/><span><strong>{ownedCount?`${ownedCount} ${ownedCount===1?'sone':'soner'}`:'Ingen soner sikret'}</strong><small>{ownedCount?'Ditt område':'Leiren er ikke overtatt'}</small></span><HudIcon name="expand" size={16}/></button>}
     {!targeting&&<details className="sz-search rz-nearby"><summary><HudIcon name="search" size={17}/><span>Finn et sted</span></summary><div><label><span className="sz-sr-only">Søk etter sone</span><input aria-label="Søk etter sone" placeholder="Søk i Stavanger …" value={zoneQuery} onChange={e=>setZoneQuery(e.target.value)}/></label><button onClick={()=>focusZone(state.homeZoneId)}><HudIcon name="hq"/>{index.byId.get(state.homeZoneId)?.name} · leiren</button>{(zoneQuery.trim()?index.l3.filter(z=>z.name.toLocaleLowerCase('nb').includes(zoneQuery.toLocaleLowerCase('nb'))).slice(0,10).map(z=>z.id):(index.adjacent.get(state.homeZoneId)??[]).map(e=>e.to)).map(id=><button key={id} data-zone-id={id} onClick={()=>focusZone(id)}><HudIcon name="location" size={15}/>{index.byId.get(id)?.name}<small>{STATUS_LABEL[state.zones[id].status]}</small></button>)}</div></details>}
-    {!targeting&&!drawer&&!modal&&!briefHidden&&<div className="sz-brief-wrap"><TodayBrief state={state} world={world} flows={flows} onGoals={()=>setModal('goals')} onCrew={()=>setDrawer('crew')} onRegions={()=>setModal('administration')} onStock={()=>setModal('stock')}/><button className="sz-brief-close" aria-label="Skjul dagens råd" onClick={()=>setBriefHidden(true)}><HudIcon name="close" size={14}/></button></div>}
+    {!targeting&&!drawer&&!modal&&!briefHidden&&<div className="sz-brief-wrap"><TodayBrief state={state} world={world} flows={flows} onZone={focusZone} onReport={()=>{setReport(state.reports.at(-1)??null);setModal('report');}} onWork={()=>setModal('community')} onGoals={()=>setModal('goals')} onCrew={()=>setDrawer('crew')} onRegions={()=>setModal('administration')} onStock={()=>{setStockResource(flows.water.daysLeft!==null&&flows.water.daysLeft<3?'water':'food');setModal('stock');}}/><button className="sz-brief-close" aria-label="Skjul dagens råd" onClick={()=>setBriefHidden(true)}><HudIcon name="close" size={14}/></button></div>}
     {!targeting&&briefHidden&&!drawer&&<button className="sz-show-brief" onClick={()=>setBriefHidden(false)}><HudIcon name="compass"/>I dag</button>}
     {targeting&&commandDraft&&<div className="sz-target-prompt" role="status"><span className="sz-target-icon"><HudIcon name={actionIcon(commandDraft.action)} size={23}/></span><span><small>{commandDraft.survivorIds.map(id=>state.survivors.find(p=>p.id===id)?.name).join(' · ')}</small><strong>{ACTIONS[commandDraft.action].label}: velg mål på kartet</strong></span><button onClick={()=>{setTargeting(false);setModal('command');}}><HudIcon name="back"/>Tilbake</button></div>}
     {drawer&&<aside className={`sz-drawer sz-drawer-${drawer}`} aria-label={drawer==='crew'?'Mannskap':drawer==='poi'?'Valgt sted':'Valgt område'}><header className="sz-drawer-heading"><span className="sz-drawer-icon"><HudIcon name={drawer==='crew'?'crew':drawer==='poi'?'location':'zone'} size={19}/></span><h2>{drawerTitle}</h2>{drawer==='poi'&&<button aria-label="Utvid stedsinformasjon" onClick={()=>setModal('poi')}><HudIcon name="expand" size={17}/></button>}<button aria-label="Lukk kontekstpanel" onClick={()=>setDrawer(null)}><HudIcon name="close" size={20}/></button></header><div className="sz-drawer-body">
@@ -500,8 +524,8 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
       {drawer==='zone'&&zoneContent}
       {drawer==='poi'&&<PoiProfile state={state} world={world} poiId={poiId} crewIds={crew} onSelectZone={focusZone} onOrder={(action,zid,target)=>addOrder(action,target,zid)} onJournal={()=>setModal('discoveries')}/>}
     </div></aside>}
-    {!drawer&&!targeting&&<PinnedCards state={state} world={world} flows={flows} pins={pinned.pins} toggle={pinned.toggle} onCrew={()=>setDrawer('crew')} onStock={()=>setModal('stock')}/>}
-    <footer className="sz-command-bar"><div className="sz-command-context">{attentionCount>0?<button className="sz-alert" onClick={()=>setModal('attention')}><HudIcon name="warning"/><b>{attentionCount}</b><span>Saker å følge opp</span></button>:<span className="sz-ready"><HudIcon name="check" size={16}/>{state.phase>=4?'Regionene venter på din plan':`${freeCrew.length} ledige i mannskapet`}</span>}</div><button className="sz-plan-button" onClick={()=>setModal('plan')} data-testid="open-plan"><HudIcon name="plan"/><span>Dagsplan</span><b>{orders.length}</b></button><button className="sz-end-day" data-testid="end-day" disabled={!!state.event||!!state.gameOver||!!replay||!!state.turnCheckpoint||!activeAvatar||targeting} onClick={()=>orders.length?setModal('plan'):setConfirmEnd(true)}><HudIcon name="sun" size={19}/><span>La døgnet gå</span><HudIcon name="arrow" size={18}/></button></footer>
+    {!drawer&&!targeting&&<PinnedCards state={state} world={world} flows={flows} pins={pinned.pins} toggle={pinned.toggle} onCrew={()=>setDrawer('crew')} onStock={()=>{setStockResource(flows.water.daysLeft!==null&&flows.water.daysLeft<3?'water':'food');setModal('stock');}}/>}
+    <footer className="sz-command-bar"><CrewDock state={state} world={world} orders={orders} onPerson={openProfile}/><div className="sz-command-context">{attentionCount>0?<button className="sz-alert" onClick={()=>setModal('attention')}><HudIcon name="warning"/><b>{attentionCount}</b><span>Saker å følge opp</span></button>:<span className="sz-ready"><HudIcon name="check" size={16}/>{state.phase>=4?'Regionene venter på din plan':`${freeCrew.length} ledige i mannskapet`}</span>}</div><button className="sz-plan-button" onClick={()=>setModal('plan')} data-testid="open-plan"><HudIcon name="plan"/><span>Dagsplan</span><b>{orders.length}</b></button><button className="sz-end-day" data-testid="end-day" disabled={!!state.event||!!state.gameOver||!!replay||!!state.turnCheckpoint||!activeAvatar||targeting} onClick={()=>orders.length?setModal('plan'):setConfirmEnd(true)}><HudIcon name="sun" size={19}/><span>La døgnet gå</span><HudIcon name="arrow" size={18}/></button></footer>
     {message&&<div className="sz-toast" role="status"><HudIcon name="check" size={16}/>{message}<button aria-label="Lukk melding" onClick={()=>setMessage('')}><HudIcon name="close" size={14}/></button></div>}
     {confirmEnd && <div className="rz-overlay"><section className="rz-dialog" role="dialog" aria-modal="true" aria-label="Ingen planlagte oppdrag"><h2>En rolig dag i leiren?</h2><p>Ingen nye oppdrag er planlagt. Pågående reiser og vakter fortsetter. Ledige folk blir der de er, og alle trenger mat og vann.</p><div className="rz-dialog-actions"><button autoFocus onClick={() => setConfirmEnd(false)}>Tilbake til planen</button><button className="rz-primary" onClick={() => { setConfirmEnd(false); finishDay(); }}>La døgnet gå uten oppdrag</button></div></section></div>}
     {state.event && <div className="rz-overlay"><section className="rz-dialog rz-event" role="dialog" aria-label={state.event.title}>
@@ -541,27 +565,28 @@ function Play({ world, state: committedState, setState, onQuit, onRestart }: { w
     {state.gameOver && <div className="rz-overlay"><section className="rz-dialog" role="dialog" aria-modal="true" aria-label="Gjennomspillingen er over"><Art path={`end/${state.gameOver.won ? 'win' : 'lose'}`} className="rz-art rz-art-wide" /><p className="rz-kicker">{state.gameOver.won ? 'SEIER' : 'SLUTT'}</p><h2>{state.gameOver.won ? 'Dere klarte det' : `Slutt etter ${state.gameOver.day} dager`}</h2><p>{state.gameOver.reason}</p>
       <p>Fase {state.phase}, {controlled(state).length} soner, {totalPeople(state)} mennesker, {state.research.done.length} oppfinnelser, {state.counters.killed ?? 0} zombier drept.</p>
       <CampaignEndingView state={state} /><button className="rz-primary" onClick={onRestart}>Ny gjennomspilling</button></section></div>}
-    {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) setModal(null); }}><section className={`rz-dialog rz-wide-dialog sz-modal sz-modal-${modal}${modal === 'equipment' ? ' rz-equipment-dialog' : ''}`} role="dialog" aria-modal="true" aria-label={modal === 'report' ? `Dagsrapport for dag ${report?.day ?? state.day}` : modal === 'book' ? 'ZA-boka' : modal === 'equipment' ? 'Utstyr til oppdraget' : modal === 'command' ? 'Planlegg oppdrag' : modal === 'plan' ? 'Dagsplan' : modal === 'crew-profile' ? 'Persondetaljer' : modal === 'hq' ? 'Hovedkvarter' : 'Spilloversikt'}>
-      <button className="rz-close" aria-label="Lukk" autoFocus onClick={() => setModal(null)}>×</button>
-      {modal === 'command' && commandDraft && <OrderComposer state={state} world={world} orders={orders} draft={commandDraft} targetOptions={taskTargets(commandDraft.action,commandDraft.zoneId)} onChange={setCommandDraft} onConfirm={queueCommand} onCancel={()=>{setModal(null);setCommandDraft(null);setTargeting(false);}} onPickTarget={()=>{setModal(null);setDrawer(null);setTargeting(true);}}/>}
+    {modal && <div className="rz-overlay" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}><section className={`rz-dialog rz-wide-dialog sz-modal sz-modal-${modal}${modal === 'equipment' ? ' rz-equipment-dialog' : ''}`} role="dialog" aria-modal="true" aria-label={modal === 'report' ? `Dagsrapport for dag ${report?.day ?? state.day}` : modal === 'book' ? 'ZA-boka' : modal === 'equipment' ? 'Utstyr til oppdraget' : modal === 'command' ? 'Planlegg oppdrag' : modal === 'plan' ? 'Dagsplan' : modal === 'crew-profile' ? 'Persondetaljer' : modal === 'hq' ? 'Hovedkvarter' : 'Spilloversikt'}>
+      <button className="rz-close" aria-label="Lukk" autoFocus onClick={closeModal}>×</button>
+      {modal === 'command' && commandDraft && <OrderComposer state={state} world={world} orders={orders} draft={commandDraft} targetOptions={taskTargets(commandDraft.action,commandDraft.zoneId)} onChange={setCommandDraft} onConfirm={queueCommand} onHelp={openHelp} onCancel={()=>{setModal(orders.some(o=>o.id===commandDraft.id)?'plan':null);setCommandDraft(null);setTargeting(false);}} onPickTarget={()=>{setModal(null);setDrawer(null);setTargeting(true);}}/>}
       {modal === 'plan' && <><DayPlan state={state} world={world} orders={orders} onEdit={id=>{setCommandDraft(structuredClone(orders.find(o=>o.id===id)!));setModal('command');}} onRemove={id=>setOrders(orders.filter(o=>o.id!==id))} onLocate={id=>{setModal(null);focusZone(id);}} onRedirect={id=>apply(()=>redirectMission(state,world,id,state.homeZoneId),false,`redirect:${id}`)}/><div className="sz-plan-footer"><button onClick={()=>setModal(null)}><HudIcon name="back"/>Tilbake til kartet</button><button className="sz-primary" disabled={!!gearPlan.errors.length||!!state.event||!!state.turnCheckpoint||!activeAvatar} onClick={()=>{setModal(null);finishDay();}}><HudIcon name="sun"/>Gjennomfør døgnet<HudIcon name="arrow"/></button></div></>}
-      {modal === 'crew-profile' && <CrewProfile state={state} world={world} personId={personId} onAssign={id=>{setCrew([id]);setModal(null);setDrawer('crew');}} onLocate={id=>{setModal(null);focusZone(id);}} onEquipment={id=>{setCrew([id]);const position=crewPositionFor(state,id);addOrder('rest',undefined,position?.kind==='zone'?position.zoneId:selected,{id:commandId('rest',position?.kind==='zone'?position.zoneId:selected,[id]),action:'rest',zoneId:position?.kind==='zone'?position.zoneId:selected,survivorIds:[id]});}}/>}
+      {modal === 'crew-profile' && <CrewProfile onHelp={openHelp} state={state} world={world} personId={personId} onAssign={id=>{setCrew([id]);setModal(null);setDrawer('crew');}} onLocate={id=>{setModal(null);focusZone(id);}} onEquipment={id=>{setCrew([id]);const position=crewPositionFor(state,id);addOrder('rest',undefined,position?.kind==='zone'?position.zoneId:selected,{id:commandId('rest',position?.kind==='zone'?position.zoneId:selected,[id]),action:'rest',zoneId:position?.kind==='zone'?position.zoneId:selected,survivorIds:[id]});}}/>}
       {modal === 'poi' && <PoiProfile state={state} world={world} poiId={poiId} crewIds={crew} onSelectZone={id=>{setModal(null);focusZone(id);}} onOrder={(action,zid,target)=>addOrder(action,target,zid)} onJournal={()=>setModal('discoveries')}/>}
-      {modal === 'hq' && <HQManagement state={state} world={world} onSelectZone={id=>{setModal(null);focusZone(id);}} onOpen={view=>{if(view==='construction'){setSelected(state.hq?.zoneId??state.homeZoneId);setSelectedArea(null);setZoneTab('develop');setDrawer('zone');setModal(null);}else setModal(view);}} construction={<section className="sz-hq-development"><p className="sz-eyebrow">UTVIKLE BASEN</p><h3>Hva trenger hovedkvarteret?</h3><TaskPalette actions={['module','build','network','fortify','craft']} disabled={(['module','build','network','craft'] as ActionId[]).filter(action=>!taskTargets(action,state.hq?.zoneId??state.homeZoneId).length)} onTask={action=>addOrder(action,undefined,state.hq?.zoneId??state.homeZoneId)}/></section>} society={<SocietyView world={world} state={state} flows={flows} apply={apply} message={message}/>} research={<ResearchView state={state} apply={apply} message={message}/>} stock={stockView}/>}
+      {modal === 'hq' && <HQManagement activeTab={hqTab} onTab={setHqTab} state={state} world={world} onSelectZone={id=>{setModal(null);focusZone(id);}} onOpen={view=>{if(view==='construction'){setSelected(state.hq?.zoneId??state.homeZoneId);setSelectedArea(null);setZoneTab('develop');setDrawer('zone');setModal(null);}else setModal(view==='society'?'community':view);}} construction={<section className="sz-hq-development"><p className="sz-eyebrow">UTVIKLE BASEN</p><h3>Hva trenger hovedkvarteret?</h3><TaskPalette actions={['module',...(state.phase>=2?['build' as const]:[]),...(state.phase>=3?['network' as const]:[]),'fortify','craft']} disabled={(['module','build','network','craft'] as ActionId[]).filter(action=>!taskTargets(action,state.hq?.zoneId??state.homeZoneId).length)} onTask={action=>addOrder(action,undefined,state.hq?.zoneId??state.homeZoneId)}/></section>} society={communityView} research={<ResearchView state={state} apply={apply} message={message} onHelp={openHelp}/>} stock={stockView}/>}
       {modal === 'equipment' && equipmentDraft && <><div className="rz-equipment-scroll"><CrewEquipment state={state} world={world} orders={orders} draftOrder={equipmentDraft} onChange={setEquipmentDraft} /><MissionOptions state={state} world={world} order={equipmentDraft} onChange={setEquipmentDraft} /></div><div className="rz-dialog-actions"><button onClick={() => { setModal(null); setEquipmentDraft(null); }}>Avbryt</button><button className="rz-primary" disabled={!draftGearPlan || !!draftGearPlan.errors.length} onClick={() => { setOrders(equipmentDraftOrders(orders, equipmentDraft)); setEquipmentDraft(null); setModal(null); setMessage('Utstyr oppdatert. Reservasjonene følger dagsplanen.'); }}>Lagre utstyrsvalg</button></div></>}
       {modal === 'attention' && <><p className="rz-kicker">TRENGER OPPFØLGING</p><h2>Åpne saker</h2>{urgent && <section className="rz-attention-item"><h3>Leirens kapasitet</h3><p>{urgent}</p><button onClick={() => setModal('stock')}>Se lager og forsyninger</button></section>}{people.filter(p => p.health < 45).map(p => <section className="rz-attention-item" key={p.id}><h3>{p.name} trenger hjelp</h3><p>Helse {Math.round(p.health)} · {placement(p.id)}</p><button onClick={() => { setModal(null); setDrawer('crew'); }}>Se mannskap og planlegg behandling</button></section>)}{regionalAlerts.map((alert, i) => <section className="rz-attention-item" key={`${alert.zoneId}-${i}`}><h3>{index.byId.get(alert.zoneId)?.name}</h3><p>{alert.text}</p><button onClick={() => setModal('administration')}>Følg opp regionen</button></section>)}{!attentionCount && <p>Ingen kritiske avvik er meldt.</p>}</>}
       {modal === 'administration' && <AdministrativeView enabled state={state} world={world} onCommand={command => apply(() => applyAdministrationCommand(state, world, command), false, `administration:${JSON.stringify(command)}`)} onSelectZone={id => { focusZone(id); setModal(null); }} onSupplyRequest={(destinationZoneId, cargo) => addOrder('supply',undefined,destinationZoneId,{id:commandId('supply',destinationZoneId,crew),action:'supply',zoneId:destinationZoneId,survivorIds:[...crew],logistics:{cargo}})} />}
       {modal === 'discoveries' && <PoiJournal state={state} world={world} crewIds={crew} onSelectZone={id => { focusZone(id); setModal(null); }} onOrder={(action, zoneId, target) => { addOrder(action, target, zoneId); }} />}
-      {modal === 'book' && <ZaBook world={world} state={state} onGoals={() => setModal('goals')} onDiscoveries={() => setModal('discoveries')} />}
-      {modal === 'report' && report && <><label className="rz-report-picker">Rapportarkiv <select aria-label="Velg dagsrapport" value={report.day} onChange={e => setReport(state.reports.find(r => r.day === Number(e.target.value)) ?? report)}>{state.reports.slice().reverse().map(r => <option key={r.day} value={r.day}>Dag {r.day}{r.day === state.day ? ' · siste rapport' : ''}</option>)}</select></label><ReportView report={report} state={state} flows={flows} onZone={id => { focusZone(id); setModal(null); }} /></>}
+      {modal === 'book' && <ZaBook world={world} state={state} initialTopic={bookTopic} onGoals={() => setModal('goals')} onDiscoveries={() => setModal('discoveries')} />}
+      {modal === 'report' && report && <><label className="rz-report-picker">Rapportarkiv <select aria-label="Velg dagsrapport" value={report.day} onChange={e => setReport(state.reports.find(r => r.day === Number(e.target.value)) ?? report)}>{state.reports.slice().reverse().map(r => <option key={r.day} value={r.day}>Dag {r.day}{r.day === state.day ? ' · siste rapport' : ''}</option>)}</select></label><DailyReport key={report.day} report={report} state={state} world={world} flows={flows} onHelp={openHelp} onZone={id => { focusZone(id); setModal(null); }} /></>}
       {modal === 'trade' && <TradeView state={state} world={world} onTrade={(id, give, take) => { try { const r = trade(state, id, give, take); advanceCampaignCommit(r.state, `trade:${id}`); setState(r.state); setMessage(r.message); } catch (e) { setMessage((e as Error).message); } }} message={message} />}
       {modal === 'goals' && <GoalsView world={world} state={state} />}
+      {modal === 'community' && communityView}
       {modal === 'society' && <SocietyView world={world} state={state} flows={flows} apply={apply} message={message} />}
-      {modal === 'research' && <ResearchView state={state} apply={apply} message={message} />}
+      {modal === 'research' && <ResearchView state={state} apply={apply} message={message} onHelp={openHelp}/>}
       {modal === 'wonders' && <WondersOperations world={world} state={state} crewIds={crew} onOrder={(zoneId, wonderId) => { addOrder('wonder', wonderId, zoneId); }} onSelectZone={id => { focusZone(id); setModal(null); }} />}
       {modal === 'chronicle' && <><h2>Krønike</h2><ol className="rz-chronicle">{[...state.memory].reverse().map((m, i) => <li key={i}><b>Dag {m.day}</b> {m.text}</li>)}</ol></>}
-      {modal === 'stock' && <><h2>Lager</h2><div className="rz-stock-grid">{[...CONTENT.resources.filter(r => r.layer !== 'capacity').map(r => r.id), 'samples'].map(id => <span key={id}><b>{number(state.stock[id] ?? 0)}</b>{resourceName(id)}</span>)}</div><h3>Personlig utstyr</h3><GearInventory state={state} world={world} plan={gearPlan} open /></>}
-      {modal === 'menu' && <><p className="rz-kicker">KOMMANDOSENTRAL</p><h2>Oversikter</h2><div className="rz-overviews">{([['attention', 'Åpne saker'], ['report', 'Dagsrapporter'], ['goals', 'Faser og mål'], ['book', 'ZA-boka'], ['society', 'Samfunn og arbeid'], ...(state.phase >= 4 ? [['administration', 'Regionale ledere']] : []), ['research', 'Forskning'], ['trade', 'Grupper og handel'], ['wonders', 'Unike steder'], ['discoveries', 'Oppdagelser og spor'], ['stock', 'Lager'], ['chronicle', 'Krønike']] as [Exclude<Modal, null>, string][]).map(([id, label]) => <button key={id} disabled={id === 'report' && !state.reports.length} onClick={() => { if (id === 'report') setReport(state.reports.at(-1) ?? null); setModal(id); }}>{label} <span>→</span></button>)}</div>
+      {modal === 'stock' && stockView}
+      {modal === 'menu' && <><p className="rz-kicker">KOMMANDOSENTRAL</p><h2>Oversikter</h2><div className="rz-overviews">{([['attention', 'Åpne saker'], ['report', 'Dagsrapporter'], ['goals', 'Faser og mål'], ['book', 'ZA-boka'], ['community', 'Leiren og arbeidsfordeling'], ...(state.phase >= 4 ? [['administration', 'Regionale ledere']] : []), ['research', 'Forskning'], ['trade', 'Grupper og handel'], ['wonders', 'Unike steder'], ['discoveries', 'Oppdagelser og spor'], ['stock', 'Lager'], ['chronicle', 'Krønike']] as [Exclude<Modal, null>, string][]).map(([id, label]) => <button key={id} disabled={id === 'report' && !state.reports.length} onClick={() => { if(id==='book'){setBookTopic(undefined);setBookReturn(null);} if(id==='stock')setStockResource(null); if (id === 'report') setReport(state.reports.at(-1) ?? null); setModal(id); }}>{label} <span>→</span></button>)}</div>
         <CampaignModeInfo state={state} /><p>Frø {state.seed} · Regler {state.rulesVersion} · Verden {state.worldVersion}</p>
         <button onClick={() => { const blob = new Blob([JSON.stringify(state)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `stavanger-z-dag-${state.day}.json`; a.click(); URL.revokeObjectURL(a.href); }}>Last ned lagring</button>
         <button onClick={onQuit}>Til startskjermen</button>
@@ -793,41 +818,21 @@ function lawEffectText(e: (typeof LAWS)[number]['effect']) {
 
 // ------------------------------------------------------------------ research
 
-function ResearchView({ state, apply, message }: { state: RegionState; apply: (fn: () => RegionState) => void; message: string }) {
-  const special = specialBranch(state);
-  const current = TECHS.find(t => t.id === state.research.current);
-  return <><h2>Forskning</h2>
-    <p className="rz-small">Det dere har mistet, må finnes opp på nytt. Forskere fra leiren og crew som forsker i HQ gir poeng hver dag. {special ? `HQ-et gjør ${BRANCHES[special].toLowerCase()} billigere og en fase tidligere.` : 'Et HQ med en spesiell type gir en spesialisering.'}</p>
-    {current && <p>Nå: <b>{current.name}</b> · {Math.round(state.research.progress)} av {techCost(state, current).points} poeng <i className="rz-bar rz-inline"><b style={{ width: `${Math.min(100, state.research.progress / techCost(state, current).points * 100)}%` }} /></i></p>}
-    {state.phase < 2 && <p>Forskning starter når dere har et HQ.</p>}
-    <div className="rz-tree">{(Object.keys(BRANCHES) as Branch[]).map(b => <section key={b} className={special === b ? 'special' : ''}><h3>{BRANCHES[b]}{special === b ? ' ★' : ''}</h3>
-      {TECHS.filter(t => t.branch === b).map(t => {
-        const done = state.research.done.includes(t.id);
-        const why = techBlocked(state, t);
-        const c = techCost(state, t);
-        const on = state.research.current === t.id;
-        return <div key={t.id} className={`rz-tech ${done ? 'done' : on ? 'on' : why ? 'blocked' : 'open'}`}>
-          <b>{t.name}</b><small>{t.text}</small>
-          <small className="rz-quiet">Fase {c.phase} · {c.points} poeng{Object.keys(c.cost).length ? ` · ${costLabel(c.cost)}` : ''}</small>
-          {done ? <small className="rz-good">Ferdig</small> : on ? <small className="rz-preview">Pågår</small> : <button disabled={!!why} title={why} onClick={() => apply(() => startResearch(state, t.id))}>{why ? why.replace('Ferdig.', '') : 'Start'}</button>}
-        </div>;
-      })}</section>)}</div>
-    {message && <p className="rz-message">{message}</p>}
-  </>;
+function ResearchView({state,apply,message,onHelp}:{state:RegionState;apply:(fn:()=>RegionState)=>void;message:string;onHelp?:(topic:string)=>void}) {
+ const special=specialBranch(state),[branch,setBranch]=useState<Branch>(special??'food'),[page,setPage]=useState(0),current=TECHS.find(t=>t.id===state.research.current),techs=TECHS.filter(t=>t.branch===branch);
+ return <div className="sz-research"><header className="sz-research-heading"><h2>Forskning</h2>{onHelp&&<button className="sz-help-icon" aria-label="Håndbok: forskning" onClick={()=>onHelp('research')}><HudIcon name="book"/></button>}</header>{current&&<p className="sz-current-research"><HudIcon name="research"/>{current.name} · {Math.round(state.research.progress)}/{techCost(state,current).points} poeng</p>}<nav className="sz-research-branches" aria-label="Forskningsgrener">{(Object.keys(BRANCHES)as Branch[]).map(id=><button key={id} aria-pressed={branch===id} onClick={()=>{setBranch(id);setPage(0);}}>{BRANCHES[id]}{special===id?' ★':''}</button>)}</nav><div className="sz-research-grid">{techs.slice(page*4,page*4+4).map(t=>{const done=state.research.done.includes(t.id),why=techBlocked(state,t),cost=techCost(state,t),active=state.research.current===t.id;return <article key={t.id} className={`${done?'is-done':active?'is-active':''}`}><HudIcon name={done?'check':why?'lock':'research'}/><h3>{t.name}</h3><p>{t.text}</p><small>Fase {cost.phase} · {cost.points} poeng{Object.keys(cost.cost).length?` · ${costLabel(cost.cost)}`:''}</small>{done?<strong>Ferdig</strong>:active?<strong>Pågår</strong>:<button disabled={!!why} title={why} onClick={()=>apply(()=>startResearch(state,t.id))}>{why??'Start forskning'}</button>}</article>;})}</div><div className="sz-zone-pagination"><button disabled={!page} onClick={()=>setPage(page-1)}>Forrige</button><span>{page+1}/{Math.ceil(techs.length/4)}</span><button disabled={(page+1)*4>=techs.length} onClick={()=>setPage(page+1)}>Neste</button></div>{message&&<p role="status">{message}</p>}</div>;
 }
 
 // ------------------------------------------------------------------ goals, report and trade
 
-function GoalsView({ world, state }: { world: RegionWorld; state: RegionState }) {
-  return <><h2>Faser og mål</h2>
-    <ol className="rz-phases">{PHASES.map(p => <li key={p.id} className={p.id < state.phase ? 'done' : p.id === state.phase ? 'on' : ''}>
-      <b>Fase {p.id}: {p.name}</b>
-      {p.id === 1 && state.phase === 1 ? <PhaseOneGoals world={world} state={state} />
-        : p.id >= state.phase && <ul>{p.goals.map(g => <li key={g.id} className={p.id === state.phase && goalMet(state, world, g.id) ? 'done' : ''}>{p.id === state.phase && goalMet(state, world, g.id) ? '✓ ' : ''}{g.text}</li>)}</ul>}
-    </li>)}</ol>
-    {state.mutations.length > 0 && <><h3>Zombiene</h3><ul>{state.mutations.map(m => <li key={m.id}>{m.known ? `${MUTATIONS.find(x => x.id === m.id)?.name}: ${MUTATIONS.find(x => x.id === m.id)?.text}` : 'Ukjent mutasjon. Forsk på zombiestudier.'}</li>)}</ul></>}
-    <h3>Milepæler</h3><ol className="rz-goals">{MILESTONES.map(m => <li key={m.id} className={state.milestones.includes(m.id) ? 'done' : ''}><b>{m.title}</b> {m.text}</li>)}</ol>
-    <p className="rz-small">Seier i fase 5: 30 dager på rad med mat nok, håp over 50 og uro under 50, en kur fra vaksineforsøket, eller alle gruppene i regionen som venner.</p></>;
+function GoalsView({world,state}:{world:RegionWorld;state:RegionState}) {
+ const [tab,setTab]=useState<'phase'|'milestones'|'knowledge'>('phase'),[phaseId,setPhaseId]=useState(state.phase),[page,setPage]=useState(0);
+ const phase=PHASES.find(p=>p.id===phaseId)??PHASES[0];
+ return <div className="sz-goals-view"><p className="sz-eyebrow">FREMGANG</p><h2>Neste steg</h2><nav className="sz-context-tabs" aria-label="Fremgangsoversikt">{([['phase','Faser'],['milestones','Milepæler'],['knowledge','Zombiekunnskap']]as const).map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>{setTab(id);setPage(0);}}>{label}</button>)}</nav>
+ {tab==='phase'&&<><div className="sz-phase-selector">{PHASES.map(p=><button key={p.id} aria-pressed={phase.id===p.id} onClick={()=>setPhaseId(p.id)}><HudIcon name={p.id<state.phase?'check':p.id===state.phase?'goals':'lock'}/>Fase {p.id}</button>)}</div><h3>{phase.name}</h3>{phase.id===1&&state.phase===1?<PhaseOneGoals world={world} state={state}/>:<ul className="sz-goal-checks">{phase.goals.map(g=><li key={g.id}><HudIcon name={phase.id<state.phase||phase.id===state.phase&&goalMet(state,world,g.id)?'check':'target'}/>{g.text}</li>)}</ul>}</>}
+ {tab==='milestones'&&<><ul className="sz-goal-checks">{MILESTONES.slice(page*4,page*4+4).map(m=><li key={m.id}><HudIcon name={state.milestones.includes(m.id)?'check':'goals'}/><span><strong>{m.title}</strong><small>{m.text}</small></span></li>)}</ul><div className="sz-zone-pagination"><button disabled={!page} onClick={()=>setPage(page-1)}>Forrige</button><span>{page+1}/{Math.max(1,Math.ceil(MILESTONES.length/4))}</span><button disabled={(page+1)*4>=MILESTONES.length} onClick={()=>setPage(page+1)}>Neste</button></div></>}
+ {tab==='knowledge'&&<><ul className="sz-goal-checks">{state.mutations.slice(page*4,page*4+4).map(m=><li key={m.id}><HudIcon name={m.known?'research':'help'}/>{m.known?`${MUTATIONS.find(x=>x.id===m.id)?.name}: ${MUTATIONS.find(x=>x.id===m.id)?.text}`:'Ukjent mutasjon · undersøk zombiene'}</li>)}</ul>{!state.mutations.length&&<p>Ingen mutasjoner er registrert.</p>}{state.mutations.length>4&&<div className="sz-zone-pagination"><button disabled={!page} onClick={()=>setPage(page-1)}>Forrige</button><button disabled={(page+1)*4>=state.mutations.length} onClick={()=>setPage(page+1)}>Neste</button></div>}</>}
+ </div>;
 }
 
 /** Visible, honest capacity feedback from the same engine rules as the phase transition. */

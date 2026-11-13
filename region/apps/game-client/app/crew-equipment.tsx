@@ -1,6 +1,7 @@
 'use client';
 
-import { useId } from 'react';
+import { useId, useState } from 'react';
+import { HudIcon } from './hud-icons';
 import {
   GEAR_CATALOG, availableGear, gearItemName, knownGearItems,
   type GearCrewPlan, type GearOrderPlan, type GearPlan, type GearPreference, type GearSlot,
@@ -20,6 +21,40 @@ export function equipmentDraftOrders(orders: RegionOrder[], draftOrder: RegionOr
   return orders.some(order => order.id === draftOrder.id)
     ? orders.map(order => order.id === draftOrder.id ? draftOrder : order)
     : [...orders, draftOrder];
+}
+
+/** Inline gear controls share the canonical planner's eligibility and reservations. */
+export function CompactCrewGear({ state, plan, person, order, disabled, onChange }: {
+  state: RegionState; plan: GearPlan; person: GearCrewPlan; order: RegionOrder;
+  disabled?: boolean; onChange: (order: RegionOrder) => void;
+}) {
+  const [slot, setSlot] = useState<GearSlot | null>(null);
+  const name = state.survivors.find(p => p.id === person.survivorId)?.name ?? person.survivorId;
+  const preference = order.gear?.[person.survivorId] ?? person.preference;
+  const change = (next: GearPreference) => onChange({ ...order, gear: { ...order.gear, [person.survivorId]: next } });
+  const locked = (key: GearSlot) => Object.prototype.hasOwnProperty.call(preference.locks ?? {}, key);
+  const choose = (itemId: string | null) => { if (slot) change({ ...preference, locks: { ...preference.locks, [slot]: itemId } }); };
+  const automatic = () => { if (!slot) return; const locks = { ...preference.locks }; delete locks[slot]; change({ ...preference, autoEquip: true, locks }); };
+  const eligible = slot ? person.available.filter(item => GEAR_CATALOG[item.kind]?.slot === slot) : [];
+  return <div className="cmd-inline-gear">
+    <div className="cmd-gear-buttons">{SLOTS.map(key => {
+      const item = person.items[key];
+      return <button type="button" key={key} disabled={disabled} aria-expanded={slot === key}
+        aria-label={`${SLOT_LABEL[key]} for ${name}: ${item ? gearItemName(item) : 'Ingen'}${locked(key) ? ', låst' : ', automatisk'}`}
+        title={`${SLOT_LABEL[key]}: ${item ? gearItemName(item) : 'Ingen'}${locked(key) ? ' · låst' : ' · automatisk'}`}
+        onClick={() => setSlot(slot === key ? null : key)}><HudIcon name={key === 'weapon' ? 'weapon' : key === 'protection' ? 'shield' : 'tool'} size={19} />{locked(key) && <HudIcon name="lock" size={10} />}</button>;
+    })}</div>
+    {slot && !disabled && <div className="cmd-gear-choice">
+      <label>{SLOT_LABEL[slot]} for {name}<select aria-label={`${SLOT_LABEL[slot]} for ${name}`}
+        value={locked(slot) ? preference.locks?.[slot] ?? '' : person.items[slot]?.id ?? ''} onChange={e => choose(e.target.value || null)}>
+        <option value="">Ingen</option>{eligible.map(item => { const reserved = plan.reservations[item.id]; const taken = !!reserved && (reserved.orderId !== order.id || reserved.survivorId !== person.survivorId); return <option key={item.id} value={item.id} disabled={taken}>{gearItemName(item)}{taken ? ' · reservert av andre' : ''}</option>; })}
+        {person.items[slot] && !eligible.some(item => item.id === person.items[slot]?.id) && <option value={person.items[slot]!.id}>{gearItemName(person.items[slot]!)}</option>}
+      </select></label>
+      <button type="button" onClick={automatic} aria-pressed={!locked(slot)}>Auto</button>
+      <button type="button" aria-pressed={locked(slot)} onClick={() => locked(slot) ? automatic() : choose(person.items[slot!]?.id ?? null)}>{locked(slot) ? 'Lås opp' : 'Lås valg'}</button>
+      <button type="button" onClick={() => setSlot(null)} aria-label={`Lukk utstyrsvalg for ${name}`}><HudIcon name="close" size={15} /></button>
+    </div>}
+  </div>;
 }
 
 export default function CrewEquipment({ state, world, orders, draftOrder, onChange }: {

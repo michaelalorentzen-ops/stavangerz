@@ -22,3 +22,21 @@
 .rz-world-threat .rz-piece-fallback { color: #ffd3b4; border-color: #ce6b4f; background: #402a25; }
 
 .has-model .rz-piece-caption { bottom: -16px; }
+
+/* Territorial ownership is a continuous boundary, while selection is dashed white. */
+.rz-map .rz-own-key{border:2px solid #9ce9c5!important;background:#8fe4bb33!important;box-sizing:border-box}
+.rz-map .rz-map-key-note{color:#b2c4bc;letter-spacing:0}
+.rz-map .rz-map-place-label{position:absolute;display:flex;flex-direction:column;gap:3px;align-items:center;background:#11262add!important;color:#e2e8df!important;border:1px solid #74877e55!important;border-radius:7px;padding:6px 10px!important;font:600 12px/1.2 sans-serif;box-shadow:0 2px 12px #0005;white-space:nowrap;min-height:0!important}
+.rz-map .rz-map-place-label.is-owned{border-color:#9ce9c566!important;color:#d2f4df!important}
+.rz-map .rz-map-place-label small{font:500 9px/1.2 sans-serif;color:#b3c5b8;letter-spacing:.06em;text-transform:uppercase}
+.rz-map .rz-map-place-label.is-owned small{color:#9ce9c5}
+.rz-map .rz-marker-home::after{content:attr(data-caption);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);color:#ffe5a6;white-space:nowrap;background:#14262aeb;border:1px solid #d5ba7355;border-radius:5px;padding:5px 8px;font:600 11px/1.2 sans-serif;pointer-events:none}
+.sz-game .rz-map-tools .rz-territory-focus{display:inline-flex!important}
+.sz-game .rz-map[data-map-mode=territory] .rz-legend{font-size:11px;gap:7px 14px;opacity:1}
+.sz-game .rz-map-tools{flex-wrap:wrap}
+@media(max-width:820px){.sz-game .rz-map-tools{max-width:calc(100% - 86px);row-gap:5px}.rz-map .rz-map-key-note{display:none}.rz-map .rz-map-place-label{font-size:11px;padding:5px 8px!important}.rz-map .rz-marker-home::after{font-size:10px}}
+.rz-map .rz-map-layer-select{display:none}
+@media(max-width:820px){
+  .sz-game .rz-map-tools .rz-map-layer-option,.sz-game .rz-map-tools .rz-territory-focus{display:none!important}
+  .rz-map .rz-map-layer-select{display:block;height:44px;min-width:104px;max-width:120px;border:1px solid #78918a66;border-radius:9px;background:#112a30ef;color:#d8e6dc;font:12px sans-serif;padding:0 10px;box-sizing:border-box}
+}

@@ -168,3 +168,8 @@ O05 er delvis avklart som **D26** av Mikki i denne økten: våpen, beskyttelse, 
 ## Samlet ferdigstillelse 13.11.2026
 
 Mikki ba om resten av v0.4 med tallbalansering utsatt, og godkjente D27 (anleggsoppdrag) og D28 (regional styringsramme). Draft #27 samler funksjonell mobilitet, reell feltdelegasjon, kampanjemoduser/Hardcore, POI-/anleggsdrift, regionale rutiner og kart-/UI-integrasjon over #26. Se [32_V04_COMPLETION.md](32_V04_COMPLETION.md) for implementert, faktisk verifisering, kjørbare kontroller og gjenværende balanse-/langspillarbeid. Ingen milepæl er omklassifisert til eiergodkjent balanse.
+
+
+## Revisjon etter eierens ti-døgnstest, 13.11.2026
+
+PR28 ble merget til main og publisert etter særskilt eiermandat. Spillerens faktiske test avdekket vesentlige UX-mangler som tekniske kontroller ikke fanget. Arbeidsgrenen `feat/v04-territory-clarity` reviderer kart, ordre, rapport, leirarbeid og detaljflater. Se [36_V04_PLAYTEST_UX_REVISION.md](36_V04_PLAYTEST_UX_REVISION.md) for implementert, verifisert og fortsatt manglende. Ingen ny balanse eller eierlåst regel erklæres godkjent.
