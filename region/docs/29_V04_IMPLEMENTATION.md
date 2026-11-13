@@ -178,3 +178,8 @@ PR28 ble merget til main og publisert etter særskilt eiermandat. Spillerens fak
 ## Visuell retning etter QA31
 
 Eieren ba om tydeligere spillpreg etter en funksjonelt positiv QA. [40_V04_ART_DIRECTION.md](40_V04_ART_DIRECTION.md) dokumenterer den samlede illustrerte retningen, kontroll mot bevart flyt og konkrete skjermbevis. Det endrer ikke D25–D28 eller balanserer motoren; stilretningen er fortsatt en vurderbar hypotese, ikke en ny eierlåst produktbeslutning.
+
+
+## QA32 før balansering
+
+Eieren ba om å fullføre gjenværende QA-punkter før tallbalansering. [41_V04_QA32_COMPLETION.md](41_V04_QA32_COMPLETION.md) registrerer lagringsbibliotek, konfigurerbare hurtigtaster, lokal Foley, komplett inventarillustrasjon, seiersoversikt og spillerutløst kartmåling, med eksplisitt skille mellom funksjonelle tester, naturlig seiersbevis og fysisk GPU. Ingen av de to siste erklæres bevist av skytester.
