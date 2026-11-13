@@ -18,6 +18,7 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
   const templates = new Map<string, { scene: THREE.Group; clips: THREE.AnimationClip[]; height: number }>();
   const instances = new Map<string, Instance>();
   const pending = new Set<string>();
+  const journeys = new Map<string, { from: [number, number]; to: [number, number]; started: number }>();
   const markers = new Map<string, Marker>();
   const zones = new Map(world.zones.map(z => [z.id, z]));
   let assets: Record<string, Asset> = {}, pieces: Piece[] = [], state = initial, disposed = false, lost = false;
@@ -56,7 +57,11 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         visible.push({ id: person.id, asset: `crew-${identity}`, at, title: `${person.name} · ${zones.get(zoneId)?.name}`, animation: position?.kind === 'transit' ? 'Walk' : 'Idle', crew: person.id, zone: zoneId, offset });
       }
       const home = zones.get(state.homeZoneId)?.at;
-      if (home && map.getBounds().contains(home)) visible.push({ id: 'camp', asset: 'hq', at: home, title: 'Leiren', animation: 'Idle', zone: state.homeZoneId });
+      if (home && map.getBounds().contains(home)) {
+        visible.push({ id: 'camp', asset: 'hq', at: home, title: 'Leiren', animation: 'Idle', zone: state.homeZoneId });
+        if (Object.values(state.stock).some(n => n > 0)) visible.push({ id: 'camp-supplies', asset: 'supply-crates', at: home, title: 'Leirlager', animation: 'Idle', zone: state.homeZoneId, offset: -1 });
+        if ((state.stock.boat ?? 0) > 0) visible.push({ id: 'camp-boat', asset: 'boat', at: home, title: 'Båt ved leiren', animation: 'Idle', zone: state.homeZoneId, offset: -2 });
+      }
       for (const zone of world.zones) {
         const known = state.zones[zone.id];
         if (!zone.at || !known || !map.getBounds().contains(zone.at) || known.status === 'unknown') continue;
@@ -76,8 +81,8 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
         button.title = piece.title; button.setAttribute('aria-label', piece.title);
         button.innerHTML = `<span class="rz-piece-fallback" aria-hidden="true">${piece.crew ? '●' : piece.asset === 'zombie' ? '⚠' : piece.asset === 'hq' ? '⌂' : '▥'}</span><span class="rz-piece-caption"></span>`;
         button.querySelector('.rz-piece-caption')!.textContent = piece.crew ? piece.title.split(' ')[0] : '';
-        button.onclick = event => { event.stopPropagation(); if (piece.crew) select.onCrew(piece.crew, piece.zone); else select.onZone(piece.zone); };
-        markers.set(piece.id, new lib.Marker({ element: button, anchor: 'bottom', offset: [piece.crew ? 35 + (piece.offset ?? 0) * 42 : 0, piece.crew ? -8 : 8] }).setLngLat(piece.at).addTo(map));
+        button.onclick = event => { event.stopPropagation(); const current = pieces.find(p => p.id === piece.id); if (!current) return; if (current.crew) select.onCrew(current.crew, current.zone); else select.onZone(current.zone); };
+        markers.set(piece.id, new lib.Marker({ element: button, anchor: 'bottom', offset: [piece.crew ? 35 + (piece.offset ?? 0) * 42 : (piece.offset ?? 0) * 48, piece.crew ? -8 : 8] }).setLngLat(piece.at).addTo(map));
       } else markers.get(piece.id)!.setLngLat(piece.at);
       if (!lowPower && !lost) load(piece.asset);
     }
@@ -111,8 +116,16 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
           instance.animation = piece.animation;
         }
         // Screen-space offset separates pieces sharing the same authoritative zone anchor.
-        const point = map.project(piece.at);
-        if (piece.crew) { point.x += 35 + (piece.offset ?? 0) * 42; point.y -= 8; }
+        const journey = journeys.get(piece.id);
+        let at = piece.at;
+        if (journey && !motion.matches) {
+          const progress = Math.min(1, (performance.now() - journey.started) / 650);
+          at = [journey.from[0] + (journey.to[0] - journey.from[0]) * progress, journey.from[1] + (journey.to[1] - journey.from[1]) * progress];
+          if (progress < 1) animate = true; else journeys.delete(piece.id);
+          marker?.setLngLat(at);
+        }
+        const point = map.project(at);
+        if (piece.crew) { point.x += 35 + (piece.offset ?? 0) * 42; point.y -= 8; } else { point.x += (piece.offset ?? 0) * 48; point.y += 8; }
         const lngLat = map.unproject(point);
         const anchor = lib.MercatorCoordinate.fromLngLat(lngLat, 0);
         const metersPerPixel = 40075016.686 * Math.cos(lngLat.lat * Math.PI / 180) / (512 * 2 ** map.getZoom());
@@ -137,8 +150,18 @@ export function attachWorldObjects(map: LibreMap, lib: typeof import('maplibre-g
   map.on('moveend', refresh);
   fetch('/models/stavangerz/manifest.json', { signal: abort.signal }).then(r => r.json()).then(manifest => { if (!disposed) { assets = manifest.assets ?? {}; refresh(); } }).catch(() => undefined);
   refresh();
-  return { update(next) { state = next; refresh(); }, destroy() {
-    disposed = true; abort.abort(); map.off('moveend', refresh);
+  return { update(next) {
+    // Only interpolate a reported advance on the same persistent route. Never
+    // infer a journey from a queued order, area assignment or unknown position.
+    for (const person of next.survivors) {
+      const before = crewPositionFor(state, person.id), after = crewPositionFor(next, person.id);
+      if (before?.kind !== 'transit' || after?.kind !== 'transit' || before.routeZoneIds.join('|') !== after.routeZoneIds.join('|') || after.atIndex !== before.atIndex + 1) continue;
+      const from = zones.get(before.routeZoneIds[before.atIndex])?.at, to = zones.get(after.routeZoneIds[after.atIndex])?.at;
+      if (from && to && map.getZoom() >= 12 && map.getBounds().contains(to)) journeys.set(person.id, { from, to, started: performance.now() });
+    }
+    state = next; refresh();
+  }, destroy() {
+    disposed = true; abort.abort(); journeys.clear(); map.off('moveend', refresh);
     map.getCanvas().removeEventListener('webglcontextlost', contextLost); map.getCanvas().removeEventListener('webglcontextrestored', contextRestored);
     markers.forEach(m => m.remove()); markers.clear();
     instances.forEach(instance => instance.mixer?.stopAllAction()); instances.clear();

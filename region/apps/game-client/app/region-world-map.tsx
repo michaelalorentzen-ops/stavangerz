@@ -1,5 +1,5 @@
- 'use client';
-import { useEffect, useRef, useState } from 'react';
+'use client';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LibreMap, GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { indexWorld, WONDERS, wonderZone, type ActionId, type Flows, type RegionState, type RegionWorld } from '../../../packages/gameplay/src/region/index';
 import { attachBuildings, COLORS, gameStyle, MAP_ATTRIBUTION, markerElement } from './region-map-style';
@@ -28,7 +28,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
   stateRef.current = state;
   const flowsRef = useRef(flows);
   flowsRef.current = flows;
-  const index = indexWorld(world);
+  const index = useMemo(() => indexWorld(world), [world]);
   useEffect(() => {
     let map: LibreMap | null = null;
     let cancelled = false;
