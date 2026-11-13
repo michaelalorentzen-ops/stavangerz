@@ -163,3 +163,8 @@ Neste arbeidspakke: [ID og eier]
 Se [samlet spillteststatus](30_V04_PLAYTEST_STATUS.md) for gjenopprettet PR-/branch-baseline, faktisk implementasjon, verifiserte spillerreiser og gjenværende arbeid. `feat/v04-phase-one-playtest` samler videre UI-arbeid fra `da16b82`; bildepakken ligger separat i draft #24. Verken M2, M3 eller hele v0.4 er erklært ferdig.
 
 O05 er delvis avklart som **D26** av Mikki i denne økten: våpen, beskyttelse, oppdragsverktøy, auto-equip, manuelle låser og faktisk reservasjon/retur bygges. Motor/regnskap og utstyrspanel er levert med disjunkt filansvar på `feat/v04-personal-gear`; [integrert gear- og spillteststatus](31_V04_GEAR_PLAYTEST.md) beskriver resultat og begrensninger. Nye tall og ett slot per kategori prøves som hypoteser. Ingen automatisk merge/deploy.
+
+
+## Samlet ferdigstillelse 13.11.2026
+
+Mikki ba om resten av v0.4 med tallbalansering utsatt, og godkjente D27 (anleggsoppdrag) og D28 (regional styringsramme). Draft #27 samler funksjonell mobilitet, reell feltdelegasjon, kampanjemoduser/Hardcore, POI-/anleggsdrift, regionale rutiner og kart-/UI-integrasjon over #26. Se [32_V04_COMPLETION.md](32_V04_COMPLETION.md) for implementert, faktisk verifisering, kjørbare kontroller og gjenværende balanse-/langspillarbeid. Ingen milepæl er omklassifisert til eiergodkjent balanse.
