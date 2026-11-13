@@ -1,7 +1,9 @@
 'use client';
 
 import { useId, useState } from 'react';
-import type { Population, RegionState, RegionWorld, Stock } from '../../../packages/gameplay/src/region/types';
+import type { Population, RegionState, RegionWorld, Stock, WorkId } from '../../../packages/gameplay/src/region/types';
+import { resourceName } from '../../../packages/gameplay/src/region/engine';
+import { WORK_NAMES } from '../../../packages/gameplay/src/region/systems';
 import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
 import {
   administrations, administrationCommandError, regionalL1, regionalMandate, regionalStock, regionalSupplyRequest,
@@ -16,7 +18,7 @@ type Props = {
   onSelectZone?: (zoneId: string) => void;
 };
 const POP_LABELS: Record<keyof Population, string> = { adults: 'Voksne', children: 'Barn', elderly: 'Eldre', sick: 'Syke' };
-const stockText = (stock: Stock) => Object.entries(stock).filter(([, n]) => n > .01).map(([id, n]) => `${Math.round(n * 10) / 10} ${id === 'food' ? 'mat' : id === 'water' ? 'vann' : id === 'medicine' ? 'medisin' : id}`).join(' · ') || 'Tomt';
+const stockText = (stock: Stock) => Object.entries(stock).filter(([, n]) => n > .01).map(([id, n]) => `${Math.round(n * 10) / 10} ${resourceName(id).toLowerCase()}`).join(' · ') || 'Tomt';
 
 export function AdministrativeView({ state, world, enabled = true, onCommand, onSupplyRequest, onSelectZone }: Props) {
   const formId = useId();
@@ -50,7 +52,7 @@ export function AdministrativeView({ state, world, enabled = true, onCommand, on
           <label>Utpekt stedfortreder<select value={region.successorId ?? ''} disabled={locked} onChange={e => onCommand({ kind: 'successor', l1Id: region.l1Id, survivorId: e.target.value || undefined })}><option value="">Ingen utpekt</option>{here.filter(s => s.id !== region.leaderId).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
           <label>Mandat<select value={region.policy} disabled={locked} onChange={e => onCommand({ kind: 'policy', l1Id: region.l1Id, policy: e.target.value as RegionalPolicy })}>{Object.entries(REGIONAL_POLICIES).map(([id, p]) => <option key={id} value={id}>{p.name}</option>)}</select></label>
           <small>{REGIONAL_POLICIES[region.policy].text}</small>
-          <dl><div><dt>Lokalt lager</dt><dd>{stockText(stock)}</dd></div><div><dt>Arbeid i dag</dt><dd>{Object.entries(region.work).filter(([, n]) => n).map(([id, n]) => `${n} ${id}`).join(' · ') || 'Ingen arbeidskraft'}</dd></div></dl>
+          <dl><div><dt>Lokalt lager</dt><dd>{stockText(stock)}</dd></div><div><dt>Arbeid i dag</dt><dd>{Object.entries(region.work).filter(([, n]) => n).map(([id, n]) => `${n} ${WORK_NAMES[id as WorkId].toLowerCase()}`).join(' · ') || 'Ingen arbeidskraft'}</dd></div></dl>
           <form onSubmit={event => { event.preventDefault(); const data = new FormData(event.currentTarget); const residents = Object.fromEntries(Object.keys(POP_LABELS).map(key => [key, Number(data.get(key))])) as unknown as Population; onCommand({ kind: 'residents', l1Id: region.l1Id, residents }); }}>
             <fieldset disabled={locked}><legend>Lokale innbyggere</legend><p>Alloker leverte innbyggere. Frigjorte folk venter her på transport, og forsvinner ikke til hoved-HQ.</p><div className="regional-population">{(Object.keys(POP_LABELS) as (keyof Population)[]).map(key => <label key={key}>{POP_LABELS[key]}<input name={key} type="number" min="0" step="1" max={region.residents[key] + (pending?.[key] ?? 0)} defaultValue={region.residents[key]} key={`${key}-${region.residents[key]}`} required /></label>)}</div><button>Oppdater lokal allokering</button></fieldset>
           </form>
