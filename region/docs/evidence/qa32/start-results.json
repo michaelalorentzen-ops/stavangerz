@@ -1,0 +1,152 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "loadingObserved": true,
+    "bounds": {
+      "viewport": 800,
+      "scroll": 800,
+      "horizontal": 1280,
+      "hardcore": {
+        "top": 394.25,
+        "bottom": 446.84375,
+        "left": 24,
+        "right": 444
+      },
+      "suggestions": {
+        "top": 504.84375,
+        "bottom": 548.84375,
+        "left": 24,
+        "right": 444
+      },
+      "list": {
+        "top": 555.84375,
+        "bottom": 722.84375,
+        "left": 24,
+        "right": 444
+      },
+      "start": {
+        "top": 727,
+        "bottom": 771,
+        "left": 1030.109375,
+        "right": 1241
+      },
+      "canvas": {
+        "top": 18,
+        "bottom": 596.609375,
+        "left": 468,
+        "right": 1256
+      },
+      "mapCanvas": [
+        786,
+        577
+      ]
+    },
+    "all17Starts": true,
+    "campaign": {
+      "difficulty": "story",
+      "hardcore": true
+    },
+    "errors": []
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "loadingObserved": true,
+    "bounds": {
+      "viewport": 1080,
+      "scroll": 1080,
+      "horizontal": 1920,
+      "hardcore": {
+        "top": 441.25,
+        "bottom": 493.84375,
+        "left": 24,
+        "right": 444
+      },
+      "suggestions": {
+        "top": 554.84375,
+        "bottom": 598.84375,
+        "left": 24,
+        "right": 444
+      },
+      "list": {
+        "top": 608.84375,
+        "bottom": 775.84375,
+        "left": 24,
+        "right": 444
+      },
+      "start": {
+        "top": 999,
+        "bottom": 1043,
+        "left": 1670.109375,
+        "right": 1881
+      },
+      "canvas": {
+        "top": 24,
+        "bottom": 866.609375,
+        "left": 468,
+        "right": 1896
+      },
+      "mapCanvas": [
+        1426,
+        841
+      ]
+    },
+    "all17Starts": true,
+    "campaign": {
+      "difficulty": "story",
+      "hardcore": true
+    },
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "loadingObserved": true,
+    "bounds": {
+      "viewport": 844,
+      "scroll": 1501,
+      "horizontal": 390,
+      "hardcore": {
+        "top": 456.25,
+        "bottom": 508.84375,
+        "left": 14,
+        "right": 376
+      },
+      "suggestions": {
+        "top": 569.84375,
+        "bottom": 613.84375,
+        "left": 14,
+        "right": 376
+      },
+      "list": {
+        "top": 623.84375,
+        "bottom": 811.84375,
+        "left": 14,
+        "right": 376
+      },
+      "start": {
+        "top": 782.5,
+        "bottom": 826.5,
+        "left": 210.90625,
+        "right": 376
+      },
+      "canvas": {
+        "top": 853.234375,
+        "bottom": 1203.234375,
+        "left": 14,
+        "right": 376
+      },
+      "mapCanvas": [
+        360,
+        348
+      ]
+    },
+    "all17Starts": true,
+    "campaign": {
+      "difficulty": "story",
+      "hardcore": true
+    },
+    "errors": []
+  }
+]
