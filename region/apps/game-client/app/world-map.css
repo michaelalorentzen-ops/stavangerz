@@ -40,3 +40,11 @@
   .sz-game .rz-map-tools .rz-map-layer-option,.sz-game .rz-map-tools .rz-territory-focus{display:none!important}
   .rz-map .rz-map-layer-select{display:block;height:44px;min-width:104px;max-width:120px;border:1px solid #78918a66;border-radius:9px;background:#112a30ef;color:#d8e6dc;font:12px sans-serif;padding:0 10px;box-sizing:border-box}
 }
+
+/* Physical chart markers: the mint owned status is kept distinct from warm HQ brass. */
+.sz-game .rz-map .rz-marker-home{background:radial-gradient(circle at 35% 20%,#65705a,#203934 60%);border-color:#f0d28b;box-shadow:0 0 0 4px #152b2ce0,0 0 0 5px #e4bc7855,0 5px 12px #06121b80}
+.sz-game .rz-map .rz-marker-home::after{background:linear-gradient(120deg,#243a3b,#142c34);color:#f0d9a0;border-color:#d8bf7a72;border-radius:5px 9px 9px 5px;box-shadow:0 2px 6px #0004}
+.sz-game .rz-map .rz-map-place-label{background:linear-gradient(150deg,#203a40ee,#102831ee)!important;border-color:#9cae9555!important;border-radius:6px 11px 11px 6px;box-shadow:0 3px 9px #07141b55}
+.sz-game .rz-map .rz-map-place-label.is-owned{background:linear-gradient(145deg,#284d41ef,#173a39ed)!important;border-color:#9ce9c588!important;color:#dff5dc!important}
+.sz-game .rz-piece-caption{border-color:#a9bc9566;border-radius:4px;background:#112b32ed;box-shadow:0 2px 5px #0005;color:#e7ead6}
+.sz-game .rz-map .rz-marker-wonder,.sz-game .rz-map .rz-marker-hq{background:linear-gradient(150deg,#35535a,#1a343c);border-color:#b4c5a777;box-shadow:0 2px 7px #07151c66}
