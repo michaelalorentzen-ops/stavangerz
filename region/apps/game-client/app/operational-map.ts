@@ -15,7 +15,7 @@ export function areaLeaves(world: RegionWorld, areaId: string): RegionZone[] {
 }
 export interface OperationalMapController { update(state: RegionState): void; destroy(): void }
 /** One bounded overlay, fed only by the canonical placement register. */
-export function attachOperationalMap(map: LibreMap, lib: typeof import('maplibre-gl'), world: RegionWorld, initial: RegionState, onSelect: (id: string) => void, onLevel: (level: 1 | 2 | 3) => void): OperationalMapController {
+export function attachOperationalMap(map: LibreMap, lib: typeof import('maplibre-gl'), world: RegionWorld, initial: RegionState, onSelect: (id: string) => void, onLevel: (level: 1 | 2 | 3) => void, individualCrew = false): OperationalMapController {
   let state = initial;
   let markers: Marker[] = [];
   const byId = new Map(world.zones.map(z => [z.id, z]));
@@ -85,7 +85,7 @@ export function attachOperationalMap(map: LibreMap, lib: typeof import('maplibre
       button.addEventListener('click', event => { event.stopPropagation(); onSelect(zone.id); });
       markers.push(new lib.Marker({ element: button, anchor: crew ? 'bottom-left' : 'center', offset: [0, offset] }).setLngLat(zone.at).addTo(map));
     };
-    for (const { zone, names, transit, area } of groups.values()) label(zone,
+    for (const { zone, names, transit, area } of groups.values()) if (!(individualCrew && level === 3 && !area)) label(zone,
       `${area ? '▱' : transit ? '→' : '●'} ${names.length === 1 && level === 3 ? names[0].split(' ')[0] : `${names.length} crew`}`,
       `${names.join(', ')} · ${area ? 'områdevakt i' : transit ? 'på reise ved' : 'ved'} ${zone.name}`, true);
     if (level < 3) for (const area of world.zones.filter(z => z.level === level)) {

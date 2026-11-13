@@ -1,0 +1,18 @@
+.rz-map { isolation: isolate; background: #102833; }
+.rz-map .rz-marker { cursor: pointer; border: 1px solid #a3bdba80; box-shadow: 0 3px 10px #0009; opacity: .9; }
+.rz-map button.rz-marker { padding: 0; }
+.rz-map .rz-marker-home { width: 36px; height: 36px; color: #ffdf8b; border: 2px solid #ffdf8b; background: #17271e; box-shadow: 0 0 0 5px #ffdf8b18, 0 4px 14px #000a; z-index: 5; }
+.rz-map .rz-marker-wonder { width: 24px; height: 24px; font-size: 16px; background: #18313b; color: #aad1d5; }
+.rz-map .rz-marker-hq { width: 27px; height: 27px; background: #27372d; }
+.rz-world-piece { position: relative; width: 40px; height: 54px; padding: 0; border: 0; background: transparent; cursor: pointer; color: #e5efd9; overflow: visible; }
+.rz-world-piece:hover, .rz-world-piece:focus-visible { outline: 2px solid #ffe08a; outline-offset: 3px; border-radius: 8px; }
+.rz-piece-fallback { position: absolute; inset: 4px 4px 17px; display: grid; place-items: center; background: #203d35; border: 2px solid #b1cc9a; border-radius: 50% 50% 40% 40%; box-shadow: 0 3px 10px #000b; font-size: 24px; }
+.rz-world-prop .rz-piece-fallback { border-color: #c5b37c; background: #293628; }
+.rz-piece-caption { position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); padding: 2px 5px; border-radius: 3px; background: #0b1a20e8; font: 10px/1.2 sans-serif; letter-spacing: .03em; color: #e4e9d7; border: 1px solid #8caf9d55; white-space: nowrap; }
+.rz-piece-caption:empty { display:none; }
+.has-model .rz-piece-fallback { opacity: 0; }
+.rz-world-piece.has-model:after { content:''; position:absolute; bottom: 12px; left: 5px; width: 30px; height: 8px; border-radius: 50%; background: #0005; z-index:-1; }
+.rz-map-targeting { position:absolute; top:18px; left:50%; transform:translateX(-50%); padding:10px 16px; border:1px solid #ffe08a; background:#152a28ed; color:#ffe5a6; z-index:4; border-radius:6px; font-size:12px; }
+.rz-map .rz-map-area-label { background:#15272bd9; border-color:#637f7b70; box-shadow:0 2px 8px #0006; }
+.rz-map .rz-command-level { color:#b2cbc7; letter-spacing:.04em; }
+@media (prefers-reduced-motion:reduce) { .rz-world-piece * { animation:none!important; transition:none!important; } }
