@@ -1,0 +1,87 @@
+[
+  {
+    "stage": "map",
+    "width": 1280,
+    "scroll": 1280,
+    "smallText": [],
+    "smallTargets": [],
+    "overflows": []
+  },
+  {
+    "stage": "hq",
+    "width": 1280,
+    "scroll": 1280,
+    "smallText": [],
+    "smallTargets": [],
+    "overflows": []
+  },
+  {
+    "stage": "book",
+    "width": 1280,
+    "scroll": 1280,
+    "smallText": [],
+    "smallTargets": [],
+    "overflows": []
+  },
+  {
+    "stage": "map",
+    "width": 390,
+    "scroll": 390,
+    "smallText": [],
+    "smallTargets": [],
+    "overflows": []
+  },
+  {
+    "stage": "hq",
+    "width": 390,
+    "scroll": 390,
+    "smallText": [],
+    "smallTargets": [],
+    "overflows": [
+      {
+        "cls": "rz-dialog rz-wide-dialog sz-modal sz-modal-hq",
+        "client": 822,
+        "scroll": 1344
+      }
+    ]
+  },
+  {
+    "stage": "book",
+    "width": 390,
+    "scroll": 390,
+    "smallText": [
+      {
+        "tag": "STRONG",
+        "cls": "",
+        "text": "Ikke skrevet ennå",
+        "font": "0px"
+      },
+      {
+        "tag": "STRONG",
+        "cls": "",
+        "text": "Ikke skrevet ennå",
+        "font": "0px"
+      },
+      {
+        "tag": "STRONG",
+        "cls": "",
+        "text": "Ikke skrevet ennå",
+        "font": "0px"
+      },
+      {
+        "tag": "STRONG",
+        "cls": "",
+        "text": "Ikke skrevet ennå",
+        "font": "0px"
+      }
+    ],
+    "smallTargets": [],
+    "overflows": [
+      {
+        "cls": "rz-dialog rz-wide-dialog sz-modal sz-modal-book",
+        "client": 822,
+        "scroll": 1097
+      }
+    ]
+  }
+]

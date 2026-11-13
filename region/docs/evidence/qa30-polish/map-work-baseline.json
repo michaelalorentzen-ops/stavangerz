@@ -1,0 +1,80 @@
+[
+  {
+    "width": 1280,
+    "label": "detail-idle",
+    "windowMs": 4000,
+    "counts": {
+      "raf": 9,
+      "draw": 6633,
+      "cos": 7425
+    },
+    "taskSeconds": 0.107837,
+    "scriptSeconds": 0.089598,
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "label": "overview-danger-idle",
+    "windowMs": 4000,
+    "counts": {
+      "raf": 142,
+      "draw": 0,
+      "cos": 0
+    },
+    "taskSeconds": 0.03474300000000019,
+    "scriptSeconds": 0.006347000000000325,
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "label": "detail-return",
+    "windowMs": 4000,
+    "counts": {
+      "raf": 15,
+      "draw": 8310,
+      "cos": 8415
+    },
+    "taskSeconds": 0.1080880000000004,
+    "scriptSeconds": 0.08971499999999999,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "label": "detail-idle",
+    "windowMs": 4000,
+    "counts": {
+      "raf": 27,
+      "draw": 9423,
+      "cos": 4617
+    },
+    "taskSeconds": 0.17861000000000002,
+    "scriptSeconds": 0.12109,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "label": "overview-danger-idle",
+    "windowMs": 4000,
+    "counts": {
+      "raf": 146,
+      "draw": 0,
+      "cos": 0
+    },
+    "taskSeconds": 0.04541300000000015,
+    "scriptSeconds": 0.009697000000000067,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "label": "detail-return",
+    "windowMs": 4000,
+    "counts": {
+      "raf": 36,
+      "draw": 8892,
+      "cos": 4455
+    },
+    "taskSeconds": 0.2580479999999996,
+    "scriptSeconds": 0.15557200000000004,
+    "errors": []
+  }
+]

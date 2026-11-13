@@ -5,7 +5,8 @@
       "feat/v04-completion": false,
       "feat/v04-situational-hud": false,
       "feat/v04-territory-clarity": false,
-      "fix/v04-qa29-polish": false
+      "fix/v04-qa29-polish": false,
+      "feat/v04-qa30-player-polish": false
     }
   }
 }

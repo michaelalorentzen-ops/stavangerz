@@ -1,0 +1,4 @@
+.sz-game kbd{font:11px Inter,sans-serif;border:1px solid #a2bbb755;border-radius:4px;padding:3px 5px;color:#c1d1c8;white-space:nowrap}.sz-game .rz-primary kbd{color:inherit;border-color:#35473966}.sz-game .sz-end-day{gap:10px}@media(max-width:820px){.sz-game .sz-end-day>kbd{display:none}}
+.sz-game .sz-end-day kbd{color:#26352b;border-color:#53604477}
+.sz-game .maplibregl-ctrl-attrib-button,.rz-start-ready .maplibregl-ctrl-attrib-button{background-repeat:no-repeat!important;background-position:center!important}
+@media(max-width:820px){.sz-game .sz-top .sz-resource strong{font-size:20px}.sz-game .sz-brief-wrap,.sz-game:has(.rz-pinned) .sz-brief-wrap{top:190px;bottom:auto}.sz-game .sz-show-brief,.sz-game:has(.rz-pinned) .sz-show-brief{top:190px;bottom:auto}}
