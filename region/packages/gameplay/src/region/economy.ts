@@ -10,6 +10,8 @@ import { POP } from './systems';
 import { lawMods } from './society';
 import { tech } from './progress';
 import { wonderEffects } from './wonders';
+import { administrations, centralPopulation, regionalL1 } from './administration';
+import { crewPositionFor } from './location';
 
 export interface ZoneFlow { food: number; water: number; other: Record<string, number>; upkeep: number; net: number }
 export interface Flows {
@@ -42,11 +44,19 @@ export function farmCapacity(state: RegionState, world: RegionWorld, zoneId: str
 }
 
 export function people(state: RegionState) {
-  const p = state.population;
-  return { crew: living(state).length, adults: p.adults, children: p.children, elderly: p.elderly };
+  const p = centralPopulation(state);
+  const crew = living(state).filter(s => { const p = crewPositionFor(state, s.id); return p?.kind === 'zone' && p.zoneId === state.homeZoneId; }).length;
+  return { crew, adults: p.adults, children: p.children, elderly: p.elderly };
 }
 
 export function dailyFlows(state: RegionState, world: RegionWorld): Flows {
+  const delegated = administrations(state);
+  if (delegated.length) {
+    const regions = new Set(delegated.map(r => r.l1Id));
+    state = { ...state, population: centralPopulation(state), administration: undefined, mobility: undefined,
+      zones: Object.fromEntries(Object.entries(state.zones).map(([id, z]) => [id, regions.has(regionalL1(world, id) ?? '') && z.status === 'controlled' ? { ...z, status: 'scouted' } : z])),
+    } as RegionState;
+  }
   const index = indexWorld(world);
   const owned = controlled(state);
   const law = lawMods(state);
@@ -83,7 +93,8 @@ export function dailyFlows(state: RegionState, world: RegionWorld): Flows {
   const hq: Record<string, number> = {};
   const home = state.hq?.zoneId ?? state.homeZoneId;
   // Everyone sets out buckets. It rains. This is Stavanger.
-  const everyone = living(state).length + state.population.adults + state.population.children + state.population.elderly;
+  const pAtHome = people(state);
+  const everyone = pAtHome.crew + pAtHome.adults + pAtHome.children + pAtHome.elderly;
   hq.water = 3 + everyone * (s.name === 'Sommer' ? .45 : .7);
   if (state.hq) for (const m of state.hq.modules) for (const [r, n] of Object.entries(MODULE_COST[m]?.daily ?? {})) {
     const amount = n * (m === 'greenhouse' || m === 'rooftop' ? (winter && !power && !tech(state, 'hydroponics') ? .4 : 1) * (tech(state, 'hydroponics') ? 2 : 1) : 1);

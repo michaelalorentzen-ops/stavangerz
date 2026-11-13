@@ -7,6 +7,7 @@ import { controlled, indexWorld, living, season } from './engine';
 const seasonFarm = (state: RegionState) => season(state.day).farm;
 import { LAW_COOLDOWN, LAWS, POP, REACTIONS, type LawEffect } from './systems';
 import { wonderEffects } from './wonders';
+import { administrations, centralPopulation } from './administration';
 
 export const WORK_IDS: WorkId[] = ['farm', 'fish', 'scavenge', 'clear', 'guard', 'build', 'research'];
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -75,8 +76,9 @@ export function populationCount(state: RegionState) { const p = state.population
 export function totalPeople(state: RegionState) { return living(state).length + populationCount(state); }
 /** Adults who can work today, plus children if the law says so. */
 export function workforce(state: RegionState) {
-  const healthy = Math.max(0, state.population.adults - Math.min(state.population.sick, state.population.adults));
-  return Math.floor(healthy + state.population.children * lawMods(state).childWork);
+  const population = centralPopulation(state);
+  const healthy = Math.max(0, population.adults - Math.min(population.sick, population.adults));
+  return Math.floor(healthy + population.children * lawMods(state).childWork);
 }
 export function assigned(state: RegionState) { return WORK_IDS.reduce((n, id) => n + (state.work[id] ?? 0), 0); }
 /** Set how many work in each job. Extra people are trimmed from the end of the list. */
@@ -153,6 +155,15 @@ export function discontentTarget(state: RegionState, world: RegionWorld) {
 
 /** End-of-day drift and the slow consequences of how people live. */
 export function societyDay(state: RegionState, world: RegionWorld, lines: ReportLine[], rng: () => number) {
+  const before = centralPopulation(state);
+  if (!administrations(state).length && Object.keys(before).every(key => before[key as keyof typeof before] === state.population[key as keyof typeof before])) { societyCommunityDay(state, world, lines, rng); return; }
+  const central = { ...state, administration: undefined, mobility: undefined, population: { ...before } } as RegionState;
+  societyCommunityDay(central, world, lines, rng);
+  for (const key of Object.keys(before) as (keyof typeof before)[]) state.population[key] = Math.max(0, state.population[key] + central.population[key] - before[key]);
+  state.morale = central.morale; state.discontent = central.discontent;
+  trimWork(state);
+}
+function societyCommunityDay(state: RegionState, world: RegionWorld, lines: ReportLine[], rng: () => number) {
   const mods = lawMods(state);
   // Hard laws have a body count: tired workers and working children get hurt.
   const accidents = Math.floor(workforce(state) * mods.accidents + rng());
