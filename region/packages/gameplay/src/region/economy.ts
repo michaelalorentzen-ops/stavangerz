@@ -12,6 +12,7 @@ import { tech } from './progress';
 import { wonderEffects } from './wonders';
 import { administrations, centralPopulation, regionalL1 } from './administration';
 import { crewPositionFor } from './location';
+import { difficultyRules } from './campaign';
 
 export interface ZoneFlow { food: number; water: number; other: Record<string, number>; upkeep: number; net: number }
 export interface Flows {
@@ -130,8 +131,9 @@ export function dailyFlows(state: RegionState, world: RegionWorld): Flows {
   // Who eats.
   const p = people(state);
   const dependents = (p.children * POP.food.child + p.elderly * POP.food.elderly) * law.dependentFood;
-  const eaten = (p.crew + p.adults * POP.food.adult + dependents) * law.foodMult;
-  const drunk = p.crew + p.adults + p.children * .6 + p.elderly * .8;
+  const difficultyConsumption = difficultyRules(state).foodWater;
+  const eaten = (p.crew + p.adults * POP.food.adult + dependents) * law.foodMult * difficultyConsumption;
+  const drunk = (p.crew + p.adults + p.children * .6 + p.elderly * .8) * difficultyConsumption;
   // What rots: fresh food above a small reserve.
   const stockFood = state.stock.food ?? 0;
   const rate = ({ Sommer: .025, Vår: .015, Høst: .015, Vinter: .007 } as Record<string, number>)[s.name] ?? .015;

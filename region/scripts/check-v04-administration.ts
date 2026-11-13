@@ -5,6 +5,7 @@ import { newRegionGame } from '../packages/gameplay/src/region/engine';
 import type { Population, RegionState, RegionWorld, ReportLine } from '../packages/gameplay/src/region/types';
 import { applyAdministrationCommand, administrations, centralAvailablePopulation, centralCommunity, regionalCommunity, regionalDay, regionalL1, regionalMandate, regionalStock, regionalSupplyRequest, type AdministrationGame } from '../packages/gameplay/src/region/administration';
 import { dailyFlows } from '../packages/gameplay/src/region/economy';
+import { initializeCampaign } from '../packages/gameplay/src/region/campaign';
 import { societyDay, workforce } from '../packages/gameplay/src/region/society';
 const world = JSON.parse(readFileSync('apps/game-client/public/world/region-v1.json', 'utf8')) as RegionWorld;
 const home = world.starts[0].zoneId;
@@ -80,4 +81,13 @@ assert.ok(hungry.survivors[1].health < healthBefore);
 assert.equal(hungry.stock.food, 500);
 assert.equal(hungryRegion.residents.adults, 9);
 assert.equal(hungry.population.adults, 19);
+for (const [difficulty, multiplier] of [['story', .85], ['survival', 1], ['realistic', 1.15]] as const) {
+  const variant = structuredClone(state); initializeCampaign(variant, { difficulty });
+  const flow = dailyFlows(variant, world); const baseFlow = dailyFlows(state, world);
+  assert.ok(Math.abs(flow.food.eaten - baseFlow.food.eaten * multiplier) < .00001);
+  assert.ok(Math.abs(flow.water.drunk - baseFlow.water.drunk * multiplier) < .00001);
+  const localVariant = dailyFlows(regionalCommunity(variant, world, administrations(variant)[0]), world);
+  const baseLocal = dailyFlows(regionalCommunity(state, world, administrations(state)[0]), world);
+  assert.ok(Math.abs(localVariant.food.eaten - baseLocal.food.eaten * multiplier) < .00001, 'Regional settlement inherits the same difficulty rules');
+}
 console.log('v0.4 administration: commands, legacy, physical people/stock, disjoint flows/work, budgets, idempotence and leader loss passed.');
