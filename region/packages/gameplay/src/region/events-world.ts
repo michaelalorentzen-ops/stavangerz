@@ -69,14 +69,15 @@ function siegeAct(s: RegionState, w: RegionWorld, c: string, rng: () => number, 
     pay(s, { ammo: 30 });
     const fighters = team(s, 3, 'combat');
     const share = clamp(.3 + fightPower(s, fighters) * .03, .3, .75);
-    const killed = Math.round(size * share);
-    addZombies(s, zone, -killed);
+    const before = s.zones[zone]?.zombies ?? 0;
+    moveZombies(s, w, zone, -Math.round(size * share));
+    const moved = before - (s.zones[zone]?.zombies ?? 0);
     for (const p of fighters) {
       if (chance(rng, hasTech(s, 'armour') ? .15 : .3)) hurtPerson(s, p, 25, lines, 'Utfallet gikk bra helt til de døde lukket seg rundt dem.');
     }
     if (!hasTech(s, 'armour') && fighters.length && chance(rng, .08)) killPerson(s, pickOne(rng, fighters), lines, 'Falt under utfallet mot beleiringen.');
     hope(s, 4);
-    lines.push({ tone: 'good', title: `Om lag ${killed} falt`, text: `Utfallet åpnet sperringen mot ${zoneName(w, zone)}. Resten trekker seg bort, foreløpig.`, zoneId: zone });
+    lines.push({ tone: 'good', title: moved ? `${moved} zombier drevet bort` : 'Flokken holder stillingen', text: moved ? `Utfallet drev ${moved} zombier fra ${zoneName(w, zone)} til nabosonene. Ingen zombiedødsfall er bekreftet.` : 'Ingen zombier kunne drives bort fra adkomsten. Flokken er fortsatt der.', zoneId: zone });
     return;
   }
   if (c === 'lure') {
@@ -490,7 +491,7 @@ export const EVENTS_WORLD: EventDef[] = [
       const size = Math.min(400, Math.round(150 + rng() * 150 + s.day * .5));
       return event('Beleiret', `Om lag ${size} zombier har samlet seg i ${zoneName(w, zone)}, rett utenfor sperringen. De går ikke videre. De står. Om natta hører dere dem lene seg mot gjerdet. Ingen kommer seg ut for å sanke, fiske eller hente vann.`, [
         { id: 'wait', label: 'Vent dem ut', detail: '20 mat og 20 vann går med. De går kanskje av seg selv.', tags: ['harsh'] },
-        { id: 'sally', label: 'Gjør utfall', detail: '30 ammunisjon. De tre beste går ut. Mange faller, kanskje noen av deres.', disabled: need(s, { ammo: 30 }) ?? noCrew(s, 2), tags: ['reckless'] },
+        { id: 'sally', label: 'Gjør utfall', detail: '30 ammunisjon. De tre beste går ut for å drive flokken til nabosonene. Crewet kan bli skadet.', disabled: need(s, { ammo: 30 }) ?? noCrew(s, 2), tags: ['reckless'] },
         { id: 'lure', label: 'Lokk dem bort med et horn', detail: `${hasTech(s, 'decoys') ? 3 : 8} drivstoff til en bil med fastlåst horn.`, disabled: need(s, { fuel: hasTech(s, 'decoys') ? 3 : 8 }) },
         { id: 'fire', label: 'Sett fyr på bydelen', detail: '15 drivstoff. Det brenner godt, også det som var å hente der.', disabled: need(s, { fuel: 15 }), tags: ['reckless'] },
       ], { zoneId: zone, data: { zone, size, round: 1 } });

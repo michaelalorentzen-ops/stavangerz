@@ -36,7 +36,7 @@ export interface WonderEffect {
 export interface WonderLevel { name: string; text: string; cost: Record<string, number>; hours: number; effect: WonderEffect }
 export interface WonderDef {
   id: string; name: string; about: string;
-  /** Where it is: a POI id, or a point (nearest coastal or any L3 zone). */
+  /** Where it is: a POI id, or a geographic point (containment, then nearest fallback). */
   poi?: string; at?: [number, number]; coastal?: boolean;
   /** How it is found: holding the zone, or an event that offers it. */
   found: 'claim' | 'event';
@@ -57,7 +57,8 @@ export const WONDERS: WonderDef[] = [
     ],
   },
   {
-    id: 'utstein', name: 'Utstein kloster', at: [5.6146, 59.0428], found: 'claim',
+    // Kartverket SSR 608330 (Severdighet), checked 2026-11-13.
+    id: 'utstein', name: 'Utstein kloster', at: [5.59043, 59.10315], found: 'claim',
     about: 'Norges best bevarte middelalderkloster, på en holme med én vei inn. Murene har stått i 750 år.',
     requires: 'Ta over sonen. Krever båt eller bru til Mosterøy.',
     levels: [
@@ -100,7 +101,8 @@ export const WONDERS: WonderDef[] = [
     ],
   },
   {
-    id: 'arena', name: 'Arenaen i Jåttåvågen', at: [5.7363, 58.9136], found: 'claim',
+    // Kartverket SSR 480714 (Idrettsanlegg), checked 2026-11-13.
+    id: 'arena', name: 'Arenaen i Jåttåvågen', at: [5.73107, 58.91453], found: 'claim',
     about: 'Fotballarenaen og hallene rundt har tak, toaletter og plass til tusenvis. Det var en evakueringsplass. Det gikk ikke bra.',
     requires: 'Ta over sonen. Den er stor, og tribunene var fulle.',
     levels: [
@@ -112,11 +114,31 @@ export const WONDERS: WonderDef[] = [
   },
 ];
 
-/** The zone each wonder belongs to in this world. */
+type Point = [number, number];
+/** GeoJSON contains: exterior ring plus holes, including polygon boundaries. */
+function ringContains(ring: Point[], point: Point): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[j], b = ring[i];
+    const cross = (point[0] - a[0]) * (b[1] - a[1]) - (point[1] - a[1]) * (b[0] - a[0]);
+    if (Math.abs(cross) < 1e-12 && point[0] >= Math.min(a[0], b[0]) && point[0] <= Math.max(a[0], b[0]) && point[1] >= Math.min(a[1], b[1]) && point[1] <= Math.max(a[1], b[1])) return true;
+    if ((a[1] > point[1]) !== (b[1] > point[1]) && point[0] < (b[0] - a[0]) * (point[1] - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+  }
+  return inside;
+}
+function zoneContains(zone: RegionWorld['zones'][number], point: Point): boolean {
+  if (!zone.geometry) return false;
+  const polygons = zone.geometry.type === 'Polygon' ? [zone.geometry.coordinates as Point[][]] : zone.geometry.coordinates as Point[][][];
+  return polygons.some(rings => !!rings[0]?.length && ringContains(rings[0], point) && !rings.slice(1).some(ring => ringContains(ring, point)));
+}
+
+/** The zone each new wonder belongs to; saved holdings keep their original zoneId. */
 export function wonderZone(world: RegionWorld, def: WonderDef): string | undefined {
   const index = indexWorld(world);
   if (def.poi) return world.pois.find(p => p.id === def.poi)?.zoneId;
   if (!def.at) return undefined;
+  const containing = index.l3.find(z => (!def.coastal || index.coastal.has(z.id)) && zoneContains(z, def.at!));
+  if (containing) return containing.id;
   const dist = (a: [number, number]) => Math.hypot((a[0] - def.at![0]) * 57.4, (a[1] - def.at![1]) * 111.2);
   return index.l3.filter(z => z.at && (!def.coastal || index.coastal.has(z.id))).sort((a, b) => dist(a.at!) - dist(b.at!))[0]?.id;
 }
@@ -125,12 +147,24 @@ export const wonderState = (state: RegionState) => (state.wonders ??= {});
 export const knownWonders = (state: RegionState): [string, WonderHolding][] => Object.entries(state.wonders ?? {});
 export const ownedWonders = (state: RegionState) => knownWonders(state).filter(([, w]) => w.level >= 0 && wonderOperational(w));
 
+/** Existing friendship promises permit crew work, never automatic activation.
+ * The 40-point threshold is shared with planeFound, the existing wonder friendship rule. */
+export function wonderCanAccess(state: RegionState, id: string, zoneId: string): boolean {
+  const holding = wonderHolding(state, id);
+  if (!holding || holding.zoneId !== zoneId) return false;
+  // D13: a discovered event ship is a separate installation, not the L3 holder’s property.
+  if (id === 'cruise') return true;
+  if (!['cathedral', 'plane'].includes(id)) return false;
+  const faction = state.factions.find(f => f.zoneId === zoneId && !f.defeated);
+  return !!faction && faction.relation >= 40 && !faction.hostile;
+}
+
 /** Combined effect of all wonders you hold, at their level. A wonder in a zone you lost gives nothing. */
 export function wonderEffects(state: RegionState): Required<WonderEffect> {
   const sum: Required<WonderEffect> = { shelter: 0, hope: 0, defense: 0, food: 0, medicine: 0, fuel: 0, research: 0, trade: 0, spoil: 0, contact: false, warn: false, workers: 0 };
   for (const [id, w] of ownedWonders(state)) {
     const def = WONDERS.find(d => d.id === id);
-    if (def?.found === 'claim' && state.zones[w.zoneId]?.status !== 'controlled') continue;
+    if (def?.found === 'claim' && state.zones[w.zoneId]?.status !== 'controlled' && !wonderCanAccess(state, id, w.zoneId)) continue;
     const e = def?.levels[w.level]?.effect;
     if (!e) continue;
     for (const k of Object.keys(sum) as (keyof WonderEffect)[]) {
@@ -161,7 +195,7 @@ export function discoverWonders(state: RegionState, world: RegionWorld, lines: R
   const owned = new Set(controlled(state));
   for (const def of WONDERS) if (def.found === 'claim' && !state.wonders?.[def.id]) {
     const zone = wonderZone(world, def);
-    if (zone && owned.has(zone)) gainWonder(state, world, def.id, lines, zone);
+    if (zone && (owned.has(zone) || (def.id === 'cathedral' && state.factions.some(f => f.zoneId === zone && !f.defeated && !f.hostile && f.relation >= 40)))) gainWonder(state, world, def.id, lines, zone);
   }
 }
 export function nextWonderLevel(state: RegionState, id: string) {
@@ -192,7 +226,7 @@ export function wonderOrderError(state: RegionState, id: string, zoneId: string)
   if (holding.zoneId !== zoneId) return 'Anleggsoppdraget må utføres der stedet faktisk er.';
   const zone = state.zones[zoneId];
   if (!zone) return 'Sonen finnes ikke i lagringen.';
-  if (!wonderOperational(holding) && zone.status !== 'controlled' && (!zone.intel || zone.intel.day < state.day - 3 || zone.intel.max > R.claimMaxZombies)) {
+  if (!wonderOperational(holding) && zone.status !== 'controlled' && !(id !== 'cruise' && wonderCanAccess(state, id, zoneId)) && (!zone.intel || zone.intel.day < state.day - 3 || zone.intel.max > R.claimMaxZombies)) {
     return 'Undersøk og rydd adkomsten først. Sonen må være kontrollert eller ha fersk etterretning om en nesten tom adkomst.';
   }
 }
