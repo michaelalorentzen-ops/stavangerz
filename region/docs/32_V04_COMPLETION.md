@@ -1,4 +1,6 @@
-# v0.4 – funksjonell ferdigstillelse, balanse utsatt
+# v0.4 – historisk funksjonsleveranse fra PR #27
+
+> **Revurdert etter eiers gjennomgang 13.11.2026:** Den tidligere ferdigvurderingen nedenfor var for vid. UI/visuell spillopplevelse er ikke godkjent, og uavhengig QA av commit2737333 fant også F01 (lastkrasj). Ny leveranse må bestå både HUD-revisjon og QA-funn før den kan kalles klar. Se [33](33_V04_INDEPENDENT_UX_REVIEW.md) og [35](35_V04_HUD_AND_QA.md). Resten av notatet dokumenterer hva som faktisk ble levert og testet da.
 
 Oppdrag 13.11.2026: Mikki ønsker resten av v0.4 implementert. Tallbalansering kan vente. Dette omfatter hele 27-spesifikasjonen, også regional drift og eksisterende avslutningsveier, ikke bare den tidligere fase-1-slicen. Tidligere forbud mot main-merge/deploy gjelder fortsatt.
 
