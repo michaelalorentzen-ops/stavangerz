@@ -11,7 +11,7 @@ import { territoryGeometry, territoryBounds } from './territory-map';
 import './world-map.css';
 const STATUS_LABEL = { unknown: 'Ukjent', scouted: 'Speidet', controlled: 'Deres' } as const;
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n).toLocaleString('nb-NO', { maximumFractionDigits: 1 })}`;
-export default function RegionWorldMap({ focus, world, state, flows, overlay, selected, hops, replayMoves, onSelect, onOverlay, onSelectPoi, onSelectCrew, targeting, validTargetZoneIds }: { focus: { zoneId: string; key: number; scope?: 'territory' } | null; world: RegionWorld; state: RegionState; flows: Flows; overlay: 'territory' | 'zombies' | 'food'; selected: string; hops: Map<string, number>; replayMoves?: { from: string; to: string; n: number }[]; onSelect: (id: string) => void; onOverlay: (o: 'territory' | 'zombies' | 'food') => void; onSelectPoi?: (poiId: string) => void; onSelectCrew?: (personId: string) => void; targeting?: { action: ActionId; crewIds: string[] }; validTargetZoneIds?: string[] }) {
+export default function RegionWorldMap({ focus, world, state, flows, overlay, selected, hops, replayMoves, onSelect, onOverlay, onSelectPoi, onSelectCrew, targeting, validTargetZoneIds, reducedMotion = typeof window!=='undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches }: { focus: { zoneId: string; key: number; scope?: 'territory' } | null; world: RegionWorld; state: RegionState; flows: Flows; overlay: 'territory' | 'zombies' | 'food'; selected: string; hops: Map<string, number>; replayMoves?: { from: string; to: string; n: number }[]; onSelect: (id: string) => void; onOverlay: (o: 'territory' | 'zombies' | 'food') => void; onSelectPoi?: (poiId: string) => void; onSelectCrew?: (personId: string) => void; targeting?: { action: ActionId; crewIds: string[] }; validTargetZoneIds?: string[]; reducedMotion?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LibreMap | null>(null);
   const markersRef = useRef<{ remove: () => void }[]>([]);
@@ -33,6 +33,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
   const index = useMemo(() => indexWorld(world), [world]);
   const ownedKey = Object.keys(state.zones).filter(id => state.zones[id].status === 'controlled').sort().join('|');
   const territory = useMemo(() => territoryGeometry(world, state), [world, ownedKey]);
+  useEffect(()=>{objectsRef.current?.setReducedMotion(reducedMotion);if(reducedMotion)captureRef.current?.skip();},[reducedMotion,ready,styleRevision]);
   useEffect(() => {
     let map: LibreMap | null = null;
     let cancelled = false;
@@ -133,7 +134,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     (map.getSource('territory') as GeoJSONSource | undefined)?.setData(territory);
     const shifts = territoryShifts(previousZonesRef.current, state.zones);
     previousZonesRef.current = state.zones;
-    if (shifts.length) void captureRef.current?.play(shifts.map(change => ({ ...change, entry: index.byId.get(change.zoneId)?.at })), 650);
+    if (shifts.length && !reducedMotion) void captureRef.current?.play(shifts.map(change => ({ ...change, entry: index.byId.get(change.zoneId)?.at })), 650);
     for (const l of world.links) map.setFeatureState({ source: 'links', id: l.id }, { c: state.chokepoints[l.id] });
     // Heat only where you have looked.
     const heat = index.l3.filter(z => state.zones[z.id].intel && state.zones[z.id].status === 'scouted' && z.at).map(z => ({ type: 'Feature' as const, properties: { n: (state.zones[z.id].intel!.min + state.zones[z.id].intel!.max) / 2 }, geometry: { type: 'Point' as const, coordinates: z.at! } }));
@@ -162,7 +163,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
   }, [state, ready, styleRevision, hops, world, index, flows, overlay, replayMoves]);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready || (overlay !== 'zombies' && !replayMoves) || !(replayMoves ?? state.reports.at(-1)?.moves ?? []).length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!map || !ready || (overlay !== 'zombies' && !replayMoves) || !(replayMoves ?? state.reports.at(-1)?.moves ?? []).length || reducedMotion) return;
     const dash = [[0, 4, 3], [.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, .5], [3, 4, 0]];
     let frame = 0, step = 0, last = 0;
     const animate = (time: number) => {
@@ -173,7 +174,7 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [ready, replayMoves, state.reports, overlay]);
+  }, [ready, replayMoves, state.reports, overlay, reducedMotion]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -191,12 +192,12 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     if (!focus || !ready) return;
     if (focus.scope === 'territory') {
       const bounds = territoryBounds(world, stateRef.current);
-      if (bounds) mapRef.current?.fitBounds(bounds, { padding: { top: 150, bottom: window.innerWidth <= 820 ? 250 : 160, left: window.innerWidth <= 820 ? 74 : 140, right: 70 }, maxZoom: 14.8, pitch: 25, duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450 });
+      if (bounds) mapRef.current?.fitBounds(bounds, { padding: { top: 150, bottom: window.innerWidth <= 820 ? 250 : 160, left: window.innerWidth <= 820 ? 74 : 140, right: 70 }, maxZoom: 14.8, pitch: 25, duration: reducedMotion ? 0 : 450 });
       return;
     }
     const at = index.byId.get(focus.zoneId)?.at;
-    if (at) mapRef.current?.easeTo({ center: at, zoom: index.byId.get(focus.zoneId)?.level === 3 ? Math.max(mapRef.current.getZoom(), 12.5) : index.byId.get(focus.zoneId)?.level === 2 ? 11 : 10, duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450 });
-  }, [focus, ready, world]);
+    if (at) mapRef.current?.easeTo({ center: at, zoom: index.byId.get(focus.zoneId)?.level === 3 ? Math.max(mapRef.current.getZoom(), 12.5) : index.byId.get(focus.zoneId)?.level === 2 ? 11 : 10, duration: reducedMotion ? 0 : 450 });
+  }, [focus, ready, world, reducedMotion]);
   return <section className="rz-map" data-map-mode={overlay} aria-label="Kart over regionen" aria-busy={!ready}>
     {targeting && <div className="rz-map-targeting" role="status">Velg mål på kartet · {targeting.crewIds.length} crew · {validTargetZoneIds?.length ?? 0} mulige soner</div>}
     <div ref={ref} className="rz-map-canvas" />
