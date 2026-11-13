@@ -78,9 +78,12 @@ export function regionalMandate(state: RegionState) {
   const government = state.laws.find(id => ['council', 'strongman', 'faithRule', 'militia'].includes(id));
   return {
     government: government ?? 'shared',
-    description: government === 'militia' ? 'Vaktplikten gjelder også lokalt. Strategiske valg og lederbekreftelse ligger hos deg.'
+    description: government === 'militia' ? 'Vaktplikten gjelder også lokalt. Minst 30 % av lokale hender går til vakt; lederbytte bekrefter du.'
+      : government === 'council' ? 'Rådets vedtatte lover og ditt budsjett setter rammen. Lederbytte og strategiske valg bekrefter du.'
+      : government === 'strongman' ? 'Lederen utfører ditt mandat og budsjett direkte. Lederbytte og strategiske valg bekrefter du.'
+      : government === 'faithRule' ? 'Menighetens lover gjelder også i regionen. Lederbytte og strategiske valg bekrefter du.'
       : 'Lokale rutiner følger ditt mandat. Strategiske valg og lederbekreftelse ligger hos deg.',
-    // O10 awaits owner approval. Infrastructure never appoints a successor silently.
+    // D28: strategic appointments remain explicit. The designated successor still needs player confirmation.
     automaticSuccession: false,
     minimumGuardShare: government === 'militia' ? .3 : 0,
     strategicAuthority: false as const,

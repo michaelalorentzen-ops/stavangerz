@@ -18,7 +18,7 @@ type Props = {
 const POP_LABELS: Record<keyof Population, string> = { adults: 'Voksne', children: 'Barn', elderly: 'Eldre', sick: 'Syke' };
 const stockText = (stock: Stock) => Object.entries(stock).filter(([, n]) => n > .01).map(([id, n]) => `${Math.round(n * 10) / 10} ${id === 'food' ? 'mat' : id === 'water' ? 'vann' : id === 'medicine' ? 'medisin' : id}`).join(' · ') || 'Tomt';
 
-export function AdministrativeView({ state, world, enabled = false, onCommand, onSupplyRequest, onSelectZone }: Props) {
+export function AdministrativeView({ state, world, enabled = true, onCommand, onSupplyRequest, onSelectZone }: Props) {
   const formId = useId();
   const regions = administrations(state);
   const candidates = world.zones.filter(z => z.level === 3 && z.id !== state.homeZoneId && state.zones[z.id]?.status === 'controlled' && regionalL1(world, z.id) && !regions.some(r => r.l1Id === regionalL1(world, z.id)));
