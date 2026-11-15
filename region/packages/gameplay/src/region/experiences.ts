@@ -26,19 +26,23 @@ export function experienceEnvironment(world: RegionWorld, zoneId: string): Illus
   return 'residential';
 }
 const TITLES: Record<ExperienceKind, string> = {
-  scout: 'Et kart med noe å stole på', search: 'Det vi kan bære', combat: 'Etter møtet med de døde', gear: 'Et funn får en eier',
+  scout: 'Veien ut, veien hjem', search: 'Det vi kan bære', combat: 'Etter møtet med de døde', gear: 'Noe verdt å ta vare på',
   claim: 'Et sted å holde', perimeter: 'En grense som kan holde', poi: 'Et navn blir et sted', hq: 'Fra tilflukt til hovedkvarter',
 };
 const TEXTS: Record<ExperienceKind, string> = {
-  scout: 'Laget må skille mellom det de vet og det de håper. Speidingen gir dem noe å stole på — men bare et øyeblikksbilde av et område som kan forandre seg.',
-  search: 'De leter etter noe som kan gjøre neste døgn mulig. Ingen av dem kan bære alt; funnene må få plass sammen med det de trenger for å komme hjem.',
-  combat: 'Etterpå er det ikke bare antallet døde som betyr noe. Det er menneskene som var der sammen. Neste oppdrag må planlegges med det de nettopp lærte.',
-  gear: 'Et verktøy som gjør en vanskelig jobb mulig, får fort en historie. Dette funnet hører til menneskene og oppdraget som brakte det fram. Veien til felleslageret må de fortsatt fullføre.',
-  claim: 'Et område er ikke lenger bare noe de prøver å komme seg gjennom. Det er noe de har tatt ansvar for. Hver ny grense betyr både litt mer fotfeste og litt mer å holde.',
-  perimeter: 'Forsvarsverket gir gruppen noe fast å støtte seg til. Det erstatter ikke menneskene som holder vakt — og det vil trenge dem igjen når det slites.',
-  poi: 'Et navn på kartet har fått mer betydning. Det kan bli et holdepunkt, et spørsmål eller en omvei de ikke har råd til ennå. Hva de vil gjøre med stedet, er ikke avgjort.',
-  hq: 'Tilflukten har fått en varig oppgave. Nå kan gruppen tenke på hvem de vil bli — samtidig som noen fortsatt må skaffe det de lever av og holde stedet trygt.',
+  scout: '{laget} stanser og ser ruten an før neste steg. Det som faktisk lar seg observere, blir skrevet ned; resten får vente. Et tokt handler også om å finne veien hjem.',
+  search: '{laget} fordeler oppmerksomheten mellom letingen og neste steg. Det er lett å ønske seg ett funn til. Det som blir med videre, må faktisk bæres.',
+  combat: 'Etter kampen må neste steg finnes igjen. {laget} går gjennom det som skjedde før arbeidet fortsetter. Dette er en erfaring å ta med inn i neste vurdering, ikke bare et tall over døde.',
+  gear: '{laget} ser over det som er funnet før turen går videre. En gjenstand kan gjøre neste oppdrag annerledes. Hvem som skal bruke den, er ikke avgjort av funnet.',
+  claim: 'En ny grense blir trukket på kartet. {laget} har et konkret sted å vende tilbake til, men navnet er ingen garanti for morgendagen. Nå er spørsmålet hvordan området skal holdes.',
+  perimeter: '{laget} går over det som nå er ferdig. Det er ikke lenger bare en plan om å holde noe ute. Forsvarsverket står der — og må passes på når arbeidet går videre.',
+  poi: '{laget} stanser ved opplysningene om stedet. Navnet får en strek i notatene, ikke et svar på alt som finnes der. Det er noe å følge videre når det passer med resten av planen.',
+  hq: 'Nå finnes det et punkt å planlegge fra. Arbeid skal fordeles, folk skal komme tilbake hit, og noen må holde oversikten. {laget} har gitt tilflukten en oppgave som varer lenger enn dette døgnet.',
 };
+function experienceText(kind: ExperienceKind, crew: readonly RegionSurvivor[]) {
+  const subject = crew.length === 1 ? crew[0].name : crew.length ? 'Laget' : kind === 'combat' ? 'Vaktholdet' : 'Byggelaget';
+  return TEXTS[kind].replaceAll('{laget}', subject);
+}
 const HELP: Record<ExperienceKind, string> = { scout: 'scout', search: 'search', combat: 'clear', gear: 'gear', claim: 'claim', perimeter: 'fortify', poi: 'poi', hq: 'hq' };
 const PREFERRED: Record<ExperienceKind, string> = { scout: 'ingrid', search: 'leila', combat: 'marius', gear: 'tor', claim: 'ingrid', perimeter: 'tor', poi: 'ingrid', hq: 'leila' };
 const VOICES: Record<ExperienceKind, string> = {
@@ -52,7 +56,7 @@ function make(state: RegionState, world: RegionWorld, kind: ExperienceKind, zone
   const candidates = crew.filter(p => p.alive && p.health > 0 && !p.left);
   const speaker = candidates.find(p => p.id === PREFERRED[kind]) ?? candidates.find(p => p.traits?.includes(kind === 'combat' ? 'hard' : 'kind')) ?? candidates[0];
   return { version: 1, id: `experience:${kind}:${state.day}:${sourceId}`, kind, day: state.day, zoneId,
-    zoneName: world.zones.find(z => z.id === zoneId)?.name ?? zoneId, title: TITLES[kind], text: TEXTS[kind], result,
+    zoneName: world.zones.find(z => z.id === zoneId)?.name ?? zoneId, title: TITLES[kind], text: experienceText(kind, crew), result,
     participants: crew.map(({ id, name, role }) => ({ id, name, role })),
     ...(speaker ? { voice: { personId: speaker.id, name: speaker.name, text: VOICES[kind] } } : {}),
     facts: { ...facts }, illustration: illustration ?? experienceEnvironment(world, zoneId), helpTopic: HELP[kind],
@@ -81,7 +85,7 @@ export function recordOperationExperience(state: RegionState, world: RegionWorld
   const produced = lines.slice(lineStart), zone = state.zones[order.zoneId];
   const source = (category: string) => produced.find(l => l.facts?.action === category || l.category === category) ?? produced.at(-1);
   const add = (kind: ExperienceKind, result: string, facts: ExpeditionExperience['facts'] = {}, illustration?: Illustration) => append(state, lines, make(state, world, kind, order.zoneId, crew, order.id, result, facts, illustration));
-  if (order.action === 'scout' && zone.intel?.day === state.day) add('scout', source('scout')?.text ?? 'Observasjonen er rapportert.', { minimum: zone.intel.min, maximum: zone.intel.max });
+  if (order.action === 'scout' && zone.intel?.day === state.day) add('scout', `Anslag: ${zone.intel.min}–${zone.intel.max} zombier.`, { minimum: zone.intel.min, maximum: zone.intel.max });
   if (order.action === 'search' && zone.searched > before.searched) {
     const recovered = Object.fromEntries(Object.entries(state.stock).filter(([id, amount]) => amount > (before.stock[id] ?? 0)).map(([id, amount]) => [id, amount - (before.stock[id] ?? 0)]));
     add('search', source('search')?.text ?? 'Søket er gjennomført.', { searchBefore: before.searched, searchAfter: zone.searched, ...recovered });
