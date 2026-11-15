@@ -9,7 +9,7 @@ export function recordedExperiences(state: RegionState): ExpeditionExperience[] 
   const seen = new Set<ExperienceKind>();
   return [...(state.experiences ?? []), ...state.reports.flatMap(report => report.lines.flatMap(line => line.experience ? [line.experience] : []))].filter(experience => {
     if (seen.has(experience.kind)) return false; seen.add(experience.kind); return true;
-  }).sort((a, b) => a.day - b.day || a.id.localeCompare(b.id));
+  }).sort((a, b) => a.day - b.day);
 }
 export const hasRecordedExperience = (state: RegionState, kind: ExperienceKind) => !!state.flags[marker(kind)] || recordedExperiences(state).some(experience => experience.kind === kind);
 export function initializeExperienceJournal(state: RegionState) { state.flags[ORIGIN] = 'new'; }

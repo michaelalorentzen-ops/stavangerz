@@ -21,6 +21,7 @@ assert.equal(reportExperiences(scouted.report).filter(e=>e.kind==='scout').lengt
 assert.equal(beat(scouted.report,'scout')!.participants[0].name,'Ingrid');assert.equal(beat(scouted.report,'scout')!.voice!.personId,'ingrid');assert.equal(beat(scouted.report,'scout')!.facts.minimum,0);
 assert.equal(beat(scouted.report,'poi')!.facts.poiId,'test-place');assert.equal(beat(scouted.report,'poi')!.facts.poiName,'Fiktivt teststed');
 for(const e of reportExperiences(scouted.report))seen.add(e.kind);
+assert.deepEqual(recordedExperiences(scouted.state).map(e=>e.kind),reportExperiences(scouted.report).map(e=>e.kind),'Same-day archive preserves actual publication order, not alphabetical ids');
 const again=structuredClone(scouted.state);delete again.event;assert.equal(beat(run(again,[order('scout')]).report,'scout'),undefined);
 const searched=run(fresh(),[order('search')]);assert(beat(searched.report,'search'));assert(beat(searched.report,'gear'));
 assert.equal(beat(searched.report,'gear')!.facts.itemCount,searched.state.gear!.items.filter(i=>i.provenance.kind==='search').length);
