@@ -524,7 +524,18 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
       break;
     }
     case 'rest': text = 'Mindre utmattelse, litt bedre helse.'; break;
-    case 'heal': costs = { medicine: Math.max(1, patientsInZone(state, order.zoneId).length) }; text = 'Behandler skadde som faktisk er i denne sonen.'; break;
+    case 'heal': {
+      const patients = patientsInZone(state, order.zoneId);
+      const region = Object.values(state.administration?.regions ?? {}).find(item => item.hqZoneId === order.zoneId);
+      const localPopulation = order.zoneId === state.homeZoneId ? centralAvailablePopulation(state) : region?.residents ?? state.mobility?.depotResidents?.[order.zoneId];
+      const sick = localPopulation?.sick ?? 0;
+      costs = { medicine: Math.max(1, patients.length) };
+      text = patients.length
+        ? `${patients.length} ${patients.length === 1 ? 'pasient' : 'pasienter'} under 80 helse i sonen: ${patients.map(person => person.name).join(', ')}.`
+        : sick ? 'Ingen navngitte pasienter under 80 helse i sonen.' : 'Ingen pasienter under 80 helse i sonen; bruk hvile for lettere skader.';
+      if (sick) text += ` ${sick} ${sick === 1 ? 'syk' : 'syke'} i den lokale befolkningen kan få behandling.`;
+      break;
+    }
     case 'craft': {
       const recipe = craftRecipes(state).find(r => r.id === order.target);
       if (!recipe) errors.push('Ingen oppskrift tilgjengelig. Bygg ammoverksted, laboratorium eller forsk.');
