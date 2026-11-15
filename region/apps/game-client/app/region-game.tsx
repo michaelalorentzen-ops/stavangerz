@@ -62,6 +62,8 @@ const shortcutAria = (code: string) => code.startsWith('Key') ? code.slice(3) : 
 function reportSound(report:RegionReport):GameSound {
   if(report.lines.some(line=>line.tone==='bad'))return 'event';
   if(report.replay?.some(stage=>stage.zoneChanges.some(change=>change.before!=='controlled'&&change.after==='controlled')))return 'claim';
+  if(report.lines.some(line=>line.experience?.kind==='perimeter'))return 'claim';
+  if(report.lines.some(line=>line.experience&&['scout','search','gear','poi'].includes(line.experience.kind)))return 'discovery';
   if(report.lines.some(line=>line.tone==='good'&&(line.category==='discovery'||/^(Personlig utstyr funnet|HQ etablert:)/.test(line.title))))return 'discovery';
   return report.killed>0?'combat':'day';
 }

@@ -28,7 +28,9 @@
     "check:region-checkpoints-ui": "tsx scripts/check-hud-checkpoints.ts",
     "check:region-map-ui": "tsx scripts/check-world-map.ts",
     "check:region-clarity-ui": "tsx scripts/check-v04-ui-clarity.ts",
-    "check:region-start-ui": "node scripts/check-start-screen.mjs"
+    "check:region-start-ui": "node scripts/check-start-screen.mjs",
+    "check:region-content-ui": "node --import tsx scripts/check-living-cards-ui.mjs",
+    "check:region-qa33-ui": "tsx scripts/check-qa33-polish-ui.ts"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",

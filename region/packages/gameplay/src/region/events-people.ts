@@ -743,7 +743,7 @@ export const EVENTS_PEOPLE: EventDef[] = [
     make: (s, _w, rng) => {
       const p = pickCrew(s, rng);
       if (!p) return null;
-      return event('Posten var tom', `Da de kom over sperringa i natt, forlot ${p.name} posten sin og løp. To andre måtte holde åpningen alene til det ble lyst. Ingen døde. Alle vet hvem som løp.${noLawNote(s)}`, list(
+      return event('Posten var tom', `Det blir reist kritikk mot ${p.name}: en avtalt vaktoppgave ble overlatt til andre da frykten tok over. Noen vil gi en ny sjanse; andre mener tilliten er brutt.${noLawNote(s)}`, list(
         lawChoice(s, false, p.name),
         { id: 'shame', label: `Ta våpenet fra ${p.name} foran alle`, detail: 'Nærkampvåpen og latrinevakt. En lærepenge.', tags: ['harsh'] },
         { id: 'chance', label: 'Gi en ny sjanse', detail: 'Alle blir redde. Noen andre vil spørre om det samme.', tags: ['merciful'] },
