@@ -9,15 +9,18 @@ import { wonderOperational } from '../../../packages/gameplay/src/region/wonders
 import { attachWorldObjects, type WorldObjectController } from './world-object-layer';
 import { territoryGeometry, territoryBounds } from './territory-map';
 import './world-map.css';
+import { attachExpeditionMapFeedback, type ExpeditionMapFeedback, type ExpeditionFeedbackController } from './expedition-map-feedback';
+import './expedition-map-feedback.css';
 import { registerBenchmarkMap } from './map-benchmark';
 const STATUS_LABEL = { unknown: 'Ukjent', scouted: 'Speidet', controlled: 'Deres' } as const;
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n).toLocaleString('nb-NO', { maximumFractionDigits: 1 })}`;
-export default function RegionWorldMap({ focus, world, state, flows, overlay, selected, hops, replayMoves, onSelect, onOverlay, onSelectPoi, onSelectCrew, targeting, validTargetZoneIds, reducedMotion = typeof window!=='undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches }: { focus: { zoneId: string; key: number; scope?: 'territory' } | null; world: RegionWorld; state: RegionState; flows: Flows; overlay: 'territory' | 'zombies' | 'food'; selected: string; hops: Map<string, number>; replayMoves?: { from: string; to: string; n: number }[]; onSelect: (id: string) => void; onOverlay: (o: 'territory' | 'zombies' | 'food') => void; onSelectPoi?: (poiId: string) => void; onSelectCrew?: (personId: string) => void; targeting?: { action: ActionId; crewIds: string[] }; validTargetZoneIds?: string[]; reducedMotion?: boolean }) {
+export default function RegionWorldMap({ focus, world, state, flows, overlay, selected, hops, replayMoves, feedback, onSelect, onOverlay, onSelectPoi, onSelectCrew, targeting, validTargetZoneIds, reducedMotion = typeof window!=='undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches }: { focus: { zoneId: string; key: number; scope?: 'territory' } | null; world: RegionWorld; state: RegionState; flows: Flows; overlay: 'territory' | 'zombies' | 'food'; selected: string; hops: Map<string, number>; replayMoves?: { from: string; to: string; n: number }[]; feedback?: ExpeditionMapFeedback | null; onSelect: (id: string) => void; onOverlay: (o: 'territory' | 'zombies' | 'food') => void; onSelectPoi?: (poiId: string) => void; onSelectCrew?: (personId: string) => void; targeting?: { action: ActionId; crewIds: string[] }; validTargetZoneIds?: string[]; reducedMotion?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LibreMap | null>(null);
   const markersRef = useRef<{ remove: () => void }[]>([]);
   const objectsRef = useRef<WorldObjectController | null>(null);
   const callbacksRef = useRef({ onSelectPoi, onSelectCrew }); callbacksRef.current = { onSelectPoi, onSelectCrew };
+  const feedbackRef = useRef<ExpeditionFeedbackController | null>(null);
   const captureRef = useRef<TerritoryCaptureController | null>(null);
   const operationsRef = useRef<OperationalMapController | null>(null);
   const [level, setLevel] = useState<1 | 2 | 3>(3);
@@ -113,13 +116,14 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
         });
         map!.on('mouseleave', 'l3-fill', () => { setHover(null); map!.getCanvas().style.cursor = ''; });
         objectsRef.current = attachWorldObjects(map!, lib, world, stateRef.current, { onCrew: (id, zoneId) => { if (callbacksRef.current.onSelectCrew) callbacksRef.current.onSelectCrew(id); else onSelectRef.current(zoneId); }, onZone: id => onSelectRef.current(id) });
+        feedbackRef.current = attachExpeditionMapFeedback(map!, lib, world);
         operationsRef.current = attachOperationalMap(map!, lib, world, stateRef.current, id => onSelectRef.current(id), setLevel, true);
         mapRef.current = map;
         unregisterBenchmark = registerBenchmarkMap(map!, () => ({ phase: stateRef.current.phase, knownZones: Object.values(stateRef.current.zones).filter(z => z.status !== 'unknown').length, controlledZones: Object.values(stateRef.current.zones).filter(z => z.status === 'controlled').length }));
         setReady(true);
       });
     });
-    return () => { cancelled = true; unregisterBenchmark?.(); objectsRef.current?.destroy(); objectsRef.current = null; operationsRef.current?.destroy(); operationsRef.current = null; markersRef.current.forEach(m => m.remove()); captureRef.current?.destroy(); captureRef.current = null; previousZonesRef.current = undefined; map?.remove(); mapRef.current = null; };
+    return () => { cancelled = true; unregisterBenchmark?.(); feedbackRef.current?.destroy(); feedbackRef.current = null; objectsRef.current?.destroy(); objectsRef.current = null; operationsRef.current?.destroy(); operationsRef.current = null; markersRef.current.forEach(m => m.remove()); captureRef.current?.destroy(); captureRef.current = null; previousZonesRef.current = undefined; map?.remove(); mapRef.current = null; };
     // The map is created once; state is pushed through feature-state below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [world]);
@@ -167,6 +171,10 @@ export default function RegionWorldMap({ focus, world, state, flows, overlay, se
     for (const f of state.factions.filter(f => f.known && !f.defeated && state.zones[f.zoneId]?.status !== 'controlled')) add(index.byId.get(f.zoneId)?.at, f.hostile ? 'enemy' : 'faction', f.name, () => onSelectRef.current(f.zoneId));
     add(index.byId.get(state.homeZoneId)?.at, 'home', `${state.hq ? 'HQ' : 'Leiren'} · ${index.byId.get(state.homeZoneId)?.name ?? ''}`, () => onSelectRef.current(state.homeZoneId));
   }, [state, ready, styleRevision, hops, world, index, flows, overlay, replayMoves]);
+  useEffect(() => {
+    if (!ready) return;
+    feedbackRef.current?.show(feedback, state, reducedMotion);
+  }, [feedback, state, reducedMotion, ready, styleRevision]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || (overlay !== 'zombies' && !replayMoves) || !(replayMoves ?? state.reports.at(-1)?.moves ?? []).length || reducedMotion) return;
