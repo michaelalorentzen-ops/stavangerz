@@ -49,3 +49,22 @@ Bildene gir stemning; motorens faktiske epilogtekst beskriver resultatet. Ingen 
 `items/inventory-atlas.png` er en original ImageGen-generert 4×4-atlas med transparent bakgrunn, visuelt inspisert før integrering. Ingen tekst er bakt inn i bildene. Rekkefølge (venstre→høyre, øverst→nederst): mat, vann, medisin, drivstoff; ammunisjon, byggematerialer, brekkjern, kikkert; verktøykasse, lommelykt, medisinveske, hjelm; beskyttelsesvest, arbeidsjakke, pistol, rifle. Illustrasjonene er generiske representasjoner av eksisterende kategorier, ikke nye ressurser eller nye utrustningsregler. `ItemArt` bruker CSS-celler; ikonfallback beholdes for øvrige katalogvarer. Asseten lastes ved bruk av illustrerte inventarflater og gjenbrukes mellom rutene. Antall, tilgjengelighet, navn, plass og reservasjon kommer fortsatt fra motoren.
 
 Atlas 2 (`items/inventory-atlas-2.png`), generert og visuelt kontrollert 13.11.2026, fullfører de 32 ressurs- og utstyrskategoriene: metall, deler, elektronikk, salt; batterier, solcelle, generator, antibiotika; tennhetter, radio, motor, båt; 3D-printer, sprengstoff, nærkampvåpen, hagle. Samme generiske, dekorative kategoriillustrasjoner og CSS-celler, uten nye regler. Original bevart i genereringsarkivet.
+
+## Levende ekspedisjoner – kuratert pakke, 15.11.2026
+
+Tolv lokale WebP-bilder er laget med ImageGen og kontrollert visuelt mot den eksisterende maleriske sjøgrønn/rav-retningen. Ingen runtime-generering, nye portretter eller tredjepartsbilder er integrert. Originalfilene er bevart i genereringsarkivet. `living-expeditions-provenance.json` registrerer originalnavn, eksport, dimensjoner, størrelser, SHA-256 og arkitekturreferanser.
+
+Seks gjenbrukbare, **fiktive miljøillustrasjoner** (`environments/`, 627×418): `residential` (trehusgate), `shop` (nærbutikk), `industrial` (verksted), `coast` (naust/landingsplass), `forest` (lavlandsskog) og `farm` (låve/beite). Dette er miljøfamilier, aldri et identifisert virkelig hus, butikk eller gårdsbruk. De er teknisk hentet fra ett originalt seksfeltsark, uten nytegning eller oppskalering. Bildene gir ikke informasjon om gjenværende loot, zombier, strøm, drift eller antall personer. Velg bare en familie som den allerede rapporterte hendelsen eller et kjent sted gir grunnlag for; ikke les skjult sonepotensial for å velge bilde.
+
+Seks håndplukkede **scenarioillustrasjoner** (`wonders/`, 1280×720):
+
+- `cruise`: spillets fiktive, umerkede cruiseskip ved Vågen. Ingen påstand om et navngitt virkelig skip, tilgjengelige dekk eller operativ drift.
+- `utstein`: stilisert Utstein kloster, med hvite murvolumer, rødt tak og sentralt kirketårn mellom skip og kor.
+- `tower`: stilisert Ullandhaugtårnet som betong-/sambandstårn på lav ås; ikke et eventyrtårn eller et signal om at senderen virker.
+- `plane`: spillets fiktive Hercules-scenario på flat Sola-oppstillingsplass. Et avbildet fly beviser verken luftdyktighet, forsyninger eller tilgang.
+- `cathedral`: stilisert Domkirke med grå stein og to lave østtårn rundt det gotiske koret.
+- `arena`: stilisert fotballarena i Jåttåvågen, med fire overdekkede tribuner, blå seter og rektangulær bane.
+
+Landemerkene er **ikke dokumentarfotografier eller nøyaktige arkitekturoppmålinger**. Offentlige museums-/reise-/klubbkilder ble brukt til arkitektoniske kjennetegn; ingen kildefoto er kopiert inn i spillet. Etter-utbruddet-stemningen og detaljene er fiksjon. Kartankre, grenser og spillregler er urørt. Wonder-bilder må bare gjengis for en faktisk kjent holding/rapportert oppdagelse, aldri i en katalog over ukjente steder. Samme bilde brukes på flere anleggsstadier; tekst fra motoren opplyser status.
+
+`story-art.ts` er en ren whitelist av lokale stier: `environmentArt`, `wonderArt` og `storyArtPath`. Resolveren har bevisst ingen tilgang til spilltilstand/verden og etablerer derfor ikke selv at kunnskapen er opptjent. `industry` er alias til `industrial`; `hq` gjenbruker eksisterende `phases/2.webp`. Bruk tom alternativtekst når bildet er dekorasjon og den tilhørende overskriften gir konteksten. Last bilder ved relevant kort/visning; ikke forhåndslast alle tolv ved spillstart.
