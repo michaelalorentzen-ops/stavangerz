@@ -13,6 +13,7 @@ import { crewPositionFor, type CrewMission } from './location';
 import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions, completeLegacyReturns, localStock, missionStoreRequest, missionLoad, transmitMissionReports, carriedGearWeight } from './mobility';
 import { reserveMissionRadio, communicationsStatus, shouldEscalateField, fieldMandate } from './communications';
 import { centralCommunity, centralAvailablePopulation, regionalDay, regionalWorkDay, regionalSurvivorIds, regionalGuardFor, regionalOverrun, regionalL1 } from './administration';
+import { initializeExperienceJournal, captureOperationExperience, recordOperationExperience, recordCompletedDefenceExperience, recordDefenceCombatExperience, finalizeExperienceReport } from './experiences';
 import { observeDiscoveries, deliverDiscoveryReports, maintainDiscoveries, discoveryOrderPreview, executeDiscoveryOrder } from './discoveries';
 import {
   GEAR_CATALOG, crewGearAway, departGear, discoverSearchGear, equippedGear, gearDamageMultiplier, gearWeapon, gearWorkMultiplier, gearStateFor,
@@ -197,6 +198,7 @@ function initialRegionGame(world: RegionWorld, startZoneId: string, seed = 2026,
 
 export function newRegionGame(world: RegionWorld, startZoneId: string, seed = 2026, options?: CampaignOptions): RegionState {
   const state = initialRegionGame(world, startZoneId, seed, options);
+  initializeExperienceJournal(state);
   if (startDangerForState(state, world).score >= 45) state.event = forceEvent(state, world, 'escape');
   return state;
 }
@@ -714,6 +716,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
     noise[order.zoneId] = (noise[order.zoneId] ?? 0) + ACTIONS[order.action].noise * crew.length
       + crew.reduce((sum, person) => sum + (equippedGear(state, person.id, 'tool')?.noise ?? 0), 0);
     const operationLineStart = lines.length;
+    const experienceBefore = captureOperationExperience(state, order, killed);
     const radioVerified = communicationsStatus({ ...state, stock: headquartersStock }, world, order.survivorIds).connected;
     const personalObservation = order.survivorIds.includes(options.avatarId ?? context?.avatarId ?? '');
     switch (order.action) {
@@ -834,7 +837,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
         const hq = state.hq!;
         if (hq.building?.id !== order.target) { pay(state.stock, m.cost); hq.building = { id: order.target!, hours: 0 }; }
         hq.building!.hours += hours;
-        finishModule(state, lines);
+        finishModule(state, lines, world);
         break;
       }
       case 'network': {
@@ -887,6 +890,7 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
       case 'relocate': { state.stock = headquartersStock; relocate(state, world, order.zoneId, rng, lines); headquartersStock = state.stock; state.stock = mission.cargo ?? {}; mission.returnZoneId = state.homeZoneId; for (const person of present({ ...state, homeZoneId: headquartersZone })) state.crewPositions![person.id] = { kind: 'zone', zoneId: state.homeZoneId }; break; }
       case 'assault': assault(state, world, order.zoneId, crew, rng, lines); break;
     }
+    recordOperationExperience(state, world, order, experienceBefore, killed, lines, operationLineStart, crew);
     for (const line of lines.slice(operationLineStart)) { line.category ??= ['clear', 'assault'].includes(order.action) ? 'combat' : order.action === 'search' ? 'loot' : ['investigate', 'discoveryChoice'].includes(order.action) ? 'discovery' : order.action; line.priority ??= line.tone === 'bad' ? 90 : line.tone === 'warn' ? 75 : line.tone === 'good' ? 50 : 25; line.facts ??= { action: order.action, orderId: order.id, missionId: mission.id }; }
     mission.operationDone = true;
     mission.cargo = state.stock;
@@ -1134,6 +1138,7 @@ export function resumeRegionDay(
       mainResourcesAfter: mainResources(), mapSnapshot: mapSnapshot(state), crewPositions: clone(state.crewPositions ?? {}), zoneIntel: Object.fromEntries(Object.entries(state.zones).flatMap(([id, zone]) => zone.intel ? [[id, { ...zone.intel }]] : [])) },
   ];
   const report: RegionReport = { day: state.day, lines, food: { produced: Math.round(foodMade), eaten: Math.round(eaten), spoiled: Math.round(spoiled) }, water: { produced: Math.round(flows.water.produced), drunk: Math.round(drunk) }, zombiesMoved: migrated, killed, moves, replay };
+  finalizeExperienceReport(state, report);
   state.reports = [...state.reports.slice(-29), report];
   state.counters.killed = (state.counters.killed ?? 0) + killed;
   enforceAvatarFate(state); advanceCampaignCommit(state, `day:${state.day}:${choice ?? 'automatic'}`);
@@ -1200,15 +1205,18 @@ function finishZoneBuilding(state: RegionState, world: RegionWorld, zoneId: stri
   if (id === 'salvage') { add(state.stock, 'building', 40); add(state.stock, 'metal', 10); add(state.stock, 'parts', 6); }
   if (id === 'barricades') for (const a of index.adjacent.get(zoneId) ?? []) if (a.kind === 'land' && state.zones[a.to]?.status !== 'controlled') { state.barricades[a.connId] = Math.max(state.barricades[a.connId] ?? 0, R.barricadeDurability * 2); state.barricadeTier[a.connId] = Math.max(state.barricadeTier[a.connId] ?? 1, 2); }
   lines.push({ tone: 'good', title: `${upgradeName(id)} er ferdig i ${zone.name}`, text: CONTENT.upgrades.find(x => x.id === id)?.gives ?? '', zoneId });
+  if (['watchpost', 'barricades'].includes(id) && !Object.values(state.crewMissions ?? {}).some(m => m.status === 'working' && m.targetZoneId === zoneId && m.action === 'build' && !m.operationDone)) recordCompletedDefenceExperience(state, world, zoneId, `build:${id}`, `${upgradeName(id)} er ferdig i ${zone.name}.`, lines);
 }
-function finishModule(state: RegionState, lines: ReportLine[]) {
+function finishModule(state: RegionState, lines: ReportLine[], world: RegionWorld) {
   const hq = state.hq;
   if (!hq?.building) return;
   const m = MODULE_COST[hq.building.id];
   if (hq.building.hours < m.hours) { lines.push({ tone: 'info', title: `Bygger ${moduleName(hq.building.id).toLowerCase()}`, text: `${Math.round(hq.building.hours)} av ${m.hours} timer.` }); return; }
-  hq.modules.push(hq.building.id);
+  const completedId = hq.building.id;
+  hq.modules.push(completedId);
   lines.push({ tone: 'good', title: `${moduleName(hq.building.id)} er ferdig`, text: CONTENT.modules.find(x => x.id === hq.building!.id)?.effect ?? '' });
   delete hq.building;
+  if (['gate', 'watchtower', 'walls', 'overview'].includes(completedId) && !Object.values(state.crewMissions ?? {}).some(mission => mission.status === 'working' && mission.action === 'module' && !mission.operationDone)) recordCompletedDefenceExperience(state, world, hq.zoneId, `module:${completedId}`, `${moduleName(completedId)} er ferdig.`, lines);
 }
 function finishNetworks(state: RegionState, world: RegionWorld, lines: ReportLine[]) {
   const index = indexWorld(world);
@@ -1284,7 +1292,7 @@ export function workDay(state: RegionState, world: RegionWorld, rng: () => numbe
   // Builders help whatever is under construction, then mend barricades.
   let buildHours = (state.work.build ?? 0) * POP.work.buildHours * law.workMult;
   if (buildHours > 0) {
-    if (state.hq?.building) { const h = Math.min(buildHours, MODULE_COST[state.hq.building.id].hours - state.hq.building.hours); state.hq.building.hours += h; buildHours -= h; finishModule(state, lines); }
+    if (state.hq?.building) { const h = Math.min(buildHours, MODULE_COST[state.hq.building.id].hours - state.hq.building.hours); state.hq.building.hours += h; buildHours -= h; finishModule(state, lines, world); }
     for (const [id, z] of Object.entries(state.zones)) if (z.building && buildHours > 0) { const h = Math.min(buildHours, UPGRADE_COST[z.building.id].hours - z.building.hours); z.building.hours += h; buildHours -= h; finishZoneBuilding(state, world, id, lines); }
     for (const key of Object.keys(state.counters)) if ((key.startsWith('network:') || key.startsWith('repair:')) && buildHours > 0) { const h = Math.min(buildHours, 10); state.counters[key] += h; buildHours -= h; }
     for (const [id, w] of Object.entries(state.wonders ?? {})) if (w.progress > 0 && buildHours > 0 && wonderOperational(w)) { const next = nextWonderLevel(state, id); if (!next) continue; const h = Math.min(buildHours, next.hours - w.progress); buildHours -= h; workOnWonder(state, id, h, lines, () => undefined, 'population'); moveShip(state, world); }
@@ -1504,6 +1512,8 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     const sneak = Math.floor(z.zombies * dig);
     const k = Math.min(z.zombies - sneak, Math.round(defense));
     z.zombies -= k; killed += k;
+    const witnesses = state.survivors.filter(p => { const position = crewPositionFor(state, p.id); return p.alive && p.health > 0 && !p.left && (position?.kind === 'zone' && position.zoneId === id || position?.kind === 'area-duty' && (position.areaZoneId === id || position.areaZoneId === index.byId.get(id)?.parentId)); });
+    recordDefenceCombatExperience(state, world, id, k, witnesses, lines);
     if (!z.zombies) continue;
     const name = index.byId.get(id)!.name;
     if (id !== state.homeZoneId) regionalOverrun(state, world, id, z.zombies, lines, rng);
@@ -1525,6 +1535,7 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
       lines.push({ tone: 'bad', title: `Angrep i natt i ${name}`, text: `${z.zombies} zombier kom gjennom forsvaret. ${victims.map(v => v.name).join(', ') || 'Ingen i crewet'} ble skadet${dead ? `, og ${dead} i leiren døde` : ''}.`, zoneId: id });
       const repelled = Math.min(z.zombies, victims.length * 2 + Math.ceil(many / 10));
       z.zombies -= repelled; killed += repelled;
+      recordDefenceCombatExperience(state, world, id, repelled, present(state), lines);
     } else if (z.zombies > 6) {
       z.status = 'scouted';
       z.intel = { min: z.zombies - 2, max: z.zombies + 3, day: state.day };

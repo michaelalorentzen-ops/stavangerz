@@ -208,6 +208,8 @@ export interface RegionState {
   gear?: RegionGearState;
   mobility?: MobilityState;
   discoveries?: DiscoveryState;
+  /** At most one public first-experience snapshot per kind; survives the 30-report window. */
+  experiences?: ExpeditionExperience[];
   campaign?: CampaignState;
   administration?: AdministrationState;
   /** Canonical v0.4 geography; optional only to read old region-2 saves. */
