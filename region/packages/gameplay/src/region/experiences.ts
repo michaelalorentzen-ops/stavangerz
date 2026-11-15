@@ -59,7 +59,7 @@ function make(state: RegionState, world: RegionWorld, kind: ExperienceKind, zone
     record: state.flags[ORIGIN] === 'new' ? 'first' : 'first-recorded' };
 }
 function append(state: RegionState, lines: ReportLine[], experience: ExpeditionExperience) {
-  if (hasRecordedExperience(state, experience.kind)) return;
+  if (hasRecordedExperience(state, experience.kind) || lines.some(line => line.experience?.kind === experience.kind)) return;
   // A candidate is transported inside privateLines until a real witness reports it.
   // Only finalizeExperienceReport consumes the campaign-wide first marker.
   lines.push({ category: 'experience', tone: 'info', priority: 60, title: experience.title, text: experience.result, zoneId: experience.zoneId, experience });
@@ -106,8 +106,8 @@ export function recordCompletedDefenceExperience(state: RegionState, world: Regi
   append(state, lines, make(state, world, 'perimeter', zoneId, [], sourceId, result, { completedDefence: true }));
 }
 /** Night combat is reported in its actual defended zone, never as off-screen kills by a named crew. */
-export function recordDefenceCombatExperience(state: RegionState, world: RegionWorld, zoneId: string, killed: number, crew: readonly RegionSurvivor[], lines: ReportLine[]) {
-  if (killed <= 0) return;
+export function recordDefenceCombatExperience(state: RegionState, world: RegionWorld, zoneId: string, killed: number, crew: readonly RegionSurvivor[], lines: ReportLine[], anonymousGuard = false) {
+  if (killed <= 0 || !crew.length && !anonymousGuard) return;
   append(state, lines, make(state, world, 'combat', zoneId, crew, `night:${zoneId}`, `${killed} zombier ble drept i forsvaret av ${world.zones.find(z => z.id === zoneId)?.name ?? zoneId}.`, { killed, context: 'night-defence' }));
 }
 /** Only after public report/replay exist. Private/dead crews never consume first markers.

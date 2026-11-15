@@ -1493,6 +1493,20 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
   let pool = guardPool;
   const homeCombat = present(state).reduce((n, s) => n + s.skills.combat * (s.health > 40 ? 1.5 : .5), 0);
   const dig = state.mutations.some(m => m.id === 'diggers') ? (state.mutations.find(m => m.id === 'diggers')!.known ? .05 : .1) : 0;
+  const reportCombat = (zoneId: string, count: number, witnesses: RegionSurvivor[]) => {
+    if (count <= 0) return;
+    const live = witnesses.filter(person => person.alive && !person.left && person.health > 0);
+    const personal = live.some(person => person.id === campaignAvatarId(state));
+    const homeReport = zoneId === state.homeZoneId && live.length > 0;
+    const anonymousGuard = zoneId === state.homeZoneId && state.hq?.zoneId === zoneId && state.work.guard > 0 && centralAvailablePopulation(state).adults > 0;
+    const radio = live.length > 0 && communicationsStatus(state, world, live.map(person => person.id)).connected;
+    if (homeReport || personal || radio || anonymousGuard) recordDefenceCombatExperience(state, world, zoneId, count, live, lines, anonymousGuard);
+    else if (live.length) {
+      // A distant witness keeps the report with their actual mission until return or valid radio.
+      const mission = Object.values(state.crewMissions ?? {}).find(item => item.status !== 'failed' && item.survivorIds.some(id => live.some(person => person.id === id)));
+      if (mission) recordDefenceCombatExperience(state, world, zoneId, count, live, mission.privateLines ??= []);
+    }
+  };
   const owned = controlled(state).sort((a, b) => state.zones[b].zombies - state.zones[a].zombies);
   for (const id of owned) {
     const z = state.zones[id];
@@ -1513,7 +1527,7 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
     const k = Math.min(z.zombies - sneak, Math.round(defense));
     z.zombies -= k; killed += k;
     const witnesses = state.survivors.filter(p => { const position = crewPositionFor(state, p.id); return p.alive && p.health > 0 && !p.left && (position?.kind === 'zone' && position.zoneId === id || position?.kind === 'area-duty' && (position.areaZoneId === id || position.areaZoneId === index.byId.get(id)?.parentId)); });
-    recordDefenceCombatExperience(state, world, id, k, witnesses, lines);
+    reportCombat(id, k, witnesses);
     if (!z.zombies) continue;
     const name = index.byId.get(id)!.name;
     if (id !== state.homeZoneId) regionalOverrun(state, world, id, z.zombies, lines, rng);
@@ -1535,7 +1549,7 @@ function nightDefence(state: RegionState, world: RegionWorld, guards: Record<str
       lines.push({ tone: 'bad', title: `Angrep i natt i ${name}`, text: `${z.zombies} zombier kom gjennom forsvaret. ${victims.map(v => v.name).join(', ') || 'Ingen i crewet'} ble skadet${dead ? `, og ${dead} i leiren døde` : ''}.`, zoneId: id });
       const repelled = Math.min(z.zombies, victims.length * 2 + Math.ceil(many / 10));
       z.zombies -= repelled; killed += repelled;
-      recordDefenceCombatExperience(state, world, id, repelled, present(state), lines);
+      reportCombat(id, repelled, present(state));
     } else if (z.zombies > 6) {
       z.status = 'scouted';
       z.intel = { min: z.zombies - 2, max: z.zombies + 3, day: state.day };
