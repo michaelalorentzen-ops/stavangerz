@@ -1,6 +1,6 @@
 # StavangerZ v0.4 – beslutningslogg
 
-**Sist gjennomgått:** 13.11.2026. **Eier:** Mikki.  
+**Sist gjennomgått:** 15.11.2026. **Eier:** Mikki.  
 **Kilde:** Samtale om v0.4 11.–12.11.2026 og verifisert v0.3-grunnlag i repoet.
 
 Dette dokumentet skiller **LÅST** (produktbeslutning godkjent av eier) fra **ÅPEN** (krever senere avklaring) og **HYPOTESE** (kan prøves i implementasjon uten å gjøre den til bindende design). Full regeltekst finnes i [27_V04_MASTER_SPEC.md](27_V04_MASTER_SPEC.md).
@@ -38,6 +38,20 @@ Dette dokumentet skiller **LÅST** (produktbeslutning godkjent av eier) fra **Å
 
 | D27 | LÅST | Nye landemerker går gjennom oppdaget → undersøkt/sikret → operativt via eksplisitte crew-oppdrag. De seks eksisterende wonders overføres til denne regelen for nye funn; allerede aktive landemerker i gamle saves beholder status og effekter. | Mikki svarte «Ja, bruk eksplisitt anleggsoppdrag» 13.11.2026 på O06-forslaget. Kostnader/tid er balansehypoteser. |
 | D28 | LÅST | Regionalt HQ etableres i en kontrollert sone med en eksisterende navngitt overlevende som lokal leder, lokalt fysisk lager, budsjett og mandat forsvar/balanse/vekst. Lederen utfører lokale rutiner; krig, diplomati og lover forblir spillervalg. Forsyninger transporteres fysisk. | Mikki svarte «Ja, bruk denne rammen» 13.11.2026 på O09/O10-forslaget. Ingen automatisk strategisk krig eller lovgivning. Numeriske kostnader og fordeling kan tunes senere. |
+
+## Eieravklaring 15.11.2026 – levende spillopplevelse
+
+Kilde: Mikkis oppdrag «Fra fungerende system til levende spillopplevelse». Tidligere D01–D28 gjelder videre.
+
+| ID | Status | Beslutning | Begrunnelse / konsekvens |
+| --- | --- | --- | --- |
+| D29 | LÅST | Dagens L1/L2/L3-modell, grenser og sonestørrelser er godkjent og beholdes. | Ingen ny geografisk omstrukturering i denne leveransen. |
+| D30 | LÅST | Eldre spilltest fant sted før de siste UX-forbedringene. Gamle UX-problemer må reproduseres i gjeldende spill før de behandles som aktuelle feil. | Ny spillerreise og QA33 er nå baseline; ikke bygg eksisterende UX på nytt. |
+| D31 | LÅST | Prioriter mer historie, lokale oppdagelser, variasjon, karakter og visuell feedback rundt faktisk spilling. Overlevelse, fremgang og utforsking er parallelle drivkrefter. | Første faktiske speiding, søk, kamp, gearfunn, overtakelse, perimeter, POI og HQ skal få kontekst som ikke repeteres som lange cutscenes. |
+| D32 | LÅST | Numerisk balansering av mat/vann, skade, ressursmengder, vanskelighetsgrader og progresjon utsettes til etter ny spilltest. | Bevar eksisterende tall og kapasitetsregler; ingen tuning for å få en bot til å passere. Nye valg bruker eksisterende kostnads-/konsekvenskontrakter og dokumenteres. |
+| D33 | LÅST | Historier følger autoritative, deterministiske hendelser og fysisk rapportering; ingen oppdiktede ressurser, skader, kamper eller geografiske fakta. Fiktive personhistorier og uverifiserte anleggsdetaljer er tydelig fiksjon. | Valgfrie spor, gjenopptakbar historie, kompatible saves og ingen lekkasje av ukjente steder eller døde lags kunnskap. |
+| D34 | LÅST | Lag et innholdskart for fem faser og implementer først en sammenhengende innholdsslice for de første 15–25 døgnene, med lokale illustrasjoner og eksisterende grafikkmotor. | Kvalitet og spillerens faktiske opplevelser prioriteres foran antall hendelser; fullføring av funksjoner er ikke bevis på spillglede. |
+| D35 | LÅST | Denne leveransen kan committes, pushes og åpnes som draft PR. Ingen merge til main eller deployment uten ny godkjenning. | Nytt mandat 15.11 overstyrer tidligere publiseringsfullmakt for denne leveransen. |
 
 ## Åpne produkt- og balansevalg
 
