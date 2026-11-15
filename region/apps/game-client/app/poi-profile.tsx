@@ -6,6 +6,7 @@ import { knownWonders, nextWonderLevel, wonderStatus, WONDERS } from '../../../p
 import { discoveryOrderPreview, visibleDiscoveries, type DiscoveryRegionState } from '../../../packages/gameplay/src/region/discoveries';
 import { CONTENT } from '../../../packages/world-data/src/content';
 import './detail-views.css';
+import { environmentArt, wonderArt } from './story-art';
 
 export interface PoiProfileProps {
   state: RegionState; world: RegionWorld; poiId: string; crewIds: string[];
@@ -31,9 +32,10 @@ export function PoiProfile({ state, world, poiId, crewIds, onSelectZone, onOrder
   if (wonder && nextWonderLevel(state, wonder[0])) actions.push({ action: 'wonder', label: nextWonderLevel(state, wonder[0])!.name, target: wonder[0] });
   if (poi?.role === 'hq' && !state.hq) actions.push({ action: 'establishHq', label: 'Etabler hovedkvarter' });
   const next = wonder ? nextWonderLevel(state, wonder[0]) : undefined;
+  const scene = wonder ? wonderArt(wonder[0]) : discovery ? environmentArt(discovery.illustration) : environmentArt(['supermarket','pharmacy'].includes(poi?.siteType??'')?'shop':poi?.siteType==='marina'?'coast':['carRepair','warehouse'].includes(poi?.siteType??'')?'industry':undefined);
   return <section className="dv dv-poi" aria-label={title}>
     <header className="dv-place-hero"><div className="dv-place-symbol"><Building2 aria-hidden="true" /></div><div><p className="dv-eyebrow">{discovery ? 'OPPDAGELSE / FELTJOURNAL' : wonder ? 'UNIKT ANLEGG' : poi?.role === 'hq' ? 'MULIG HOVEDKVARTER' : 'RAPPORTERT STED'}</p><h2>{title}</h2><p><MapPin aria-hidden="true" /> {zone?.name ?? 'Rapportert sone'}</p></div></header>
-    <div className="dv-poi-body"><p className="dv-lead">{discovery?.notes.at(-1)?.text ?? definition?.about ?? (type ? `${type.name}. Et mulig fast tilhold for gruppen.` : site ? ('summary' in site ? site.summary : site.name) : 'Registrert sted i sonen.')}</p>
+    <div className="dv-poi-body">{scene&&<img className="dv-poi-scene" src={scene} alt=""/>}<p className="dv-lead">{discovery?.notes.at(-1)?.text ?? definition?.about ?? (type ? `${type.name}. Et mulig fast tilhold for gruppen.` : site ? ('summary' in site ? site.summary : site.name) : 'Registrert sted i sonen.')}</p>
       <div className="dv-traits"><span className="dv-tag">{state.zones[zoneId]?.status === 'controlled' ? 'Sonen er kontrollert' : 'Sonen er ikke kontrollert'}</span>{wonder && <span className="dv-tag">{({ discovered: 'Oppdaget', secured: 'Undersøkt og sikret', operational: 'Operativt' })[wonderStatus(wonder[1])]}</span>}{state.hq?.zoneId === zoneId && <span className="dv-tag">Eget HQ i sonen</span>}</div>
       {next && wonder && <article className="dv-next"><p className="dv-eyebrow">NESTE UTVIKLING</p><h3>{next.name}</h3><p>{next.text}</p><label><Clock aria-hidden="true" /> {Math.round(wonder[1].progress)} / {next.hours} arbeidstimer<progress aria-label="Anleggsarbeid" value={Math.min(wonder[1].progress, next.hours)} max={Math.max(1, next.hours)} /></label></article>}
       <div className="dv-order-options">{actions.map(({ action, target, label }) => {

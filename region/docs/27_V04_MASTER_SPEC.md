@@ -1,6 +1,6 @@
 # StavangerZ v0.4 – produktspesifikasjon
 
-**Status:** designgrunnlag godkjent på prinsippnivå 12.11.2026. M1 finnes i draft-PR-er, men er ikke merget eller deployet.  
+**Status:** designgrunnlag godkjent på prinsippnivå 12.11.2026. Publisert implementasjonsbaseline og ny draft-leveranse er dokumentert i [41](41_V04_QA32_COMPLETION.md) og [42](42_V04_LIVING_EXPERIENCE.md); denne filen beskriver designet, ikke en oppdatert releasehistorikk.  
 **Produkt:** regionspillet under `region/`, videreføring av `regionspill-v0.3`.  
 **Eier:** Mikki. **Teknisk leveranse:** orkestrert, trinnvis implementering med tester og godkjenning.
 

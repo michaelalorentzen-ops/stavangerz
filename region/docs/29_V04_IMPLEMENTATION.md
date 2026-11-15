@@ -183,3 +183,8 @@ Eieren ba om tydeligere spillpreg etter en funksjonelt positiv QA. [40_V04_ART_D
 ## QA32 før balansering
 
 Eieren ba om å fullføre gjenværende QA-punkter før tallbalansering. [41_V04_QA32_COMPLETION.md](41_V04_QA32_COMPLETION.md) registrerer lagringsbibliotek, konfigurerbare hurtigtaster, lokal Foley, komplett inventarillustrasjon, seiersoversikt og spillerutløst kartmåling, med eksplisitt skille mellom funksjonelle tester, naturlig seiersbevis og fysisk GPU. Naturlig stabilitetsseier er nå reprodusert på dag 194 med identisk uavbrutt sluttilstand; fysisk GPU er fortsatt ikke verifisert.
+
+
+## Levende spillopplevelse, 15.11.2026
+
+Nytt eiermandat D29–D35: bevar godkjent geografi og tall, utvid innhold og visuell feedback rundt faktisk spilling. [42_V04_LIVING_EXPERIENCE.md](42_V04_LIVING_EXPERIENCE.md) inneholder gjenopprettet baseline/QA33, innholdskart for fem faser, disjunkt filansvar, felles rapportkontrakt og verifisert spillerreise når integrert. Eksisterende hendelser, fysisk rapportering, kartmotor, arkiv og saves gjenbrukes. Leveransen er draft; ingen automatisk merge/deploy.

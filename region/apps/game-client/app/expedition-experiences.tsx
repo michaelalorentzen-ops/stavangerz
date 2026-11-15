@@ -41,7 +41,7 @@ export function ExpeditionExperienceCards({ experiences, onZone, onHelp }: {
     <article className={`exp-card exp-${experience.kind}`} data-experience-id={experience.id}>
       <div className="exp-scene" aria-hidden="true">{image && <img src={image} alt=""/>}<span><HudIcon name={ICONS[experience.kind]} size={24}/>{LABELS[experience.kind]}</span></div>
       <div className="exp-copy">
-        <p className="exp-record">{experience.record === 'first' ? 'DET FØRSTE STEGET' : 'FRA FELTJOURNALEN'} <span>· dag {experience.day}</span></p>
+        <p className="exp-record">{experience.record === 'first' ? 'DET FØRSTE STEGET' : 'FRA FELTJOURNALEN'} <span>· opplevd dag {experience.day}</span></p>
         <h3>{experience.title}</h3>
         <p className="exp-story">{experience.text}</p>
         <p className="exp-result"><HudIcon name="report" size={17}/><span>{experience.result}</span></p>

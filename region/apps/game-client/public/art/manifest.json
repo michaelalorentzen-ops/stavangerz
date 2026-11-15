@@ -5,6 +5,12 @@
  "crew/tor.webp",
  "end/lose.webp",
  "end/win.webp",
+ "environments/coast.webp",
+ "environments/farm.webp",
+ "environments/forest.webp",
+ "environments/industrial.webp",
+ "environments/residential.webp",
+ "environments/shop.webp",
  "intro/1.webp",
  "intro/2.webp",
  "intro/3.webp",
@@ -18,5 +24,11 @@
  "phases/5.webp",
  "report/danger.webp",
  "report/quiet.webp",
- "report/success.webp"
+ "report/success.webp",
+ "wonders/arena.webp",
+ "wonders/cathedral.webp",
+ "wonders/cruise.webp",
+ "wonders/plane.webp",
+ "wonders/tower.webp",
+ "wonders/utstein.webp"
 ]

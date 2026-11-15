@@ -139,3 +139,8 @@ Eksempel: 100×100m er ikke et krav. Hvis 150–250m kuraterte polygoner gir bed
 ## Regionspillet blir hovedspillet (11.11.2026)
 
 **Besluttet av eier:** Spillet flyttes til soneeditorens verden. Forsiden er nå regionspillet `region-0.1`, med L1–L3, steder, bruer og tunneler. Det har flere startområder, zombier som vandrer mot lyd, ukentlige hendelser, oppgraderinger av L3, L2 og HQ, og handel med NPC-grupper. Buøy-prototypen og lagringene dens ligger på `/fase1`. Regionspillet har egen lagringsnøkkel. Se [23_REGIONSPILL.md](23_REGIONSPILL.md).
+
+
+## v0.4 – innhold før tallbalansering (15.11.2026)
+
+Mikki godkjente eksisterende geografi og ba om en levende, ikke-lineær spillerreise med førstegangsopplevelser, lokale historier og kuraterte illustrasjoner. Tallbalansering utsettes; eldre UX-funn må kontrolleres i siste versjon. D29–D35 i [beslutningsloggen](28_V04_DECISIONS.md) er styrende. [Innholdskart og leveranse](42_V04_LIVING_EXPERIENCE.md). Kun utviklingsgren/draft PR; ingen merge eller deployment uten ny godkjenning.

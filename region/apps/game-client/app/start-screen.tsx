@@ -7,12 +7,14 @@ import { CONTENT } from '../../../packages/world-data/src/content';
 import { attachBuildings, gameStyle, MAP_ATTRIBUTION } from './region-map-style';
 import './start-screen.css';
 import { HudIcon, type HudIconName } from './hud-icons';
+import { GameConfirm } from './game-confirm';
 const DANGER_COLOR: Record<string,string> = { Rolig:'#5f9a5f',Middels:'#a8a24a',Krevende:'#c48a3a','Svært krevende':'#b8563c','Nesten umulig':'#7c2230' };
 const number=(n:number)=>Math.round(n).toLocaleString('nb-NO');
 export default function StartScreen({ world, saved, onStart, onLibrary }: { world: RegionWorld; saved: RegionState | null; onStart: (s: RegionState, fresh: boolean) => void; onLibrary: () => void }) {
   const index = useMemo(() => indexWorld(world), [world]);
   const [choice, setChoice] = useState(world.starts.find(s => s.name.startsWith('Lundsneset'))?.zoneId ?? world.starts[0]?.zoneId ?? '');
   const [campaignOptions, setCampaignOptions] = useState<CampaignOptions>({ difficulty: 'survival', hardcore: false });
+  const [confirmStart, setConfirmStart] = useState(false);
   const [startPage, setStartPage] = useState(0);
   const [seed, setSeed] = useState(() => 1 + Math.floor(Math.random() * 9999));
   const estimates = useMemo(() => Object.fromEntries(index.l3.map(z => [z.id, startDanger(world, z.id)])), [world, index]);
@@ -22,9 +24,10 @@ export default function StartScreen({ world, saved, onStart, onLibrary }: { worl
   const dangers = useMemo(() => ({ ...estimates, ...seededStarts, ...(choice && d ? { [choice]: d } : {}) }), [estimates, seededStarts, choice, d]);
   const l2 = index.byId.get(zone?.parentId ?? '');
   const hqNear = [choice, ...(index.adjacent.get(choice) ?? []).map(a => a.to)].flatMap(id => (index.poisByZone.get(id) ?? []).filter(p => p.role === 'hq')).map(p => `${p.name} (${CONTENT.hqTypes.find(t => t.id === p.hqType)?.name ?? ''})`);
+  const start = () => onStart(newRegionGame(world, choice, seed, { ...campaignOptions, runId: crypto.randomUUID() }), true);
   return <main className={`rz-shell rz-start rz-start-ready ${saved?'is-returning':''}`}>
     <section className="rz-start-intro">
-      <div className="rz-start-brand"><button aria-label="Gjennomspillinger · lagre og last" title="Gjennomspillinger · lagre og last" onClick={onLibrary} style={{position:'absolute',right:10,top:10,zIndex:2,width:44,height:44,padding:8}}><HudIcon name="stock" size={22}/></button><img src="/art/intro/hero.webp" className="rz-art rz-art-hero" alt="" /><div><p className="rz-kicker">ETTER DAG NULL</p><h1 className="start-wordmark"><span>STAVANGER</span><b>Z</b></h1><p className="start-tagline">Hele regionen. Ett døgn av gangen.</p></div></div>
+      <div className="rz-start-brand"><button className="start-library" aria-label="Gjennomspillinger · lagre og last" title="Gjennomspillinger · lagre og last" onClick={onLibrary}><HudIcon name="archive" size={18}/><span>Last spill</span></button><img src="/art/intro/hero.webp" className="rz-art rz-art-hero" alt="" /><div><p className="rz-kicker">ETTER DAG NULL</p><h1 className="start-wordmark"><span>STAVANGER</span><b>Z</b></h1><p className="start-tagline">Hele regionen. Ett døgn av gangen.</p></div></div>
       <p className="rz-start-lead">Led folkene dine gjennom utbruddet. Velg et startsted på kartet, gi ordre og se hva neste døgn bringer.</p>
       <details className="rz-start-story"><summary>Om verden og startstedet</summary><p>Tette bysentre har mye å finne, men så mange døde at første oppgave kan være å flykte. På landet finnes jord, båter og diesel, men avstandene er lange.</p></details>
       {saved && <button className="rz-primary rz-wide" onClick={() => onStart(saved, false)}>{saved.gameOver ? 'Vis avslutningen etter' : 'Fortsett'} dag {saved.day} i {index.byId.get(saved.homeZoneId)?.name} →</button>}
@@ -48,12 +51,12 @@ export default function StartScreen({ world, saved, onStart, onLibrary }: { worl
         <div className="rz-start-go">
           <label>Frø <input type="number" value={seed} onChange={e => setSeed(Number(e.target.value) || 1)} /></label>
           <button className="rz-primary" data-testid="start-game" onClick={() => {
-            if (saved && !confirm('Starte en ny gjennomspilling? Den aktive bevares på en ledig lagringsplass. Er alle plassene fulle, åpne Gjennomspillinger først.')) return;
-            onStart(newRegionGame(world, choice, seed, { ...campaignOptions, runId: crypto.randomUUID() }), true);
+            if (saved) setConfirmStart(true); else start();
           }}><HudIcon name="claim" size={20}/><span>Start i {zone.name}</span><HudIcon name="arrow" size={18}/></button>
         </div>
       </div>}
     </section>
+    {confirmStart && <GameConfirm title="En ny begynnelse?" message="Den aktive gjennomspillingen bevares på en ledig lagringsplass. Hvis alle tre er fulle, åpne Last spill og frigjør en plass først." confirmLabel="Start ny gjennomspilling" onCancel={() => setConfirmStart(false)} onConfirm={() => {setConfirmStart(false);start();}}/>}
   </main>;
 }
 

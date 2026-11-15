@@ -7,6 +7,8 @@ import {
 } from '../../../packages/gameplay/src/region/index';
 import './za-book.css';
 import { visibleDiscoveries } from '../../../packages/gameplay/src/region/discoveries';
+import { recordedExperiences } from '../../../packages/gameplay/src/region/experiences';
+import { environmentArt } from './story-art';
 import { HudIcon } from './hud-icons';
 
 type BookTab = 'chapters' | 'manual' | 'field';
@@ -202,6 +204,11 @@ export const BOOK_HELP_TOPICS = {
   gear: { section: 'gear', lead: 'Automatisk som utgangspunkt' },
   missions: { section: 'travel', lead: 'Der folk faktisk er' },
   report: { section: 'day', lead: 'Rapporter' },
+  fortify: { section: 'camp', lead: 'Forsvar og fase 2' },
+  perimeter: { section: 'camp', lead: 'Forsvar og fase 2' },
+  poi: { section: 'map', lead: 'Spesielle steder' },
+  hq: { section: 'camp', lead: 'Forsvar og fase 2' },
+  discoveries: { section: 'discoveries', lead: 'Spor og undersøkelser' },
   zone: { section: 'map', lead: 'Kontroll' },
 } as const satisfies Record<string, { section: ManualSectionId; lead: string }>;
 export type BookHelpTopic = keyof typeof BOOK_HELP_TOPICS;
@@ -224,6 +231,8 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
   const manualSelectId = useId();
   const [tab, setTab] = useState<BookTab>(() => requested ? 'manual' : 'chapters');
   const [chapterPage,setChapterPage]=useState(0);
+  const [field, setField] = useState<'experiences'|'discoveries'|'mutations'|'research'|'gear'|'memory'>('experiences');
+  const [fieldPage, setFieldPage] = useState(0);
   const [chapter, setChapter] = useState(Math.min(5, Math.max(1, state.phase)));
   const [manualIndex, setManualIndex] = useState(() => requested?.index ?? 0);
   const [manualPage, setManualPage] = useState(() => requested?.page ?? 0);
@@ -250,6 +259,15 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
   const index = indexWorld(world);
   const homeName = index.byId.get(state.homeZoneId)?.name ?? 'ukjent område';
   const discoveries = visibleDiscoveries(state);
+  const experiences = recordedExperiences(state);
+  const fieldCounts = {experiences:experiences.length, discoveries:discoveries.length, mutations:visibleMutations.length, research:research.length, gear:foundGear.length, memory:state.memory.length};
+  const fieldLabels = {experiences:'Våre første steg', discoveries:'Lokale spor', mutations:'De døde', research:'Forskning', gear:'Utstyr', memory:'Krøniken'};
+  const fieldSize = field==='experiences'||field==='discoveries'?1:2;
+  const fieldPages = Math.max(1,Math.ceil(fieldCounts[field]/fieldSize));
+  const activeFieldPage = Math.min(fieldPage,fieldPages-1);
+  const fieldSlice = <T,>(items:T[]) => items.slice(activeFieldPage*fieldSize,(activeFieldPage+1)*fieldSize);
+  const experience = experiences[activeFieldPage];
+
 
   return <div className="zab">
     <div className="zab-head">
@@ -322,48 +340,20 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
     </div>}
 
     {tab === 'field' && <div className="zab-field">
-      <section className="zab-field-card">
-        <p className="zab-eyebrow">RAPPORTERTE SPOR</p>
-        <h3>Det noen har fortalt videre</h3>
-        {!discoveries.length && <p className="zab-unknown">Ingen lokale historier er rapportert. Urapporterte feltobservasjoner og ukjente steder blir ikke vist her.</p>}
-        {discoveries.map(entry => <div className="zab-discovery" key={entry.id}><span className="zab-discovery-mark">{entry.status === 'resolved' ? '✓' : entry.status === 'lost' ? '–' : '?'}</span>
-          <div><strong>{entry.title}</strong><small>{entry.poiName} · {entry.status === 'resolved' ? 'Avsluttet' : entry.status === 'lost' ? 'Sporet er tapt' : 'Valgfritt spor'}</small><p>{entry.notes.at(-1)?.text}</p></div>
-        </div>)}
-        {onDiscoveries && <button type="button" className="zab-journal-link" onClick={onDiscoveries}>Åpne feltjournalen</button>}
-      </section>
-      <section className="zab-field-card">
-        <p className="zab-eyebrow">OBSERVASJONER</p>
-        <h3>Det vi vet om de døde</h3>
-        {!visibleMutations.length && <p className="zab-unknown">Ingen uvanlig atferd rapportert ennå.</p>}
-        {visibleMutations.map((m, i) => {
-          const description = m.known ? MUTATIONS.find(x => x.id === m.id) : undefined;
-          return <div className="zab-discovery" key={m.id + ':' + i}>
-            <span className={'zab-discovery-mark ' + (m.known ? 'known' : 'unknown')}>{m.known ? '✓' : '?'}</span>
-            <div><strong>{description?.name ?? 'Ukjent endring i atferd'}</strong><small>Først observert dag {m.day} · {m.known ? 'Undersøkt' : 'Ikke forstått'}</small>
-              <p>{description?.text ?? 'Noe er annerledes med zombiene. Observasjonen er notert, men årsak og mottiltak er fortsatt ukjent.'}</p></div>
-          </div>;
-        })}
-      </section>
-      <section className="zab-field-card">
-        <p className="zab-eyebrow">DOKUMENTERTE FUNN</p>
-        <h3>Det vi har lært</h3>
-        {research.length === 0 && <p className="zab-unknown">Ingen forskningsresultater nedskrevet ennå. En gruppe med kunnskap kan endre dette.</p>}
-        {research.map(t => <div className="zab-discovery" key={t.id}><span className="zab-discovery-mark known">✓</span><div><strong>{t.name}</strong><p>{t.text}</p></div></div>)}
-        {currentResearch && <p className="zab-in-progress">Pågående arbeid: {currentResearch.name}. Resultatene er ikke klare.</p>}
-      </section>
-      <section className="zab-field-card">
-        <p className="zab-eyebrow">RAPPORTERTE UTSTYRSFUNN</p>
-        <h3>Det vi kan ta i bruk</h3>
-        {!foundGear.length && <p className="zab-unknown">Ingen nye utstyrstyper er rapportert hjem ennå.</p>}
-        {foundGear.map(item => <div className="zab-discovery" key={item.kind}><span className="zab-discovery-mark known">✓</span><div><strong>{gearItemName(item)}</strong><p>{GEAR_CATALOG[item.kind]?.description}</p><small>Funnet under oppdrag dag {item.provenance.day}. Nåværende beholdning og bærer vises i Lager.</small></div></div>)}
-      </section>
-      <section className="zab-field-card">
-        <p className="zab-eyebrow">FUNN OG HENDELSER</p>
-        <h3>Det som har skjedd</h3>
-        <p className="zab-unknown">{observedPlaces} spesielle steder registrert i leirens oversikt. Ikke alle steder er oppdaget, og boka viser ikke hemmeligheter dere ennå ikke kjenner.</p>
-        {!state.memory.length && <p className="zab-unknown">Ingen større hendelser skrevet ned.</p>}
-        {state.memory.slice(-8).reverse().map((entry, i) => <div className="zab-memory" key={entry.day + ':' + i}><small>Dag {entry.day}</small><p>{entry.text}</p></div>)}
-      </section>
+      <label className="zab-field-select">Feltnotater<select aria-label="Velg feltnotater" value={field} onChange={event=>{setField(event.target.value as typeof field);setFieldPage(0);}}>{(Object.keys(fieldLabels) as (keyof typeof fieldLabels)[]).map(id=><option key={id} value={id}>{fieldLabels[id]} · {fieldCounts[id]}</option>)}</select></label>
+      {field==='experiences'&&<section className="zab-field-card zab-experience-card" aria-label="Våre første steg">
+        {experience?<><p className="zab-eyebrow">DAG {experience.day} · {experience.zoneName}</p><div className="zab-experience-layout"><img src={environmentArt(experience.illustration)} alt=""/><div><h3>{experience.title}</h3><p>{experience.text}</p><p className="zab-experience-result">{experience.result}</p>{experience.voice&&<blockquote>«{experience.voice.text}»<cite>{experience.voice.name}</cite></blockquote>}<small>{experience.participants.map(p=>p.name).join(' · ')}</small></div></div><p className="zab-unknown">Et bevart feltnotat. Dagens forhold og lagre kan ha endret seg.</p></>:<><h3>Den første turen gjenstår</h3><p className="zab-unknown">Rapporterte opplevelser blir bevart her når dere faktisk speider, søker, kjemper og bygger et tilhold. Du velger rekkefølgen.</p></>}
+      </section>}
+      {field==='discoveries'&&<section className="zab-field-card"><p className="zab-eyebrow">RAPPORTERTE SPOR</p><h3>Det noen har fortalt videre</h3>
+        {!discoveries.length&&<p className="zab-unknown">Ingen lokale historier er rapportert. Urapporterte feltobservasjoner og ukjente steder blir ikke vist her.</p>}
+        {fieldSlice(discoveries).map(entry=><div className="zab-discovery" key={entry.id}><span className="zab-discovery-mark">{entry.status==='resolved'?'✓':entry.status==='lost'?'–':'?'}</span><div><strong>{entry.title}</strong><small>{entry.poiName} · {entry.status==='resolved'?'Avsluttet':entry.status==='lost'?'Sporet er tapt':'Valgfritt spor'}</small><p>{entry.notes.at(-1)?.text}</p></div></div>)}
+        {onDiscoveries&&<button type="button" className="zab-journal-link" onClick={onDiscoveries}>Åpne feltjournalen</button>}
+      </section>}
+      {field==='mutations'&&<section className="zab-field-card"><p className="zab-eyebrow">OBSERVASJONER</p><h3>Det vi vet om de døde</h3>{!visibleMutations.length&&<p className="zab-unknown">Ingen uvanlig atferd rapportert ennå.</p>}{fieldSlice(visibleMutations).map((m,i)=>{const description=m.known?MUTATIONS.find(x=>x.id===m.id):undefined;return <div className="zab-discovery" key={m.id+':'+i}><span className={'zab-discovery-mark '+(m.known?'known':'unknown')}>{m.known?'✓':'?'}</span><div><strong>{description?.name??'Ukjent endring i atferd'}</strong><small>Først observert dag {m.day} · {m.known?'Undersøkt':'Ikke forstått'}</small><p>{description?.text??'Noe er annerledes med zombiene. Observasjonen er notert, men årsak og mottiltak er fortsatt ukjent.'}</p></div></div>;})}</section>}
+      {field==='research'&&<section className="zab-field-card"><p className="zab-eyebrow">DOKUMENTERTE FUNN</p><h3>Det vi har lært</h3>{!research.length&&<p className="zab-unknown">Ingen forskningsresultater nedskrevet ennå.</p>}{fieldSlice(research).map(t=><div className="zab-discovery" key={t.id}><span className="zab-discovery-mark known">✓</span><div><strong>{t.name}</strong><p>{t.text}</p></div></div>)}{currentResearch&&<p className="zab-in-progress">Pågående arbeid: {currentResearch.name}. Resultatene er ikke klare.</p>}</section>}
+      {field==='gear'&&<section className="zab-field-card"><p className="zab-eyebrow">RAPPORTERTE UTSTYRSFUNN</p><h3>Det vi kan ta i bruk</h3>{!foundGear.length&&<p className="zab-unknown">Ingen nye utstyrstyper er rapportert hjem ennå.</p>}{fieldSlice(foundGear).map(item=><div className="zab-discovery" key={item.kind}><span className="zab-discovery-mark known">✓</span><div><strong>{gearItemName(item)}</strong><p>{GEAR_CATALOG[item.kind]?.description}</p><small>Funnet under oppdrag dag {item.provenance.day}. Dagens beholdning og bærer vises i Lager.</small></div></div>)}</section>}
+      {field==='memory'&&<section className="zab-field-card"><p className="zab-eyebrow">FUNN OG HENDELSER</p><h3>Det som har skjedd</h3><p className="zab-unknown">{observedPlaces} spesielle steder er rapportert. Boka viser bare det gruppen har fortalt videre.</p>{!state.memory.length&&<p className="zab-unknown">Ingen større hendelser skrevet ned.</p>}{fieldSlice([...state.memory].reverse()).map((entry,i)=><div className="zab-memory" key={entry.day+':'+i}><small>Dag {entry.day}</small><p>{entry.text}</p></div>)}</section>}
+      <nav className="zab-page-controls" aria-label="Sider i feltnotatene"><button disabled={!activeFieldPage} onClick={()=>setFieldPage(activeFieldPage-1)}><HudIcon name="back"/>Forrige</button><span>Side {activeFieldPage+1} av {fieldPages}</span><button disabled={activeFieldPage+1>=fieldPages} onClick={()=>setFieldPage(activeFieldPage+1)}>Neste<HudIcon name="arrow"/></button></nav>
     </div>}
 
     <footer className="zab-foot">
