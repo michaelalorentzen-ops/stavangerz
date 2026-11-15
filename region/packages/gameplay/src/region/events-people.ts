@@ -765,27 +765,29 @@ export const EVENTS_PEOPLE: EventDef[] = [
       const p = crewById(s, d?.who);
       if (!p) return null;
       const good = rng() < .55 ? 1 : 0;
+      const loss = Math.min(2, s.population.adults);
+      const lossText = loss ? `${loss} ${loss === 1 ? 'voksen vil gå tapt' : 'voksne vil gå tapt'} når denne hendelsen avgjøres, uansett hvilket valg du tar.` : 'Ingen voksne utenom mannskapet kan gå tapt her, men håpet vil svekkes og uroen øke.';
       return event(good ? 'Den andre sjansen' : 'Igjen', good
-        ? `Da sperringa ved vannposten falt i går, var det ${p.name} som sto igjen og holdt mens barna ble båret inn. Ingen spør lenger hvem som løp sist.`
-        : `${p.name} løp igjen. Denne gangen var det ingen som holdt åpningen. To voksne fra leiren rakk ikke inn.${noLawNote(s)}`, good
+        ? `Valget om å gi ${p.name} en ny sjanse blir vurdert på nytt. Folk ønsker å høre om du fortsatt står ved avgjørelsen. En tydelig anerkjennelse kan styrke tilliten; du kan også la saken ligge.`
+        : `Saken om den nye sjansen til ${p.name} får et alvorlig etterspill. ${lossText} Nå må du avgjøre hvordan tillit og ansvar skal håndteres.${noLawNote(s)}`, good
         ? [
-          { id: 'honour', label: `Hedre ${p.name} ved bålet`, detail: 'Folk trenger å se at nye sjanser virker.', tags: ['merciful'] },
-          { id: 'quiet', label: 'Ingenting å snakke om', detail: 'Det var jobben.' },
+          { id: 'honour', label: `Hedre ${p.name}`, detail: 'Gi tydelig anerkjennelse til den nye sjansen.', tags: ['merciful'] },
+          { id: 'quiet', label: 'Ingenting å snakke om', detail: 'La anerkjennelsen være stillferdig.' },
         ]
         : list(
           lawChoice(s, true, p.name),
-          { id: 'expel', label: `Send ${p.name} ut`, detail: 'Du ga en sjanse. Den kostet to liv.', tags: ['harsh'] },
-          { id: 'keep', label: `Behold ${p.name} borte fra porten`, detail: 'Ikke alle er laget for dette. Folk vil mene noe om det.', tags: ['merciful'] },
+          { id: 'expel', label: `Forvis ${p.name} fra gruppen`, detail: 'Forvisning kommer i tillegg til hendelsens øvrige tap.', tags: ['harsh'] },
+          { id: 'keep', label: `La ${p.name} bli i gruppen`, detail: 'Personen beholder plassen i gruppen. Uroen vil øke.', tags: ['merciful'] },
         ), { data: { who: p.id, good } });
     },
     resolve: (s, _w, c, _rng, lines) => {
       const p = crewById(s, str(s, 'who'));
       if (num(s, 'good')) { if (p) loyalty(p, c === 'honour' ? 15 : 5); hope(s, c === 'honour' ? 6 : 2); return; }
-      removePeople(s, 'adults', 2); hope(s, -6); unrest(s, 6);
-      remember(s, 'Den andre sjansen kostet to liv.');
+      const lost = removePeople(s, 'adults', 2); hope(s, -6); unrest(s, 6);
+      remember(s, lost ? `Etterspillet av den nye sjansen endte med tap av ${lost} ${lost === 1 ? 'voksen' : 'voksne'}.` : 'Etterspillet av den nye sjansen svekket håpet og økte uroen.');
       if (!p) return;
       if (c === 'law') applyLaw(s, lines, p, p.name);
-      if (c === 'expel') leaves(s, p, lines, 'Sendt ut etter å ha forlatt posten to ganger.');
+      if (c === 'expel') leaves(s, p, lines, 'Forvist etter etterspillet av den nye sjansen.');
       if (c === 'keep') { unrest(s, 6); loyalty(p, 5); }
     },
   },
