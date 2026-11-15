@@ -17,13 +17,13 @@ export const LOCAL_OBSERVATIONS: readonly LocalObservation[] = [
     text: 'Ved en pauseplass ligger et par arbeidshansker. Én er vrengt. Noen har skrevet «tilbake etter lunsj» på en pappbit. Laget tar en pause selv og fordeler hvem som bærer hva. Et verksted kan være verdifullt, men ingenting hjelper leiren før det er undersøkt og fraktet dit.' },
   { id: 'farm', title: 'Det som kan vokse videre', illustration: 'farm',
     matches: (zone, pois) => (zone.measures?.farm ?? 0) > 0 || pois.some(p => p.hqType === 'coastFarm' || p.siteType === 'greenhouse'),
-    text: 'En tom frøpose har falmet i et vindu. På baksiden står en kort påminnelse om å vanne. Laget begynner å snakke om mat som kan komme igjen, i stedet for enda en kasse som tømmes. Ingen har startet dyrkingen her ennå. Det krever arbeid, folk og et sted dere kan holde.' },
+    text: 'En tom frøpose har falmet i et vindu. På baksiden står en kort påminnelse om å vanne. Laget begynner å snakke om mat som kan komme igjen, i stedet for enda en kasse som tømmes. Å holde dyrkingen i gang krever arbeid, folk og et sted dere kan holde.' },
   { id: 'coast', title: 'Fortøyningen', illustration: 'coast',
     matches: (zone, pois) => (zone.measures?.coastM ?? 0) > 0 || pois.some(p => ['marina', 'ferry'].includes(p.siteType ?? '')),
-    text: 'Et løst tau slår mot en stolpe ved vannet. Lyden er liten, men alle stanser. Når de går videre, har laget skrevet tre spørsmål i margen: hvor kan vi legge til, hva kan vi bære, og hvordan kommer vi hjem? Kysten gir muligheter. En brukbar båt må fortsatt finnes og klargjøres.' },
+    text: 'Et løst tau slår mot en stolpe ved vannet. Lyden er liten, men alle stanser. Når de går videre, har laget skrevet tre spørsmål i margen: hvor kan vi legge til, hva kan vi bære, og hvordan kommer vi hjem? Kysten gir muligheter. Før noen legger ut, må båten, lasten og returen være avklart.' },
   { id: 'forest', title: 'Mellom trærne', illustration: 'forest',
     matches: zone => (zone.measures?.forest ?? 0) > 0,
-    text: 'Trærne gjør det vanskelig å holde øyekontakt. Laget stanser og avtaler et lavt signal før de fortsetter. En hånd opp. Vent. Kom nærmere. De teller folk på nytt. Stillheten kan føles trygg, men de lar dagens speiderrapport avgjøre hva de faktisk vet om faren.' },
+    text: 'Trærne gjør det vanskelig å holde øyekontakt. Laget stanser og avtaler et lavt signal før de fortsetter. En hånd opp. Vent. Kom nærmere. De teller folk på nytt. Stillheten kan føles trygg, men det laget faktisk har observert, veier tyngre enn følelsen.' },
   { id: 'residential', title: 'Noens vanlige morgen', illustration: 'residential',
     matches: zone => (zone.measures?.homes ?? 0) > 0,
     text: 'En sko ved en terskel blir stående i feltboka. Noen tenker på sin egen gang hjemme. Ingen sier det høyt. Laget teller hvilke deler av boligområdet de allerede har undersøkt, og hva som må vente. Bak hver dør kan det ligge en vanlig morgen som stoppet opp.' },
@@ -76,3 +76,17 @@ export const PERSON_DISCOVERY_STORIES: readonly PersonDiscoveryStory[] = [
   },
 ];
 export const personDiscoveryStory = (id?: string) => PERSON_DISCOVERY_STORIES.find(story => story.id === id);
+
+/** Snapshot a story's observed setting, not the personality theme. Existing saved notes stay unchanged. */
+export function personStoryIllustration(story: PersonDiscoveryStory, poi: RegionPoi): DiscoveryIllustration {
+  const site = poi.siteType ?? poi.hqType ?? poi.facilityType ?? poi.kind;
+  const setting: Record<string, DiscoveryIllustration> = {
+    coastFarm: 'farm', greenhouse: 'farm',
+    marina: 'coast', ferry: 'coast', harbour: 'coast',
+    hardware: 'industry', carRepair: 'industry', industry: 'industry', shipyard: 'industry',
+    supermarket: 'shop', mall: 'shop', pharmacy: 'shop', outdoorShop: 'shop',
+    school: 'residential', clinic: 'residential', hospital: 'residential',
+    shootingRange: 'forest',
+  };
+  return setting[site] ?? story.illustration;
+}

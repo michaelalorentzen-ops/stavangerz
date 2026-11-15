@@ -6,7 +6,7 @@ import type { RegionPoi, RegionState, RegionWorld, ReportLine, Stock } from './t
 import { crewPositionFor } from './location';
 import { gainWonder, WONDERS, wonderZone } from './wonders';
 import { routeBetween } from './mobility';
-import { LOCAL_OBSERVATIONS, PERSON_DISCOVERY_STORIES, personDiscoveryStory, type DiscoveryIllustration } from './discovery-content';
+import { LOCAL_OBSERVATIONS, PERSON_DISCOVERY_STORIES, personDiscoveryStory, personStoryIllustration, type DiscoveryIllustration } from './discovery-content';
 
 export type DiscoverySource = 'scout' | 'search' | 'rumor' | 'radio';
 export type DiscoveryDelivery = 'none' | 'returned' | 'radio';
@@ -162,7 +162,7 @@ function observeLocalContent(state: DiscoveryRegionState, world: RegionWorld, ev
     if (!poi) continue;
     const entry: DiscoveryEntry = { id: story.id, kind: 'ordinary', storyId: story.id, title: story.title,
       poiId: poi.id, poiName: poi.name, zoneId: zone.id, status: 'clue', step: 0, revision: 0,
-      discoveredDay: state.day, sources: [evidence.source], notes: [], choices: [], boundPersonId: story.personId, illustration: story.illustration };
+      discoveredDay: state.day, sources: [evidence.source], notes: [], choices: [], boundPersonId: story.personId, illustration: personStoryIllustration(story, poi) };
     note(entry, state.day, `Ved ${poi.name}: ${story.clue}`);
     receive(state, { id: `${entry.id}:clue`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
     return;
