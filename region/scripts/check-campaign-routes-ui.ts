@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 /** Layout fixtures only; no claim of a natural phase-five playthrough. */
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {newRegionGame,SAVE_KEY_REGION,type RegionWorld} from '../packages/gamepl
 async function main(){
  const world=JSON.parse(readFileSync('apps/game-client/public/world/region-v1.json','utf8')) as RegionWorld;
  const out='artifacts/qa32-campaign-routes';mkdirSync(out,{recursive:true});
- const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+ const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE??(existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),args:['--no-sandbox']});
  try{for(const width of [1280,390]){
   const context=await browser.newContext({viewport:{width,height:width===1280?800:844},reducedMotion:'reduce'}),page=await context.newPage();const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
   const state=newRegionGame(world,world.starts[0].zoneId,101,{avatarId:'ingrid',runId:'routes-layout'});delete state.event;state.phase=5;state.day=99;state.counters.stable=17;
