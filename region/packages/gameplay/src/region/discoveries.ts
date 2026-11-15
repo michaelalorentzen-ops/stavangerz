@@ -21,7 +21,7 @@ export interface DiscoveryEntry {
   /** Optional content metadata; legacy ordinary/Tor chains retain their existing meaning. */
   storyId?: string;
   illustration?: DiscoveryIllustration;
-  /** Selected only after a choice, from actual already-known reachable POIs. */
+  /** Pinned during investigation, before the choice, from actual already-known reachable POIs. */
   followup?: { poiId: string; poiName: string; zoneId: string };
 }
 export interface DiscoveryObservation {
@@ -200,11 +200,13 @@ function executePersonStory(state: DiscoveryRegionState, world: RegionWorld, ent
     entry.status = 'choice';
     if (entry.step === 0) {
       entry.step = 1;
+      entry.followup = knownFollowup(state, world, entry);
+      const destination = `${entry.followup.poiName} · ${world.zones.find(zone => zone.id === entry.followup!.zoneId)?.name ?? 'leiren'}`;
       entry.choices = [
-        { id: 'follow', label: story.followLabel, detail: story.followDetail },
+        { id: 'follow', label: story.followLabel, detail: `${story.followDetail} Neste undersøkelse: ${destination}.` },
         { id: 'supplies', label: story.stopLabel, detail: story.stopDetail },
       ];
-      note(entry, state.day, story.investigation);
+      note(entry, state.day, `${story.investigation} Et videre oppdrag går til ${destination}.`);
     } else {
       entry.step = 3;
       entry.choices = [
@@ -216,7 +218,7 @@ function executePersonStory(state: DiscoveryRegionState, world: RegionWorld, ent
   } else {
     entry.chosen = [...(entry.chosen ?? []), choiceId!]; entry.choices = [];
     if (choiceId === 'follow') {
-      entry.followup = knownFollowup(state, world, entry);
+      entry.followup ??= knownFollowup(state, world, entry);
       entry.status = 'followup'; entry.step = 2;
       entry.zoneId = entry.followup.zoneId;
       entry.poiId = entry.followup.poiId; entry.poiName = entry.followup.poiName;
