@@ -88,7 +88,24 @@ export interface RegionOrder { id: string; action: ActionId; zoneId: string; sur
 export interface Population { adults: number; children: number; elderly: number; sick: number }
 export type WorkId = 'farm' | 'fish' | 'scavenge' | 'clear' | 'guard' | 'build' | 'research';
 
-export interface ReportLine { category?: string; priority?: number; facts?: Record<string, string | number | boolean>; tone: 'info' | 'good' | 'warn' | 'bad'; title: string; text: string; zoneId?: string }
+/** A saved presentation of a real, reportable field result. Never an invented event. */
+export type ExperienceKind = 'scout' | 'search' | 'combat' | 'gear' | 'claim' | 'perimeter' | 'poi' | 'hq';
+export interface ExpeditionExperience {
+  version: 1;
+  id: string; kind: ExperienceKind; day: number;
+  zoneId: string; zoneName: string;
+  title: string; text: string; result: string;
+  participants: { id: string; name: string; role: string }[];
+  voice?: { personId: string; name: string; text: string };
+  /** Public outcomes only: never raw hidden population, loot or POI data. */
+  facts: Record<string, string | number | boolean>;
+  illustration: 'residential' | 'shop' | 'industry' | 'coast' | 'forest' | 'farm' | 'hq';
+  helpTopic: string;
+  /** Legacy campaigns cannot honestly claim this is their first-ever action. */
+  record: 'first' | 'first-recorded';
+}
+
+export interface ReportLine { experience?: ExpeditionExperience; category?: string; priority?: number; facts?: Record<string, string | number | boolean>; tone: 'info' | 'good' | 'warn' | 'bad'; title: string; text: string; zoneId?: string }
 /**
  * v0.4 replay metadata from the authoritative end-of-day result. This is a
  * presentation journal, NOT a resumable mid-turn simulation checkpoint.
