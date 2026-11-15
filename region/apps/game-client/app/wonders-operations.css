@@ -9,3 +9,5 @@
 /* Keep the inherited 68px application header out of this compact illustration card. */
 .sz-game .rz-installation header{height:auto;min-height:0;padding:0;border:0;background:none}
 .sz-game .rz-installation header>span{letter-spacing:normal}
+
+.sz-game .rz-installation-sections{display:flex;gap:16px;margin:5px 0 3px;border-bottom:1px solid #819d6d33}.sz-game .rz-installation-sections button{min-height:44px;padding:7px 0;border:0;border-radius:0;background:none;color:#9db5a2;font-size:var(--ui-control-text,12px)}.sz-game .rz-installation-sections button[aria-pressed=true]{color:#e5d29d;border-bottom:2px solid #c4ae72}
