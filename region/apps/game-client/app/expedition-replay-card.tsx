@@ -67,5 +67,5 @@ export function ExpeditionReplaySceneCard({ scene, position, total, paused, onTo
 export function ExpeditionReplayCompact({ lines }: { lines: readonly ReportLine[] }) {
   if (!lines.length) return null;
   return <div className="exp-replay-compact" role="status" aria-label="Kort fra oppdragene">{lines.slice(0, 2).map((line, index) =>
-    <p key={`${index}:${line.title}`} className={`exp-replay-${line.tone}`}><span aria-hidden="true">{line.tone === 'bad' || line.tone === 'warn' ? '!' : '·'}</span>{line.title}</p>)}</div>;
+    <p key={`${index}:${line.title}`} className={`exp-replay-${line.tone}`}><span aria-hidden="true">{line.tone === 'bad' || line.tone === 'warn' ? '!' : '·'}</span>{line.title}{line.text.match(/\d+ % gjennomsøkt\.$/u)?.[0] && <small>{line.text.match(/\d+ % gjennomsøkt\.$/u)![0]}</small>}</p>)}</div>;
 }

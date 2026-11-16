@@ -39,3 +39,5 @@
 .exp-replay-search-progress{margin-left:auto;padding:3px 5px;border-radius:4px;background:#12282ce8;color:#ddd7b7;font-size:11px;line-height:1.2;white-space:nowrap}
 .exp-replay-location:has(.exp-replay-search-progress){flex-wrap:wrap}
 @media(max-width:650px){.exp-replay-loot li{padding:1px 4px;gap:3px}.exp-replay-loot .item-art{width:21px;height:21px}.exp-replay-loot strong,.exp-replay-search-progress{font-size:12px}}
+.exp-replay-compact small{margin-left:auto;flex-shrink:0;color:#d4c192;font-size:inherit}
+@media(max-width:650px){.exp-replay-scene{display:flex;flex-direction:column;overflow:hidden}.exp-replay-heading,.exp-replay-crew,.exp-replay-controls{flex-shrink:0}.exp-replay-content{min-height:0;overflow-y:auto;overscroll-behavior:contain}}

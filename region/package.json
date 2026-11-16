@@ -32,7 +32,9 @@
     "check:region-content-ui": "node --import tsx scripts/check-living-cards-ui.mjs",
     "check:region-qa33-ui": "tsx scripts/check-qa33-polish-ui.ts",
     "check:region-cues-ui": "node scripts/check-expedition-cues-ui.mjs",
-    "check:region-protest-ui": "node --import tsx scripts/check-public-protest-ui.ts"
+    "check:region-protest-ui": "node --import tsx scripts/check-public-protest-ui.ts",
+    "check:region-replay-ui": "node --import tsx scripts/check-expedition-replay-ui.ts",
+    "check:region-phase-two-ui": "node --import tsx scripts/check-expedition-phase-two-ui.ts"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",
