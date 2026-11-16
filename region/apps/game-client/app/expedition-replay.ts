@@ -93,7 +93,9 @@ export function replayStageScenes(before: RegionState, world: RegionWorld, stage
         participants: experience.participants.map(p => ({ ...p })),
         voice: experience.voice ? { ...experience.voice } : undefined,
         image: experienceArt(experience.kind, experience.illustration, experience.milestone),
-        importance: injury ? 110 : experience.milestone ? 105 : 95,
+        importance: injury ? 110 : experience.milestone ? 105 : experience.kind === 'combat' ? 103
+          : experience.kind === 'hq' ? 102 : ['claim', 'perimeter'].includes(experience.kind) ? 100
+            : experience.kind === 'gear' ? 90 : 95,
         tone: injury ? 'warn' : line.tone, first: true, milestone: !!experience.milestone,
       });
       sources.set(experience.id, line);
