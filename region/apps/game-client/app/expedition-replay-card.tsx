@@ -3,6 +3,8 @@
 import { Pause, Play, SkipForward, MapPin, UserRound, Radio, Flag } from 'lucide-react';
 import type { ReportLine } from '../../../packages/gameplay/src/region/types';
 import type { ExpeditionReplayScene } from './expedition-replay';
+import { ItemArt } from './item-art';
+import './item-art.css';
 import './expedition-replay.css';
 
 export interface ExpeditionReplaySceneCardProps {
@@ -31,14 +33,17 @@ export function ExpeditionReplaySceneCard({ scene, position, total, paused, onTo
       <div className="exp-replay-heading-copy">
         <div className="exp-replay-kicker">{scene.milestone ? <><Flag size={13} aria-hidden="true" /> Milepæl</> : PHASE[scene.phase]}{scene.first && !scene.milestone && scene.kind !== 'departure' && <span>Et første minne</span>}</div>
         <h2>{scene.title}</h2>
-        {scene.zoneName && <p className="exp-replay-location"><MapPin size={13} aria-hidden="true" />{scene.zoneName}</p>}
+        {scene.zoneName && <p className="exp-replay-location"><MapPin size={13} aria-hidden="true" />{scene.zoneName}{scene.loot && <span className="exp-replay-search-progress">{scene.loot.progress}</span>}</p>}
       </div>
     </div>
     <div className="exp-replay-content" role="status" aria-live="polite" aria-atomic="true">
       {scene.voice && scene.first && scene.text && <p className="exp-replay-narrative exp-replay-lead">{narrativeLead(scene.text)}</p>}
       {scene.voice ? <blockquote><Radio size={14} aria-hidden="true" /><div><strong>{scene.voice.name}</strong><p>«{scene.voice.text}»</p></div></blockquote>
         : scene.text && <p className="exp-replay-narrative">{scene.text}</p>}
-      {scene.result && <p className="exp-replay-result">{scene.result}</p>}
+      {scene.loot ? <ul className="exp-replay-loot" aria-label="Rapporterte funn i søket">{scene.loot.items.map(item =>
+        <li key={item.id} title={item.name} aria-label={`${item.name}: ${item.count.toLocaleString('nb-NO', { maximumFractionDigits: 20 })}`}>
+          <ItemArt id={item.id} /><strong aria-hidden="true">{item.count.toLocaleString('nb-NO', { maximumFractionDigits: 20 })}</strong>
+        </li>)}</ul> : scene.result && <p className="exp-replay-result">{scene.result}</p>}
     </div>
     {scene.participants.length > 0 && <div className="exp-replay-crew" aria-label="Rapportens deltakere">{scene.participants.map(person => {
       const portrait = person.name.toLocaleLowerCase('nb-NO');

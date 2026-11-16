@@ -4,11 +4,12 @@
 import type { RegionOrder, RegionReplayStage, RegionState, RegionWorld, ReportLine } from '../../../packages/gameplay/src/region/types';
 import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
 import { experienceEnvironment } from '../../../packages/gameplay/src/region/experiences';
+import { resourceName } from '../../../packages/gameplay/src/region/engine';
 import { discoveryArt, experienceArt } from './story-art';
 
 export interface ExpeditionReplayScene {
   id: string;
-  kind: 'departure' | 'scout' | 'search' | 'combat' | 'gear' | 'claim' | 'perimeter' | 'poi' | 'hq' | 'discovery' | 'warning';
+  kind: 'departure' | 'scout' | 'search' | 'combat' | 'gear' | 'claim' | 'perimeter' | 'poi' | 'hq' | 'discovery' | 'warning' | 'arrival';
   phase: 'departure' | RegionReplayStage['phase'];
   title: string;
   text: string;
@@ -22,6 +23,29 @@ export interface ExpeditionReplayScene {
   tone: ReportLine['tone'];
   first: boolean;
   milestone: boolean;
+  /** Optional complete, verified rendering of this public first-search result. */
+  loot?: { items: { id: string; name: string; count: number }[]; progress: string };
+}
+
+const RESOURCE_IDS = new Set(['food', 'water', 'medicine', 'fuel', 'ammo', 'building', 'metal', 'parts', 'electronics', 'salt',
+  'batteries', 'solar', 'generator', 'antibiotics', 'primers', 'radio', 'engine', 'boat', 'printer', 'explosives']);
+function firstSearchLoot(experience: NonNullable<ReportLine['experience']>): ExpeditionReplayScene['loot'] {
+  if (experience.kind !== 'search') return;
+  const entries = Object.entries(experience.facts);
+  // Fail closed on new/unrecognized facts. Never silently omit a resource or
+  // transform a source sentence that these facts cannot completely reproduce.
+  if (entries.some(([key]) => !RESOURCE_IDS.has(key) && !['searchBefore', 'searchAfter'].includes(key))) return;
+  const amounts = entries.filter(([key]) => RESOURCE_IDS.has(key));
+  if (!amounts.length || amounts.some(([, count]) => typeof count !== 'number' || !Number.isFinite(count) || count <= 0)) return;
+  const items = amounts.map(([id, count]) => ({ id, name: resourceName(id), count: count as number }));
+  const prefix = `${experience.participants.map(p => p.name).join(', ')} fant `;
+  if (!experience.result.startsWith(prefix)) return;
+  const match = experience.result.slice(prefix.length).match(/^(.+)\. (\d+ % gjennomsøkt\.)$/u);
+  if (!match) return;
+  const source = match[1].split(', ').sort();
+  const actual = items.map(item => `${item.count} ${item.name.toLowerCase()}`).sort();
+  if (source.length !== actual.length || source.some((value, index) => value !== actual[index])) return;
+  return { items, progress: match[2] };
 }
 
 /** A planning intention, not evidence of departure or arrival. Only the first
@@ -67,7 +91,8 @@ function kindForLine(line: ReportLine): ExpeditionReplayScene['kind'] | undefine
   if (line.tone === 'bad') return 'warning';
   if (line.facts?.action === 'clear' && Number(line.facts.killed) > 0) return 'combat';
   if (line.facts?.action === 'search' && Number(line.facts.searchAfter) > Number(line.facts.searchBefore)) return 'search';
-  if (line.category === 'loot') return 'gear';
+  if (line.category === 'loot' && ['Personlig utstyr funnet', 'Utstyr rapportert fra feltet'].includes(line.title)) return 'gear';
+  if (line.category === 'loot' && / ble med$/u.test(line.title)) return 'arrival';
   if (line.tone === 'warn' && (line.priority ?? 0) >= 80) return 'warning';
 }
 
@@ -118,6 +143,7 @@ export function replayStageScenes(before: RegionState, world: RegionWorld, stage
           : experience.kind === 'hq' ? 102 : ['claim', 'perimeter'].includes(experience.kind) ? 100
             : experience.kind === 'gear' ? 90 : 95,
         tone: namedInjuries.length ? 'bad' : injury ? 'warn' : line.tone, first: true, milestone: !!experience.milestone,
+        loot: firstSearchLoot(experience),
       });
       sources.set(experience.id, line);
       continue;
@@ -143,8 +169,8 @@ export function replayStageScenes(before: RegionState, world: RegionWorld, stage
       // Routine reports don't identify every participant; never infer them from
       // all orders or from the final crew roster/position.
       participants: [], image: kind === 'discovery' ? discoveryArt(storyId, discoveryId === 'tor-repair-notes' ? 'tor' : undefined, environment)
-        : kind === 'warning' ? undefined : experienceArt(kind, environment),
-      importance: line.tone === 'bad' ? 115 : kind === 'warning' ? 100 : kind === 'discovery' ? 80 : kind === 'gear' ? 65 : 35,
+        : kind === 'warning' || kind === 'arrival' ? undefined : experienceArt(kind, environment),
+      importance: line.tone === 'bad' ? 115 : kind === 'warning' ? 100 : kind === 'discovery' ? 80 : kind === 'arrival' ? 75 : kind === 'gear' ? 65 : 35,
       tone: line.tone, first: false, milestone: false,
     });
     sources.set(`${stage.phase}:${index}:${line.zoneId ?? 'camp'}`, line);

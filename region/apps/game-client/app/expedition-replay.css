@@ -30,3 +30,12 @@
 @keyframes exp-replay-enter{from{opacity:0;translate:0 9px}to{opacity:1;translate:0 0}}
 @media(max-width:650px){.exp-replay-scene{width:calc(100vw - 20px);bottom:max(10px,env(safe-area-inset-bottom));max-height:min(320px,calc(100dvh - 180px));overflow-y:auto;overscroll-behavior:contain}.exp-replay-heading{min-height:71px}.exp-replay-heading-copy{padding:8px 12px}.exp-replay-scene h2{font-size:18px}.exp-replay-kicker span{font-size:12px}.exp-replay-content{padding:9px 12px 0;font-size:12px;line-height:1.4}.exp-replay-content blockquote{margin-bottom:5px;gap:6px}.exp-replay-content blockquote strong{margin-right:5px}.exp-replay-content blockquote p{display:inline;margin:0}.exp-replay-lead{margin-bottom:5px!important}.exp-replay-crew{padding:5px 12px 0;gap:5px 8px}.exp-replay-crew img{width:20px;height:20px}.exp-replay-controls{padding:2px 5px 3px;margin-top:4px}.exp-replay-controls button{min-height:44px;padding:8px}.exp-replay-compact{bottom:max(12px,env(safe-area-inset-bottom));width:calc(100vw - 20px)}}
 @media(prefers-reduced-motion:reduce){.exp-replay-scene{animation:none}}
+/* Complete, verified first-search loot: the existing inventory atlas replaces
+ * the resource paragraph. Counts and progress come from this one public result. */
+.exp-replay-loot{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:0;list-style:none}
+.exp-replay-loot li{display:flex;align-items:center;gap:4px;min-height:24px;box-sizing:border-box;margin:0;padding:2px 5px;border:1px solid #8da7853b;border-radius:6px;background:#233d38;color:#f4e7bd;font-size:13px;line-height:1}
+.exp-replay-loot .item-art{width:23px;height:23px;filter:drop-shadow(0 1px 2px #0008)}
+.exp-replay-loot strong{font-size:13px;line-height:1;font-weight:650}
+.exp-replay-search-progress{margin-left:auto;padding:3px 5px;border-radius:4px;background:#12282ce8;color:#ddd7b7;font-size:11px;line-height:1.2;white-space:nowrap}
+.exp-replay-location:has(.exp-replay-search-progress){flex-wrap:wrap}
+@media(max-width:650px){.exp-replay-loot li{padding:1px 4px;gap:3px}.exp-replay-loot .item-art{width:21px;height:21px}.exp-replay-loot strong,.exp-replay-search-progress{font-size:12px}}

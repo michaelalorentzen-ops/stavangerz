@@ -95,5 +95,21 @@ assert.equal(fold([namedInjury, { ...combatLine, facts: { orderId: '', missionId
 assert.equal(fold([namedInjury, { ...combatLine, experience: { ...combatLine.experience!, facts: { injuredCount: 0 } } }]).featured.length, 2, 'No injured combat fact means no suppression');
 assert.equal(fold([{ ...namedInjury, title: 'Tor døde' }, combatLine]).featured.length, 2, 'Death/loss is never folded away');
 assert.equal(fold([{ ...namedInjury, category: 'combat' }, combatLine]).featured.length, 2, 'Narrow loot injury contract only');
+const lootSource: ReportLine = { ...combatLine, experience: { ...memory, id: 'loot-source', kind: 'search', zoneId: home,
+  result: `${memory.participants.map(p => p.name).join(', ')} fant 24 mat, 16 vann. 17 % gjennomsøkt.`,
+  facts: { searchBefore: 0, searchAfter: 8, food: 24, water: 16 } } };
+const visualLoot = fold([lootSource]).featured[0];
+assert.deepEqual(visualLoot.loot, { items: [{ id: 'food', name: 'Mat', count: 24 }, { id: 'water', name: 'Vann', count: 16 }], progress: '17 % gjennomsøkt.' });
+assert.equal(visualLoot.result, lootSource.experience!.result, 'Full source remains available unchanged for report/history');
+const lootFacts = (facts: ExpeditionExperience['facts']) => fold([{ ...lootSource, experience: { ...lootSource.experience!, facts } }]).featured[0].loot;
+assert.equal(lootFacts({ searchBefore: 0, searchAfter: 8, food: 24 }), undefined, 'Missing reported resource count retains full text');
+assert.equal(lootFacts({ searchBefore: 0, searchAfter: 8, food: 25, water: 16 }), undefined, 'Mismatched count cannot replace public paragraph');
+assert.equal(lootFacts({ food: 24, water: 16, mystery: 3 }), undefined, 'Unknown facts fail closed');
+assert.equal(lootFacts({ food: Infinity, water: 16 }), undefined);
+assert.equal(lootFacts({ food: '24', water: 16 }), undefined);
+assert.equal(fold([{ ...lootSource, experience: { ...lootSource.experience!, result: 'Andre resultater som må beholdes.' } }]).featured[0].loot, undefined, 'Unrecognized prose keeps exact source');
+const recruit = fold([{ tone: 'good', category: 'loot', title: 'Amina ble med', text: 'En faktisk ny person blir med gruppen.' }]);
+assert.equal(recruit.featured[0].kind, 'arrival'); assert.equal(recruit.featured[0].image, undefined, 'Recruitment must never receive equipment-crate art');
+assert.deepEqual(recruit.featured[0].participants, [], 'No portrait/person details inferred from future survivor state');
 assert.equal(departureScene(actual.state, world, [order]), undefined, 'First introduction ends once scouting is recorded');
 console.log('Expedition replay projection: authoritative day, privacy, no lookahead, JSON retention, bounded scenes, truthful planning PASS');
