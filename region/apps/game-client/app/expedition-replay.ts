@@ -131,7 +131,8 @@ export function replayStageScenes(before: RegionState, world: RegionWorld, stage
   // The compact strip carries actual warnings/progress, not routine inventory
   // returns or a fabricated "quiet day". Empty phases are allowed to be empty.
   const compact = stage.lines.filter(line => !used.has(line) && !suppressed.has(line) && !line.experience && knownZone(before, stage, line.zoneId)
-    && (line.tone === 'bad' || line.tone === 'warn' || line.category === 'discovery' || line.facts?.action === 'search' || line.facts?.action === 'clear'))
+    && (line.tone === 'bad' || line.tone === 'warn' || line.category === 'discovery' || line.category === 'travel'
+      || line.facts?.action === 'search' || line.facts?.action === 'clear'))
     .sort((a, b) => (b.tone === 'bad' ? 100 : b.priority ?? 0) - (a.tone === 'bad' ? 100 : a.priority ?? 0)).slice(0, 2);
   return { featured: selected, compact };
 }
