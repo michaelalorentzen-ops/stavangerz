@@ -73,7 +73,8 @@ export function attachExpeditionMapFeedback(map: LibreMap, lib: typeof import('m
     const bounds = canvas.getBoundingClientRect();
     // Reserve the maximum chip rectangle, not merely its geographic anchor.
     const chip = { left: bounds.left + point.x - 100, right: bounds.left + point.x + 100, top: bounds.top + point.y + 40, bottom: bounds.top + point.y + 160 };
-    return ![...document.querySelectorAll('.rz-replay-card,.sz-top,.sz-search[open],.sz-brief-wrap,.sz-territory-button')].some(element => {
+    return ![...document.querySelectorAll('.rz-replay-card,.exp-replay-scene,.exp-replay-compact,.sz-top,.sz-search[open],.sz-brief-wrap,.sz-territory-button')].some(element => {
+      if (getComputedStyle(element).visibility === 'hidden') return false;
       const rect = element.getBoundingClientRect();
       return rect.width > 0 && rect.height > 0 && chip.left < rect.right && chip.right > rect.left && chip.top < rect.bottom && chip.bottom > rect.top;
     });

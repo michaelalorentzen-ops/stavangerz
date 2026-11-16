@@ -48,7 +48,8 @@ import { OrderComposer } from './order-composer';
 import { DayPlan } from './day-plan';
 import { departureScene, replayStageScenes, type ExpeditionReplayScene } from './expedition-replay';
 import { ExpeditionReplaySceneCard, ExpeditionReplayCompact } from './expedition-replay-card';
-import { experienceArt } from './story-art';
+import { environmentArt } from './story-art';
+import { experienceEnvironment } from '../../../packages/gameplay/src/region/experiences';
 import './live-replay.css';
 import './region.css';
 import './situational-hud.css';
@@ -585,7 +586,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
 
     </section></div>}
     {pendingNightDecision && !replay && <div className="rz-overlay"><section className="rz-dialog rz-event rz-night-decision" role="dialog" aria-modal="true" aria-label={pendingNightDecision.title}>
-      <img className="live-decision-art" src={experienceArt(pendingNightDecision.kind === 'field-encounter' ? 'scout' : 'perimeter')} alt="" />
+      <img className="live-decision-art" src={environmentArt(experienceEnvironment(world, pendingNightDecision.zoneId))} alt="" />
       <p className="rz-kicker">KRITISK · DAG {state.day} · {pendingNightDecision.kind === 'field-encounter' ? 'UTENFOR LEIREN' : 'NATT 22:00–07:00'}</p>
       <h2>{pendingNightDecision.title}</h2><p>{pendingNightDecision.text}</p>
       <p className="rz-small">{index.byId.get(pendingNightDecision.zoneId)?.name}</p>

@@ -15,20 +15,21 @@ const read=()=>page.evaluate(()=>{const g=(window as unknown as {__szRegion:{sta
 /** Optional DOM-only observation of actual live replay cues; never injects reports or engine state. */
 async function observeCues() {
   if (!process.env.REGION_PLAYTEST_CAPTURE_CUES) return;
-  const cues: unknown[] = []; const photographed = new Set<string>();
+  const cues: {id?:string;kind?:string}[] = process.env.REGION_PLAYTEST_RESUME&&existsSync(`${out}/live-cues.json`)?JSON.parse(readFileSync(`${out}/live-cues.json`,'utf8')):[]; const photographed = new Set<string>(cues.flatMap(c=>c.kind?[c.kind]:[]));
   await page.exposeFunction('__captureLivingCue', async (cue: { id: string; kind: string; text: string }) => {
-    cues.push(cue); writeFileSync(`${out}/live-cues.json`, JSON.stringify(cues, null, 2));
+    if(cues.some(existing=>existing.id===cue.id))return; cues.push(cue); writeFileSync(`${out}/live-cues.json`, JSON.stringify(cues, null, 2));
     if (!photographed.has(cue.kind)) { photographed.add(cue.kind); await page.screenshot({ path: `${out}/live-cue-${cue.kind}.png` }).catch(error => console.log(`Cue screenshot unavailable: ${String(error)}`)); }
     console.log(`LIVE CUE: ${cue.kind}`);
   });
   await page.addInitScript(() => {
     const seen = new Set<string>();
     new MutationObserver(() => document.querySelectorAll<HTMLElement>('.rz-expedition-cue, .exp-replay-scene').forEach(element => {
-      const id = element.dataset.experienceId ?? element.dataset.sceneId!;
+      const sourceId = element.dataset.experienceId ?? element.dataset.sceneId!;
+      const id = `${document.querySelector('.live-replay-status .rz-kicker')?.textContent ?? ''}:${sourceId}`;
       if (seen.has(id)) return;
       seen.add(id);
       const rect = element.getBoundingClientRect();
-      void (window as unknown as { __captureLivingCue: (cue: unknown) => Promise<void> }).__captureLivingCue({ id, kind: element.dataset.experienceKind ?? 'scene', text: element.innerText, rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }, viewport: { width: innerWidth, height: innerHeight } });
+      void (window as unknown as { __captureLivingCue: (cue: unknown) => Promise<void> }).__captureLivingCue({ id, kind: element.dataset.experienceKind ?? (sourceId.startsWith('experience:')||sourceId.startsWith('memory:')?sourceId.split(':')[1]:'scene'), text: element.innerText, rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }, viewport: { width: innerWidth, height: innerHeight } });
     })).observe(document, { childList: true, subtree: true });
   });
 }
