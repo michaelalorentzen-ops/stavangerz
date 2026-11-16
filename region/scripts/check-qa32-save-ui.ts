@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 /** Integrated three-slot journey and custom-key confirmation, desktop and mobile. */
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -13,7 +14,7 @@ const world = JSON.parse(readFileSync('apps/game-client/public/world/region-v1.j
 const camp = world.starts.find(s => s.name.startsWith('Lundsneset'))!.zoneId;
 const output = 'artifacts/qa32-save-ui'; mkdirSync(output, { recursive: true });
 async function main() {
- const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
+ const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ?? (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined), args: ['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
  try { for (const width of [1280, 390]) {
   const context = await browser.newContext({ viewport: { width, height: width === 1280 ? 800 : 844 }, reducedMotion: 'reduce' });
   const page = await context.newPage(), errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
@@ -26,6 +27,7 @@ async function main() {
   let library = page.getByRole('dialog', {name:'Gjennomspillinger',exact:true}); await library.waitFor();
   await library.locator('input').first().fill('Første leir'); await library.getByRole('button',{name:'Lagre',exact:true}).first().click();
   await library.getByRole('status').filter({hasText:'oppdatert'}).waitFor();
+  const smallTargets=await library.locator('button').evaluateAll(buttons=>buttons.map(button=>({name:button.getAttribute('aria-label')||button.textContent,box:button.getBoundingClientRect()})).filter(target=>target.box.width<44||target.box.height<44).map(target=>target.name));assert.deepEqual(smallTargets,[],'Every library button must have a 44×44 target');
   if(width===1280) assert(await library.evaluate(e=>e.scrollHeight<=e.clientHeight+1),'Desktop library needs no scrolling');
   await page.screenshot({path:`${output}/library-${width}.png`});
   await library.getByRole('button',{name:'Lukk gjennomspillinger'}).click();
@@ -41,7 +43,12 @@ async function main() {
   await page.getByRole('button',{name:'Flere oversikter'}).click();
   await page.getByRole('button',{name:'Gjennomspillinger · lagre og last'}).click();
   library=page.getByRole('dialog',{name:'Gjennomspillinger',exact:true});
-  await library.getByRole('button',{name:'Last',exact:true}).first().click(); await library.getByRole('button',{name:'Bekreft',exact:true}).click();
+  const beforeLoad=await page.evaluate(key=>localStorage.getItem(key),SAVE_KEY_REGION);
+  await library.getByRole('button',{name:'Last',exact:true}).first().click();
+  let loadConfirm=library.getByRole('alertdialog');assert.match(await loadConfirm.innerText(),/fra dag 0/);assert.match(await loadConfirm.innerText(),/fra dag 1/);
+  const preserve=loadConfirm.getByRole('checkbox',{name:/Lagre nåværende på ledig plass først/});assert(await preserve.isChecked());await preserve.uncheck();assert.match(await loadConfirm.innerText(),/uten å lage en ny kopi/);await loadConfirm.getByRole('button',{name:'Avbryt',exact:true}).click();assert.equal(await page.evaluate(key=>localStorage.getItem(key),SAVE_KEY_REGION),beforeLoad,'Cancel preserves exact stored bytes');
+  await library.getByRole('button',{name:'Last',exact:true}).first().click();loadConfirm=library.getByRole('alertdialog');assert(await loadConfirm.getByRole('checkbox').isChecked());await page.screenshot({path:`${output}/rewind-confirm-${width}.png`});await loadConfirm.getByRole('button',{name:'Bekreft',exact:true}).click();
+  const backedUp=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).library.slots,SAVE_KEY_REGION);assert.equal(backedUp.length,2);assert.equal(backedUp.find((slot:{id:number})=>slot.id===1).state.day,1,'Outgoing day1 preserved on free slot');
   await page.waitForFunction(()=> (window as unknown as {__szRegion:{state:RegionState}}).__szRegion.state.day===0);
   const loaded=await page.evaluate(()=> (window as unknown as {__szRegion:{state:RegionState}}).__szRegion.state); assert.deepEqual(loaded,JSON.parse(JSON.stringify(state)));
   await page.getByRole('button',{name:/FASE 1/}).click(); await page.getByRole('button',{name:'Seiersveier',exact:true}).click();

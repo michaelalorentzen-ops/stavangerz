@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-16",
+  "generator": "ImageGen",
+  "purpose": "QA34 F02: distinguish combat, supply search and gear inspection from the saved landscape atmosphere.",
+  "originalsPreserved": true,
+  "thirdPartyImageReuse": false,
+  "style": "Existing StavangerZ painted Nordic sea-green/slate/olive, weathered natural materials, muted amber and rain.",
+  "selectionContract": "Presentation may choose these files from an already-public experience kind. Do not rewrite stored experience facts, original illustration keys, world state or save format.",
+  "limits": [
+    "Anonymous cropped figures are fictional atmosphere, not a portrait of a named survivor.",
+    "No image establishes actual wound/death, combat kills, gear identity, reward quantity, electricity, building identity or geographical incident.",
+    "The report facts and named participants remain authoritative.",
+    "Do not render an event image before the experience is publicly reported or during an earlier hidden replay stage."
+  ],
+  "assets": [
+    {
+      "path": "experiences/combat.webp",
+      "experienceKind": "combat",
+      "original": "exec-a8755435-ccf6-4f48-a89e-1bd5ddde7437.png",
+      "originalSha256": "8ca89bccc8f36cd0b8508f36f605985723a0b00927073c5c1c9f67c44f4eb48e",
+      "sha256": "a122d9aeb5c612df152471f8d359c91a6720a7fc5bb9f88b75aa34bbd1935b69",
+      "width": 1280,
+      "height": 720,
+      "bytes": 179998,
+      "encoding": "ImageMagick resize 1280x720 + WebP quality 87",
+      "visuallyInspected": true,
+      "meaning": "Tense aftermath, cropped anonymous raincoat/glove, no visible wound, body, enemy count or identifiable place."
+    },
+    {
+      "path": "experiences/search.webp",
+      "experienceKind": "search",
+      "original": "exec-a0dc5c4a-14ff-4f1c-b892-757a7856e95c.png",
+      "originalSha256": "4c803e7b6ed60edac751227ca5d9295d86005b4e5edc8558f217ffe59ad8fbaa",
+      "sha256": "48070462355a691bba179401097f2945f981cf99e349b74c0fbf2ebdc3654b53",
+      "width": 1280,
+      "height": 720,
+      "bytes": 149806,
+      "encoding": "ImageMagick resize 1280x720 + WebP quality 87",
+      "visuallyInspected": true,
+      "meaning": "Supply search action in a generic room with empty storage; no guaranteed loot or named building."
+    },
+    {
+      "path": "experiences/gear.webp",
+      "experienceKind": "gear",
+      "original": "exec-7faeaebf-d793-43a2-bc4e-fd33b073e29d.png",
+      "originalSha256": "b18e01f66ef8a25616d44dd50dd1d5c6dc9aab919cd579ba46cb5ade5dc63d58",
+      "sha256": "b292c1cec9d6ac0bc2420de61cfb86225fe7c3d831eafd6d7478ae7c40da7bb9",
+      "width": 1280,
+      "height": 720,
+      "bytes": 146998,
+      "encoding": "ImageMagick resize 1280x720 + WebP quality 87",
+      "visuallyInspected": true,
+      "meaning": "Generic tactile equipment inspection; the cloth/buckle is not an exact promised gear category or quantity."
+    }
+  ],
+  "totalBytes": 476802
+}

@@ -3,8 +3,11 @@
  * reporter; material rewards are returned as physical cargo, never global stock.
  */
 import type { RegionPoi, RegionState, RegionWorld, ReportLine, Stock } from './types';
+import { REACTIVE_OBSERVATIONS, REACTIVE_CHOICE_STORIES, reactiveChoiceStory, type FieldContext } from './discovery-reactive-content';
 import { crewPositionFor } from './location';
 import { gainWonder, WONDERS, wonderZone } from './wonders';
+import { routeBetween } from './mobility';
+import { LOCAL_OBSERVATIONS, PERSON_DISCOVERY_STORIES, personDiscoveryStory, personStoryIllustration, type DiscoveryIllustration } from './discovery-content';
 
 export type DiscoverySource = 'scout' | 'search' | 'rumor' | 'radio';
 export type DiscoveryDelivery = 'none' | 'returned' | 'radio';
@@ -16,6 +19,11 @@ export interface DiscoveryEntry {
   discoveredDay: number; sources: DiscoverySource[]; notes: DiscoveryNote[];
   choices: { id: string; label: string; detail: string }[];
   chosen?: string[]; boundPersonId?: string;
+  /** Optional content metadata; legacy ordinary/Tor chains retain their existing meaning. */
+  storyId?: string;
+  illustration?: DiscoveryIllustration;
+  /** Pinned during investigation, before the choice, from actual already-known reachable POIs. */
+  followup?: { poiId: string; poiName: string; zoneId: string };
 }
 export interface DiscoveryObservation {
   id: string; reporterIds: string[]; day: number; entry: DiscoveryEntry;
@@ -51,6 +59,8 @@ export const DISCOVERY_WORK = {
 } as const;
 
 function alive(state: RegionState, id: string) { return state.survivors.some(p => p.id === id && p.alive && p.health > 0 && !p.left); }
+function personName(state: RegionState, id?: string) { return state.survivors.find(p => p.id === id)?.name ?? 'Personen som fulgte sporet'; }
+function at(state: RegionState, id: string, zoneId: string) { const p = crewPositionFor(state, id); return p?.kind === 'zone' && p.zoneId === zoneId; }
 function home(state: RegionState, id: string) {
   const p = crewPositionFor(state, id);
   return p?.kind === 'zone' && (p.zoneId === state.homeZoneId || p.zoneId === state.hq?.zoneId);
@@ -62,6 +72,7 @@ function line(lines: ReportLine[], entry: DiscoveryEntry, title: string, text: s
   const tagged: ReportLine & { category: 'discovery'; discoveryId: string; eventId: string } = {
     tone, title, text, zoneId: entry.zoneId, category: 'discovery', discoveryId: entry.id,
     eventId: `discovery:${entry.id}:${entry.revision}`,
+    facts: { discoveryId: entry.id, status: entry.status, ...(entry.storyId ? { storyId: entry.storyId } : {}), ...(entry.illustration ? { illustration: entry.illustration } : {}) },
   };
   lines.push(tagged);
 }
@@ -103,7 +114,7 @@ function publish(state: DiscoveryRegionState, observation: DiscoveryObservation,
   // but must not create an actionable person-bound quest after that person's death.
   if (entry.boundPersonId && !alive(state, entry.boundPersonId) && !['resolved', 'lost'].includes(entry.status)) {
     entry = structuredClone(entry); entry.status = 'lost'; entry.revision++; entry.choices = [];
-    note(entry, state.day, 'Notatet kom fram med en levende avsender, men Tor kan ikke lenger følge sporet. Den valgfrie historien er avsluttet; vanlig progresjon er fortsatt tilgjengelig.');
+    note(entry, state.day, `Notatet kom fram med en levende avsender, men ${personName(state, entry.boundPersonId)} kan ikke lenger følge sporet. Den valgfrie historien er avsluttet; vanlig progresjon er fortsatt tilgjengelig.`);
   }
   if (old && old.revision >= entry.revision) {
     old.sources = [...new Set([...old.sources, ...entry.sources])];
@@ -112,12 +123,13 @@ function publish(state: DiscoveryRegionState, observation: DiscoveryObservation,
   if (old?.status === 'lost') return;
   r.entries[entry.id] = { ...structuredClone(entry), sources: [...new Set([...(old?.sources ?? []), ...entry.sources])] };
   if (observation.morale) state.morale = Math.max(0, Math.min(100, state.morale + observation.morale));
-  if (observation.loyalty && alive(state, 'tor')) {
-    const tor = state.survivors.find(p => p.id === 'tor')!;
-    tor.loyalty = Math.max(0, Math.min(100, (tor.loyalty ?? 60) + observation.loyalty));
+  if (observation.loyalty && alive(state, entry.boundPersonId ?? 'tor')) {
+    const person = state.survivors.find(p => p.id === (entry.boundPersonId ?? 'tor'))!;
+    person.loyalty = Math.max(0, Math.min(100, (person.loyalty ?? 60) + observation.loyalty));
   }
   const latest = entry.notes.at(-1)!;
-  line(lines, entry, entry.status === 'resolved' ? `Avsluttet: ${entry.title}` : `Feltnotat: ${entry.title}`, latest.text, entry.status === 'resolved' ? 'good' : entry.status === 'lost' ? 'warn' : 'info');
+  const observationOnly = entry.id.startsWith('local-');
+  line(lines, entry, entry.status === 'resolved' && !observationOnly ? `Avsluttet: ${entry.title}` : `Feltnotat: ${entry.title}`, latest.text, entry.status === 'resolved' && !observationOnly ? 'good' : entry.status === 'lost' ? 'warn' : 'info');
   if (!state.memory.some(m => m.text === latest.text)) state.memory.push({ day: state.day, text: latest.text });
 }
 function receive(state: DiscoveryRegionState, observation: DiscoveryObservation, evidence: Pick<DiscoveryEvidence, 'delivery' | 'radioVerified'>, lines: ReportLine[]) {
@@ -135,9 +147,134 @@ function receive(state: DiscoveryRegionState, observation: DiscoveryObservation,
     else registry(state).pending.push(observation);
   }
 }
+/** New content uses actual local observers. A claimed remote location is not evidence. */
+function observeLocalContent(state: DiscoveryRegionState, world: RegionWorld, evidence: DiscoveryEvidence, lines: ReportLine[]) {
+  if (!['scout', 'search'].includes(evidence.source)) return;
+  const witnesses = evidence.reporterIds.filter(id => alive(state, id) && at(state, id, evidence.zoneId));
+  if (!witnesses.length) return;
+  const zone = world.zones.find(z => z.id === evidence.zoneId && z.level === 3);
+  if (!zone) return;
+  const pois = world.pois.filter(p => p.zoneId === zone.id);
+  const r = registry(state);
+  const seen = (id: string) => !!r.entries[id] || r.pending.some(p => p.entry.id === id);
+  for (const story of PERSON_DISCOVERY_STORIES) {
+    if (seen(story.id) || !witnesses.includes(story.personId)) continue;
+    const poi = pois.filter(p => story.siteTypes.includes(p.siteType ?? p.hqType ?? p.facilityType ?? '')).sort((a, b) => a.id.localeCompare(b.id))[0];
+    if (!poi) continue;
+    const entry: DiscoveryEntry = { id: story.id, kind: 'ordinary', storyId: story.id, title: story.title,
+      poiId: poi.id, poiName: poi.name, zoneId: zone.id, status: 'clue', step: 0, revision: 0,
+      discoveredDay: state.day, sources: [evidence.source], notes: [], choices: [], boundPersonId: story.personId, illustration: personStoryIllustration(story, poi) };
+    note(entry, state.day, `Ved ${poi.name}: ${story.clue}`);
+    receive(state, { id: `${entry.id}:clue`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
+    return;
+  }
+  const context: FieldContext = { state, zone, pois, witnesses, source: evidence.source };
+  // Initial place observations get first priority in their own environment. Contextual
+  // content remains available here; visiting all six environments is never required.
+  const local = LOCAL_OBSERVATIONS.find(def => !seen(`local-${def.id}`) && def.matches(zone, pois));
+  if (!local) {
+    for (const story of REACTIVE_CHOICE_STORIES) {
+      if (seen(story.id) || !witnesses.includes(story.personId) || !story.matches(context)) continue;
+      const poi = pois.filter(p => story.siteTypes.includes(p.siteType ?? p.hqType ?? p.facilityType ?? '')).sort((a, b) => a.id.localeCompare(b.id))[0];
+      if (!poi) continue;
+      const debrief = story.id === 'field-home-debrief';
+      const destination = debrief ? state.hq!.zoneId : zone.id;
+      const destinationName = world.zones.find(z => z.id === destination)?.name ?? zone.name;
+      const setting = debrief ? world.pois.find(p => p.zoneId === destination && p.hqType === state.hq?.type) : poi;
+      const entry: DiscoveryEntry = { id: story.id, kind: 'ordinary', title: story.title,
+        poiId: debrief ? '' : poi.id, poiName: debrief ? `Arbeidsbordet i ${destinationName}` : poi.name,
+        zoneId: destination, status: debrief ? 'followup' : 'choice', step: 1, revision: 0,
+        discoveredDay: state.day, sources: [evidence.source], notes: [], choices: debrief ? [] : structuredClone(story.choices),
+        boundPersonId: story.personId, illustration: setting ? personStoryIllustration(story, setting) : story.illustration };
+      note(entry, state.day, debrief
+        ? `${story.opening} Gjennomgangen krever ett arbeidsoppdrag på ${DISCOVERY_WORK.ordinaryHours} timer ved ${entry.poiName}; håp og Marius sin tillit øker med fem når erfaringen er rapportert. Sporet kan ligge uten kostnad.`
+        : `Ved ${poi.name}: ${story.opening}`);
+      receive(state, { id: `${entry.id}:opening`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
+      return;
+    }
+    const reactive = REACTIVE_OBSERVATIONS.find(def => !seen(`local-${def.id}`) && def.matches(context));
+    if (!reactive) return;
+    const entry: DiscoveryEntry = { id: `local-${reactive.id}`, kind: 'ordinary', title: reactive.title,
+      poiId: '', poiName: zone.name, zoneId: zone.id, status: 'resolved', step: 1, revision: 0,
+      discoveredDay: state.day, sources: [evidence.source], notes: [], choices: [], illustration: reactive.illustration };
+    note(entry, state.day, reactive.text(context));
+    receive(state, { id: `${entry.id}:observation`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
+    return;
+  }
+  // A fictional detail of a measured area, not a claim about a particular real house.
+  const entry: DiscoveryEntry = { id: `local-${local.id}`, kind: 'ordinary', title: local.title,
+    poiId: '', poiName: zone.name, zoneId: zone.id, status: 'resolved', step: 1, revision: 0,
+    discoveredDay: state.day, sources: [evidence.source], notes: [], choices: [], illustration: local.illustration };
+  note(entry, state.day, local.text);
+  receive(state, { id: `${entry.id}:observation`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
+}
+
+/** Only already-known, land-reachable POIs can be named as the next place. */
+function knownFollowup(state: RegionState, world: RegionWorld, entry: DiscoveryEntry): NonNullable<DiscoveryEntry['followup']> {
+  const story = personDiscoveryStory(entry.storyId)!;
+  const candidates = world.pois.filter(p => p.id !== entry.poiId && state.zones[p.zoneId]?.status && state.zones[p.zoneId].status !== 'unknown')
+    .filter(p => story.siteTypes.includes(p.siteType ?? p.hqType ?? p.facilityType ?? ''))
+    .filter(p => !state.factions.some(faction => !faction.defeated && faction.zoneId === p.zoneId))
+    .map(p => ({ poi: p, route: routeBetween(state, world, entry.zoneId, p.zoneId, false) }))
+    .filter((candidate): candidate is { poi: RegionPoi; route: string[] } => !!candidate.route)
+    .sort((a, b) => Number(a.poi.zoneId === entry.zoneId) - Number(b.poi.zoneId === entry.zoneId) || a.route.length - b.route.length || a.poi.id.localeCompare(b.poi.id));
+  const poi = candidates[0]?.poi;
+  if (poi) return { poiId: poi.id, poiName: poi.name, zoneId: poi.zoneId };
+  const zoneId = state.hq?.zoneId ?? state.homeZoneId;
+  return { poiId: '', poiName: `Arbeidsbordet i ${world.zones.find(z => z.id === zoneId)?.name ?? 'leiren'}`, zoneId };
+}
+
+/** All effects reuse established finite story presets. No new economy or combat values. */
+function executePersonStory(state: DiscoveryRegionState, world: RegionWorld, entry: DiscoveryEntry, kind: DiscoveryWork['kind'], choiceId?: string) {
+  const story = personDiscoveryStory(entry.storyId)!;
+  let cargo: Stock = {}, morale = 0, loyalty = 0;
+  if (kind === 'investigate') {
+    entry.status = 'choice';
+    if (entry.step === 0) {
+      entry.step = 1;
+      entry.followup = knownFollowup(state, world, entry);
+      const destination = `${entry.followup.poiName} · ${world.zones.find(zone => zone.id === entry.followup!.zoneId)?.name ?? 'leiren'}`;
+      entry.choices = [
+        { id: 'follow', label: story.followLabel, detail: `${story.followDetail} Neste undersøkelse: ${destination}.` },
+        { id: 'supplies', label: story.stopLabel, detail: story.stopDetail },
+      ];
+      note(entry, state.day, `${story.investigation} Et videre oppdrag går til ${destination}.`);
+    } else {
+      entry.step = 3;
+      entry.choices = [
+        { id: 'share', label: story.shareLabel, detail: story.shareDetail },
+        { id: 'kit', label: story.supplyLabel, detail: story.supplyDetail },
+      ];
+      note(entry, state.day, story.finish);
+    }
+  } else {
+    entry.chosen = [...(entry.chosen ?? []), choiceId!]; entry.choices = [];
+    if (choiceId === 'follow') {
+      entry.followup ??= knownFollowup(state, world, entry);
+      entry.status = 'followup'; entry.step = 2;
+      entry.zoneId = entry.followup.zoneId;
+      entry.poiId = entry.followup.poiId; entry.poiName = entry.followup.poiName;
+      note(entry, state.day, `${story.followup} Neste sted: ${entry.poiName}.`);
+    } else {
+      entry.status = 'resolved';
+      if (choiceId === 'supplies') cargo = { ...DISCOVERY_WORK[story.stopCargo] };
+      if (choiceId === 'kit') cargo = { ...DISCOVERY_WORK.finishedKit };
+      // Same established teaching values; the recipient is the actual story person.
+      if (choiceId === 'share') { morale = 5; loyalty = 5; }
+      note(entry, state.day, choiceId === 'share'
+        ? `${personName(state, entry.boundPersonId)} delte erfaringen med gruppen. Håpet og tilliten vokste; dere valgte bort arbeidssettet.`
+        : choiceId === 'kit'
+          ? 'Dere prioriterte arbeidssettet. Delene og materialene følger laget fysisk; historien er avsluttet.'
+          : 'Dere tok den endelige forsyningen og lot resten av sporet ligge. Lasten følger laget; denne kassen fylles ikke opp igjen.');
+    }
+  }
+  return { cargo, morale, loyalty };
+}
+
 /** Observe locally after successful scout/search, or from a real rumor/radio source. */
 export function observeDiscoveries(state: DiscoveryRegionState, world: RegionWorld, evidence: DiscoveryEvidence, lines: ReportLine[]) {
   if (!evidence.reporterIds.some(id => alive(state, id))) return;
+  const beforeEntries = Object.keys(state.discoveries?.entries ?? {}).length + (state.discoveries?.pending.length ?? 0);
   for (const def of WONDERS) {
     const zoneId = wonderZone(world, def);
     if (!zoneId || zoneId !== evidence.zoneId || state.wonders?.[def.id]) continue;
@@ -165,6 +302,10 @@ export function observeDiscoveries(state: DiscoveryRegionState, world: RegionWor
     }
     receive(state, { id: `${entry.id}:clue:${evidence.source}`, day: state.day, reporterIds: [...evidence.reporterIds], entry }, evidence, lines);
   }
+  // At most one additional story beat per actual operation, and no newcomer competes
+  // with a newly observed legacy clue in the same report.
+  const afterEntries = Object.keys(state.discoveries?.entries ?? {}).length + (state.discoveries?.pending.length ?? 0);
+  if (afterEntries === beforeEntries) observeLocalContent(state, world, evidence, lines);
 }
 /** Invoke only at real arrival. Pending observations remain private while away. */
 export function deliverDiscoveryReports(state: DiscoveryRegionState, world: RegionWorld, lines: ReportLine[]) {
@@ -210,7 +351,7 @@ export function maintainDiscoveries(state: DiscoveryRegionState, lines: ReportLi
   r.wonderObservations = r.wonderObservations?.filter(p => p.reporterIds.some(id => alive(state, id)));
   for (const entry of Object.values(r.entries)) if (entry.boundPersonId && !alive(state, entry.boundPersonId) && !['resolved', 'lost'].includes(entry.status)) {
     entry.status = 'lost'; entry.revision++; entry.choices = [];
-    note(entry, state.day, 'Tor kan ikke lenger følge sporet. Det som allerede er rapportert, blir stående i feltboka. Historien er valgfri; andre oppdrag og all vanlig progresjon er fortsatt tilgjengelig.');
+    note(entry, state.day, `${personName(state, entry.boundPersonId)} kan ikke lenger følge sporet. Det som allerede er rapportert, blir stående i feltboka. Historien er valgfri; andre oppdrag og all vanlig progresjon er fortsatt tilgjengelig.`);
     line(lines, entry, 'Et spor blir liggende', entry.notes.at(-1)!.text, 'warn');
   }
 }
@@ -224,10 +365,11 @@ export function discoveryOrderPreview(state: DiscoveryRegionState, _world: Regio
   if (state.discoveries?.pending.some(p => p.entry.id === id && p.entry.revision > entry.revision)) return no('Laget har ikke rapportert resultatet ennå.');
   if (zoneId !== entry.zoneId) return no('Oppdraget må utføres der sporet finnes.');
   if (!crewIds.length || !crewIds.every(id => alive(state, id))) return no('Velg et levende lag.');
-  if (entry.boundPersonId && !crewIds.includes(entry.boundPersonId)) return no('Tor må være med på sitt eget spor.');
+  if (entry.boundPersonId && !crewIds.includes(entry.boundPersonId)) return no(`${personName(state, entry.boundPersonId)} må være med på sitt eget spor.`);
+  if (entry.storyId && !personDiscoveryStory(entry.storyId)) return no('Denne historien støttes ikke av denne spillversjonen.');
   if (kind === 'investigate' && !['clue', 'followup'].includes(entry.status)) return no('Undersøkelsen er ferdig; velg hvordan dere vil følge opp.');
   if (kind === 'choice' && (entry.status !== 'choice' || !entry.choices.some(c => c.id === choiceId))) return no('Dette valget finnes ikke i den rapporterte oppdagelsen.');
-  return { ok: true, hours: entry.kind === 'ordinary' ? DISCOVERY_WORK.ordinaryHours : entry.step >= 2 ? DISCOVERY_WORK.followupHours : DISCOVERY_WORK.torHours,
+  return { ok: true, hours: entry.storyId ? (entry.step >= 2 ? DISCOVERY_WORK.followupHours : DISCOVERY_WORK.ordinaryHours) : entry.kind === 'ordinary' ? DISCOVERY_WORK.ordinaryHours : entry.step >= 2 ? DISCOVERY_WORK.followupHours : DISCOVERY_WORK.torHours,
     cost: kind === 'investigate' && entry.kind === 'tor' && entry.step === 2 ? { ...DISCOVERY_WORK.followupCost } : {} };
 }
 /** Apply an actual successful field work slice. No mutation when insufficient hours.
@@ -244,7 +386,24 @@ export function executeDiscoveryOrder(state: DiscoveryRegionState, world: Region
   const receipt = `${entry.id}:${entry.revision}:${work.kind}:${choiceId ?? ''}`;
   let cargo: Stock = {}, morale = 0, loyalty = 0;
   entry.revision++;
-  if (work.kind === 'investigate') {
+  if (reactiveChoiceStory(entry.id)) {
+    entry.status = 'resolved'; entry.step++; entry.choices = [];
+    if (choiceId) entry.chosen = [...(entry.chosen ?? []), choiceId];
+    if (entry.id === 'field-home-debrief') {
+      morale = 5; loyalty = 5;
+      note(entry, state.day, 'Marius ga dem som ble igjen plass i gjennomgangen. Gruppen delte det som faktisk var observert og snakket om neste tur. Håpet og Marius sin tillit vokste; ingen nye forsyninger, forsvarseffekter eller kartopplysninger ble opprettet.');
+    } else {
+      const preset = entry.id === 'field-workshop-sort'
+        ? choiceId === 'parts' ? 'salvage' : 'finishedKit'
+        : choiceId === 'medical' ? 'ordinaryMedical' : 'ordinaryFood';
+      cargo = { ...DISCOVERY_WORK[preset] };
+      const picked = r.entries[id].choices.find(c => c.id === choiceId)!;
+      note(entry, state.day, `${personName(state, entry.boundPersonId)} og laget valgte «${picked.label}». De berget ${Object.entries(cargo).map(([key, amount]) => `${amount} ${{ parts: 'deler', building: 'byggematerialer', medicine: 'medisiner', batteries: 'batterier', food: 'mat', water: 'vann' }[key] ?? key}`).join(' og ')}. Resten ble igjen; dette funnet kan ikke hentes på nytt.`);
+    }
+  } else if (entry.storyId) {
+    const result = executePersonStory(state, world, entry, work.kind, choiceId);
+    cargo = result.cargo; morale = result.morale; loyalty = result.loyalty;
+  } else if (work.kind === 'investigate') {
     entry.status = 'choice';
     if (entry.kind === 'ordinary') {
       entry.step = 1;

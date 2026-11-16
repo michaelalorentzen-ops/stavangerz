@@ -1,0 +1,76 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "startFit": {
+      "startBottom": 771,
+      "startTop": 727,
+      "listBottom": 722.84375,
+      "scrollHeight": 800,
+      "scrollWidth": 1280
+    },
+    "normalBounds": null,
+    "largeBounds": null,
+    "nativeDialogs": [],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "startFit": {
+      "startBottom": 826.5,
+      "startTop": 782.5,
+      "listBottom": 811.84375,
+      "scrollHeight": 1501,
+      "scrollWidth": 390
+    },
+    "normalBounds": {
+      "territory": {
+        "x": 68,
+        "y": 128,
+        "width": 150,
+        "height": 90,
+        "right": 218,
+        "bottom": 218
+      },
+      "brief": {
+        "x": 68,
+        "y": 230,
+        "width": 300,
+        "height": 118.1875,
+        "right": 368,
+        "bottom": 348.1875
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollWidth": 390
+    },
+    "largeBounds": {
+      "territory": {
+        "x": 68,
+        "y": 128,
+        "width": 150,
+        "height": 94,
+        "right": 218,
+        "bottom": 222
+      },
+      "brief": {
+        "x": 68,
+        "y": 234,
+        "width": 300,
+        "height": 120.1875,
+        "right": 368,
+        "bottom": 354.1875
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scrollWidth": 390
+    },
+    "nativeDialogs": [],
+    "errors": []
+  }
+]

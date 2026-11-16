@@ -1,0 +1,11 @@
+/* The reached phase sits above the map; one short scene sits below it. */
+.sz-game .rz-replay-shield.live-replay{padding:0;background:#0409071a}
+.sz-game .live-replay-status{position:absolute;top:86px;left:50%;transform:translateX(-50%);width:min(460px,calc(100vw - 150px));padding:11px 15px;display:grid;grid-template-columns:1fr auto;gap:7px 12px;border-color:#859a6b66;border-radius:8px;background:#101e18f2}
+.live-replay-status .rz-kicker{margin:0 0 3px;font-size:11px}.live-replay-status h2{margin:0;font-size:17px;line-height:1.2}.live-replay-supplies{align-self:center;color:#abb8ae;font-size:12px}.live-replay-supplies b{color:#eee7ce}
+.live-replay-phases{grid-column:1/-1;display:flex;gap:4px}.live-replay-phases span{flex:1;border-top:2px solid #425047;padding-top:4px;color:#8a978c;font-size:11px}.live-replay-phases .reached{border-color:#bea66f;color:#eee7ce}
+.live-replay-fallback-controls{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}.live-replay-fallback-controls button{min-height:36px;font-size:12px}
+.live-decision-art{display:block;width:100%;height:125px;object-fit:cover;object-position:center 44%;border-radius:8px;margin:0 0 14px}
+@media(max-width:600px){.sz-game .live-replay-status{top:100px;width:calc(100vw - 34px);padding:9px 12px;gap:5px 7px}.live-replay-status h2{font-size:15px}.live-replay-status .rz-kicker,.live-replay-phases span{font-size:12px}.live-replay-supplies{font-size:12px}.live-replay-fallback-controls button{min-height:44px}.live-decision-art{height:105px}}
+
+/* Planning panels describe dawn, not the reached replay snapshot. */
+.sz-game.is-replaying .sz-top,.sz-game.is-replaying .sz-command-bar,.sz-game.is-replaying .sz-map-status-stack,.sz-game.is-replaying .sz-search,.sz-game.is-replaying .sz-nav,.sz-game.is-replaying .sz-show-brief,.sz-game.is-replaying .sz-toast{visibility:hidden}

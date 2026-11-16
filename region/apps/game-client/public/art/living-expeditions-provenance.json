@@ -1,0 +1,287 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-15",
+  "generator": "ImageGen",
+  "style": "Existing painted Nordic sea-green/slate/olive and natural amber, muted April light",
+  "originalsPreserved": true,
+  "sourcePhotoReuse": false,
+  "references": [
+    {
+      "url": "https://www.utsteinkloster.no/en/aktuelt/utstein-kloster",
+      "usedFor": "Church tower centrally between nave and chancel; whitewashed medieval ensemble."
+    },
+    {
+      "url": "https://www.visitnorway.no/listings/utstein-kloster/22381/",
+      "usedFor": "Low coastal cultural landscape, whitewashed walls and red tiled roofs."
+    },
+    {
+      "url": "https://www.visitnorway.no/listings/ullandhaugtarnet-i-stavanger/30717/",
+      "usedFor": "Communications landmark over a low wooded hill and flat regional landscape."
+    },
+    {
+      "url": "https://www.aftenbladet.no/lokalt/i/AvQBPx/her-blir-det-lounge-og-moeterom-med-panoramautsikt",
+      "usedFor": "Concrete shaft, service platforms, dishes and aerial silhouette; reference only, no photo reuse."
+    },
+    {
+      "url": "https://snl.no/Stavanger_domkirke",
+      "usedFor": "Medieval Romanesque nave / Gothic east choir architectural identity."
+    },
+    {
+      "url": "https://www.stavangermuseum.no/mitt-stavanger/steinhodet",
+      "usedFor": "Gothic choir and two eastern towers."
+    },
+    {
+      "url": "https://www.vikingfotball.no/om-klubben/engelsk/the-stadium",
+      "usedFor": "Viking Stadion identity at Jåttåvågen; rectangular contemporary stadium with covered stands."
+    }
+  ],
+  "limits": [
+    "No geography, world anchors or rules changed.",
+    "No hidden-place authorization is performed by the path resolver; caller must gate known information.",
+    "Environmental illustrations do not identify any actual individual building.",
+    "Scenario renders do not prove access, clearance, power, loot or operational upgrades."
+  ],
+  "assets": [
+    {
+      "path": "environments/residential.webp",
+      "original": "exec-6d5acb2b-5639-4231-8c66-b730f0036cad.png",
+      "originalSha256": "41fdeec2838e32e5bb8035953455a8bbb9a1371d58bfaebe109bfcc67316223b",
+      "extraction": {
+        "grid": [
+          2,
+          3
+        ],
+        "cell": [
+          0,
+          0
+        ],
+        "rect": [
+          0,
+          0,
+          627,
+          418
+        ]
+      },
+      "encoding": "ImageMagick WebP quality 88; no rescale",
+      "width": 627,
+      "height": 418,
+      "bytes": 100650,
+      "sha256": "efc405a179ba350e54899694e3d44911ca39861bd7cfa6b38d72340e884311e7",
+      "visuallyInspected": true,
+      "meaning": "Fictional environment family, no current operational facts."
+    },
+    {
+      "path": "environments/shop.webp",
+      "original": "exec-6d5acb2b-5639-4231-8c66-b730f0036cad.png",
+      "originalSha256": "41fdeec2838e32e5bb8035953455a8bbb9a1371d58bfaebe109bfcc67316223b",
+      "extraction": {
+        "grid": [
+          2,
+          3
+        ],
+        "cell": [
+          1,
+          0
+        ],
+        "rect": [
+          627,
+          0,
+          627,
+          418
+        ]
+      },
+      "encoding": "ImageMagick WebP quality 88; no rescale",
+      "width": 627,
+      "height": 418,
+      "bytes": 64868,
+      "sha256": "b34a3fea9575464887943b1e3c286ebcb6f16c2a44d93be71544201177d1c27b",
+      "visuallyInspected": true,
+      "meaning": "Fictional environment family, no current operational facts."
+    },
+    {
+      "path": "environments/industrial.webp",
+      "original": "exec-6d5acb2b-5639-4231-8c66-b730f0036cad.png",
+      "originalSha256": "41fdeec2838e32e5bb8035953455a8bbb9a1371d58bfaebe109bfcc67316223b",
+      "extraction": {
+        "grid": [
+          2,
+          3
+        ],
+        "cell": [
+          0,
+          1
+        ],
+        "rect": [
+          0,
+          418,
+          627,
+          418
+        ]
+      },
+      "encoding": "ImageMagick WebP quality 88; no rescale",
+      "width": 627,
+      "height": 418,
+      "bytes": 71312,
+      "sha256": "50b955e724431df4eb58e6e1c2d05f3403e218bd7da4c2d0341bca6546193260",
+      "visuallyInspected": true,
+      "meaning": "Fictional environment family, no current operational facts."
+    },
+    {
+      "path": "environments/coast.webp",
+      "original": "exec-6d5acb2b-5639-4231-8c66-b730f0036cad.png",
+      "originalSha256": "41fdeec2838e32e5bb8035953455a8bbb9a1371d58bfaebe109bfcc67316223b",
+      "extraction": {
+        "grid": [
+          2,
+          3
+        ],
+        "cell": [
+          1,
+          1
+        ],
+        "rect": [
+          627,
+          418,
+          627,
+          418
+        ]
+      },
+      "encoding": "ImageMagick WebP quality 88; no rescale",
+      "width": 627,
+      "height": 418,
+      "bytes": 81480,
+      "sha256": "ec8c9fef1ccb3b0d8170d28b3690ba6a319362b5870d5aaebd114b5097c30713",
+      "visuallyInspected": true,
+      "meaning": "Fictional environment family, no current operational facts."
+    },
+    {
+      "path": "environments/forest.webp",
+      "original": "exec-6d5acb2b-5639-4231-8c66-b730f0036cad.png",
+      "originalSha256": "41fdeec2838e32e5bb8035953455a8bbb9a1371d58bfaebe109bfcc67316223b",
+      "extraction": {
+        "grid": [
+          2,
+          3
+        ],
+        "cell": [
+          0,
+          2
+        ],
+        "rect": [
+          0,
+          836,
+          627,
+          418
+        ]
+      },
+      "encoding": "ImageMagick WebP quality 88; no rescale",
+      "width": 627,
+      "height": 418,
+      "bytes": 125544,
+      "sha256": "a0ed2c33002915c5042aa9331d77e1a67e4bf40031ce1638e0d0d2dcec6ceb3b",
+      "visuallyInspected": true,
+      "meaning": "Fictional environment family, no current operational facts."
+    },
+    {
+      "path": "environments/farm.webp",
+      "original": "exec-6d5acb2b-5639-4231-8c66-b730f0036cad.png",
+      "originalSha256": "41fdeec2838e32e5bb8035953455a8bbb9a1371d58bfaebe109bfcc67316223b",
+      "extraction": {
+        "grid": [
+          2,
+          3
+        ],
+        "cell": [
+          1,
+          2
+        ],
+        "rect": [
+          627,
+          836,
+          627,
+          418
+        ]
+      },
+      "encoding": "ImageMagick WebP quality 88; no rescale",
+      "width": 627,
+      "height": 418,
+      "bytes": 84030,
+      "sha256": "8d95a58b510143040ae62be27a034ec3a6abfc653ba11340c3fd68a95703b458",
+      "visuallyInspected": true,
+      "meaning": "Fictional environment family, no current operational facts."
+    },
+    {
+      "path": "wonders/utstein.webp",
+      "original": "exec-04a33f70-e7f1-420b-bc8a-0b4d88aca9eb.png",
+      "originalSha256": "809ca4a425d6d92544d3344918408ef62571ce3a1a41d642777591404513f86d",
+      "encoding": "ImageMagick resize 1280x720 and WebP quality 87",
+      "width": 1280,
+      "height": 720,
+      "bytes": 270460,
+      "sha256": "b19e5377265f5337776c55c31c32b94e30c428509a114e5d173be642f04efd05",
+      "visuallyInspected": true,
+      "meaning": "Stylized known-site scenario atmosphere; not a documentary image or operational state."
+    },
+    {
+      "path": "wonders/cathedral.webp",
+      "original": "exec-f39407ed-f3c0-4e2c-b161-01a717779a67.png",
+      "originalSha256": "6ff303d0408ca181c09d1ade9a7612337e8dc8481314d4a029a505d263b5018a",
+      "encoding": "ImageMagick resize 1280x720 and WebP quality 87",
+      "width": 1280,
+      "height": 720,
+      "bytes": 258138,
+      "sha256": "8c066df590d4e1ee6a88006eb15dc9089dc1e8794d2397b4d6a2c437e440dcd0",
+      "visuallyInspected": true,
+      "meaning": "Stylized known-site scenario atmosphere; not a documentary image or operational state."
+    },
+    {
+      "path": "wonders/tower.webp",
+      "original": "exec-34f874dc-994c-486f-aa3e-ad0a734d905f.png",
+      "originalSha256": "6fc9fdea799bddc950462c276f5694290ba52db9e3be3dad41988aff62d170e0",
+      "encoding": "ImageMagick resize 1280x720 and WebP quality 87",
+      "width": 1280,
+      "height": 720,
+      "bytes": 214916,
+      "sha256": "b92235dc4283dadf8d2b5c4727a3c6ab69d99b50ccb8045f9ce1cabffdd5592d",
+      "visuallyInspected": true,
+      "meaning": "Stylized known-site scenario atmosphere; not a documentary image or operational state."
+    },
+    {
+      "path": "wonders/cruise.webp",
+      "original": "exec-c10a85b3-f5e8-438e-b24c-b060ac60b6fa.png",
+      "originalSha256": "d73742f92779926b27beabdd3e7676dd2150281f8e25cdbf939dbe08d0617222",
+      "encoding": "ImageMagick resize 1280x720 and WebP quality 87",
+      "width": 1280,
+      "height": 720,
+      "bytes": 235364,
+      "sha256": "241716ffdd1427d7e3ee4de49afa7981a309549ba993cf94a359387c7667bf94",
+      "visuallyInspected": true,
+      "meaning": "Stylized known-site scenario atmosphere; not a documentary image or operational state."
+    },
+    {
+      "path": "wonders/plane.webp",
+      "original": "exec-d9f033a4-cc78-4a14-85d7-f81ea1631b65.png",
+      "originalSha256": "f4c1e006eeb04c1fa43af30c4c231a4ae34c262fa9857b0363a772fbadd41e0b",
+      "encoding": "ImageMagick resize 1280x720 and WebP quality 87",
+      "width": 1280,
+      "height": 720,
+      "bytes": 135348,
+      "sha256": "19fc0965788091d43fbe70d5a6868b0d11f41f49e726f0bbe7fe9e859edf27ae",
+      "visuallyInspected": true,
+      "meaning": "Stylized known-site scenario atmosphere; not a documentary image or operational state."
+    },
+    {
+      "path": "wonders/arena.webp",
+      "original": "exec-af4b9edd-fd78-4cd5-95df-37e2820e75f0.png",
+      "originalSha256": "48869d60a215807ee29754cd96189168631a5952295bd9e5194dd6ec9f250c5f",
+      "encoding": "ImageMagick resize 1280x720 and WebP quality 87",
+      "width": 1280,
+      "height": 720,
+      "bytes": 244654,
+      "sha256": "3ad74cff8e2f0731a1c201093aeb3871b7e9ad835b17d787ac0733239f26cf76",
+      "visuallyInspected": true,
+      "meaning": "Stylized known-site scenario atmosphere; not a documentary image or operational state."
+    }
+  ],
+  "totalBytes": 1886764
+}

@@ -74,3 +74,5 @@
 @media(max-width:820px){.sz-game .sz-resources{gap:7px}.sz-game .sz-resource-more{flex-direction:column}.sz-game .sz-resource-more svg{width:18px;height:18px}.sz-resource-overview{grid-template-columns:1fr 1fr}.sz-game .sz-resource-overview>button{flex-wrap:wrap;gap:8px;min-height:100px}.sz-resource-overview small{width:100%;margin:0}.sz-game .dv-hq .dv-tabs{justify-content:flex-start;flex-wrap:wrap;overflow:visible;padding:4px 8px;gap:4px}.sz-game .dv-hq .dv-tabs button{flex-shrink:0;min-height:44px;padding:9px;font-size:12px}}
 
 .pref-reduced-motion *{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}.sz-game .sz-modal-settings{max-width:760px}
+
+.sz-game [data-testid=nav-journal]>svg{color:#e0c68f}

@@ -101,13 +101,14 @@ export function saveRegionSlot(id: number, name: string, state: RegionState, opt
   write(e, storage);
 }
 /** Switch only after successful atomic persistence; caller then accepts returned state without re-saving. */
-export function loadRegionSlot(id: number, storage: RegionSaveStorage = browserStorage()): RegionState {
+export function loadRegionSlot(id: number, storage: RegionSaveStorage = browserStorage(), options: { preserveCurrent?: boolean } = {}): RegionState {
   const e = read(storage), slot = e.library!.slots.find(s => s.id === id);
   if (!slot) throw new RegionSaveError('Lagringsplassen er tom.', 'invalid');
   const state = slot.state; checkHardcore(state, e);
   if (e.state && hash(e.state) !== hash(state)) {
-    // Same-run normal snapshots deliberately rewind; another run must first be preserved.
-    if (campaignFor(e.state).id !== campaignFor(state).id) archive(e.state, e);
+    // Switching runs always preserves the outgoing checkpoint. A same-run rewind
+    // can explicitly preserve it too, in this same atomic write, before loading.
+    if (options.preserveCurrent || campaignFor(e.state).id !== campaignFor(state).id) archive(e.state, e);
   }
   e.state = state; e.highWater = receipt(state); write(e, storage); return state;
 }

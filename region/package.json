@@ -28,7 +28,15 @@
     "check:region-checkpoints-ui": "tsx scripts/check-hud-checkpoints.ts",
     "check:region-map-ui": "tsx scripts/check-world-map.ts",
     "check:region-clarity-ui": "tsx scripts/check-v04-ui-clarity.ts",
-    "check:region-start-ui": "node scripts/check-start-screen.mjs"
+    "check:region-start-ui": "node scripts/check-start-screen.mjs",
+    "check:region-content-ui": "node --import tsx scripts/check-living-cards-ui.mjs",
+    "check:region-qa33-ui": "tsx scripts/check-qa33-polish-ui.ts",
+    "check:region-cues-ui": "node scripts/check-expedition-cues-ui.mjs",
+    "check:region-protest-ui": "node --import tsx scripts/check-public-protest-ui.ts",
+    "check:region-replay-ui": "node --import tsx scripts/check-expedition-replay-ui.ts",
+    "check:region-phase-two-ui": "node --import tsx scripts/check-expedition-phase-two-ui.ts",
+    "check:region-setback-ui": "node --import tsx scripts/check-expedition-setback-ui.ts",
+    "check:region-rest-group-ui": "node scripts/check-rest-group-ui.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",

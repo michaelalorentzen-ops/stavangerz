@@ -1,0 +1,43 @@
+PASS expedition experiences: eight real firsts, once/reload, private/dead/radio/checkpoint gates, legacy honesty and 40-day permanent retention.
+PASS expedition map feedback: immutable public snapshots, real known L3 only, no claim duplication, private/legacy/malformed suppression and JSON reload.
+PASS living stories: 3 optional person chains/3 outcomes each; known reachable follow-up; physical/private reports; correct loyalty; finite cargo; reload/death/repeat; 6 reward-free local observations.
+PASS QA33 rewind: optional exact outgoing backup, quota/full atomicity, explicit discard, dedup and Hardcore latest-only.
+PASS treatment preview: actual local patients, strict existing80 threshold, local/depot/regional sick counts, unchanged validity/cost/no-op behavior and no mutation.
+PASS library: snapshots/checkpoint exactness, legacy formats, confirmation, full/quota/corruption atomicity and Hardcore latest-only receipts.
+Campaign presentation: goals, 3 victory predicate boundaries, reset, legacy and immutability passed. Fixtures, not natural wins.
+{"result":"PASS orders UX","searchHours":[8,25],"searched":[8,24],"combatHours":[8,25],"estimatedKills":[6.6000000000000005,20.625000000000004],"incomingDestinations":45,"incomingTotal":127}
+PASS PR27 mission load: 29→31kg fortify trigger, prospective gear rollback, radio manifest priority/weight, passengers, legacy version and seeded escape.
+PASS PR27 S3/S4/S5: explicit allied work, geographic containment/holes and actual finite siege reporting.
+v0.4 crew location contract: OK
+PASS v0.4 real night checkpoint: replay/resume, JSON save, radio delegation fallback, single settlement and ammo accounting.
+PASS v0.4 deterministic day replay phases and legacy report fallback.
+PASS v0.4 gear: pure priority reservations, locks, real effects, finite loot, physical return/absence/injury/death, JSON checkpoint and legacy weapons.
+PASS v0.4 phase-one capacity: HQ, connected core, durable perimeter, provisions, whole-L2 route.
+PASS region claim: stale intel cannot erase a horde; valid small remainder still counts correctly.
+PASS claim frontier: isolated local crew rejected; legitimate controlled frontier accepted independently of HQ travel distance.
+PASS mobility: actual routes/multi-day return, depot retrieval/supply, serializable personal field choice and bound radio opt-in.
+PASS arrivals: central promotion, no allocated-population teleport, actual field rescue and return, usable gear, preserved unknown canonical entries.
+PASS v0.4 campaign: real mode supplies/flows/day, permanent HC death, explicit succession, fixed away-avatar, three derived endings, disk reload/checkpoint and HC rewind/divergence/write-failure rejection.
+PASS v0.4 discoveries: 4 alternative sources; delayed/live-only reporting; radio gate; finite cargo; two ordinary choices; multi-order Tor branches; person loss; reload; legacy unique places.
+PASS D27: six explicit crew installation paths, once-only finite costs, partial work reload, no anonymous activation, actual threat gate, legacy effects/events, private live-only site reports.
+Regional work integration: finite scavenging, local construction and physical depot delivery passed.
+v0.4 administration: commands, legacy, physical people/stock, disjoint flows/work, budgets, idempotence and leader loss passed.
+M2 synthetic seed=435; H values, no combat/economy/server turn lock
+day=1 zones=62 outside=28 import=5 export=3 barrier=1 events=barrier-pressure
+day=2 zones=65 outside=25 import=5 export=2 barrier=1 events=barrier-pressure,barrier-warning
+day=3 zones=68 outside=22 import=5 export=2 barrier=0 events=barrier-pressure,barrier-breached
+day=4 zones=71 outside=19 import=5 export=2 barrier=0 events=-
+day=5 zones=73 outside=17 import=5 export=3 barrier=0 events=-
+day=6 zones=74 outside=16 import=5 export=4 barrier=0 events=-
+day=7 zones=74 outside=16 import=4 export=4 barrier=0 events=-
+day=8 zones=73 outside=17 import=3 export=4 barrier=0 events=-
+day=9 zones=72 outside=18 import=3 export=4 barrier=0 events=-
+day=10 zones=75 outside=15 import=5 export=2 barrier=0 events=-
+PASS: deterministic/order-independent, input unchanged, conserved finite population, no same-day multihop, warning before breach
+PASS: 40-day deterministic replay, second seed conserved; food 130 -> 50, finite cache empty, duplicate/overspend/same-day-arrival spend rejected; rules=m2.2
+PASS M3: deterministic ordered plans, no opening mutation, crew double-use/stale day rejected, hidden intel, resource/zombie ledger; temporary base on day 5; injury/death consequence checked.
+PASS fase 1: vannrensing og HQ dag 9, vedvarende søk, endelige lagre og separat M3-lagring.
+117 events, 113 built on 16 states.
+Never built here (may need special conditions): spyCaught, spyRaid, allyDelivery, fieldRadioReport
+All choices resolve.
+PASS functional v0.4 gate. Run both browser journeys against a running production build.

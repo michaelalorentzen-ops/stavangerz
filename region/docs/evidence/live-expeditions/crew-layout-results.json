@@ -1,0 +1,110 @@
+[
+  {
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "action": "rest",
+    "actualDay": 20,
+    "oneClickSelected": 5,
+    "afterDeselect": 4,
+    "fit": {
+      "client": 433,
+      "scroll": 433
+    },
+    "gearFit": {
+      "client": 433,
+      "scroll": 433
+    },
+    "exactStatePreserved": true,
+    "errors": []
+  },
+  {
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "action": "search",
+    "actualDay": 20,
+    "oneClickSelected": 5,
+    "afterDeselect": 4,
+    "fit": {
+      "client": 433,
+      "scroll": 433
+    },
+    "gearFit": {
+      "client": 433,
+      "scroll": 433
+    },
+    "exactStatePreserved": true,
+    "errors": []
+  },
+  {
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "action": "clear",
+    "actualDay": 20,
+    "oneClickSelected": 5,
+    "afterDeselect": 4,
+    "fit": {
+      "client": 433,
+      "scroll": 433
+    },
+    "gearFit": {
+      "client": 433,
+      "scroll": 433
+    },
+    "exactStatePreserved": true,
+    "errors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "action": "rest",
+    "actualDay": 20,
+    "oneClickSelected": 5,
+    "afterDeselect": 4,
+    "fit": {
+      "client": 567,
+      "scroll": 567
+    },
+    "exactStatePreserved": true,
+    "errors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "action": "search",
+    "actualDay": 20,
+    "oneClickSelected": 5,
+    "afterDeselect": 4,
+    "fit": {
+      "client": 567,
+      "scroll": 567
+    },
+    "exactStatePreserved": true,
+    "errors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "action": "clear",
+    "actualDay": 20,
+    "oneClickSelected": 5,
+    "afterDeselect": 4,
+    "fit": {
+      "client": 540,
+      "scroll": 563
+    },
+    "exactStatePreserved": true,
+    "errors": []
+  }
+]

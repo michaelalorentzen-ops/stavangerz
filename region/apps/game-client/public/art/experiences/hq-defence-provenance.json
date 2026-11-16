@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "generator": "ImageGen",
+  "purpose": "QA34 round3 F01: earned HQ-defence memory gets a distinct illustration rather than reusing the first perimeter-work image.",
+  "originalsPreserved": true,
+  "original": "exec-73b603dd-c43c-4d67-a6c2-9c94c3c04a8b.png",
+  "originalSha256": "9d1c6e5ed4153c02d2ee2b7e695a4022263c6a145834a499a9d08c4b15096edd",
+  "path": "experiences/hq-defence.webp",
+  "sha256": "bec71c2f842e197193f9e8e3dbde9439292625a66d1ae09dbeab6a604be1f174",
+  "width": 1280,
+  "height": 720,
+  "bytes": 142636,
+  "encoding": "ImageMagick resize 1280x720 + WebP quality 87",
+  "styleReferences": [
+    "phases/2.webp",
+    "experiences/perimeter.webp"
+  ],
+  "style": "Existing dark restrained painterly Norwegian timber/iron, sea-green/slate/olive, damp surfaces and natural amber dusk.",
+  "visuallyInspected": true,
+  "selectionContract": "Only the already-public hq-defence earned-memory milestone. Ordinary perimeter first experience still uses experiences/perimeter.webp. No stored experience facts, world state or save fields are modified.",
+  "meaning": "Representative quiet HQ defensive gate/lookout motif, not an exact blueprint or a claim that gate, walls, watchtower and overview modules all exist. The authoritative moduleId and result remain in the report.",
+  "limits": [
+    "No combat, wounded people, corpse, enemy count, named character, weapon or depicted resource stock.",
+    "No recognizable real building, specific headquarters identity, site coordinate or claimed geographic incident.",
+    "No powered lights or operational infrastructure beyond the thematic defensive structure.",
+    "Public earned-memory visibility must still be checked by the existing caller."
+  ]
+}

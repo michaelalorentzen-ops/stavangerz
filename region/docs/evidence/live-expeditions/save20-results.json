@@ -1,0 +1,218 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "actualDay": 20,
+    "firsts": [
+      "scout",
+      "poi",
+      "search",
+      "gear",
+      "combat",
+      "claim",
+      "hq",
+      "perimeter"
+    ],
+    "earned": [
+      "hq-defence"
+    ],
+    "resolvedMarius": false,
+    "memoryImages": [
+      "/art/experiences/scout.webp",
+      "/art/experiences/poi.webp",
+      "/art/experiences/search.webp",
+      "/art/experiences/gear.webp",
+      "/art/experiences/combat-farm.webp",
+      "/art/experiences/claim.webp",
+      "/art/phases/2.webp",
+      "/art/experiences/perimeter.webp",
+      "/art/experiences/hq-defence.webp"
+    ],
+    "rail": [
+      {
+        "name": "Mannskap",
+        "x": 22,
+        "y": 120,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 172.796875
+      },
+      {
+        "name": "Feltjournal",
+        "x": 22,
+        "y": 175.796875,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 228.59375
+      },
+      {
+        "name": "Leiren",
+        "x": 22,
+        "y": 231.59375,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 284.390625
+      },
+      {
+        "name": "Mine områder",
+        "x": 22,
+        "y": 287.390625,
+        "width": 70,
+        "height": 66.59375,
+        "bottom": 353.984375
+      },
+      {
+        "name": "Innstillinger",
+        "x": 22,
+        "y": 356.984375,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 409.78125
+      },
+      {
+        "name": "ZA-boka",
+        "x": 22,
+        "y": 412.78125,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 465.578125
+      },
+      {
+        "name": "Hovedkvarter",
+        "x": 22,
+        "y": 468.578125,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 521.375
+      },
+      {
+        "name": "Dagsrapporter",
+        "x": 22,
+        "y": 540.375,
+        "width": 70,
+        "height": 51.796875,
+        "bottom": 592.171875
+      },
+      {
+        "name": "Flere oversikter",
+        "x": 22,
+        "y": 595.171875,
+        "width": 70,
+        "height": 51.796875,
+        "bottom": 646.96875
+      }
+    ],
+    "openStories": 1,
+    "hqWorkforceRole": "group",
+    "exactReload": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "actualDay": 20,
+    "firsts": [
+      "scout",
+      "poi",
+      "search",
+      "gear",
+      "combat",
+      "claim",
+      "hq",
+      "perimeter"
+    ],
+    "earned": [
+      "hq-defence"
+    ],
+    "resolvedMarius": false,
+    "memoryImages": [
+      "/art/experiences/scout.webp",
+      "/art/experiences/poi.webp",
+      "/art/experiences/search.webp",
+      "/art/experiences/gear.webp",
+      "/art/experiences/combat-farm.webp",
+      "/art/experiences/claim.webp",
+      "/art/phases/2.webp",
+      "/art/experiences/perimeter.webp",
+      "/art/experiences/hq-defence.webp"
+    ],
+    "rail": [
+      {
+        "name": "Mannskap",
+        "x": 12,
+        "y": 136,
+        "width": 44,
+        "height": 44,
+        "bottom": 180
+      },
+      {
+        "name": "Feltjournal",
+        "x": 12,
+        "y": 183,
+        "width": 44,
+        "height": 44,
+        "bottom": 227
+      },
+      {
+        "name": "Leiren",
+        "x": 12,
+        "y": 230,
+        "width": 44,
+        "height": 44,
+        "bottom": 274
+      },
+      {
+        "name": "Mine områder",
+        "x": 12,
+        "y": 277,
+        "width": 44,
+        "height": 44,
+        "bottom": 321
+      },
+      {
+        "name": "Innstillinger",
+        "x": 12,
+        "y": 324,
+        "width": 44,
+        "height": 44,
+        "bottom": 368
+      },
+      {
+        "name": "ZA-boka",
+        "x": 12,
+        "y": 371,
+        "width": 44,
+        "height": 44,
+        "bottom": 415
+      },
+      {
+        "name": "Hovedkvarter",
+        "x": 12,
+        "y": 418,
+        "width": 44,
+        "height": 44,
+        "bottom": 462
+      },
+      {
+        "name": "Dagsrapporter",
+        "x": 12,
+        "y": 481,
+        "width": 44,
+        "height": 44,
+        "bottom": 525
+      },
+      {
+        "name": "Flere oversikter",
+        "x": 12,
+        "y": 528,
+        "width": 44,
+        "height": 44,
+        "bottom": 572
+      }
+    ],
+    "openStories": 1,
+    "hqWorkforceRole": "group",
+    "exactReload": true,
+    "errors": []
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "actualDay": 1,
+    "cues": [
+      {
+        "id": "experience:poi:0:o0-scout-z3-0018-ingrid.marius.leila.tor",
+        "place": "Lundsneset",
+        "title": "Et sted å undersøke",
+        "titleFont": 11,
+        "placeFont": 12,
+        "placeClipped": false,
+        "rect": {
+          "x": 559.0859375,
+          "y": 448,
+          "right": 720.9140625,
+          "bottom": 497.234375
+        },
+        "overlaps": []
+      }
+    ],
+    "archiveReplayedCue": false,
+    "errors": [],
+    "screenshotLimitation": "DOM measured during live replay; no claim about animation frames on a physical GPU"
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "actualDay": 1,
+    "cues": [
+      {
+        "id": "experience:poi:0:o0-scout-z3-0018-ingrid.marius.leila.tor",
+        "place": "Lundsneset",
+        "title": "Et sted å undersøke",
+        "titleFont": 12,
+        "placeFont": 12,
+        "placeClipped": false,
+        "rect": {
+          "x": 115,
+          "y": 470,
+          "right": 275,
+          "bottom": 532.1875
+        },
+        "overlaps": []
+      }
+    ],
+    "archiveReplayedCue": false,
+    "errors": [],
+    "screenshotLimitation": "DOM measured during live replay; no claim about animation frames on a physical GPU"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "width": 1280,
+    "scenario": true,
+    "sourceDay": 6,
+    "allFirstsAlreadyUsed": true,
+    "phase": 2,
+    "actualPhaseCard": true,
+    "engineEqual": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "scenario": true,
+    "sourceDay": 6,
+    "allFirstsAlreadyUsed": true,
+    "phase": 2,
+    "actualPhaseCard": true,
+    "engineEqual": true,
+    "errors": []
+  }
+]

@@ -208,3 +208,19 @@
 .cmd-day-plan-compact button:disabled{opacity:.4;cursor:not-allowed}
 .cmd-day-plan-compact summary:focus-visible{outline:2px solid var(--cmd-amber);outline-offset:2px}
 @media(max-width:650px){.cmd-day-plan-compact .cmd-order-list{grid-template-columns:1fr}.cmd-day-plan-compact .cmd-plan-stats{gap:12px;flex-wrap:wrap}.cmd-day-plan-compact .cmd-plan-stats>div{gap:4px}.cmd-day-plan-compact .cmd-plan-stats span{font-size:12px}.cmd-day-plan-compact .cmd-order-actions button{padding-inline:8px}}
+
+/* Explicit group selection; time remains visible beside confirmation. */
+.cmd-composer .cmd-crew-section>header .cmd-select-ready{margin-left:8px;min-height:32px;padding:4px 8px;font-size:12px}
+.cmd-day-plan-compact .cmd-order-timing{display:flex;align-items:center;gap:5px;color:var(--cmd-ink);font-size:12px}
+.cmd-day-plan-compact .cmd-risk-low{color:var(--cmd-teal)}
+.cmd-day-plan-compact .cmd-risk-medium{color:#f1cc82}
+.cmd-day-plan-compact .cmd-risk-high{color:#f2b2a4}
+@media(max-width:480px){.cmd-composer .cmd-crew-section>header .cmd-select-ready{margin-left:2px;min-height:44px}.cmd-composer .cmd-crew-section>header{gap:5px}}
+/* Five-person parties use the available width; controls and names keep their size. */
+@media(min-width:1000px){
+ .sz-game .cmd-composer .cmd-crew-list:has(>.cmd-person:nth-child(5)){grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
+}
+@media(max-width:650px){
+ .sz-game .cmd-composer .cmd-crew-list:has(>.cmd-person:nth-child(5)){row-gap:0}
+ .sz-game .cmd-composer .cmd-crew-list:has(>.cmd-person:nth-child(5))>.cmd-person{padding-block:2px}
+}

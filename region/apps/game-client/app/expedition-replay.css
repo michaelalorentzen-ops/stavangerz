@@ -1,0 +1,43 @@
+/* Reserved lower-center replay layer. No full-screen shade: the map remains the
+ * playing surface. Top HUD/phase controls occupy a separate root-owned layer. */
+.exp-replay-scene{position:fixed;z-index:44;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(480px,calc(100vw - 36px));box-sizing:border-box;border:1px solid #b49b624f;border-radius:14px;background:linear-gradient(145deg,#17272bf7,#101b20fb);box-shadow:0 14px 55px #0009,0 0 0 1px #0004;overflow:hidden;color:#e8e8dc;text-align:left;animation:exp-replay-enter .28s ease-out;pointer-events:auto;isolation:isolate}
+.exp-replay-heading{position:relative;min-height:82px;border-bottom:1px solid #c2af781f;background:#172b30;overflow:hidden}
+.exp-replay-art{position:absolute;right:0;top:0;width:52%;height:100%;object-fit:cover;opacity:.78;z-index:-1}
+.exp-replay-heading:has(.exp-replay-art){background:linear-gradient(90deg,#172b30 35%,#172b3090 68%,#172b3012);isolation:isolate}
+.exp-replay-heading-copy{position:relative;padding:12px 15px;max-width:100%}
+.exp-replay-kicker{display:flex;align-items:center;gap:6px;color:#d8be86;font-size:11px;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;font-weight:650}
+.exp-replay-kicker span{font-size:11px;padding-left:7px;border-left:1px solid #b49b6270;color:#d6d8ca}
+.exp-replay-scene h2{margin:4px 0 3px;font:600 20px/1.15 var(--font-display,Georgia,serif);color:#f2ead6;text-wrap:balance}
+.exp-replay-location{display:flex;align-items:center;gap:4px;margin:0;font-size:12px;line-height:1.3;color:#e2e5d9}
+.exp-replay-content{padding:11px 15px 0;font-size:13px;line-height:1.45}
+.exp-replay-content p{margin:0}
+.exp-replay-content blockquote{display:flex;align-items:flex-start;gap:8px;margin:0 0 9px;padding:0;color:#d6ded8;font-style:normal}
+.exp-replay-content blockquote>svg{flex-shrink:0;margin-top:3px;color:#d9bd80}
+.exp-replay-content blockquote strong{font-size:12px;color:#dac491;font-weight:650}
+.exp-replay-content blockquote p{margin:2px 0 0}
+.exp-replay-narrative{color:#d2dcd7;margin-bottom:9px!important}
+.exp-replay-result{color:#f1eddf;font-weight:550}
+.exp-replay-warn .exp-replay-result{color:#efcf8a}.exp-replay-bad .exp-replay-result{color:#f1a79a}
+.exp-replay-crew{display:flex;flex-wrap:wrap;gap:5px 10px;padding:9px 15px 0}
+.exp-replay-crew>span{display:flex;align-items:center;gap:4px;font-size:11px;line-height:1.3;color:#c3cec8}
+.exp-replay-crew img{width:23px;height:23px;object-fit:cover;border-radius:50%;border:1px solid #a1b4a55c}
+.exp-replay-controls{display:flex;align-items:center;gap:4px;padding:5px 9px 6px;margin-top:5px;border-top:1px solid #c2af7817}
+.exp-replay-controls button{display:flex;align-items:center;justify-content:center;gap:5px;min-height:42px;padding:8px 10px;border:0;border-radius:7px;color:#e1e3d7;background:transparent;font-family:inherit;font-weight:600;font-size:12px;line-height:1.2;cursor:pointer;white-space:nowrap}
+.exp-replay-controls button:hover{background:#c6ae7524}.exp-replay-controls button:focus-visible{outline:2px solid #e4c98a;outline-offset:-2px}
+.exp-replay-progress{flex:1;color:#aebfb7;padding-left:6px;font-size:11px}
+.exp-replay-compact{position:fixed;z-index:43;left:50%;bottom:max(30px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(470px,calc(100vw - 36px));padding:8px 12px;border-radius:10px;background:#13262aee;box-sizing:border-box;color:#e0e6dc;pointer-events:none}
+.exp-replay-compact p{display:flex;align-items:center;gap:8px;margin:0;font-size:12px;line-height:1.4}.exp-replay-compact p+p{margin-top:4px}.exp-replay-compact p>span{color:#c6b477;font-weight:800}.exp-replay-compact .exp-replay-bad>span{color:#e99683}
+@keyframes exp-replay-enter{from{opacity:0;translate:0 9px}to{opacity:1;translate:0 0}}
+@media(max-width:650px){.exp-replay-scene{width:calc(100vw - 20px);bottom:max(10px,env(safe-area-inset-bottom));max-height:min(320px,calc(100dvh - 180px));overflow-y:auto;overscroll-behavior:contain}.exp-replay-heading{min-height:71px}.exp-replay-heading-copy{padding:8px 12px}.exp-replay-scene h2{font-size:18px}.exp-replay-kicker span{font-size:12px}.exp-replay-content{padding:9px 12px 0;font-size:12px;line-height:1.4}.exp-replay-content blockquote{margin-bottom:5px;gap:6px}.exp-replay-content blockquote strong{margin-right:5px}.exp-replay-content blockquote p{display:inline;margin:0}.exp-replay-lead{margin-bottom:5px!important}.exp-replay-crew{padding:5px 12px 0;gap:5px 8px}.exp-replay-crew img{width:20px;height:20px}.exp-replay-controls{padding:2px 5px 3px;margin-top:4px}.exp-replay-controls button{min-height:44px;padding:8px}.exp-replay-compact{bottom:max(12px,env(safe-area-inset-bottom));width:calc(100vw - 20px)}}
+@media(prefers-reduced-motion:reduce){.exp-replay-scene{animation:none}}
+/* Complete, verified first-search loot: the existing inventory atlas replaces
+ * the resource paragraph. Counts and progress come from this one public result. */
+.exp-replay-loot{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:0;list-style:none}
+.exp-replay-loot li{display:flex;align-items:center;gap:4px;min-height:24px;box-sizing:border-box;margin:0;padding:2px 5px;border:1px solid #8da7853b;border-radius:6px;background:#233d38;color:#f4e7bd;font-size:13px;line-height:1}
+.exp-replay-loot .item-art{width:23px;height:23px;filter:drop-shadow(0 1px 2px #0008)}
+.exp-replay-loot strong{font-size:13px;line-height:1;font-weight:650}
+.exp-replay-search-progress{margin-left:auto;padding:3px 5px;border-radius:4px;background:#12282ce8;color:#ddd7b7;font-size:11px;line-height:1.2;white-space:nowrap}
+.exp-replay-location:has(.exp-replay-search-progress){flex-wrap:wrap}
+@media(max-width:650px){.exp-replay-loot li{padding:1px 4px;gap:3px}.exp-replay-loot .item-art{width:21px;height:21px}.exp-replay-loot strong,.exp-replay-search-progress{font-size:12px}}
+.exp-replay-compact small{margin-left:auto;flex-shrink:0;color:#d4c192;font-size:inherit}
+@media(max-width:650px){.exp-replay-scene{display:flex;flex-direction:column;overflow:hidden}.exp-replay-heading,.exp-replay-crew,.exp-replay-controls{flex-shrink:0}.exp-replay-content{min-height:0;overflow-y:auto;overscroll-behavior:contain}}

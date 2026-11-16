@@ -1,0 +1,1755 @@
+{
+  "kind": "Orchestrator-directed orders and choices entered through real browser UI; no bot planning or simulation edits",
+  "seed": 101,
+  "start": "Lundsneset",
+  "difficulty": "Survival",
+  "days": 17,
+  "environmentResume": "Exact actual day1 export restored after cloud interruption; presentation fixes integrated during playtest, not balance changes",
+  "sourceFinalSaveSha256": "0f319e46da53d5bef056fb47576fde3e6da1466ae125dace4abc0398f191e312",
+  "daysPlayed": [
+    {
+      "day": 1,
+      "intent": "Første tur ut: alle fire undersøker nabosonen Hundvåg 2 sammen, for å få fersk etterretning og en tryggere forståelse av nærområdet.",
+      "report": [
+        {
+          "tone": "info",
+          "title": "Hundvåg 2 er speidet",
+          "text": "Ingrid, Marius, Leila, Tor: om lag 31–40 zombier.",
+          "zoneId": "z3-0006"
+        },
+        {
+          "tone": "info",
+          "title": "Et kart med noe å stole på",
+          "text": "Ingrid, Marius, Leila, Tor: om lag 31–40 zombier.",
+          "zoneId": "z3-0006",
+          "first": "scout"
+        },
+        {
+          "tone": "info",
+          "title": "Et navn blir et sted",
+          "text": "Hundvåg 2 kystgård er registrert i Hundvåg 2.",
+          "zoneId": "z3-0006",
+          "first": "poi"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det siste punktet på lista",
+          "text": "Ved Hundvåg 2 kystgård: Marius stanser ved en sjekkliste med bare tre punkter. Det siste er understreket: «Tell alle på vei hjem.» Han sier lite, men ber om å få undersøke resten selv.",
+          "zoneId": "z3-0006"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "clue",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "intent": "Vi sikrer hjemveien: Marius og Tor bekjemper zombiene i leiren, mens Ingrid og Leila søker etter forsyninger når området er ryddigere.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "15 zombier drept i Lundsneset",
+          "text": "Marius, Tor, 8 patroner brukt. Sonen ser tom ut. 1 prøver tatt med hjem.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Etter møtet med de døde",
+          "text": "15 zombier ble drept under oppdraget.",
+          "zoneId": "z3-0018",
+          "first": "combat"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Søk i Lundsneset",
+          "text": "Ingrid, Leila fant 2 ammunisjon, 2 medisin, 2 batterier, 2 elektronikk, 1 salt, 10 drivstoff, 3 mekaniske deler, 12 mat, 10 byggemateriale, 8 vann. 9 % gjennomsøkt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Det vi kan bære",
+          "text": "Ingrid, Leila fant 2 ammunisjon, 2 medisin, 2 batterier, 2 elektronikk, 1 salt, 10 drivstoff, 3 mekaniske deler, 12 mat, 10 byggemateriale, 8 vann. 9 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "first": "search"
+        },
+        {
+          "tone": "info",
+          "title": "Et funn får en eier",
+          "text": "Funnet: Kikkert. Utstyret må følge laget fram til faktisk levering.",
+          "zoneId": "z3-0018",
+          "first": "gear"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Personlig utstyr funnet",
+          "text": "Kikkert. Rapportert av laget ved faktisk hjemkomst."
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Strekene i margen",
+          "text": "Ved Lundsvågen naturskole: Ingrid legger merke til en brettet lapp med piler i margen. «Noen prøvde å holde orden mens alle andre løp.» Hun vil undersøke den selv. Foreløpig er det bare streker; dere vet ikke hvor de fører.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "clue",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "clue",
+          "zoneId": "z3-0018",
+          "boundPersonId": "ingrid"
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "intent": "Ta fotfeste i Lundsneset. Marius og Tor overtar sonen, Ingrid undersøker sitt spor, og Leila skaffer flere forsyninger.",
+      "report": [],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 11,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 11,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 11,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 11,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "clue",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "clue",
+          "zoneId": "z3-0018",
+          "boundPersonId": "ingrid"
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "intent": "Overtakelsen trenger mer søk først. Ingrid følger sitt eget spor mens de tre andre undersøker resten av leiren og bærer hjem forsyninger.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "bad",
+          "title": "Leila ble skadet",
+          "text": "I Lundsneset: 12 i skade."
+        },
+        {
+          "tone": "good",
+          "title": "Søk i Lundsneset",
+          "text": "Marius, Leila, Tor fant 1 båter, 2 ammunisjon, 3 medisin, 3 batterier, 3 elektronikk, 2 salt, 16 drivstoff, 5 mekaniske deler, 18 mat, 15 byggemateriale, 12 vann. 22 % gjennomsøkt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Strekene i margen",
+          "text": "Ingrid sammenligner lappen med stedene laget kjenner. Hun setter spørsmålstegn ved flere av pilene. Ved siden av ligger en liten forsyningskasse. Dere kan ta den nå, eller bruke mer tid på notatene. «Jeg vil at de andre også skal kunne lese det vi faktisk vet.»",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Navn uten svar",
+          "text": "Ved Lundsvågen naturskole: Leila finner en slitt oppslagsside i en mappe. Noen har skrevet navn, andre har bare satt en strek. «Vi vet ikke hva som hendte med dem.» Hun vil lese videre, men ber de andre om å vente med å trekke slutninger.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 29,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 29,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 88,
+          "fatigue": 29,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 29,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "clue",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "choice",
+          "zoneId": "z3-0018",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "clue",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "intent": "Ferske farer kan ha kommet tilbake. De to sterkeste bekjemper dem før Leila prøver å overta. Ingrid velger tid og kunnskap fremfor rasjonene i sitt spor.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "3 zombier drept i Lundsneset",
+          "text": "Marius, Tor, 2 patroner brukt. Sonen ser tom ut.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Lundsneset er deres",
+          "text": "Sonen er overtatt. Hold grensene for å beholde den.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Et sted å holde",
+          "text": "Sonen er nå kontrollert av gruppen.",
+          "zoneId": "z3-0018",
+          "first": "claim"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Strekene i margen",
+          "text": "Ingrid har tatt vare på notatene. Neste arbeid er å gå gjennom dem ved det avtalte stedet, der laget allerede kjenner omgivelsene. «Det hjelper ikke at bare jeg forstår mine egne streker.» Neste sted: Meny Hundvåg.",
+          "zoneId": "z3-0002"
+        },
+        {
+          "tone": "warn",
+          "title": "2 zombier kom inn i Lundsneset",
+          "text": "Lyd trekker dem til. Sperr grensene eller hold vakt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Milepæl: Et trygt sted",
+          "text": "Ta over en sone."
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 47,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 47,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 88,
+          "fatigue": 47,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 47,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "clue",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "followup",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "clue",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        }
+      ]
+    },
+    {
+      "day": 6,
+      "intent": "Vi gjør leiren varig før neste store tur. Tor og Leila etablerer HQ, Marius bygger sperringer, og Ingrid søker mer utstyr og mat.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "HQ etablert: Lundsneset kystgård",
+          "text": "Kystgård. Har fra start: kai og båtplass.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Fra tilflukt til hovedkvarter",
+          "text": "Kystgård. Har fra start: kai og båtplass.",
+          "zoneId": "z3-0018",
+          "first": "hq"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Planker og piggtråd i Lundsneset",
+          "text": "2 av 2 grenser er sperret.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "En grense som kan holde",
+          "text": "2 av 2 grenser er sperret.",
+          "zoneId": "z3-0018",
+          "first": "perimeter"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Søk i Lundsneset",
+          "text": "Ingrid fant 1 ammunisjon, 2 medisin, 1 batterier, 1 elektronikk, 5 drivstoff, 1 mekaniske deler, 5 mat, 5 byggemateriale, 4 vann. 26 % gjennomsøkt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det som kan vokse videre",
+          "text": "En tom frøpose har falmet i et vindu. På baksiden står en kort påminnelse om å vanne. Laget begynner å snakke om mat som kan komme igjen, i stedet for enda en kasse som tømmes. Ingen har startet dyrkingen her ennå. Det krever arbeid, folk og et sted dere kan holde.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Milepæl: Hovedkvarter",
+          "text": "Etabler et HQ i en sone dere eier."
+        },
+        {
+          "tone": "warn",
+          "title": "En stille kveld",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "En stille kveld",
+          "text": "Dere valgte: Nyt det."
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 65,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 65,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 88,
+          "fatigue": 65,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 65,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "clue",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "followup",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "clue",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 7,
+      "intent": "Et trygt tilhold gir plass til å hente seg inn. Leila behandler skaden sin; Ingrid, Marius og Tor hviler før nye undersøkelser.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Skadde behandlet",
+          "text": "Ingen i crewet fikk behandling."
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "warn",
+          "title": "Posten var tom",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Posten var tom",
+          "text": "Dere valgte: Gi en ny sjanse."
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 90,
+          "fatigue": 40,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "clue",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "followup",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "clue",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 8,
+      "intent": "Vi gir Marius en ny sjanse. Han drar sammen med Ingrid for å undersøke sjekklisten. Tor begynner på et vakttårn, mens Leila får ro til å hente seg inn.",
+      "report": [
+        {
+          "tone": "info",
+          "title": "Bygger vakttårn",
+          "text": "8 av 12 timer."
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det siste punktet på lista",
+          "text": "Lista handler om ansvar når folk går ut sammen. Marius vil ikke bruke den som en fortelling om noen han ikke kjenner. Det er også brukbare reservedeler å berge. Dere kan ta delene og avslutte, eller la ham prøve å gjøre lista til en felles vane.",
+          "zoneId": "z3-0006"
+        },
+        {
+          "tone": "warn",
+          "title": "Et skjult lager",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Et skjult lager",
+          "text": "Dere valgte: Hent det."
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 97,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "choice",
+          "zoneId": "z3-0006",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "followup",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "clue",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 9,
+      "intent": "Et matfunn ga oss pusterom. Tor fullfører vakttårnet. Leila undersøker mappen hjemme. Marius og Ingrid lar reservedelene stå og følger sjekklisten videre.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Vakttårn er ferdig",
+          "text": "Ser trusler tidligere og frigjør patruljer."
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Navn uten svar",
+          "text": "Mellom navnene står små påminnelser: husk vann, spør igjen, sett deg ned hos den som er redd. Leila leser en av dem to ganger. En førstehjelpskasse kan tas med nå. Ellers kan hun bruke mer tid på notatene og ta en samtale med gruppen om hvordan de passer på hverandre.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det siste punktet på lista",
+          "text": "Marius har tatt lista med videre. Ved det kjente samlingsstedet vil han arbeide med den før han sier mer. «Hvis vi skal fortsette å gå ut sammen, må alle få komme til orde om veien hjem.» Neste sted: Lundsneset kystgård.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 97,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "followup",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "followup",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "choice",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 10,
+      "intent": "Marius arbeider med sjekklisten og Leila henter førstehjelpskassen. Ingrids reise binder den eneste båten, så Tor søker hjemme i stedet for å fiske.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Austbø er speidet",
+          "text": "Ingrid: om lag 225–242 zombier.",
+          "zoneId": "z3-0002"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Søk i Lundsneset",
+          "text": "Tor fant 1 ammunisjon, 1 medisin, 1 batterier, 1 elektronikk, 1 salt, 6 drivstoff, 1 mekaniske deler, 6 mat, 5 byggemateriale, 4 vann. 30 % gjennomsøkt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det siste punktet på lista",
+          "text": "Marius legger lista på bordet. «Det første er å komme fram. Det andre er å komme hjem. Det tredje er å vite hvem vi mangler.» Arbeidet har også gitt et lite praktisk sett. Dere må velge hva dere prioriterer.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Avsluttet: Navn uten svar",
+          "text": "Dere tok den endelige forsyningen og lot resten av sporet ligge. Lasten følger laget; denne kassen fylles ikke opp igjen.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Skiftet som aldri tok slutt",
+          "text": "En håndskrevet handleliste har havnet mellom to hyller: melk, brød, bursdagslys. Laget blir stående litt før de går videre. Det som var en vanlig handletur, ble aldri ferdig. Lista blir med i feltboka; det er fortsatt det faktiske søket som avgjør hva de får med seg hjem.",
+          "zoneId": "z3-0002"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Fortøyningen",
+          "text": "Et løst tau slår mot en stolpe ved vannet. Lyden er liten, men alle stanser. Når de går videre, har laget skrevet tre spørsmål i margen: hvor kan vi legge til, hva kan vi bære, og hvordan kommer vi hjem? Kysten gir muligheter. Før noen legger ut, må båten, lasten og returen være avklart.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 54,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 54,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 97,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 54,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "choice",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "followup",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 11,
+      "intent": "Marius velger felles gjennomgang framfor arbeidssettet. De andre hviler etter feltarbeidet.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Avsluttet: Det siste punktet på lista",
+          "text": "Marius delte erfaringen med gruppen. Håpet og tilliten vokste; dere valgte bort arbeidssettet.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 72,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "followup",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 12,
+      "intent": "Ingrid og Leila følger rutekartet ved Meny Hundvåg. Reisen bruker båten; Tor søker hjemme mens Marius hviler.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Søk i Lundsneset",
+          "text": "Tor fant 1 ammunisjon, 1 medisin, 1 batterier, 1 elektronikk, 1 salt, 6 drivstoff, 2 mekaniske deler, 6 mat, 6 byggemateriale, 3 vann. 35 % gjennomsøkt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Strekene i margen",
+          "text": "Ingrid har ordnet notatene og gjort klart en gjennomgang. Under arbeidet har hun også berget et lite arbeidssett. «Vi skal ikke være avhengige av at jeg går først hver gang.» Dere kan prioritere erfaringen som binder laget sammen, eller utstyret dere trenger til neste jobb.",
+          "zoneId": "z3-0002"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Mellom trærne",
+          "text": "Trærne gjør det vanskelig å holde øyekontakt. Laget stanser og avtaler et lavt signal før de fortsetter. En hånd opp. Vent. Kom nærmere. De teller folk på nytt. Stillheten kan føles trygg, men det laget faktisk har observert, veier tyngre enn følelsen.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "choice",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-forest",
+          "title": "Mellom trærne",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 13,
+      "intent": "Ingrid velger det bergede arbeidssettet framfor gjennomgangen. Tor og Marius søker etter flere forsyninger hjemme, mens Leila hviler.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Søk i Lundsneset",
+          "text": "Marius, Tor fant 1 ammunisjon, 3 medisin, 2 batterier, 2 elektronikk, 2 salt, 11 drivstoff, 3 mekaniske deler, 12 mat, 10 byggemateriale, 8 vann. 43 % gjennomsøkt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Avsluttet: Strekene i margen",
+          "text": "Dere prioriterte arbeidssettet. Delene og materialene følger laget fysisk; historien er avsluttet.",
+          "zoneId": "z3-0002"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Noens vanlige morgen",
+          "text": "En sko ved en terskel blir stående i feltboka. Noen tenker på sin egen gang hjemme. Ingen sier det høyt. Laget teller hvilke deler av boligområdet de allerede har undersøkt, og hva som må vente. Bak hver dør kan det ligge en vanlig morgen som stoppet opp.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "resolved",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-forest",
+          "title": "Mellom trærne",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-residential",
+          "title": "Noens vanlige morgen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 14,
+      "intent": "Gruppen begynner å sikre naboområdet der første tur startet. Marius og Tor bekjemper zombier i Hundvåg 2, Ingrid og Leila undersøker området sammen.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "bad",
+          "title": "Tor ble skadet",
+          "text": "I Hundvåg 2: 7 i skade."
+        },
+        {
+          "tone": "good",
+          "title": "21 zombier drept i Hundvåg 2",
+          "text": "Marius, Tor, 11 patroner brukt. Om lag 32 igjen. 1 prøver tatt med hjem.",
+          "zoneId": "z3-0006"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "warn",
+          "title": "Stemmen klokka sju",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Stemmen klokka sju",
+          "text": "Dere valgte: Send to dit."
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 11,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 93,
+          "fatigue": 54,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "resolved",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-forest",
+          "title": "Mellom trærne",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-residential",
+          "title": "Noens vanlige morgen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 15,
+      "intent": "Radiostemmen binder Ingrid og Marius i to døgn. Leila fisker for å holde maten oppe mens Tor hviler etter skaden.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Milepæl: Mat som kommer igjen",
+          "text": "Produser mat: dyrk, fisk eller bygg drivhus."
+        },
+        {
+          "tone": "warn",
+          "title": "Den andre sjansen",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Den andre sjansen",
+          "text": "Dere valgte: Hedre Marius ved bålet."
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 11,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 0,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "resolved",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-forest",
+          "title": "Mellom trærne",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-residential",
+          "title": "Noens vanlige morgen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 16,
+      "intent": "Leila og Tor sikrer nye forsyninger mens de venter på radiolaget. Dette gjør kostnaden ved to bortreiste personer synlig.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "Søk i Lundsneset",
+          "text": "Leila, Tor fant 1 ammunisjon, 2 medisin, 2 batterier, 3 elektronikk, 1 salt, 11 drivstoff, 4 mekaniske deler, 12 mat, 10 byggemateriale, 7 vann. 52 % gjennomsøkt.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Personlig utstyr funnet",
+          "text": "Verktøysett. Rapportert av laget ved faktisk hjemkomst."
+        },
+        {
+          "tone": "warn",
+          "title": "Et opptak",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Et opptak",
+          "text": "Dere valgte: Merk kjelleren på kartet."
+        },
+        {
+          "tone": "good",
+          "title": "Et kryss på kartet",
+          "text": "Kjelleren i Hundvåg 2 venter på dere.",
+          "zoneId": "z3-0006"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 11,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 18,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "resolved",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-forest",
+          "title": "Mellom trærne",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-residential",
+          "title": "Noens vanlige morgen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 17,
+      "intent": "Radiolaget er tilbake med et nytt spor i Hundvåg 2. Alle fire går sammen for å bekjempe trusselen før de leter etter kjelleren.",
+      "report": [
+        {
+          "tone": "good",
+          "title": "32 zombier drept i Hundvåg 2",
+          "text": "Ingrid, Marius, Leila, Tor, 16 patroner brukt. Om lag 12 igjen. 2 prøver tatt med hjem.",
+          "zoneId": "z3-0006"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        }
+      ],
+      "crew": [
+        {
+          "id": "ingrid",
+          "health": 100,
+          "fatigue": 29,
+          "alive": true
+        },
+        {
+          "id": "marius",
+          "health": 100,
+          "fatigue": 54,
+          "alive": true
+        },
+        {
+          "id": "leila",
+          "health": 100,
+          "fatigue": 54,
+          "alive": true
+        },
+        {
+          "id": "tor",
+          "health": 100,
+          "fatigue": 36,
+          "alive": true
+        }
+      ],
+      "storyStatus": [
+        {
+          "id": "marius-return-notes",
+          "title": "Det siste punktet på lista",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "marius"
+        },
+        {
+          "id": "ingrid-route-notes",
+          "title": "Strekene i margen",
+          "status": "resolved",
+          "zoneId": "z3-0002",
+          "boundPersonId": "ingrid"
+        },
+        {
+          "id": "leila-care-notes",
+          "title": "Navn uten svar",
+          "status": "resolved",
+          "zoneId": "z3-0018",
+          "boundPersonId": "leila"
+        },
+        {
+          "id": "local-farm",
+          "title": "Det som kan vokse videre",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-shop",
+          "title": "Skiftet som aldri tok slutt",
+          "status": "resolved",
+          "zoneId": "z3-0002"
+        },
+        {
+          "id": "local-coast",
+          "title": "Fortøyningen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-forest",
+          "title": "Mellom trærne",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        },
+        {
+          "id": "local-residential",
+          "title": "Noens vanlige morgen",
+          "status": "resolved",
+          "zoneId": "z3-0018"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "actualDay": 1,
+    "cues": [],
+    "scenes": [
+      {
+        "id": "experience:scout:0:o0-scout-z3-0018-ingrid.marius.leila.tor",
+        "place": "Lundsneset",
+        "title": "Veien ut, veien hjem"
+      }
+    ],
+    "archiveReplayedCue": false,
+    "errors": [],
+    "screenshotLimitation": "DOM measured during live replay; no claim about animation frames on a physical GPU"
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "actualDay": 1,
+    "cues": [
+      {
+        "id": "experience:poi:0:o0-scout-z3-0018-ingrid.marius.leila.tor",
+        "place": "Lundsneset",
+        "title": "Et sted å undersøke",
+        "titleFont": 12,
+        "placeFont": 12,
+        "placeClipped": false,
+        "rect": {
+          "x": 115,
+          "y": 470,
+          "right": 275,
+          "bottom": 532.1875
+        },
+        "overlaps": []
+      }
+    ],
+    "scenes": [
+      {
+        "id": "experience:scout:0:o0-scout-z3-0018-ingrid.marius.leila.tor",
+        "place": "Lundsneset",
+        "title": "Veien ut, veien hjem"
+      }
+    ],
+    "archiveReplayedCue": false,
+    "errors": [],
+    "screenshotLimitation": "DOM measured during live replay; no claim about animation frames on a physical GPU"
+  }
+]

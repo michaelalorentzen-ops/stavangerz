@@ -1,0 +1,550 @@
+[
+  {
+    "width": 1280,
+    "label": "map-controls",
+    "geometry": {
+      "search": [
+        {
+          "open": false,
+          "x": 1046,
+          "y": 98,
+          "width": 210,
+          "height": 46
+        }
+      ],
+      "elements": [
+        {
+          "selector": ".rz-map-tools",
+          "x": 627.953125,
+          "y": 710,
+          "width": 586.046875,
+          "height": 44
+        },
+        {
+          "selector": ".maplibregl-ctrl-attrib",
+          "x": 855.34375,
+          "y": 766,
+          "width": 406.65625,
+          "height": 26
+        },
+        {
+          "selector": ".rz-legend",
+          "x": 112,
+          "y": 787,
+          "width": 96.109375,
+          "height": 27
+        },
+        {
+          "selector": ".sz-command-bar",
+          "x": 0,
+          "y": 812,
+          "width": 1280,
+          "height": 88
+        }
+      ],
+      "targets": [
+        {
+          "label": "Zoom inn",
+          "x": 754.078125,
+          "y": 710,
+          "width": 44,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Zoom ut",
+          "x": 803.078125,
+          "y": 710,
+          "width": 44,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Oversikt",
+          "x": 852.078125,
+          "y": 710,
+          "width": 66.953125,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": "rz-map-layer-option on"
+        },
+        {
+          "label": "Fare",
+          "x": 924.03125,
+          "y": 710,
+          "width": 44.84375,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": "rz-map-layer-option "
+        },
+        {
+          "label": "Forsyning",
+          "x": 973.875,
+          "y": 710,
+          "width": 75.859375,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": "rz-map-layer-option "
+        },
+        {
+          "label": "Ditt område",
+          "x": 1054.734375,
+          "y": 710,
+          "width": 86.109375,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": "rz-territory-focus"
+        },
+        {
+          "label": "Til leiren",
+          "x": 1145.84375,
+          "y": 710,
+          "width": 68.15625,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Ingrid: Hjemme. Lundsneset. Åpne persondetaljer",
+          "x": 26,
+          "y": 824.5,
+          "width": 114.84375,
+          "height": 64,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Marius: Hjemme. Lundsneset. Åpne persondetaljer",
+          "x": 147.84375,
+          "y": 824.5,
+          "width": 114.84375,
+          "height": 64,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Leila: Hjemme. Lundsneset. Åpne persondetaljer",
+          "x": 269.6875,
+          "y": 824.5,
+          "width": 114.84375,
+          "height": 64,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Tor: I felt. Skeie. Åpne persondetaljer",
+          "x": 391.53125,
+          "y": 824.5,
+          "width": 92.703125,
+          "height": 64,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Dagsplan0",
+          "x": 824.453125,
+          "y": 834.5,
+          "width": 144.390625,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "La døgnet gåMellomrom",
+          "x": 986.84375,
+          "y": 830.5,
+          "width": 269.15625,
+          "height": 52,
+          "receivesPointer": true,
+          "covering": ""
+        }
+      ]
+    },
+    "overlap": [],
+    "targetsBelow44": [],
+    "obscured": [],
+    "attributionLegendOverlap": false
+  },
+  {
+    "width": 1280,
+    "label": "regional-header",
+    "geometry": {
+      "close": {
+        "x": 1107,
+        "y": 200.59375,
+        "width": 44,
+        "height": 44
+      },
+      "text": [
+        {
+          "text": "Én organisasjon · lokale forsyninger",
+          "x": 175,
+          "y": 240.59375,
+          "width": 299.359375,
+          "height": 14
+        },
+        {
+          "text": "Regionale ledere",
+          "x": 175,
+          "y": 262.59375,
+          "width": 134.828125,
+          "height": 26
+        },
+        {
+          "text": "Gi lokale rutiner et mandat. Folk, utstyr og forsyninger må reise til regionen; krig, diplomati og lover avgjør du.",
+          "x": 175,
+          "y": 302.984375,
+          "width": 670.328125,
+          "height": 16
+        }
+      ]
+    },
+    "overlap": []
+  },
+  {
+    "width": 1280,
+    "label": "hq-header",
+    "geometry": {
+      "close": {
+        "x": 1107,
+        "y": 89.75,
+        "width": 44,
+        "height": 44
+      },
+      "text": [
+        {
+          "text": "HOVEDKVARTER / DAG 0",
+          "x": 214,
+          "y": 107.75,
+          "width": 138.125,
+          "height": 15
+        },
+        {
+          "text": "HOVEDKVARTER / DAG 0",
+          "x": 352.125,
+          "y": 107.75,
+          "width": 8.09375,
+          "height": 15
+        },
+        {
+          "text": "Lundsneset",
+          "x": 214,
+          "y": 127.34375,
+          "width": 117.4375,
+          "height": 34
+        },
+        {
+          "text": "DRIFT / DAGENS PRIORITERING",
+          "x": 153,
+          "y": 220.828125,
+          "width": 182.296875,
+          "height": 15
+        },
+        {
+          "text": "ARBEIDSKRAFT",
+          "x": 776.109375,
+          "y": 306.765625,
+          "width": 92.484375,
+          "height": 15
+        }
+      ]
+    },
+    "overlap": []
+  },
+  {
+    "width": 1280,
+    "label": "poi-header",
+    "geometry": {
+      "close": {
+        "x": 1107,
+        "y": 225.703125,
+        "width": 44,
+        "height": 44
+      },
+      "text": [
+        {
+          "text": "MULIG HOVEDKVARTER",
+          "x": 265,
+          "y": 286.40625,
+          "width": 141.28125,
+          "height": 15
+        },
+        {
+          "text": "Lundsneset kystgård",
+          "x": 265,
+          "y": 315,
+          "width": 169.203125,
+          "height": 26
+        }
+      ]
+    },
+    "overlap": []
+  },
+  {
+    "width": 1280,
+    "day": 1,
+    "supply": {
+      "food": 11.450000000000001,
+      "water": 24.55
+    },
+    "errors": []
+  },
+  {
+    "width": 390,
+    "label": "map-controls",
+    "geometry": {
+      "search": [
+        {
+          "open": false,
+          "x": 220,
+          "y": 122,
+          "width": 160,
+          "height": 46
+        }
+      ],
+      "elements": [
+        {
+          "selector": ".rz-map-tools",
+          "x": 65,
+          "y": 535,
+          "width": 260,
+          "height": 93
+        },
+        {
+          "selector": ".maplibregl-ctrl-attrib",
+          "x": 10,
+          "y": 644.40625,
+          "width": 367,
+          "height": 39.59375
+        },
+        {
+          "selector": ".rz-legend",
+          "x": 64,
+          "y": 705,
+          "width": 88.109375,
+          "height": 23
+        },
+        {
+          "selector": ".sz-command-bar",
+          "x": 0,
+          "y": 702,
+          "width": 390,
+          "height": 142
+        }
+      ],
+      "targets": [
+        {
+          "label": "Zoom inn",
+          "x": 132,
+          "y": 535,
+          "width": 44,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Zoom ut",
+          "x": 181,
+          "y": 535,
+          "width": 44,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Til leiren",
+          "x": 260.84375,
+          "y": 584,
+          "width": 64.15625,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Ingrid: Hjemme. Lundsneset. Åpne persondetaljer",
+          "x": 14,
+          "y": 714,
+          "width": 85.25,
+          "height": 52,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Marius: Hjemme. Lundsneset. Åpne persondetaljer",
+          "x": 106.25,
+          "y": 714,
+          "width": 85.25,
+          "height": 52,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Leila: Hjemme. Lundsneset. Åpne persondetaljer",
+          "x": 198.5,
+          "y": 714,
+          "width": 85.25,
+          "height": 52,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Tor: I felt. Skeie. Åpne persondetaljer",
+          "x": 290.75,
+          "y": 714,
+          "width": 85.25,
+          "height": 52,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "Dagsplan0",
+          "x": 12,
+          "y": 779,
+          "width": 120.53125,
+          "height": 44,
+          "receivesPointer": true,
+          "covering": ""
+        },
+        {
+          "label": "La døgnet gåMellomrom",
+          "x": 217.1875,
+          "y": 772.65625,
+          "width": 160.8125,
+          "height": 56.6875,
+          "receivesPointer": true,
+          "covering": ""
+        }
+      ]
+    },
+    "overlap": [],
+    "targetsBelow44": [],
+    "obscured": [],
+    "attributionLegendOverlap": false
+  },
+  {
+    "width": 390,
+    "label": "regional-header",
+    "geometry": {
+      "close": {
+        "x": 324,
+        "y": 119.078125,
+        "width": 44,
+        "height": 44
+      },
+      "text": [
+        {
+          "text": "Én organisasjon · lokale forsyninger",
+          "x": 43,
+          "y": 150.078125,
+          "width": 199.578125,
+          "height": 14
+        },
+        {
+          "text": "Én organisasjon · lokale forsyninger",
+          "x": 43,
+          "y": 164.078125,
+          "width": 91.484375,
+          "height": 14
+        },
+        {
+          "text": "Regionale ledere",
+          "x": 43,
+          "y": 186.078125,
+          "width": 134.828125,
+          "height": 26
+        },
+        {
+          "text": "Gi lokale rutiner et mandat. Folk, utstyr og forsyninger må reise til regionen; krig, diplomati og lover avgjør du.",
+          "x": 43,
+          "y": 226.46875,
+          "width": 256.28125,
+          "height": 16
+        },
+        {
+          "text": "Gi lokale rutiner et mandat. Folk, utstyr og forsyninger må reise til regionen; krig, diplomati og lover avgjør du.",
+          "x": 43,
+          "y": 247.265625,
+          "width": 232.671875,
+          "height": 16
+        },
+        {
+          "text": "Gi lokale rutiner et mandat. Folk, utstyr og forsyninger må reise til regionen; krig, diplomati og lover avgjør du.",
+          "x": 43,
+          "y": 268.0625,
+          "width": 174.078125,
+          "height": 16
+        }
+      ]
+    },
+    "overlap": []
+  },
+  {
+    "width": 390,
+    "label": "hq-header",
+    "geometry": {
+      "close": {
+        "x": 324,
+        "y": 22,
+        "width": 44,
+        "height": 44
+      },
+      "text": [
+        {
+          "text": "Lundsneset",
+          "x": 110,
+          "y": 50,
+          "width": 117.4375,
+          "height": 34
+        },
+        {
+          "text": "DRIFT / DAGENS PRIORITERING",
+          "x": 43,
+          "y": 352.625,
+          "width": 182.296875,
+          "height": 15
+        }
+      ]
+    },
+    "overlap": []
+  },
+  {
+    "width": 390,
+    "label": "poi-header",
+    "geometry": {
+      "close": {
+        "x": 324,
+        "y": 218.40625,
+        "width": 44,
+        "height": 44
+      },
+      "text": [
+        {
+          "text": "MULIG HOVEDKVARTER",
+          "x": 135,
+          "y": 256.40625,
+          "width": 141.28125,
+          "height": 15
+        },
+        {
+          "text": "Lundsneset kystgård",
+          "x": 135,
+          "y": 285,
+          "width": 169.203125,
+          "height": 26
+        }
+      ]
+    },
+    "overlap": []
+  },
+  {
+    "width": 390,
+    "day": 1,
+    "supply": {
+      "food": 11.450000000000001,
+      "water": 24.55
+    },
+    "errors": []
+  }
+]

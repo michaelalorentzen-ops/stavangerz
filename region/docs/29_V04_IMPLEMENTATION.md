@@ -183,3 +183,22 @@ Eieren ba om tydeligere spillpreg etter en funksjonelt positiv QA. [40_V04_ART_D
 ## QA32 før balansering
 
 Eieren ba om å fullføre gjenværende QA-punkter før tallbalansering. [41_V04_QA32_COMPLETION.md](41_V04_QA32_COMPLETION.md) registrerer lagringsbibliotek, konfigurerbare hurtigtaster, lokal Foley, komplett inventarillustrasjon, seiersoversikt og spillerutløst kartmåling, med eksplisitt skille mellom funksjonelle tester, naturlig seiersbevis og fysisk GPU. Naturlig stabilitetsseier er nå reprodusert på dag 194 med identisk uavbrutt sluttilstand; fysisk GPU er fortsatt ikke verifisert.
+
+
+## Levende spillopplevelse, 15.11.2026
+
+Nytt eiermandat D29–D35: bevar godkjent geografi og tall, utvid innhold og visuell feedback rundt faktisk spilling. [42_V04_LIVING_EXPERIENCE.md](42_V04_LIVING_EXPERIENCE.md) inneholder gjenopprettet baseline/QA33, innholdskart for fem faser, disjunkt filansvar, felles rapportkontrakt og verifisert spillerreise når integrert. Eksisterende hendelser, fysisk rapportering, kartmotor, arkiv og saves gjenbrukes. Leveransen er draft; ingen automatisk merge/deploy.
+
+
+## QA34 – visuell og redaksjonell polish, 16.11.2026
+
+[43_V04_QA34_POLISH.md](43_V04_QA34_POLISH.md) følger opp seks lave funn med lesbar metadata, tre egne hendelsesmotiver, synlig minneknapp på skadedager, fast feltjournal, menneskelig etterspill og korrekt HQ-semantikk. Låste regler, geografi, saves og tallbalanse beholdes. D32/D35 gjelder fortsatt.
+
+
+## QA34 runde 2 – flere bilder og opptjente minner, 16.11.2026
+
+[44_V04_MEMORY_VARIATION.md](44_V04_MEMORY_VARIATION.md) følger D36 med tolv nye motiv, miljøtilpasset kamp, identitetsbevarte personscener og seks faktiske fremgangsminner etter førstegangene. J-binding, mobilens sitatnavn og synlig protestutfall er rettet. Valgfritt, avgrenset minnearkiv bevarer originalåtte og eldre saves; D32/D35 gjelder fortsatt.
+
+## Levende ekspedisjoner i døgnavspillingen, 16.11.2026
+
+[45_V04_LIVE_EXPEDITIONS.md](45_V04_LIVE_EXPEDITIONS.md) viderefører PR #34 med offentlige ekspedisjonsøyeblikk i nådd replayfase, pause/Skip som bevarer påkrevde valg, ressursikoner, mindre personvalg-repetisjon, åtte reaktive observasjoner og tre kortere valgfrie historier. Hvile publiserer eksisterende faktiske virkninger uten endret beregning. En naturlig 20-døgns UI-kampanje og eksplisitte PC-/mobilscenarioer dekker førsteganger, videre innhold, lagring og inngang til fase 2. Overtakelsestempo og gjentatte feltvalg er registrerte tuningfunn; D32/D35 gjelder fortsatt. Leveransen erklærer ikke hele spillet ferdig.

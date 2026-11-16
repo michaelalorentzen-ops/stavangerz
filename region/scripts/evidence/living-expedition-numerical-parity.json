@@ -1,0 +1,19 @@
+{
+  "kind": "Synthetic integration/reference engine parity; not natural playthrough",
+  "referenceCommit": "90abd6b",
+  "referenceEngine": "Unmodified main engine immediately before this presentation work",
+  "days": 7,
+  "operations": [
+    "search",
+    "scout",
+    "claim",
+    "build watchpost",
+    "establishHq",
+    "fortify",
+    "clear 70 actual zombies"
+  ],
+  "assertion": "Exact full simulation projection equality after EACH operation; excludes reports/experiences/memory/discoveries/campaign receipt/private-line presentation metadata only",
+  "projectionSha256": "939cee8bf96058bfc6ef06636ba4f80b9ec3a3eafe0d3a87ad6ec0c775046a03",
+  "randomness": "No added RNG calls; combat/loot/health/ammo outcomes compared",
+  "reproduce": "EXPERIENCE_REFERENCE_ENGINE=<90abd6b checkout>/region/packages/gameplay/src/region/engine.ts node --import tsx scripts/check-expedition-experiences.ts"
+}

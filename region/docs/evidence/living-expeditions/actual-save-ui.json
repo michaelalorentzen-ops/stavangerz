@@ -1,0 +1,36 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "actualDay": 17,
+    "firsts": [
+      "poi",
+      "scout",
+      "combat",
+      "gear",
+      "search",
+      "claim",
+      "hq",
+      "perimeter"
+    ],
+    "exactReload": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "actualDay": 17,
+    "firsts": [
+      "poi",
+      "scout",
+      "combat",
+      "gear",
+      "search",
+      "claim",
+      "hq",
+      "perimeter"
+    ],
+    "exactReload": true,
+    "errors": []
+  }
+]

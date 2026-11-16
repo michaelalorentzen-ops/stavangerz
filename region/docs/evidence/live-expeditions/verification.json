@@ -1,0 +1,32 @@
+{
+  "runtimeSource": "3f67a93",
+  "baseline": "42f30ac",
+  "mainBaseline": "5a2bebe",
+  "functionalScripts": 30,
+  "naturalUIDays": 20,
+  "seed": 101,
+  "avatar": "ingrid",
+  "simulationEdited": false,
+  "resumeDays": [
+    2,
+    13
+  ],
+  "viewports": [
+    [
+      1280,
+      800
+    ],
+    [
+      390,
+      844
+    ]
+  ],
+  "physicalGPU": false,
+  "geographyTypesSystemsFilesUnchanged": true,
+  "save20SHA256": "540e9f479dba028a51b338c4466e55b76194a8aaf95b8448c6228e2c7f51644b",
+  "notes": [
+    "UI campaign iteratively fixed during development; final first expedition and layout tested separately.",
+    "Final numeric change is preview text cap only; simulation quantities and progression unchanged.",
+    "Late phase2 uses an explicitly modified scenario copy, not the natural campaign."
+  ]
+}

@@ -1,0 +1,2675 @@
+{
+  "kind": "Orkestratorstyrt faktisk UI-kampanje, ingen bot-planlegging eller tilstandsredigering",
+  "seed": 101,
+  "start": "z3-0018",
+  "endDay": 20,
+  "sourceSHA256": "540e9f479dba028a51b338c4466e55b76194a8aaf95b8448c6228e2c7f51644b",
+  "exactResumeDays": [
+    2,
+    13
+  ],
+  "reports": [
+    {
+      "day": 1,
+      "lines": [
+        {
+          "tone": "info",
+          "title": "Hundvåg 2 er speidet",
+          "text": "Ingrid, Marius, Leila, Tor: om lag 31–40 zombier.",
+          "zoneId": "z3-0006",
+          "category": "scout",
+          "priority": 25,
+          "facts": {
+            "action": "scout",
+            "orderId": "o0-scout-z3-0006-ingrid.marius.leila.tor",
+            "missionId": "mission:0:o0-scout-z3-0006-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Veien ut, veien hjem",
+          "text": "Anslag: 31–40 zombier.",
+          "zoneId": "z3-0006",
+          "experience": {
+            "version": 1,
+            "id": "experience:scout:0:o0-scout-z3-0006-ingrid.marius.leila.tor",
+            "kind": "scout",
+            "day": 0,
+            "zoneId": "z3-0006",
+            "zoneName": "Hundvåg 2",
+            "title": "Veien ut, veien hjem",
+            "text": "Laget stanser og ser ruten an før neste steg. Det som faktisk lar seg observere, blir skrevet ned; resten får vente. Et tokt handler også om å finne veien hjem.",
+            "result": "Anslag: 31–40 zombier.",
+            "participants": [
+              {
+                "id": "ingrid",
+                "name": "Ingrid",
+                "role": "Speider"
+              },
+              {
+                "id": "marius",
+                "name": "Marius",
+                "role": "Jeger"
+              },
+              {
+                "id": "leila",
+                "name": "Leila",
+                "role": "Sykepleier"
+              },
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "voice": {
+              "personId": "ingrid",
+              "name": "Ingrid",
+              "text": "Et anslag er bedre enn å gjette. Vi må fortsatt se oss for."
+            },
+            "facts": {
+              "minimum": 31,
+              "maximum": 40
+            },
+            "illustration": "farm",
+            "helpTopic": "scout",
+            "record": "first"
+          },
+          "facts": {
+            "action": "scout",
+            "orderId": "o0-scout-z3-0006-ingrid.marius.leila.tor",
+            "missionId": "mission:0:o0-scout-z3-0006-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Et navn blir et sted",
+          "text": "Hundvåg 2 kystgård er registrert i Hundvåg 2.",
+          "zoneId": "z3-0006",
+          "experience": {
+            "version": 1,
+            "id": "experience:poi:0:o0-scout-z3-0006-ingrid.marius.leila.tor",
+            "kind": "poi",
+            "day": 0,
+            "zoneId": "z3-0006",
+            "zoneName": "Hundvåg 2",
+            "title": "Et navn blir et sted",
+            "text": "Laget stanser ved opplysningene om stedet. Navnet får en strek i notatene, ikke et svar på alt som finnes der. Det er noe å følge videre når det passer med resten av planen.",
+            "result": "Hundvåg 2 kystgård er registrert i Hundvåg 2.",
+            "participants": [
+              {
+                "id": "ingrid",
+                "name": "Ingrid",
+                "role": "Speider"
+              },
+              {
+                "id": "marius",
+                "name": "Marius",
+                "role": "Jeger"
+              },
+              {
+                "id": "leila",
+                "name": "Leila",
+                "role": "Sykepleier"
+              },
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "voice": {
+              "personId": "ingrid",
+              "name": "Ingrid",
+              "text": "Et navn på kartet er en begynnelse. Vi må fortsatt undersøke stedet."
+            },
+            "facts": {
+              "poiId": "poi-649",
+              "poiName": "Hundvåg 2 kystgård"
+            },
+            "illustration": "farm",
+            "helpTopic": "poi",
+            "record": "first"
+          },
+          "facts": {
+            "action": "scout",
+            "orderId": "o0-scout-z3-0006-ingrid.marius.leila.tor",
+            "missionId": "mission:0:o0-scout-z3-0006-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det siste punktet på lista",
+          "text": "Ved Hundvåg 2 kystgård: Marius stanser ved en sjekkliste med bare tre punkter. Det siste er understreket: «Tell alle på vei hjem.» Han sier lite, men ber om å få undersøke resten selv.",
+          "zoneId": "z3-0006",
+          "category": "discovery",
+          "discoveryId": "marius-return-notes",
+          "eventId": "discovery:marius-return-notes:0",
+          "facts": {
+            "discoveryId": "marius-return-notes",
+            "status": "clue",
+            "storyId": "marius-return-notes",
+            "illustration": "farm"
+          }
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "lines": [
+        {
+          "tone": "bad",
+          "title": "Tor ble skadet",
+          "text": "I Lundsneset: 10 i skade.",
+          "category": "loot",
+          "priority": 90,
+          "facts": {
+            "action": "search",
+            "orderId": "o1-search-z3-0018-ingrid.marius.leila.tor",
+            "missionId": "mission:1:o1-search-z3-0018-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 0,
+            "searchAfter": 32,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Ingrid, Marius, Leila, Tor fant 1 båter, 3 ammunisjon, 4 medisin, 4 batterier, 5 elektronikk, 2 salt, 1 generatorer, 21 drivstoff, 7 mekaniske deler, 24 mat, 20 byggemateriale, 11 vann. 17 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Amina ble med",
+          "text": "Ingrid, Marius, Leila, Tor fant noen som gjemte seg i Lundsneset. Lege: Jobbet på SUS til siste dag.",
+          "category": "loot",
+          "priority": 50,
+          "facts": {
+            "action": "search",
+            "orderId": "o1-search-z3-0018-ingrid.marius.leila.tor",
+            "missionId": "mission:1:o1-search-z3-0018-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Det vi kan bære",
+          "text": "Ingrid, Marius, Leila, Tor fant 1 båter, 3 ammunisjon, 4 medisin, 4 batterier, 5 elektronikk, 2 salt, 1 generatorer, 21 drivstoff, 7 mekaniske deler, 24 mat, 20 byggemateriale, 11 vann. 17 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "experience": {
+            "version": 1,
+            "id": "experience:search:1:o1-search-z3-0018-ingrid.marius.leila.tor",
+            "kind": "search",
+            "day": 1,
+            "zoneId": "z3-0018",
+            "zoneName": "Lundsneset",
+            "title": "Det vi kan bære",
+            "text": "Laget fordeler oppmerksomheten mellom letingen og neste steg. Det er lett å ønske seg ett funn til. Det som blir med videre, må faktisk bæres.",
+            "result": "Ingrid, Marius, Leila, Tor fant 1 båter, 3 ammunisjon, 4 medisin, 4 batterier, 5 elektronikk, 2 salt, 1 generatorer, 21 drivstoff, 7 mekaniske deler, 24 mat, 20 byggemateriale, 11 vann. 17 % gjennomsøkt.",
+            "participants": [
+              {
+                "id": "ingrid",
+                "name": "Ingrid",
+                "role": "Speider"
+              },
+              {
+                "id": "marius",
+                "name": "Marius",
+                "role": "Jeger"
+              },
+              {
+                "id": "leila",
+                "name": "Leila",
+                "role": "Sykepleier"
+              },
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "voice": {
+              "personId": "leila",
+              "name": "Leila",
+              "text": "Det vi kan bære, er det vi faktisk kan leve av."
+            },
+            "facts": {
+              "searchBefore": 0,
+              "searchAfter": 32,
+              "food": 24,
+              "water": 11,
+              "boat": 1,
+              "ammo": 3,
+              "medicine": 4,
+              "batteries": 4,
+              "electronics": 5,
+              "salt": 2,
+              "generator": 1,
+              "fuel": 21,
+              "parts": 7,
+              "building": 20
+            },
+            "illustration": "farm",
+            "helpTopic": "search",
+            "record": "first"
+          },
+          "facts": {
+            "action": "search",
+            "orderId": "o1-search-z3-0018-ingrid.marius.leila.tor",
+            "missionId": "mission:1:o1-search-z3-0018-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Noe verdt å ta vare på",
+          "text": "Funnet: Kikkert. Utstyret må følge laget fram til faktisk levering.",
+          "zoneId": "z3-0018",
+          "experience": {
+            "version": 1,
+            "id": "experience:gear:1:o1-search-z3-0018-ingrid.marius.leila.tor",
+            "kind": "gear",
+            "day": 1,
+            "zoneId": "z3-0018",
+            "zoneName": "Lundsneset",
+            "title": "Noe verdt å ta vare på",
+            "text": "Laget ser over det som er funnet før turen går videre. En gjenstand kan gjøre neste oppdrag annerledes. Hvem som skal bruke den, er ikke avgjort av funnet.",
+            "result": "Funnet: Kikkert. Utstyret må følge laget fram til faktisk levering.",
+            "participants": [
+              {
+                "id": "ingrid",
+                "name": "Ingrid",
+                "role": "Speider"
+              },
+              {
+                "id": "marius",
+                "name": "Marius",
+                "role": "Jeger"
+              },
+              {
+                "id": "leila",
+                "name": "Leila",
+                "role": "Sykepleier"
+              },
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "voice": {
+              "personId": "tor",
+              "name": "Tor",
+              "text": "Et godt verktøy må være med den som trenger det."
+            },
+            "facts": {
+              "itemCount": 1,
+              "itemKinds": "binoculars"
+            },
+            "illustration": "farm",
+            "helpTopic": "gear",
+            "record": "first"
+          },
+          "facts": {
+            "action": "search",
+            "orderId": "o1-search-z3-0018-ingrid.marius.leila.tor",
+            "missionId": "mission:1:o1-search-z3-0018-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Etter møtet med de døde",
+          "text": "2 zombier ble drept under oppdraget. 1 i laget ble skadet.",
+          "zoneId": "z3-0018",
+          "experience": {
+            "version": 1,
+            "id": "experience:combat:1:o1-search-z3-0018-ingrid.marius.leila.tor",
+            "kind": "combat",
+            "day": 1,
+            "zoneId": "z3-0018",
+            "zoneName": "Lundsneset",
+            "title": "Etter møtet med de døde",
+            "text": "Etter kampen må neste steg finnes igjen. Laget går gjennom det som skjedde før arbeidet fortsetter. Dette er en erfaring å ta med inn i neste vurdering, ikke bare et tall over døde.",
+            "result": "2 zombier ble drept under oppdraget. 1 i laget ble skadet.",
+            "participants": [
+              {
+                "id": "ingrid",
+                "name": "Ingrid",
+                "role": "Speider"
+              },
+              {
+                "id": "marius",
+                "name": "Marius",
+                "role": "Jeger"
+              },
+              {
+                "id": "leila",
+                "name": "Leila",
+                "role": "Sykepleier"
+              },
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "voice": {
+              "personId": "marius",
+              "name": "Marius",
+              "text": "Vi må telle hvem som kommer med oss videre, ikke bare de døde."
+            },
+            "facts": {
+              "killed": 2,
+              "injuredCount": 1,
+              "ammoUsed": 0
+            },
+            "illustration": "farm",
+            "helpTopic": "clear",
+            "record": "first"
+          },
+          "facts": {
+            "action": "search",
+            "orderId": "o1-search-z3-0018-ingrid.marius.leila.tor",
+            "missionId": "mission:1:o1-search-z3-0018-ingrid.marius.leila.tor"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "category": "loot",
+          "priority": 65,
+          "title": "Personlig utstyr funnet",
+          "text": "Kikkert. Rapportert av laget ved faktisk hjemkomst."
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Strekene i margen",
+          "text": "Ved Lundsvågen naturskole: Ingrid legger merke til en brettet lapp med piler i margen. «Noen prøvde å holde orden mens alle andre løp.» Hun vil undersøke den selv. Foreløpig er det bare streker; dere vet ikke hvor de fører.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "ingrid-route-notes",
+          "eventId": "discovery:ingrid-route-notes:0",
+          "facts": {
+            "discoveryId": "ingrid-route-notes",
+            "status": "clue",
+            "storyId": "ingrid-route-notes",
+            "illustration": "residential"
+          }
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "lines": [
+        {
+          "tone": "good",
+          "facts": {
+            "action": "clear",
+            "killed": 14,
+            "remainingMin": 0,
+            "remainingMax": 2
+          },
+          "title": "14 zombier drept i Lundsneset",
+          "text": "Ingrid, Marius, 10 patroner brukt. Sonen ser tom ut. 1 prøver tatt med hjem.",
+          "zoneId": "z3-0018",
+          "category": "combat",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Skadde behandlet",
+          "text": "Ingen i crewet fikk behandling.",
+          "category": "heal",
+          "priority": 50,
+          "facts": {
+            "action": "heal",
+            "orderId": "o2-heal-z3-0018-tor.r1-4",
+            "missionId": "mission:2:o2-heal-z3-0018-tor.r1-4"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 32,
+            "searchAfter": 40,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Leila fant 2 medisin, 1 batterier, 1 elektronikk, 1 salt, 5 drivstoff, 1 mekaniske deler, 6 mat, 5 byggemateriale, 5 vann. 22 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Navn uten svar",
+          "text": "Ved Lundsvågen naturskole: Leila finner en slitt oppslagsside i en mappe. Noen har skrevet navn, andre har bare satt en strek. «Vi vet ikke hva som hendte med dem.» Hun vil lese videre, men ber de andre om å vente med å trekke slutninger.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "leila-care-notes",
+          "eventId": "discovery:leila-care-notes:0",
+          "facts": {
+            "discoveryId": "leila-care-notes",
+            "status": "clue",
+            "storyId": "leila-care-notes",
+            "illustration": "residential"
+          }
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "Lundsneset er deres",
+          "text": "3 gjenværende zombier ble slått ned. Sonen er overtatt. Hold grensene for å beholde den.",
+          "zoneId": "z3-0018",
+          "category": "claim",
+          "priority": 50,
+          "facts": {
+            "action": "claim",
+            "orderId": "o3-claim-z3-0018-ingrid.marius",
+            "missionId": "mission:3:o3-claim-z3-0018-ingrid.marius"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Et sted å holde",
+          "text": "Sonen er nå kontrollert av gruppen.",
+          "zoneId": "z3-0018",
+          "experience": {
+            "version": 1,
+            "id": "experience:claim:3:o3-claim-z3-0018-ingrid.marius",
+            "kind": "claim",
+            "day": 3,
+            "zoneId": "z3-0018",
+            "zoneName": "Lundsneset",
+            "title": "Et sted å holde",
+            "text": "En ny grense blir trukket på kartet. Laget har et konkret sted å vende tilbake til, men navnet er ingen garanti for morgendagen. Nå er spørsmålet hvordan området skal holdes.",
+            "result": "Sonen er nå kontrollert av gruppen.",
+            "participants": [
+              {
+                "id": "ingrid",
+                "name": "Ingrid",
+                "role": "Speider"
+              },
+              {
+                "id": "marius",
+                "name": "Marius",
+                "role": "Jeger"
+              }
+            ],
+            "voice": {
+              "personId": "ingrid",
+              "name": "Ingrid",
+              "text": "Nå må vi holde det vi har tatt ansvar for."
+            },
+            "facts": {
+              "controlled": true
+            },
+            "illustration": "farm",
+            "helpTopic": "claim",
+            "record": "first"
+          },
+          "facts": {
+            "action": "claim",
+            "orderId": "o3-claim-z3-0018-ingrid.marius",
+            "missionId": "mission:3:o3-claim-z3-0018-ingrid.marius"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "warn",
+          "category": "migration",
+          "zoneId": "z3-0018",
+          "facts": {
+            "count": 2,
+            "totalIncoming": 2,
+            "destinationCount": 1
+          },
+          "title": "2 zombier kom inn i Lundsneset",
+          "text": "Lyd trekker dem til. Sperr grensene eller hold vakt."
+        },
+        {
+          "tone": "good",
+          "title": "Milepæl: Et trygt sted",
+          "text": "Ta over en sone."
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "HQ etablert: Lundsneset kystgård",
+          "text": "Kystgård. Har fra start: kai og båtplass.",
+          "zoneId": "z3-0018",
+          "category": "establishHq",
+          "priority": 50,
+          "facts": {
+            "action": "establishHq",
+            "orderId": "o4-establishHq-z3-0018-tor.leila-poi-020",
+            "missionId": "mission:4:o4-establishHq-z3-0018-tor.leila-poi-020"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Fra tilflukt til hovedkvarter",
+          "text": "Kystgård. Har fra start: kai og båtplass.",
+          "zoneId": "z3-0018",
+          "experience": {
+            "version": 1,
+            "id": "experience:hq:4:o4-establishHq-z3-0018-tor.leila-poi-020",
+            "kind": "hq",
+            "day": 4,
+            "zoneId": "z3-0018",
+            "zoneName": "Lundsneset",
+            "title": "Fra tilflukt til hovedkvarter",
+            "text": "Nå finnes det et punkt å planlegge fra. Arbeid skal fordeles, folk skal komme tilbake hit, og noen må holde oversikten. Laget har gitt tilflukten en oppgave som varer lenger enn dette døgnet.",
+            "result": "Kystgård. Har fra start: kai og båtplass.",
+            "participants": [
+              {
+                "id": "leila",
+                "name": "Leila",
+                "role": "Sykepleier"
+              },
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "voice": {
+              "personId": "leila",
+              "name": "Leila",
+              "text": "Nå kan vi begynne å planlegge mer enn neste natt."
+            },
+            "facts": {
+              "hqType": "coastFarm"
+            },
+            "illustration": "hq",
+            "helpTopic": "hq",
+            "record": "first"
+          },
+          "facts": {
+            "action": "establishHq",
+            "orderId": "o4-establishHq-z3-0018-tor.leila-poi-020",
+            "missionId": "mission:4:o4-establishHq-z3-0018-tor.leila-poi-020"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Skadde behandlet",
+          "text": "Ingen i crewet fikk behandling.",
+          "category": "heal",
+          "priority": 50,
+          "facts": {
+            "action": "heal",
+            "orderId": "o4-heal-z3-0018-r1-4",
+            "missionId": "mission:4:o4-heal-z3-0018-r1-4"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "warn",
+          "category": "migration",
+          "zoneId": "z3-0018",
+          "facts": {
+            "count": 2,
+            "totalIncoming": 2,
+            "destinationCount": 1
+          },
+          "title": "2 zombier kom inn i Lundsneset",
+          "text": "Lyd trekker dem til. Sperr grensene eller hold vakt."
+        },
+        {
+          "tone": "good",
+          "title": "Milepæl: Hovedkvarter",
+          "text": "Etabler et HQ i en sone dere eier."
+        }
+      ]
+    },
+    {
+      "day": 6,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "Planker og piggtråd i Lundsneset",
+          "text": "2 av 2 grenser er sperret.",
+          "zoneId": "z3-0018",
+          "category": "fortify",
+          "priority": 50,
+          "facts": {
+            "action": "fortify",
+            "orderId": "o5-fortify-z3-0018-ingrid.marius.tor",
+            "missionId": "mission:5:o5-fortify-z3-0018-ingrid.marius.tor"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "En grense som kan holde",
+          "text": "2 av 2 grenser er sperret.",
+          "zoneId": "z3-0018",
+          "experience": {
+            "version": 1,
+            "id": "experience:perimeter:5:o5-fortify-z3-0018-ingrid.marius.tor",
+            "kind": "perimeter",
+            "day": 5,
+            "zoneId": "z3-0018",
+            "zoneName": "Lundsneset",
+            "title": "En grense som kan holde",
+            "text": "Laget går over det som nå er ferdig. Det er ikke lenger bare en plan om å holde noe ute. Forsvarsverket står der — og må passes på når arbeidet går videre.",
+            "result": "2 av 2 grenser er sperret.",
+            "participants": [
+              {
+                "id": "ingrid",
+                "name": "Ingrid",
+                "role": "Speider"
+              },
+              {
+                "id": "marius",
+                "name": "Marius",
+                "role": "Jeger"
+              },
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "voice": {
+              "personId": "tor",
+              "name": "Tor",
+              "text": "En sperring gjør bare jobben sin så lenge vi vedlikeholder den."
+            },
+            "facts": {
+              "barriersBuiltOrStrengthened": 2,
+              "completedPost": false,
+              "completedHqDefence": false
+            },
+            "illustration": "farm",
+            "helpTopic": "fortify",
+            "record": "first"
+          },
+          "facts": {
+            "action": "fortify",
+            "orderId": "o5-fortify-z3-0018-ingrid.marius.tor",
+            "missionId": "mission:5:o5-fortify-z3-0018-ingrid.marius.tor"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 40,
+            "searchAfter": 56,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Leila, Amina fant 1 ammunisjon, 2 medisin, 2 batterier, 3 elektronikk, 1 salt, 11 drivstoff, 3 mekaniske deler, 12 mat, 10 byggemateriale, 8 vann. 30 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det som kan vokse videre",
+          "text": "En tom frøpose har falmet i et vindu. På baksiden står en kort påminnelse om å vanne. Laget begynner å snakke om mat som kan komme igjen, i stedet for enda en kasse som tømmes. Å holde dyrkingen i gang krever arbeid, folk og et sted dere kan holde.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-farm",
+          "eventId": "discovery:local-farm:0",
+          "facts": {
+            "discoveryId": "local-farm",
+            "status": "resolved",
+            "illustration": "farm"
+          }
+        },
+        {
+          "tone": "warn",
+          "title": "En stille kveld",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "En stille kveld",
+          "text": "Dere valgte: Nyt det."
+        }
+      ]
+    },
+    {
+      "day": 7,
+      "lines": [
+        {
+          "tone": "info",
+          "title": "Bygger vakttårn",
+          "text": "8 av 12 timer.",
+          "category": "module",
+          "priority": 25,
+          "facts": {
+            "action": "module",
+            "orderId": "o6-module-z3-0018-tor-watchtower",
+            "missionId": "mission:6:o6-module-z3-0018-tor-watchtower"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Strekene i margen",
+          "text": "Ingrid sammenligner lappen med stedene laget kjenner. Hun setter spørsmålstegn ved flere av pilene. Ved siden av ligger en liten forsyningskasse. Dere kan ta den nå, eller bruke mer tid på notatene. «Jeg vil at de andre også skal kunne lese det vi faktisk vet.» Et videre oppdrag går til Meny Hundvåg · Austbø.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "ingrid-route-notes",
+          "eventId": "discovery:ingrid-route-notes:1",
+          "facts": {
+            "discoveryId": "ingrid-route-notes",
+            "status": "choice",
+            "storyId": "ingrid-route-notes",
+            "illustration": "residential"
+          }
+        },
+        {
+          "tone": "warn",
+          "title": "Posten var tom",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Posten var tom",
+          "text": "Dere valgte: Gi en ny sjanse."
+        }
+      ]
+    },
+    {
+      "day": 8,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "Vakttårn er ferdig",
+          "text": "Ser trusler tidligere og frigjør patruljer.",
+          "category": "module",
+          "priority": 50,
+          "facts": {
+            "action": "module",
+            "orderId": "o7-module-z3-0018-tor-watchtower",
+            "missionId": "mission:7:o7-module-z3-0018-tor-watchtower"
+          }
+        },
+        {
+          "category": "experience",
+          "tone": "info",
+          "priority": 60,
+          "title": "Et vern å bygge videre på",
+          "text": "Vakttårn er ferdig.",
+          "zoneId": "z3-0018",
+          "experience": {
+            "version": 1,
+            "id": "memory:hq-defence:7",
+            "kind": "perimeter",
+            "day": 7,
+            "zoneId": "z3-0018",
+            "zoneName": "Lundsneset",
+            "title": "Et vern å bygge videre på",
+            "text": "Det første perimeteret var en begynnelse. Nå har hovedkvarteret fått et ferdig forsvarsanlegg. Arbeidet gjør en forskjell, men noen må fortsatt holde oversikt over hva som trenger vedlikehold.",
+            "result": "Vakttårn er ferdig.",
+            "participants": [
+              {
+                "id": "tor",
+                "name": "Tor",
+                "role": "Mekaniker"
+              }
+            ],
+            "facts": {
+              "completedHqDefence": true,
+              "moduleId": "watchtower"
+            },
+            "illustration": "farm",
+            "helpTopic": "milestones",
+            "record": "first",
+            "milestone": "hq-defence"
+          },
+          "facts": {
+            "action": "module",
+            "orderId": "o7-module-z3-0018-tor-watchtower",
+            "missionId": "mission:7:o7-module-z3-0018-tor-watchtower"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "bad",
+          "title": "Amina ble skadet",
+          "text": "I Hundvåg 2: 17 i skade.",
+          "category": "combat",
+          "priority": 90,
+          "facts": {
+            "action": "clear",
+            "orderId": "o7-clear-z3-0006-marius.r1-4",
+            "missionId": "mission:7:o7-clear-z3-0006-marius.r1-4"
+          }
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "clear",
+            "killed": 19,
+            "remainingMin": 24,
+            "remainingMax": 28
+          },
+          "title": "19 zombier drept i Hundvåg 2",
+          "text": "Marius, Amina, 11 patroner brukt. Om lag 26 igjen. 1 prøver tatt med hjem.",
+          "zoneId": "z3-0006",
+          "category": "combat",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 56,
+            "searchAfter": 64,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Leila fant 1 ammunisjon, 1 medisin, 1 batterier, 1 elektronikk, 1 salt, 5 drivstoff, 2 mekaniske deler, 6 mat, 5 byggemateriale, 4 vann. 35 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Avsluttet: Strekene i margen",
+          "text": "Dere tok den endelige forsyningen og lot resten av sporet ligge. Lasten følger laget; denne kassen fylles ikke opp igjen.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "ingrid-route-notes",
+          "eventId": "discovery:ingrid-route-notes:2",
+          "facts": {
+            "discoveryId": "ingrid-route-notes",
+            "status": "resolved",
+            "storyId": "ingrid-route-notes",
+            "illustration": "residential"
+          }
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Fortøyningen",
+          "text": "Et løst tau slår mot en stolpe ved vannet. Lyden er liten, men alle stanser. Når de går videre, har laget skrevet tre spørsmål i margen: hvor kan vi legge til, hva kan vi bære, og hvordan kommer vi hjem? Kysten gir muligheter. Før noen legger ut, må båten, lasten og returen være avklart.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-coast",
+          "eventId": "discovery:local-coast:0",
+          "facts": {
+            "discoveryId": "local-coast",
+            "status": "resolved",
+            "illustration": "coast"
+          }
+        },
+        {
+          "tone": "warn",
+          "title": "Et skjult lager",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Et skjult lager",
+          "text": "Dere valgte: Hent det."
+        }
+      ]
+    },
+    {
+      "day": 9,
+      "lines": [
+        {
+          "tone": "bad",
+          "title": "Marius ble skadet",
+          "text": "I Hundvåg 2: 15 i skade.",
+          "category": "combat",
+          "priority": 90,
+          "facts": {
+            "action": "clear",
+            "orderId": "o8-clear-z3-0006-ingrid.marius",
+            "missionId": "mission:8:o8-clear-z3-0006-ingrid.marius"
+          }
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "clear",
+            "killed": 17,
+            "remainingMin": 16,
+            "remainingMax": 20
+          },
+          "title": "17 zombier drept i Hundvåg 2",
+          "text": "Ingrid, Marius, 5 patroner brukt. Om lag 18 igjen. 2 prøver tatt med hjem.",
+          "zoneId": "z3-0006",
+          "category": "combat",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Navn uten svar",
+          "text": "Mellom navnene står små påminnelser: husk vann, spør igjen, sett deg ned hos den som er redd. Leila leser en av dem to ganger. En førstehjelpskasse kan tas med nå. Ellers kan hun bruke mer tid på notatene og ta en samtale med gruppen om hvordan de passer på hverandre. Et videre oppdrag går til Apotek 1 Hundvåg · Austbø.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "leila-care-notes",
+          "eventId": "discovery:leila-care-notes:1",
+          "facts": {
+            "discoveryId": "leila-care-notes",
+            "status": "choice",
+            "storyId": "leila-care-notes",
+            "illustration": "residential"
+          }
+        }
+      ]
+    },
+    {
+      "day": 10,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "bad",
+          "title": "Amina ble skadet",
+          "text": "I Hundvåg 2: 12 i skade.",
+          "category": "loot",
+          "priority": 90,
+          "facts": {
+            "action": "search",
+            "orderId": "o9-search-z3-0006-leila.tor.r1-4",
+            "missionId": "mission:9:o9-search-z3-0006-leila.tor.r1-4"
+          }
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 0,
+            "searchAfter": 24,
+            "searchTotal": 274
+          },
+          "title": "Søk i Hundvåg 2",
+          "text": "Leila, Tor, Amina fant 2 ammunisjon, 3 medisin, 3 batterier, 2 elektronikk, 1 salt, 13 drivstoff, 5 mekaniske deler, 13 mat, 13 byggemateriale, 10 vann. 9 % gjennomsøkt.",
+          "zoneId": "z3-0006",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "2 nye overlevende",
+          "text": "Leila, Tor, Amina fant noen som gjemte seg i Hundvåg 2.",
+          "category": "loot",
+          "priority": 50,
+          "facts": {
+            "action": "search",
+            "orderId": "o9-search-z3-0006-leila.tor.r1-4",
+            "missionId": "mission:9:o9-search-z3-0006-leila.tor.r1-4"
+          }
+        },
+        {
+          "tone": "good",
+          "category": "loot",
+          "priority": 65,
+          "title": "Personlig utstyr funnet",
+          "text": "Lommelykt. Rapportert av laget ved faktisk hjemkomst."
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Mellom trærne",
+          "text": "Trærne gjør det vanskelig å holde øyekontakt. Laget stanser og avtaler et lavt signal før de fortsetter. En hånd opp. Vent. Kom nærmere. De teller folk på nytt. Stillheten kan føles trygg, men det laget faktisk har observert, veier tyngre enn følelsen.",
+          "zoneId": "z3-0006",
+          "category": "discovery",
+          "discoveryId": "local-forest",
+          "eventId": "discovery:local-forest:0",
+          "facts": {
+            "discoveryId": "local-forest",
+            "status": "resolved",
+            "illustration": "forest"
+          }
+        }
+      ]
+    },
+    {
+      "day": 11,
+      "lines": [
+        {
+          "tone": "good",
+          "facts": {
+            "action": "clear",
+            "killed": 17,
+            "remainingMin": 8,
+            "remainingMax": 12
+          },
+          "title": "17 zombier drept i Hundvåg 2",
+          "text": "Ingrid, Marius, 5 patroner brukt. Om lag 10 igjen. 2 prøver tatt med hjem.",
+          "zoneId": "z3-0006",
+          "category": "combat",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Skadde behandlet",
+          "text": "Amina fikk behandling.",
+          "category": "heal",
+          "priority": 50,
+          "facts": {
+            "action": "heal",
+            "orderId": "o10-heal-z3-0018-leila",
+            "missionId": "mission:10:o10-heal-z3-0018-leila"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 64,
+            "searchAfter": 72,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Tor fant 1 medisin, 1 batterier, 1 elektronikk, 1 salt, 5 drivstoff, 2 mekaniske deler, 6 mat, 5 byggemateriale, 5 vann. 39 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Noens vanlige morgen",
+          "text": "En sko ved en terskel blir stående i feltboka. Noen tenker på sin egen gang hjemme. Ingen sier det høyt. Laget teller hvilke deler av boligområdet de allerede har undersøkt, og hva som må vente. Bak hver dør kan det ligge en vanlig morgen som stoppet opp.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-residential",
+          "eventId": "discovery:local-residential:0",
+          "facts": {
+            "discoveryId": "local-residential",
+            "status": "resolved",
+            "illustration": "residential"
+          }
+        }
+      ]
+    },
+    {
+      "day": 12,
+      "lines": [
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 72,
+            "searchAfter": 80,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Marius fant 1 ammunisjon, 1 medisin, 1 batterier, 1 elektronikk, 5 drivstoff, 1 mekaniske deler, 6 mat, 5 byggemateriale, 5 vann. 43 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "bad",
+          "title": "Tor ble skadet",
+          "text": "I Hundvåg 2: 16 i skade.",
+          "category": "loot",
+          "priority": 90,
+          "facts": {
+            "action": "search",
+            "orderId": "o11-search-z3-0006-ingrid.tor.r1-4",
+            "missionId": "mission:11:o11-search-z3-0006-ingrid.tor.r1-4"
+          }
+        },
+        {
+          "tone": "bad",
+          "title": "Amina ble skadet",
+          "text": "I Hundvåg 2: 6 i skade.",
+          "category": "loot",
+          "priority": 90,
+          "facts": {
+            "action": "search",
+            "orderId": "o11-search-z3-0006-ingrid.tor.r1-4",
+            "missionId": "mission:11:o11-search-z3-0006-ingrid.tor.r1-4"
+          }
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 24,
+            "searchAfter": 48,
+            "searchTotal": 274
+          },
+          "title": "Søk i Hundvåg 2",
+          "text": "Ingrid, Tor, Amina fant 1 ammunisjon, 2 medisin, 2 batterier, 2 elektronikk, 2 salt, 13 drivstoff, 5 mekaniske deler, 13 mat, 13 byggemateriale, 11 vann. 18 % gjennomsøkt.",
+          "zoneId": "z3-0006",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Fortell dem som ble igjen",
+          "text": "Marius vil ta en gjennomgang hjemme etter dagens observasjoner. «De som blir igjen, må få si hva de trenger å vite før vi går ut igjen.» Dette handler om gruppens faktiske arbeid og forsvar, ikke om et nytt funn eller en kamp. Dere kan sette av tid til samtalen, eller la dette valgfrie sporet ligge. Gjennomgangen krever ett arbeidsoppdrag på 4 timer ved Arbeidsbordet i Lundsneset; håp og Marius sin tillit øker med fem når erfaringen er rapportert. Sporet kan ligge uten kostnad.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "field-home-debrief",
+          "eventId": "discovery:field-home-debrief:0",
+          "facts": {
+            "discoveryId": "field-home-debrief",
+            "status": "followup",
+            "illustration": "farm"
+          }
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Den siste kassa og neste sesong",
+          "text": "Det er mindre mat enn vann på det rapporterte lageret. Ute ved jordbruksarealene blir samtalen konkret: hvem kan dere avse til varig matarbeid mens andre må finne noe å spise nå? Ingen av dem kan leve av en plan. Dyrkbar mark er en mulighet, ikke en ferdig avling.",
+          "zoneId": "z3-0006",
+          "category": "discovery",
+          "discoveryId": "local-farm-hunger",
+          "eventId": "discovery:local-farm-hunger:0",
+          "facts": {
+            "discoveryId": "local-farm-hunger",
+            "status": "resolved",
+            "illustration": "farm"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Avsluttet: Navn uten svar",
+          "text": "Dere tok den endelige forsyningen og lot resten av sporet ligge. Lasten følger laget; denne kassen fylles ikke opp igjen.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "leila-care-notes",
+          "eventId": "discovery:leila-care-notes:2",
+          "facts": {
+            "discoveryId": "leila-care-notes",
+            "status": "resolved",
+            "storyId": "leila-care-notes",
+            "illustration": "residential"
+          }
+        }
+      ]
+    },
+    {
+      "day": 13,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 80,
+            "searchAfter": 88,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Leila fant 1 ammunisjon, 2 medisin, 1 batterier, 1 elektronikk, 1 salt, 5 drivstoff, 2 mekaniske deler, 6 mat, 5 byggemateriale, 4 vann. 48 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "title": "Avsluttet: Fortell dem som ble igjen",
+          "text": "Marius ga dem som ble igjen plass i gjennomgangen. Gruppen delte det som faktisk var observert og snakket om neste tur. Håpet og Marius sin tillit vokste; ingen nye forsyninger, forsvarseffekter eller kartopplysninger ble opprettet.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "field-home-debrief",
+          "eventId": "discovery:field-home-debrief:1",
+          "facts": {
+            "discoveryId": "field-home-debrief",
+            "status": "resolved",
+            "illustration": "farm"
+          }
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: En vei hjem er også en plan",
+          "text": "Første gang ved vannet snakket de om å komme seg videre. Nå har de et hovedkvarter å komme tilbake til. Laget gjennomgår hvem som bærer lasten og hvor de skal møtes om de blir skilt. De skriver bare inn steder de allerede kjenner. Det er blitt viktigere å avtale hvor de skal tilbake enn hvor langt de kan dra.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-coast-return",
+          "eventId": "discovery:local-coast-return:0",
+          "facts": {
+            "discoveryId": "local-coast-return",
+            "status": "resolved",
+            "illustration": "coast"
+          }
+        }
+      ]
+    },
+    {
+      "day": 14,
+      "lines": [
+        {
+          "tone": "bad",
+          "title": "Amina ble skadet",
+          "text": "I Hundvåg 2: 11 i skade.",
+          "category": "combat",
+          "priority": 90,
+          "facts": {
+            "action": "clear",
+            "orderId": "o13-clear-z3-0006-ingrid.tor.r1-4",
+            "missionId": "mission:13:o13-clear-z3-0006-ingrid.tor.r1-4"
+          }
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "clear",
+            "killed": 17,
+            "remainingMin": 1,
+            "remainingMax": 5
+          },
+          "title": "17 zombier drept i Hundvåg 2",
+          "text": "Ingrid, Tor, Amina, 5 patroner brukt. Om lag 3 igjen. 1 prøver tatt med hjem.",
+          "zoneId": "z3-0006",
+          "category": "combat",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "category": "recovery",
+          "priority": 30,
+          "zoneId": "z3-0018",
+          "title": "Marius, Leila fikk hvile",
+          "text": "Til sammen: 100 poeng mindre utmattelse · 5 helse tilbake under hvilen.",
+          "facts": {
+            "action": "rest",
+            "orderId": "o13-rest-z3-0018-marius.leila",
+            "missionId": "mission:13:o13-rest-z3-0018-marius.leila",
+            "fatigueReduced": 100,
+            "healthRecovered": 5,
+            "recoveredCount": 2
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "warn",
+          "title": "Stemmen klokka sju",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Stemmen klokka sju",
+          "text": "Dere valgte: Send to dit."
+        }
+      ]
+    },
+    {
+      "day": 15,
+      "lines": [
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 88,
+            "searchAfter": 104,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Tor, Amina fant 1 båter, 2 ammunisjon, 2 medisin, 2 batterier, 2 elektronikk, 2 salt, 11 drivstoff, 4 mekaniske deler, 12 mat, 10 byggemateriale, 7 vann. 57 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "category": "loot",
+          "priority": 65,
+          "title": "Personlig utstyr funnet",
+          "text": "Verktøysett. Rapportert av laget ved faktisk hjemkomst."
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Tempoet til den som går sist",
+          "text": "Tor er fortsatt skadet. Mellom trærne avtaler laget å sjekke den som går sist før de fortsetter. «Ikke bare spør om jeg klarer å fortsette,» sier Tor. «Spør om jeg klarer returen også.» Laget må fortsatt velge tid til hvile eller behandling.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-forest-injury",
+          "eventId": "discovery:local-forest-injury:0",
+          "facts": {
+            "discoveryId": "local-forest-injury",
+            "status": "resolved",
+            "illustration": "forest"
+          }
+        },
+        {
+          "tone": "warn",
+          "title": "Den andre sjansen",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Den andre sjansen",
+          "text": "Dere valgte: Hedre Marius."
+        }
+      ]
+    },
+    {
+      "day": 16,
+      "lines": [
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 104,
+            "searchAfter": 112,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Leila fant 1 medisin, 1 batterier, 1 elektronikk, 1 salt, 5 drivstoff, 2 mekaniske deler, 5 mat, 5 byggemateriale, 5 vann. 61 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "category": "recovery",
+          "priority": 30,
+          "zoneId": "z3-0018",
+          "title": "Tor, Amina fikk hvile",
+          "text": "Til sammen: 72 poeng mindre utmattelse · 10 helse tilbake under hvilen.",
+          "facts": {
+            "action": "rest",
+            "orderId": "o15-rest-z3-0018-tor.r1-4",
+            "missionId": "mission:15:o15-rest-z3-0018-tor.r1-4",
+            "fatigueReduced": 72,
+            "healthRecovered": 10,
+            "recoveredCount": 2
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Nabolag, ikke bare søkefelt",
+          "text": "Dere kontrollerer nå Lundsneset. Mellom boligene snakker laget om forskjellen på å ha vært innom og å ha ansvar for et område. Hva er undersøkt, og hva gjenstår? De faktiske søketimene og kartet er fasiten. De har sluttet å omtale alle gatene som «der ute».",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-residential-home",
+          "eventId": "discovery:local-residential-home:0",
+          "facts": {
+            "discoveryId": "local-residential-home",
+            "status": "resolved",
+            "illustration": "residential"
+          }
+        },
+        {
+          "tone": "warn",
+          "title": "Et opptak",
+          "text": "En hendelse krever et valg."
+        },
+        {
+          "tone": "info",
+          "title": "Et opptak",
+          "text": "Dere valgte: Merk kjelleren på kartet."
+        },
+        {
+          "tone": "good",
+          "title": "Et kryss på kartet",
+          "text": "Kjelleren i Hundvåg 2 venter på dere.",
+          "zoneId": "z3-0006"
+        }
+      ]
+    },
+    {
+      "day": 17,
+      "lines": [
+        {
+          "tone": "good",
+          "facts": {
+            "action": "clear",
+            "killed": 14,
+            "remainingMin": 0,
+            "remainingMax": 2
+          },
+          "title": "14 zombier drept i Hundvåg 2",
+          "text": "Ingrid, Marius, Leila, Tor, Amina, 3 patroner brukt. Sonen ser tom ut. 1 prøver tatt med hjem.",
+          "zoneId": "z3-0006",
+          "category": "combat",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        }
+      ]
+    },
+    {
+      "day": 18,
+      "lines": [
+        {
+          "tone": "warn",
+          "title": "Overtakelsen ble stanset",
+          "text": "Ingrid, Tor fant flere zombier enn speiderrapporten antydet. Sonen må ryddes før den kan overtas.",
+          "zoneId": "z3-0006",
+          "category": "claim",
+          "priority": 75,
+          "facts": {
+            "action": "claim",
+            "orderId": "o17-claim-z3-0006-ingrid.tor",
+            "missionId": "mission:17:o17-claim-z3-0006-ingrid.tor"
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 112,
+            "searchAfter": 136,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Marius, Leila, Amina fant 2 ammunisjon, 3 medisin, 3 batterier, 3 elektronikk, 2 salt, 16 drivstoff, 5 mekaniske deler, 18 mat, 15 byggemateriale, 13 vann. 74 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Innenfor og utenfor",
+          "text": "Gruppen har bygget varige sperringer. På kartet peker laget ut hvor de faktisk står; en sperring et annet sted gjør ikke denne gata trygg. Ingen vil at noen skal gå ut med en trygghet kartet ikke lover. «Vis meg hvilken side du mener,» sier en av dem. Pekingen blir til en gjennomgang av de faktiske sperringene.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-residential-perimeter",
+          "eventId": "discovery:local-residential-perimeter:0",
+          "facts": {
+            "discoveryId": "local-residential-perimeter",
+            "status": "resolved",
+            "illustration": "residential"
+          }
+        }
+      ]
+    },
+    {
+      "day": 19,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "category": "recovery",
+          "priority": 30,
+          "zoneId": "z3-0018",
+          "title": "Ingrid, Leila, Tor, Amina fikk hvile",
+          "text": "Til sammen: 172 poeng mindre utmattelse · 6 helse tilbake under hvilen.",
+          "facts": {
+            "action": "rest",
+            "orderId": "o18-rest-z3-0018-ingrid.leila.tor.r1-4",
+            "missionId": "mission:18:o18-rest-z3-0018-ingrid.leila.tor.r1-4",
+            "fatigueReduced": 172,
+            "healthRecovered": 6,
+            "recoveredCount": 4
+          }
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det siste punktet på lista",
+          "text": "Lista handler om ansvar når folk går ut sammen. Marius vil ikke bruke den som en fortelling om noen han ikke kjenner. Det er også brukbare reservedeler å berge. Dere kan ta delene og avslutte, eller la ham prøve å gjøre lista til en felles vane. Et videre oppdrag går til Lundsneset kystgård · Lundsneset.",
+          "zoneId": "z3-0006",
+          "category": "discovery",
+          "discoveryId": "marius-return-notes",
+          "eventId": "discovery:marius-return-notes:1",
+          "facts": {
+            "discoveryId": "marius-return-notes",
+            "status": "choice",
+            "storyId": "marius-return-notes",
+            "illustration": "farm"
+          }
+        }
+      ]
+    },
+    {
+      "day": 20,
+      "lines": [
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "facts": {
+            "action": "search",
+            "searchBefore": 136,
+            "searchAfter": 168,
+            "searchTotal": 184
+          },
+          "title": "Søk i Lundsneset",
+          "text": "Ingrid, Leila, Tor, Amina fant 2 ammunisjon, 6 medisin, 4 batterier, 1 3d-printer, 4 elektronikk, 2 salt, 22 drivstoff, 7 mekaniske deler, 1 motorer, 23 mat, 21 byggemateriale, 3 vann. 91 % gjennomsøkt.",
+          "zoneId": "z3-0018",
+          "category": "loot",
+          "priority": 50
+        },
+        {
+          "tone": "good",
+          "title": "Leveransen er fremme",
+          "text": "Lasten er levert på det faktiske ankomststedet.",
+          "zoneId": "z3-0018"
+        },
+        {
+          "tone": "good",
+          "category": "loot",
+          "priority": 65,
+          "title": "Personlig utstyr funnet",
+          "text": "Brekkjern. Rapportert av laget ved faktisk hjemkomst."
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Det siste punktet på lista",
+          "text": "Marius har tatt lista med videre. Ved det kjente samlingsstedet vil han arbeide med den før han sier mer. «Hvis vi skal fortsette å gå ut sammen, må alle få komme til orde om veien hjem.» Neste sted: Lundsneset kystgård.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "marius-return-notes",
+          "eventId": "discovery:marius-return-notes:2",
+          "facts": {
+            "discoveryId": "marius-return-notes",
+            "status": "followup",
+            "storyId": "marius-return-notes",
+            "illustration": "farm"
+          }
+        },
+        {
+          "tone": "info",
+          "title": "Feltnotat: Et sted å bli",
+          "text": "Gården er blitt hovedkvarter. Laget blir stående ved arbeidsplassen og diskuterer hvem som skal være her når de andre går ut. Det er en annen samtale enn på den første turen: ikke bare hvor lenge maten rekker, men hva slags hverdag de vil bygge. Noen må være igjen når de andre drar. For første gang snakker de om det som en hverdag, ikke bare en ventetid.",
+          "zoneId": "z3-0018",
+          "category": "discovery",
+          "discoveryId": "local-farm-settlement",
+          "eventId": "discovery:local-farm-settlement:0",
+          "facts": {
+            "discoveryId": "local-farm-settlement",
+            "status": "resolved",
+            "illustration": "farm"
+          }
+        }
+      ]
+    }
+  ],
+  "firsts": [
+    {
+      "version": 1,
+      "id": "experience:scout:0:o0-scout-z3-0006-ingrid.marius.leila.tor",
+      "kind": "scout",
+      "day": 0,
+      "zoneId": "z3-0006",
+      "zoneName": "Hundvåg 2",
+      "title": "Veien ut, veien hjem",
+      "text": "Laget stanser og ser ruten an før neste steg. Det som faktisk lar seg observere, blir skrevet ned; resten får vente. Et tokt handler også om å finne veien hjem.",
+      "result": "Anslag: 31–40 zombier.",
+      "participants": [
+        {
+          "id": "ingrid",
+          "name": "Ingrid",
+          "role": "Speider"
+        },
+        {
+          "id": "marius",
+          "name": "Marius",
+          "role": "Jeger"
+        },
+        {
+          "id": "leila",
+          "name": "Leila",
+          "role": "Sykepleier"
+        },
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "voice": {
+        "personId": "ingrid",
+        "name": "Ingrid",
+        "text": "Et anslag er bedre enn å gjette. Vi må fortsatt se oss for."
+      },
+      "facts": {
+        "minimum": 31,
+        "maximum": 40
+      },
+      "illustration": "farm",
+      "helpTopic": "scout",
+      "record": "first"
+    },
+    {
+      "version": 1,
+      "id": "experience:poi:0:o0-scout-z3-0006-ingrid.marius.leila.tor",
+      "kind": "poi",
+      "day": 0,
+      "zoneId": "z3-0006",
+      "zoneName": "Hundvåg 2",
+      "title": "Et navn blir et sted",
+      "text": "Laget stanser ved opplysningene om stedet. Navnet får en strek i notatene, ikke et svar på alt som finnes der. Det er noe å følge videre når det passer med resten av planen.",
+      "result": "Hundvåg 2 kystgård er registrert i Hundvåg 2.",
+      "participants": [
+        {
+          "id": "ingrid",
+          "name": "Ingrid",
+          "role": "Speider"
+        },
+        {
+          "id": "marius",
+          "name": "Marius",
+          "role": "Jeger"
+        },
+        {
+          "id": "leila",
+          "name": "Leila",
+          "role": "Sykepleier"
+        },
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "voice": {
+        "personId": "ingrid",
+        "name": "Ingrid",
+        "text": "Et navn på kartet er en begynnelse. Vi må fortsatt undersøke stedet."
+      },
+      "facts": {
+        "poiId": "poi-649",
+        "poiName": "Hundvåg 2 kystgård"
+      },
+      "illustration": "farm",
+      "helpTopic": "poi",
+      "record": "first"
+    },
+    {
+      "version": 1,
+      "id": "experience:search:1:o1-search-z3-0018-ingrid.marius.leila.tor",
+      "kind": "search",
+      "day": 1,
+      "zoneId": "z3-0018",
+      "zoneName": "Lundsneset",
+      "title": "Det vi kan bære",
+      "text": "Laget fordeler oppmerksomheten mellom letingen og neste steg. Det er lett å ønske seg ett funn til. Det som blir med videre, må faktisk bæres.",
+      "result": "Ingrid, Marius, Leila, Tor fant 1 båter, 3 ammunisjon, 4 medisin, 4 batterier, 5 elektronikk, 2 salt, 1 generatorer, 21 drivstoff, 7 mekaniske deler, 24 mat, 20 byggemateriale, 11 vann. 17 % gjennomsøkt.",
+      "participants": [
+        {
+          "id": "ingrid",
+          "name": "Ingrid",
+          "role": "Speider"
+        },
+        {
+          "id": "marius",
+          "name": "Marius",
+          "role": "Jeger"
+        },
+        {
+          "id": "leila",
+          "name": "Leila",
+          "role": "Sykepleier"
+        },
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "voice": {
+        "personId": "leila",
+        "name": "Leila",
+        "text": "Det vi kan bære, er det vi faktisk kan leve av."
+      },
+      "facts": {
+        "searchBefore": 0,
+        "searchAfter": 32,
+        "food": 24,
+        "water": 11,
+        "boat": 1,
+        "ammo": 3,
+        "medicine": 4,
+        "batteries": 4,
+        "electronics": 5,
+        "salt": 2,
+        "generator": 1,
+        "fuel": 21,
+        "parts": 7,
+        "building": 20
+      },
+      "illustration": "farm",
+      "helpTopic": "search",
+      "record": "first"
+    },
+    {
+      "version": 1,
+      "id": "experience:gear:1:o1-search-z3-0018-ingrid.marius.leila.tor",
+      "kind": "gear",
+      "day": 1,
+      "zoneId": "z3-0018",
+      "zoneName": "Lundsneset",
+      "title": "Noe verdt å ta vare på",
+      "text": "Laget ser over det som er funnet før turen går videre. En gjenstand kan gjøre neste oppdrag annerledes. Hvem som skal bruke den, er ikke avgjort av funnet.",
+      "result": "Funnet: Kikkert. Utstyret må følge laget fram til faktisk levering.",
+      "participants": [
+        {
+          "id": "ingrid",
+          "name": "Ingrid",
+          "role": "Speider"
+        },
+        {
+          "id": "marius",
+          "name": "Marius",
+          "role": "Jeger"
+        },
+        {
+          "id": "leila",
+          "name": "Leila",
+          "role": "Sykepleier"
+        },
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "voice": {
+        "personId": "tor",
+        "name": "Tor",
+        "text": "Et godt verktøy må være med den som trenger det."
+      },
+      "facts": {
+        "itemCount": 1,
+        "itemKinds": "binoculars"
+      },
+      "illustration": "farm",
+      "helpTopic": "gear",
+      "record": "first"
+    },
+    {
+      "version": 1,
+      "id": "experience:combat:1:o1-search-z3-0018-ingrid.marius.leila.tor",
+      "kind": "combat",
+      "day": 1,
+      "zoneId": "z3-0018",
+      "zoneName": "Lundsneset",
+      "title": "Etter møtet med de døde",
+      "text": "Etter kampen må neste steg finnes igjen. Laget går gjennom det som skjedde før arbeidet fortsetter. Dette er en erfaring å ta med inn i neste vurdering, ikke bare et tall over døde.",
+      "result": "2 zombier ble drept under oppdraget. 1 i laget ble skadet.",
+      "participants": [
+        {
+          "id": "ingrid",
+          "name": "Ingrid",
+          "role": "Speider"
+        },
+        {
+          "id": "marius",
+          "name": "Marius",
+          "role": "Jeger"
+        },
+        {
+          "id": "leila",
+          "name": "Leila",
+          "role": "Sykepleier"
+        },
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "voice": {
+        "personId": "marius",
+        "name": "Marius",
+        "text": "Vi må telle hvem som kommer med oss videre, ikke bare de døde."
+      },
+      "facts": {
+        "killed": 2,
+        "injuredCount": 1,
+        "ammoUsed": 0
+      },
+      "illustration": "farm",
+      "helpTopic": "clear",
+      "record": "first"
+    },
+    {
+      "version": 1,
+      "id": "experience:claim:3:o3-claim-z3-0018-ingrid.marius",
+      "kind": "claim",
+      "day": 3,
+      "zoneId": "z3-0018",
+      "zoneName": "Lundsneset",
+      "title": "Et sted å holde",
+      "text": "En ny grense blir trukket på kartet. Laget har et konkret sted å vende tilbake til, men navnet er ingen garanti for morgendagen. Nå er spørsmålet hvordan området skal holdes.",
+      "result": "Sonen er nå kontrollert av gruppen.",
+      "participants": [
+        {
+          "id": "ingrid",
+          "name": "Ingrid",
+          "role": "Speider"
+        },
+        {
+          "id": "marius",
+          "name": "Marius",
+          "role": "Jeger"
+        }
+      ],
+      "voice": {
+        "personId": "ingrid",
+        "name": "Ingrid",
+        "text": "Nå må vi holde det vi har tatt ansvar for."
+      },
+      "facts": {
+        "controlled": true
+      },
+      "illustration": "farm",
+      "helpTopic": "claim",
+      "record": "first"
+    },
+    {
+      "version": 1,
+      "id": "experience:hq:4:o4-establishHq-z3-0018-tor.leila-poi-020",
+      "kind": "hq",
+      "day": 4,
+      "zoneId": "z3-0018",
+      "zoneName": "Lundsneset",
+      "title": "Fra tilflukt til hovedkvarter",
+      "text": "Nå finnes det et punkt å planlegge fra. Arbeid skal fordeles, folk skal komme tilbake hit, og noen må holde oversikten. Laget har gitt tilflukten en oppgave som varer lenger enn dette døgnet.",
+      "result": "Kystgård. Har fra start: kai og båtplass.",
+      "participants": [
+        {
+          "id": "leila",
+          "name": "Leila",
+          "role": "Sykepleier"
+        },
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "voice": {
+        "personId": "leila",
+        "name": "Leila",
+        "text": "Nå kan vi begynne å planlegge mer enn neste natt."
+      },
+      "facts": {
+        "hqType": "coastFarm"
+      },
+      "illustration": "hq",
+      "helpTopic": "hq",
+      "record": "first"
+    },
+    {
+      "version": 1,
+      "id": "experience:perimeter:5:o5-fortify-z3-0018-ingrid.marius.tor",
+      "kind": "perimeter",
+      "day": 5,
+      "zoneId": "z3-0018",
+      "zoneName": "Lundsneset",
+      "title": "En grense som kan holde",
+      "text": "Laget går over det som nå er ferdig. Det er ikke lenger bare en plan om å holde noe ute. Forsvarsverket står der — og må passes på når arbeidet går videre.",
+      "result": "2 av 2 grenser er sperret.",
+      "participants": [
+        {
+          "id": "ingrid",
+          "name": "Ingrid",
+          "role": "Speider"
+        },
+        {
+          "id": "marius",
+          "name": "Marius",
+          "role": "Jeger"
+        },
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "voice": {
+        "personId": "tor",
+        "name": "Tor",
+        "text": "En sperring gjør bare jobben sin så lenge vi vedlikeholder den."
+      },
+      "facts": {
+        "barriersBuiltOrStrengthened": 2,
+        "completedPost": false,
+        "completedHqDefence": false
+      },
+      "illustration": "farm",
+      "helpTopic": "fortify",
+      "record": "first"
+    }
+  ],
+  "earned": [
+    {
+      "version": 1,
+      "id": "memory:hq-defence:7",
+      "kind": "perimeter",
+      "day": 7,
+      "zoneId": "z3-0018",
+      "zoneName": "Lundsneset",
+      "title": "Et vern å bygge videre på",
+      "text": "Det første perimeteret var en begynnelse. Nå har hovedkvarteret fått et ferdig forsvarsanlegg. Arbeidet gjør en forskjell, men noen må fortsatt holde oversikt over hva som trenger vedlikehold.",
+      "result": "Vakttårn er ferdig.",
+      "participants": [
+        {
+          "id": "tor",
+          "name": "Tor",
+          "role": "Mekaniker"
+        }
+      ],
+      "facts": {
+        "completedHqDefence": true,
+        "moduleId": "watchtower"
+      },
+      "illustration": "farm",
+      "helpTopic": "milestones",
+      "record": "first",
+      "milestone": "hq-defence"
+    }
+  ],
+  "publishedStories": {
+    "marius-return-notes": {
+      "id": "marius-return-notes",
+      "kind": "ordinary",
+      "storyId": "marius-return-notes",
+      "title": "Det siste punktet på lista",
+      "poiId": "poi-020",
+      "poiName": "Lundsneset kystgård",
+      "zoneId": "z3-0018",
+      "status": "followup",
+      "step": 2,
+      "revision": 2,
+      "discoveredDay": 0,
+      "sources": [
+        "scout"
+      ],
+      "notes": [
+        {
+          "id": "marius-return-notes:0",
+          "day": 0,
+          "text": "Ved Hundvåg 2 kystgård: Marius stanser ved en sjekkliste med bare tre punkter. Det siste er understreket: «Tell alle på vei hjem.» Han sier lite, men ber om å få undersøke resten selv."
+        },
+        {
+          "id": "marius-return-notes:1",
+          "day": 18,
+          "text": "Lista handler om ansvar når folk går ut sammen. Marius vil ikke bruke den som en fortelling om noen han ikke kjenner. Det er også brukbare reservedeler å berge. Dere kan ta delene og avslutte, eller la ham prøve å gjøre lista til en felles vane. Et videre oppdrag går til Lundsneset kystgård · Lundsneset."
+        },
+        {
+          "id": "marius-return-notes:2",
+          "day": 19,
+          "text": "Marius har tatt lista med videre. Ved det kjente samlingsstedet vil han arbeide med den før han sier mer. «Hvis vi skal fortsette å gå ut sammen, må alle få komme til orde om veien hjem.» Neste sted: Lundsneset kystgård."
+        }
+      ],
+      "choices": [],
+      "boundPersonId": "marius",
+      "illustration": "farm",
+      "followup": {
+        "poiId": "poi-020",
+        "poiName": "Lundsneset kystgård",
+        "zoneId": "z3-0018"
+      },
+      "chosen": [
+        "follow"
+      ]
+    },
+    "ingrid-route-notes": {
+      "id": "ingrid-route-notes",
+      "kind": "ordinary",
+      "storyId": "ingrid-route-notes",
+      "title": "Strekene i margen",
+      "poiId": "poi-021",
+      "poiName": "Lundsvågen naturskole",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 2,
+      "discoveredDay": 1,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "ingrid-route-notes:0",
+          "day": 1,
+          "text": "Ved Lundsvågen naturskole: Ingrid legger merke til en brettet lapp med piler i margen. «Noen prøvde å holde orden mens alle andre løp.» Hun vil undersøke den selv. Foreløpig er det bare streker; dere vet ikke hvor de fører."
+        },
+        {
+          "id": "ingrid-route-notes:1",
+          "day": 6,
+          "text": "Ingrid sammenligner lappen med stedene laget kjenner. Hun setter spørsmålstegn ved flere av pilene. Ved siden av ligger en liten forsyningskasse. Dere kan ta den nå, eller bruke mer tid på notatene. «Jeg vil at de andre også skal kunne lese det vi faktisk vet.» Et videre oppdrag går til Meny Hundvåg · Austbø."
+        },
+        {
+          "id": "ingrid-route-notes:2",
+          "day": 7,
+          "text": "Dere tok den endelige forsyningen og lot resten av sporet ligge. Lasten følger laget; denne kassen fylles ikke opp igjen."
+        }
+      ],
+      "choices": [],
+      "boundPersonId": "ingrid",
+      "illustration": "residential",
+      "followup": {
+        "poiId": "poi-004",
+        "poiName": "Meny Hundvåg",
+        "zoneId": "z3-0002"
+      },
+      "chosen": [
+        "supplies"
+      ]
+    },
+    "leila-care-notes": {
+      "id": "leila-care-notes",
+      "kind": "ordinary",
+      "storyId": "leila-care-notes",
+      "title": "Navn uten svar",
+      "poiId": "poi-021",
+      "poiName": "Lundsvågen naturskole",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 2,
+      "discoveredDay": 2,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "leila-care-notes:0",
+          "day": 2,
+          "text": "Ved Lundsvågen naturskole: Leila finner en slitt oppslagsside i en mappe. Noen har skrevet navn, andre har bare satt en strek. «Vi vet ikke hva som hendte med dem.» Hun vil lese videre, men ber de andre om å vente med å trekke slutninger."
+        },
+        {
+          "id": "leila-care-notes:1",
+          "day": 8,
+          "text": "Mellom navnene står små påminnelser: husk vann, spør igjen, sett deg ned hos den som er redd. Leila leser en av dem to ganger. En førstehjelpskasse kan tas med nå. Ellers kan hun bruke mer tid på notatene og ta en samtale med gruppen om hvordan de passer på hverandre. Et videre oppdrag går til Apotek 1 Hundvåg · Austbø."
+        },
+        {
+          "id": "leila-care-notes:2",
+          "day": 11,
+          "text": "Dere tok den endelige forsyningen og lot resten av sporet ligge. Lasten følger laget; denne kassen fylles ikke opp igjen."
+        }
+      ],
+      "choices": [],
+      "boundPersonId": "leila",
+      "illustration": "residential",
+      "followup": {
+        "poiId": "poi-006",
+        "poiName": "Apotek 1 Hundvåg",
+        "zoneId": "z3-0002"
+      },
+      "chosen": [
+        "supplies"
+      ]
+    },
+    "local-farm": {
+      "id": "local-farm",
+      "kind": "ordinary",
+      "title": "Det som kan vokse videre",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 5,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-farm:0",
+          "day": 5,
+          "text": "En tom frøpose har falmet i et vindu. På baksiden står en kort påminnelse om å vanne. Laget begynner å snakke om mat som kan komme igjen, i stedet for enda en kasse som tømmes. Å holde dyrkingen i gang krever arbeid, folk og et sted dere kan holde."
+        }
+      ],
+      "choices": [],
+      "illustration": "farm"
+    },
+    "local-coast": {
+      "id": "local-coast",
+      "kind": "ordinary",
+      "title": "Fortøyningen",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 7,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-coast:0",
+          "day": 7,
+          "text": "Et løst tau slår mot en stolpe ved vannet. Lyden er liten, men alle stanser. Når de går videre, har laget skrevet tre spørsmål i margen: hvor kan vi legge til, hva kan vi bære, og hvordan kommer vi hjem? Kysten gir muligheter. Før noen legger ut, må båten, lasten og returen være avklart."
+        }
+      ],
+      "choices": [],
+      "illustration": "coast"
+    },
+    "local-forest": {
+      "id": "local-forest",
+      "kind": "ordinary",
+      "title": "Mellom trærne",
+      "poiId": "",
+      "poiName": "Hundvåg 2",
+      "zoneId": "z3-0006",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 9,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-forest:0",
+          "day": 9,
+          "text": "Trærne gjør det vanskelig å holde øyekontakt. Laget stanser og avtaler et lavt signal før de fortsetter. En hånd opp. Vent. Kom nærmere. De teller folk på nytt. Stillheten kan føles trygg, men det laget faktisk har observert, veier tyngre enn følelsen."
+        }
+      ],
+      "choices": [],
+      "illustration": "forest"
+    },
+    "local-residential": {
+      "id": "local-residential",
+      "kind": "ordinary",
+      "title": "Noens vanlige morgen",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 10,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-residential:0",
+          "day": 10,
+          "text": "En sko ved en terskel blir stående i feltboka. Noen tenker på sin egen gang hjemme. Ingen sier det høyt. Laget teller hvilke deler av boligområdet de allerede har undersøkt, og hva som må vente. Bak hver dør kan det ligge en vanlig morgen som stoppet opp."
+        }
+      ],
+      "choices": [],
+      "illustration": "residential"
+    },
+    "field-home-debrief": {
+      "id": "field-home-debrief",
+      "kind": "ordinary",
+      "title": "Fortell dem som ble igjen",
+      "poiId": "",
+      "poiName": "Arbeidsbordet i Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 2,
+      "revision": 1,
+      "discoveredDay": 11,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "field-home-debrief:0",
+          "day": 11,
+          "text": "Marius vil ta en gjennomgang hjemme etter dagens observasjoner. «De som blir igjen, må få si hva de trenger å vite før vi går ut igjen.» Dette handler om gruppens faktiske arbeid og forsvar, ikke om et nytt funn eller en kamp. Dere kan sette av tid til samtalen, eller la dette valgfrie sporet ligge. Gjennomgangen krever ett arbeidsoppdrag på 4 timer ved Arbeidsbordet i Lundsneset; håp og Marius sin tillit øker med fem når erfaringen er rapportert. Sporet kan ligge uten kostnad."
+        },
+        {
+          "id": "field-home-debrief:1",
+          "day": 12,
+          "text": "Marius ga dem som ble igjen plass i gjennomgangen. Gruppen delte det som faktisk var observert og snakket om neste tur. Håpet og Marius sin tillit vokste; ingen nye forsyninger, forsvarseffekter eller kartopplysninger ble opprettet."
+        }
+      ],
+      "choices": [],
+      "boundPersonId": "marius",
+      "illustration": "farm"
+    },
+    "local-farm-hunger": {
+      "id": "local-farm-hunger",
+      "kind": "ordinary",
+      "title": "Den siste kassa og neste sesong",
+      "poiId": "",
+      "poiName": "Hundvåg 2",
+      "zoneId": "z3-0006",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 11,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-farm-hunger:0",
+          "day": 11,
+          "text": "Det er mindre mat enn vann på det rapporterte lageret. Ute ved jordbruksarealene blir samtalen konkret: hvem kan dere avse til varig matarbeid mens andre må finne noe å spise nå? Ingen av dem kan leve av en plan. Dyrkbar mark er en mulighet, ikke en ferdig avling."
+        }
+      ],
+      "choices": [],
+      "illustration": "farm"
+    },
+    "local-coast-return": {
+      "id": "local-coast-return",
+      "kind": "ordinary",
+      "title": "En vei hjem er også en plan",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 12,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-coast-return:0",
+          "day": 12,
+          "text": "Første gang ved vannet snakket de om å komme seg videre. Nå har de et hovedkvarter å komme tilbake til. Laget gjennomgår hvem som bærer lasten og hvor de skal møtes om de blir skilt. De skriver bare inn steder de allerede kjenner. Det er blitt viktigere å avtale hvor de skal tilbake enn hvor langt de kan dra."
+        }
+      ],
+      "choices": [],
+      "illustration": "coast"
+    },
+    "local-forest-injury": {
+      "id": "local-forest-injury",
+      "kind": "ordinary",
+      "title": "Tempoet til den som går sist",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 14,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-forest-injury:0",
+          "day": 14,
+          "text": "Tor er fortsatt skadet. Mellom trærne avtaler laget å sjekke den som går sist før de fortsetter. «Ikke bare spør om jeg klarer å fortsette,» sier Tor. «Spør om jeg klarer returen også.» Laget må fortsatt velge tid til hvile eller behandling."
+        }
+      ],
+      "choices": [],
+      "illustration": "forest"
+    },
+    "local-residential-home": {
+      "id": "local-residential-home",
+      "kind": "ordinary",
+      "title": "Nabolag, ikke bare søkefelt",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 15,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-residential-home:0",
+          "day": 15,
+          "text": "Dere kontrollerer nå Lundsneset. Mellom boligene snakker laget om forskjellen på å ha vært innom og å ha ansvar for et område. Hva er undersøkt, og hva gjenstår? De faktiske søketimene og kartet er fasiten. De har sluttet å omtale alle gatene som «der ute»."
+        }
+      ],
+      "choices": [],
+      "illustration": "residential"
+    },
+    "local-residential-perimeter": {
+      "id": "local-residential-perimeter",
+      "kind": "ordinary",
+      "title": "Innenfor og utenfor",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 17,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-residential-perimeter:0",
+          "day": 17,
+          "text": "Gruppen har bygget varige sperringer. På kartet peker laget ut hvor de faktisk står; en sperring et annet sted gjør ikke denne gata trygg. Ingen vil at noen skal gå ut med en trygghet kartet ikke lover. «Vis meg hvilken side du mener,» sier en av dem. Pekingen blir til en gjennomgang av de faktiske sperringene."
+        }
+      ],
+      "choices": [],
+      "illustration": "residential"
+    },
+    "local-farm-settlement": {
+      "id": "local-farm-settlement",
+      "kind": "ordinary",
+      "title": "Et sted å bli",
+      "poiId": "",
+      "poiName": "Lundsneset",
+      "zoneId": "z3-0018",
+      "status": "resolved",
+      "step": 1,
+      "revision": 0,
+      "discoveredDay": 19,
+      "sources": [
+        "search"
+      ],
+      "notes": [
+        {
+          "id": "local-farm-settlement:0",
+          "day": 19,
+          "text": "Gården er blitt hovedkvarter. Laget blir stående ved arbeidsplassen og diskuterer hvem som skal være her når de andre går ut. Det er en annen samtale enn på den første turen: ikke bare hvor lenge maten rekker, men hva slags hverdag de vil bygge. Noen må være igjen når de andre drar. For første gang snakker de om det som en hverdag, ikke bare en ventetid."
+        }
+      ],
+      "choices": [],
+      "illustration": "farm"
+    }
+  },
+  "finalCrew": [
+    {
+      "id": "ingrid",
+      "name": "Ingrid",
+      "health": 100,
+      "fatigue": 18,
+      "alive": true
+    },
+    {
+      "id": "marius",
+      "name": "Marius",
+      "health": 99,
+      "fatigue": 72,
+      "alive": true
+    },
+    {
+      "id": "leila",
+      "name": "Leila",
+      "health": 100,
+      "fatigue": 18,
+      "alive": true
+    },
+    {
+      "id": "tor",
+      "name": "Tor",
+      "health": 100,
+      "fatigue": 18,
+      "alive": true
+    },
+    {
+      "id": "r1-4",
+      "name": "Amina",
+      "health": 100,
+      "fatigue": 18,
+      "alive": true
+    }
+  ]
+}

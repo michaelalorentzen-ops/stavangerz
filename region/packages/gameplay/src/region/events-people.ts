@@ -743,7 +743,7 @@ export const EVENTS_PEOPLE: EventDef[] = [
     make: (s, _w, rng) => {
       const p = pickCrew(s, rng);
       if (!p) return null;
-      return event('Posten var tom', `Da de kom over sperringa i natt, forlot ${p.name} posten sin og løp. To andre måtte holde åpningen alene til det ble lyst. Ingen døde. Alle vet hvem som løp.${noLawNote(s)}`, list(
+      return event('Posten var tom', `Det blir reist kritikk mot ${p.name}: en avtalt vaktoppgave ble overlatt til andre da frykten tok over. Noen vil gi en ny sjanse; andre mener tilliten er brutt.${noLawNote(s)}`, list(
         lawChoice(s, false, p.name),
         { id: 'shame', label: `Ta våpenet fra ${p.name} foran alle`, detail: 'Nærkampvåpen og latrinevakt. En lærepenge.', tags: ['harsh'] },
         { id: 'chance', label: 'Gi en ny sjanse', detail: 'Alle blir redde. Noen andre vil spørre om det samme.', tags: ['merciful'] },
@@ -765,27 +765,34 @@ export const EVENTS_PEOPLE: EventDef[] = [
       const p = crewById(s, d?.who);
       if (!p) return null;
       const good = rng() < .55 ? 1 : 0;
-      return event(good ? 'Den andre sjansen' : 'Igjen', good
-        ? `Da sperringa ved vannposten falt i går, var det ${p.name} som sto igjen og holdt mens barna ble båret inn. Ingen spør lenger hvem som løp sist.`
-        : `${p.name} løp igjen. Denne gangen var det ingen som holdt åpningen. To voksne fra leiren rakk ikke inn.${noLawNote(s)}`, good
+      const loss = Math.min(2, s.population.adults);
+      const lossText = loss ? `${loss === 1 ? 'Én voksen har' : 'To voksne har'} bestemt seg for å dra i protest. «${loss === 1 ? 'Jeg' : 'Vi'} stoler ikke på ledelsen lenger.» Avgjørelsen står fast.` : 'Misnøyen har blitt til et spørsmål ingen lar ligge: «Hvordan skal vi stole på ledelsen nå?»';
+      return event(good ? 'Den andre sjansen' : 'Splittet', good
+        ? `Folk begynner å snakke om ${p.name} som en av dem igjen. De vil høre at du fortsatt står ved den nye sjansen du ga. Noen få ord fra deg kan gjøre det lettere å legge saken bak seg.`
+        : `Den nye sjansen til ${p.name} har splittet gruppen. ${lossText} Hva vil du gjøre med ${p.name}?${noLawNote(s)}`, good
         ? [
-          { id: 'honour', label: `Hedre ${p.name} ved bålet`, detail: 'Folk trenger å se at nye sjanser virker.', tags: ['merciful'] },
-          { id: 'quiet', label: 'Ingenting å snakke om', detail: 'Det var jobben.' },
+          { id: 'honour', label: `Hedre ${p.name}`, detail: 'Gi tydelig anerkjennelse til den nye sjansen.', tags: ['merciful'] },
+          { id: 'quiet', label: 'Ingenting å snakke om', detail: 'La anerkjennelsen være stillferdig.' },
         ]
         : list(
           lawChoice(s, true, p.name),
-          { id: 'expel', label: `Send ${p.name} ut`, detail: 'Du ga en sjanse. Den kostet to liv.', tags: ['harsh'] },
-          { id: 'keep', label: `Behold ${p.name} borte fra porten`, detail: 'Ikke alle er laget for dette. Folk vil mene noe om det.', tags: ['merciful'] },
+          { id: 'expel', label: `Forvis ${p.name} fra gruppen`, detail: loss ? 'Personen forvises i tillegg til dem som drar i protest.' : 'Personen forvises fra gruppen.', tags: ['harsh'] },
+          { id: 'keep', label: `La ${p.name} bli i gruppen`, detail: 'Personen beholder plassen i gruppen. Uroen vil øke.', tags: ['merciful'] },
         ), { data: { who: p.id, good } });
     },
     resolve: (s, _w, c, _rng, lines) => {
       const p = crewById(s, str(s, 'who'));
       if (num(s, 'good')) { if (p) loyalty(p, c === 'honour' ? 15 : 5); hope(s, c === 'honour' ? 6 : 2); return; }
-      removePeople(s, 'adults', 2); hope(s, -6); unrest(s, 6);
-      remember(s, 'Den andre sjansen kostet to liv.');
+      const lost = removePeople(s, 'adults', 2); hope(s, -6); unrest(s, 6);
+      lines.push({ tone: 'warn', category: 'population', priority: 75,
+        title: lost ? `${lost} ${lost === 1 ? 'voksen forlot' : 'voksne forlot'} gruppen` : 'Protesten svekket tilliten',
+        text: lost ? 'Avgangen var en protest mot den nye sjansen.' : 'Protesten svekket håpet og økte uroen i gruppen.',
+        facts: { eventId: 'cowardAgain', departedAdults: lost },
+      });
+      remember(s, lost ? `${lost} ${lost === 1 ? 'voksen forlot' : 'voksne forlot'} gruppen i protest mot den nye sjansen.` : 'Den nye sjansen førte til protest og svekket tillit.');
       if (!p) return;
       if (c === 'law') applyLaw(s, lines, p, p.name);
-      if (c === 'expel') leaves(s, p, lines, 'Sendt ut etter å ha forlatt posten to ganger.');
+      if (c === 'expel') leaves(s, p, lines, 'Forvist etter striden om den nye sjansen.');
       if (c === 'keep') { unrest(s, 6); loyalty(p, 5); }
     },
   },
