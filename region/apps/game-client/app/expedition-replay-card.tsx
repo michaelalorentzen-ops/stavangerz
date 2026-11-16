@@ -15,6 +15,11 @@ export interface ExpeditionReplaySceneCardProps {
 }
 const PORTRAITS = new Set(['ingrid', 'marius', 'leila', 'tor']);
 const PHASE = { departure: 'Dagens rute', operations: 'Fra oppdragene', night: 'Gjennom natten', 'new-day': 'Ved daggry' };
+/** Keep a complete recorded sentence, never invent a shorter event or retell
+ * facts from outside this scene. Full narration remains in report/history. */
+function narrativeLead(text: string) {
+  return text.match(/^.*?[.!?](?=\s|$)/u)?.[0] ?? text;
+}
 
 /** No timer, state mutation, outcome calculation or extra scene-advance click.
  * Parent owns the reached stage, duration, keyboard control and mandatory choices.
@@ -30,6 +35,7 @@ export function ExpeditionReplaySceneCard({ scene, position, total, paused, onTo
       </div>
     </div>
     <div className="exp-replay-content" role="status" aria-live="polite" aria-atomic="true">
+      {scene.voice && scene.first && scene.text && <p className="exp-replay-narrative exp-replay-lead">{narrativeLead(scene.text)}</p>}
       {scene.voice ? <blockquote><Radio size={14} aria-hidden="true" /><div><strong>{scene.voice.name}</strong><p>«{scene.voice.text}»</p></div></blockquote>
         : scene.text && <p className="exp-replay-narrative">{scene.text}</p>}
       {scene.result && <p className="exp-replay-result">{scene.result}</p>}
