@@ -46,6 +46,10 @@ import { PoiProfile } from './poi-profile';
 import { HQManagement } from './hq-management';
 import { OrderComposer } from './order-composer';
 import { DayPlan } from './day-plan';
+import { departureScene, replayStageScenes, type ExpeditionReplayScene } from './expedition-replay';
+import { ExpeditionReplaySceneCard, ExpeditionReplayCompact } from './expedition-replay-card';
+import { experienceArt } from './story-art';
+import './live-replay.css';
 import './region.css';
 import './situational-hud.css';
 import './game-identity.css';
@@ -76,7 +80,7 @@ const decimal = (n: number) => n.toLocaleString('nb-NO', { maximumFractionDigits
 const signed = (n: number) => `${n >= 0 ? '+' : '−'}${decimal(Math.abs(Math.round(n * 10) / 10))}`;
 
 type Modal = null | 'report' | 'trade' | 'goals' | 'menu' | 'stock' | 'society' | 'research' | 'chronicle' | 'wonders' | 'book' | 'equipment' | 'discoveries' | 'administration' | 'attention' | 'crew-profile' | 'hq' | 'plan' | 'command' | 'poi' | 'community' | 'resources' | 'settings';
-type DayReplaySession = { before: RegionState; report: RegionReport; pendingEvent: boolean };
+type DayReplaySession = { before: RegionState; report: RegionReport; pendingEvent: boolean; orders: RegionOrder[]; continuation: boolean };
 
 // ------------------------------------------------------------------ art
 // Pictures live in public/art and are listed in public/art/manifest.json (pnpm art:manifest).
@@ -203,6 +207,8 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
   },[]);
   const [replay, setReplay] = useState<DayReplaySession | null>(null);
   const [replayStep, setReplayStep] = useState(-1);
+  const [replayMoment, setReplayMoment] = useState(0);
+  const [replayPaused, setReplayPaused] = useState(false);
   const audibleState = replay?.before ?? committedState;
   const knownHarbor = audibleState.zones[audibleState.homeZoneId]?.status !== 'unknown' && world.pois.some(poi => poi.zoneId === audibleState.homeZoneId && poi.siteType === 'marina');
   const playSound = useGameAudio(preferences, replay && replayStep === 0 ? 'night' : knownHarbor ? 'harbor' : 'camp');
@@ -299,31 +305,51 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
     else {playSound(reportSound(replay.report));setModal('report');}
   };
   useEffect(()=>{if(replay&&replayStep===0)playSound('night');},[replay?.report.day,replayStep,playSound]);
+  // Resolve only stages already reached. Earlier selections consume the small
+  // daily attention budget; future stages and the committed world stay unread.
+  const replayPresentation = useMemo(() => {
+    if (!replay) return { scenes: [] as ExpeditionReplayScene[], compact: [] as RegionReport['lines'], preceding: 0 };
+    const departure = replay.continuation ? undefined : departureScene(replay.before, world, replay.orders);
+    if (replayStep < 0) return { scenes: departure ? [departure] : [], compact: [], preceding: 0 };
+    let used = departure ? 1 : 0;
+    for (let i = 0; i <= replayStep; i++) {
+      const stage = replay.report.replay?.[i];
+      if (!stage) continue;
+      const projected = replayStageScenes(replay.before, world, stage);
+      const eligible = projected.featured.filter(scene => scene.importance >= 65);
+      const scenes = eligible.slice(0, Math.min(2, Math.max(0, 4 - used)));
+      const compact = [...projected.featured.filter(scene => !scenes.includes(scene)).map(scene => ({ title: scene.title, text: scene.result, tone: scene.tone, zoneId: scene.zoneId })), ...projected.compact];
+      if (i === replayStep) return { scenes, compact, preceding: used };
+      used += scenes.length;
+    }
+    return { scenes: [], compact: [], preceding: used };
+  }, [replay, replayStep, world]);
+  const currentReplayScene = replayPresentation.scenes[replayMoment];
   useEffect(() => {
-    if (!replay) return;
-    const delay = [-1, 0, 1, 2].includes(replayStep)
-      ? replayStep === -1 ? 1100 : replayStep === 0 ? 850 : replayStep === 1 ? 450 : 350
-      : 350;
+    if (!replay || replayPaused) return;
+    const delay = currentReplayScene ? currentReplayScene.kind === 'departure' ? 3500 : currentReplayScene.first || currentReplayScene.importance >= 80 ? 5500 : 3000 : 1500;
     const timer = window.setTimeout(() => {
-      if (replayStep < 2) setReplayStep(replayStep + 1);
+      if (replayMoment + 1 < replayPresentation.scenes.length) setReplayMoment(replayMoment + 1);
+      else if (replayStep < 2) { setReplayMoment(0); setReplayStep(replayStep + 1); }
       else closeReplay();
     }, delay);
     return () => window.clearTimeout(timer);
-    // closeReplay operates on the same immutable session as replay.
+    // This immutable presentation session owns all playback timers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replay, replayStep]);
+  }, [replay, replayStep, replayMoment, replayPaused, currentReplayScene]);
   useEffect(() => {
     if (!replay) return;
-    // The translucent shield blocks pointer actions; trap keyboard focus too,
-    // so players cannot issue a second order against an older visible state.
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     const trap = (event: KeyboardEvent) => {
+      const dialog = document.querySelector('.rz-replay-shield');
       if (event.key === 'Tab') {
+        const buttons = Array.from(dialog?.querySelectorAll<HTMLButtonElement>('button:not([disabled])') ?? []);
+        if (!buttons.length) return;
         event.preventDefault();
-        document.querySelector<HTMLButtonElement>('[data-testid="skip-replay"]')?.focus();
-      } else if (!event.metaKey && !event.ctrlKey && !event.altKey && !(event.target instanceof Node && document.querySelector('.rz-replay-card')?.contains(event.target))) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
+        const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+        buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+      } else if (!event.metaKey && !event.ctrlKey && !event.altKey && !(event.target instanceof Node && dialog?.contains(event.target))) {
+        event.preventDefault(); event.stopImmediatePropagation();
       }
     };
     window.addEventListener('keydown', trap, true);
@@ -389,13 +415,13 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
     if (['rest','heal','return'].includes(action)) { setTargeting(false); setModal('command'); }
     else { setTargeting(true); setModal(null); setMessage('Velg målsonen på kartet.'); }
   };
-  const showCompletedDay = (before: RegionState, result: { state: RegionState; report: RegionReport }, skipReplay = false) => {
+  const showCompletedDay = (before: RegionState, result: { state: RegionState; report: RegionReport }, continuation = false) => {
       setState(result.state); setOrders([]); setCrew([]); setReport(result.report);
       const stages = result.report.replay;
-      if (!skipReplay && stages?.length === 3 && stages[0].phase === 'operations' && stages[1].phase === 'night' && stages[2].phase === 'new-day'
+      if (stages?.length === 3 && stages[0].phase === 'operations' && stages[1].phase === 'night' && stages[2].phase === 'new-day'
         && !preferences.reducedMotion) {
-        playSound('day');setReplay({ before, report: result.report, pendingEvent: !!result.state.event });
-        setReplayStep(-1);
+        playSound('day');setReplay({ before, report: result.report, pendingEvent: !!result.state.event, orders: continuation ? [] : [...orders], continuation });
+        setReplayStep(continuation ? 0 : -1); setReplayMoment(0); setReplayPaused(false);
         setModal(null);
       } else if (result.state.event) {
         playSound('event');setReportAfterEvent(result.report);
@@ -421,9 +447,8 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
     try {
       const result = continueRegionDay(committedState, world, choice);
       if (result.status === 'paused') { setState(result.state); setOrders([]); setCrew([]); setModal(null); return; }
-      // The checkpoint is already post-operations. Without a persisted dawn
-      // snapshot, animating the whole day from it would leak/falsify history.
-      // Show the actual complete report directly for this first vertical slice.
+      // Resume presentation at the public operations result, never recreate dawn
+      // or replay old orders from this authoritative partial checkpoint.
       showCompletedDay(committedState, result, true);
       setMessage('');
     } catch (e) { setMessage((e as Error).message); }
@@ -547,6 +572,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
 
     </section></div>}
     {pendingNightDecision && !replay && <div className="rz-overlay"><section className="rz-dialog rz-event rz-night-decision" role="dialog" aria-modal="true" aria-label={pendingNightDecision.title}>
+      <img className="live-decision-art" src={experienceArt(pendingNightDecision.kind === 'field-encounter' ? 'scout' : 'perimeter')} alt="" />
       <p className="rz-kicker">KRITISK · DAG {state.day} · {pendingNightDecision.kind === 'field-encounter' ? 'UTENFOR LEIREN' : 'NATT 22:00–07:00'}</p>
       <h2>{pendingNightDecision.title}</h2><p>{pendingNightDecision.text}</p>
       <p className="rz-small">{index.byId.get(pendingNightDecision.zoneId)?.name}</p>
@@ -593,7 +619,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
         <button onClick={() => setConfirmRestart(true)}>Ny gjennomspilling</button>
 </>}
     </section></div>}
-    {replay && <DayReplay session={replay} step={replayStep} onSkip={closeReplay} />}
+    {replay && <DayReplay session={replay} step={replayStep} scene={currentReplayScene} compact={replayPresentation.compact} position={replayPresentation.preceding + replayMoment} paused={replayPaused} onTogglePause={() => setReplayPaused(value => !value)} onSkip={closeReplay} />}
     {confirmRestart && <GameConfirm title="Til en ny begynnelse?" message="Den aktive gjennomspillingen bevares på en ledig lagringsplass. Hvis alle tre er fulle, frigjør en plass under Gjennomspillinger først." confirmLabel="Til startskjermen" onCancel={()=>setConfirmRestart(false)} onConfirm={()=>{setConfirmRestart(false);onRestart();}}/>}
   </main>;
 }
@@ -619,39 +645,22 @@ function CampaignConclusion({state,onRestart,onLibrary}:{state:RegionState;onRes
   </section></div>;
 }
 
-/** A presentation of settled journal entries, not a minute-based simulation. */
-function DayReplay({ session, step, onSkip }: { session: DayReplaySession; step: number; onSkip: () => void }) {
-  const [clock, setClock] = useState('07:00');
-  useEffect(() => {
-    if (step >= 1) { setClock('07:00'); return; }
-    const start = performance.now();
-    const night = step === 0;
-    const duration = night ? 850 : 1100;
-    const beginMinutes = night ? 22 * 60 : 7 * 60;
-    const spanMinutes = (night ? 9 : 15) * 60;
-    const timer = window.setInterval(() => {
-      const ratio = Math.min(1, (performance.now() - start) / duration);
-      const minutes = (beginMinutes + Math.floor(spanMinutes * ratio)) % (24 * 60);
-      setClock(`${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
-    }, 60);
-    return () => window.clearInterval(timer);
-  }, [step]);
-  const journal = session.report.replay ?? [];
-  const settled = step >= 0 ? journal[Math.min(step, journal.length - 1)] : null;
-  const label = step < 0 ? 'DAGENS OPERASJONER' : step === 0 ? 'NATTEN FALLER' : step === 1 ? 'MORGENEN GRYR' : 'NY DAG';
-  const headline = step < 0 ? 'Oppdragene gjennomføres' : step === 0 ? 'Operasjonene er avgjort' : step === 1 ? 'Nattevakten har rapportert' : 'Døgnet er oppsummert';
-  const lines = settled?.lines.slice().sort((a, b) => reportPriority(b, session.before.phase) - reportPriority(a, session.before.phase)).slice(0, 3) ?? [];
-  const resources = settled?.mainResourcesAfter ?? { food: session.before.stock.food ?? 0, water: session.before.stock.water ?? 0 };
-  return <div className="rz-replay-shield" role="dialog" aria-modal="true" aria-label="Døgnet spilles av">
-    <section className="rz-replay-card" aria-live="off">
-      <div className="rz-replay-head"><div><p className="rz-kicker">DAG {session.before.day} · {label}</p><h2>{headline}</h2></div><time className="rz-replay-clock">{clock}</time></div>
-      <div className="rz-replay-track" aria-hidden="true"><span key={step} style={{ animationDuration: `${step < 0 ? 1100 : step === 0 ? 850 : step === 1 ? 450 : 350}ms` }} /></div>
-      <div className="rz-replay-feed">
-        {lines.length ? lines.map((line, i) => <p key={`${step}-${i}`} className={`rz-replay-line rz-replay-${line.tone}`}>{line.title}</p>) : <p className="rz-replay-empty">{step < 0 ? 'Laget er ute. Utfallet vises etter operasjonene.' : 'Ingen større hendelser i denne delen av døgnet.'}</p>}
-        {!!settled?.zoneChanges.length && <p className="rz-replay-zones">{settled.zoneChanges.length} {settled.zoneChanges.length === 1 ? 'sone endret status' : 'soner endret status'} på kartet</p>}
-      </div>
-      <div className="rz-replay-bottom"><span>Mat <b>{number(resources.food)}</b> · Vann <b>{number(resources.water)}</b></span><button className="rz-primary" onClick={onSkip} data-testid="skip-replay">Hopp over avspilling →</button></div>
+/** Public, reached phase results. No invented minute-by-minute action times. */
+function DayReplay({ session, step, scene, compact, position, paused, onTogglePause, onSkip }: {
+  session: DayReplaySession; step: number; scene?: ExpeditionReplayScene; compact: readonly RegionReport['lines'][number][]; position: number;
+  paused: boolean; onTogglePause: () => void; onSkip: () => void;
+}) {
+  const settled = step >= 0 ? session.report.replay?.[step] : undefined;
+  const phase = step < 0 ? 'Dagens rute' : step === 0 ? 'Rapport fra oppdragene' : step === 1 ? 'Gjennom natten' : 'Ved daggry';
+  const resources = settled?.mainResourcesAfter ?? session.before.stock;
+  return <div className="rz-replay-shield live-replay" role="dialog" aria-modal="true" aria-label="Døgnet spilles av">
+    <section className="rz-replay-card live-replay-status" aria-label="Døgnets fase">
+      <div><p className="rz-kicker">DAG {Math.max(0, session.report.day - 1)}{session.continuation ? ' · ETTER AVGJØRELSEN' : ''}</p><h2>{phase}</h2></div>
+      <span className="live-replay-supplies">Mat <b>{number(resources.food ?? 0)}</b> · Vann <b>{number(resources.water ?? 0)}</b></span>
+      <div className="live-replay-phases" aria-hidden="true">{['Rute', 'Oppdrag', 'Natt', 'Daggry'].map((label,i)=><span key={label} className={i <= step + 1 ? 'reached' : ''}>{label}</span>)}</div>
+      {!scene && <div className="live-replay-fallback-controls"><button onClick={onTogglePause}>{paused ? 'Fortsett' : 'Pause'}</button><button data-testid="skip-replay" onClick={onSkip}>Hopp over avspilling →</button></div>}
     </section>
+    {scene ? <ExpeditionReplaySceneCard scene={scene} position={position} paused={paused} onTogglePause={onTogglePause} onSkip={onSkip} /> : <ExpeditionReplayCompact lines={compact} />}
   </div>;
 }
 
