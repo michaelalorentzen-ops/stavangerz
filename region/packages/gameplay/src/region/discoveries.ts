@@ -3,6 +3,7 @@
  * reporter; material rewards are returned as physical cargo, never global stock.
  */
 import type { RegionPoi, RegionState, RegionWorld, ReportLine, Stock } from './types';
+import { REACTIVE_OBSERVATIONS, REACTIVE_CHOICE_STORIES, reactiveChoiceStory, type FieldContext } from './discovery-reactive-content';
 import { crewPositionFor } from './location';
 import { gainWonder, WONDERS, wonderZone } from './wonders';
 import { routeBetween } from './mobility';
@@ -167,8 +168,38 @@ function observeLocalContent(state: DiscoveryRegionState, world: RegionWorld, ev
     receive(state, { id: `${entry.id}:clue`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
     return;
   }
+  const context: FieldContext = { state, zone, pois, witnesses, source: evidence.source };
+  // Initial place observations get first priority in their own environment. Contextual
+  // content remains available here; visiting all six environments is never required.
   const local = LOCAL_OBSERVATIONS.find(def => !seen(`local-${def.id}`) && def.matches(zone, pois));
-  if (!local) return;
+  if (!local) {
+    for (const story of REACTIVE_CHOICE_STORIES) {
+      if (seen(story.id) || !witnesses.includes(story.personId) || !story.matches(context)) continue;
+      const poi = pois.filter(p => story.siteTypes.includes(p.siteType ?? p.hqType ?? p.facilityType ?? '')).sort((a, b) => a.id.localeCompare(b.id))[0];
+      if (!poi) continue;
+      const debrief = story.id === 'field-home-debrief';
+      const destination = debrief ? state.hq!.zoneId : zone.id;
+      const destinationName = world.zones.find(z => z.id === destination)?.name ?? zone.name;
+      const entry: DiscoveryEntry = { id: story.id, kind: 'ordinary', title: story.title,
+        poiId: debrief ? '' : poi.id, poiName: debrief ? `Arbeidsbordet i ${destinationName}` : poi.name,
+        zoneId: destination, status: debrief ? 'followup' : 'choice', step: 1, revision: 0,
+        discoveredDay: state.day, sources: [evidence.source], notes: [], choices: debrief ? [] : structuredClone(story.choices),
+        boundPersonId: story.personId, illustration: story.illustration };
+      note(entry, state.day, debrief
+        ? `${story.opening} Gjennomgangen krever ett arbeidsoppdrag på ${DISCOVERY_WORK.ordinaryHours} timer ved ${entry.poiName}; håp og Marius sin tillit øker med fem når erfaringen er rapportert. Sporet kan ligge uten kostnad.`
+        : `Ved ${poi.name}: ${story.opening}`);
+      receive(state, { id: `${entry.id}:opening`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
+      return;
+    }
+    const reactive = REACTIVE_OBSERVATIONS.find(def => !seen(`local-${def.id}`) && def.matches(context));
+    if (!reactive) return;
+    const entry: DiscoveryEntry = { id: `local-${reactive.id}`, kind: 'ordinary', title: reactive.title,
+      poiId: '', poiName: zone.name, zoneId: zone.id, status: 'resolved', step: 1, revision: 0,
+      discoveredDay: state.day, sources: [evidence.source], notes: [], choices: [], illustration: reactive.illustration };
+    note(entry, state.day, reactive.text(context));
+    receive(state, { id: `${entry.id}:observation`, reporterIds: witnesses, day: state.day, entry }, evidence, lines);
+    return;
+  }
   // A fictional detail of a measured area, not a claim about a particular real house.
   const entry: DiscoveryEntry = { id: `local-${local.id}`, kind: 'ordinary', title: local.title,
     poiId: '', poiName: zone.name, zoneId: zone.id, status: 'resolved', step: 1, revision: 0,
@@ -354,7 +385,21 @@ export function executeDiscoveryOrder(state: DiscoveryRegionState, world: Region
   const receipt = `${entry.id}:${entry.revision}:${work.kind}:${choiceId ?? ''}`;
   let cargo: Stock = {}, morale = 0, loyalty = 0;
   entry.revision++;
-  if (entry.storyId) {
+  if (reactiveChoiceStory(entry.id)) {
+    entry.status = 'resolved'; entry.step++; entry.choices = [];
+    if (choiceId) entry.chosen = [...(entry.chosen ?? []), choiceId];
+    if (entry.id === 'field-home-debrief') {
+      morale = 5; loyalty = 5;
+      note(entry, state.day, 'Marius ga dem som ble igjen plass i gjennomgangen. Gruppen delte det som faktisk var observert og snakket om neste tur. Håpet og Marius sin tillit vokste; ingen nye forsyninger, forsvarseffekter eller kartopplysninger ble opprettet.');
+    } else {
+      const preset = entry.id === 'field-workshop-sort'
+        ? choiceId === 'parts' ? 'salvage' : 'finishedKit'
+        : choiceId === 'medical' ? 'ordinaryMedical' : 'ordinaryFood';
+      cargo = { ...DISCOVERY_WORK[preset] };
+      const picked = r.entries[id].choices.find(c => c.id === choiceId)!;
+      note(entry, state.day, `${personName(state, entry.boundPersonId)} og laget valgte «${picked.label}». ${picked.detail} Funnet er endelig og følger laget fysisk; det blir ikke fylt opp igjen.`);
+    }
+  } else if (entry.storyId) {
     const result = executePersonStory(state, world, entry, work.kind, choiceId);
     cargo = result.cargo; morale = result.morale; loyalty = result.loyalty;
   } else if (work.kind === 'investigate') {

@@ -65,5 +65,5 @@ for(const zone of world.zones.filter(z=>z.level===3)){
 for(const def of LOCAL_OBSERVATIONS){const e=entry(local,`local-${def.id}`);assert(e,def.id);assert.equal(e.status,'resolved');assert.equal(e.illustration,def.illustration);assert.equal(e.poiId,'');assert.equal(world.zones.find(z=>z.id===e.zoneId)?.name,e.poiName);}
 assert.deepEqual(local.stock,stock);assert.equal(local.morale,hope);
 for(const def of LOCAL_OBSERVATIONS){const e=entry(local,`local-${def.id}`);place(local,'tor',e.zoneId);observeDiscoveries(local,world,{zoneId:e.zoneId,source:'search',reporterIds:['tor'],delivery:'radio',radioVerified:true},lines);}
-assert.equal(Object.keys(local.discoveries!.entries).filter(id=>id.startsWith('local-')).length,6);
+assert.equal(Object.keys(local.discoveries!.entries).filter(id=>LOCAL_OBSERVATIONS.some(d=>id===`local-${d.id}`)).length,6);
 console.log('PASS living stories: 3 optional person chains/3 outcomes each; known reachable follow-up; physical/private reports; correct loyalty; finite cargo; reload/death/repeat; 6 reward-free local observations.');
