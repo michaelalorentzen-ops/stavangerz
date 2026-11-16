@@ -1,18 +1,33 @@
 /** Saved presentation of authoritative outcomes. No randomness, rewards or new simulation. */
 import { GEAR_CATALOG } from './gear';
-import type { ExpeditionExperience, ExperienceKind, RegionOrder, RegionReport, RegionState, RegionSurvivor, RegionWorld, ReportLine, Stock } from './types';
+import { crewPositionFor } from './location';
+import type { EarnedMemoryKind, ExpeditionExperience, ExperienceKind, RegionOrder, RegionReport, RegionState, RegionSurvivor, RegionWorld, ReportLine, Stock } from './types';
 const ORIGIN = 'experience:origin';
+const MILESTONE_ORIGIN = 'experience:milestone-origin';
+const DEFENCE_MODULES = new Set(['gate', 'watchtower', 'walls', 'overview']);
+const MEMORY_LIMIT = 12;
 export const experienceMarker = (kind: ExperienceKind) => `experience:first:${kind}`;
+export const earnedMemoryMarker = (kind: EarnedMemoryKind) => `experience:milestone:${kind}`;
 const marker = experienceMarker;
 /** Permanent, bounded public journal; old saves may fall back to retained public reports. */
 export function recordedExperiences(state: RegionState): ExpeditionExperience[] {
   const seen = new Set<ExperienceKind>();
   return [...(state.experiences ?? []), ...state.reports.flatMap(report => report.lines.flatMap(line => line.experience ? [line.experience] : []))].filter(experience => {
-    if (seen.has(experience.kind)) return false; seen.add(experience.kind); return true;
+    if (experience.milestone || seen.has(experience.kind)) return false; seen.add(experience.kind); return true;
   }).sort((a, b) => a.day - b.day);
 }
 export const hasRecordedExperience = (state: RegionState, kind: ExperienceKind) => !!state.flags[marker(kind)] || recordedExperiences(state).some(experience => experience.kind === kind);
-export function initializeExperienceJournal(state: RegionState) { state.flags[ORIGIN] = 'new'; }
+/** Milestones never displace the original eight, even after the report window rotates. */
+export function recordedMemories(state: RegionState): ExpeditionExperience[] {
+  const seen = new Set<EarnedMemoryKind>();
+  const milestones = [...(state.earnedMemories ?? []), ...state.reports.flatMap(report => report.lines.flatMap(line => line.experience?.milestone ? [line.experience] : []))]
+    .filter(experience => { if (!experience.milestone || seen.has(experience.milestone)) return false; seen.add(experience.milestone); return true; }).slice(-MEMORY_LIMIT);
+  return [...recordedExperiences(state), ...milestones].sort((a, b) => a.day - b.day);
+}
+export function initializeExperienceJournal(state: RegionState) { state.flags[ORIGIN] = 'new'; state.flags[MILESTONE_ORIGIN] = 'new'; }
+function hasEarnedMemory(state: RegionState, milestone: EarnedMemoryKind) {
+  return !!state.flags[earnedMemoryMarker(milestone)] || recordedMemories(state).some(experience => experience.milestone === milestone);
+}
 type Illustration = ExpeditionExperience['illustration'];
 export function experienceEnvironment(world: RegionWorld, zoneId: string): Illustration {
   const m = world.zones.find(z => z.id === zoneId)?.measures;
@@ -68,15 +83,38 @@ function append(state: RegionState, lines: ReportLine[], experience: ExpeditionE
   // Only finalizeExperienceReport consumes the campaign-wide first marker.
   lines.push({ category: 'experience', tone: 'info', priority: 60, title: experience.title, text: experience.result, zoneId: experience.zoneId, experience });
 }
+function appendMilestone(state: RegionState, lines: ReportLine[], experience: ExpeditionExperience) {
+  if (!experience.milestone || hasEarnedMemory(state, experience.milestone) || lines.some(line => line.experience?.milestone === experience.milestone)) return;
+  // This line follows the same private mission transport as ordinary field results.
+  lines.push({ category: 'experience', tone: 'info', priority: 60, title: experience.title, text: experience.result, zoneId: experience.zoneId, experience });
+}
+function milestoneMemory(state: RegionState, world: RegionWorld, milestone: EarnedMemoryKind, kind: ExperienceKind, zoneId: string,
+  crew: readonly RegionSurvivor[], title: string, text: string, result: string, facts: ExpeditionExperience['facts']): ExpeditionExperience {
+  const experience = make(state, world, kind, zoneId, crew, milestone, result, facts, kind === 'hq' ? 'hq' : undefined);
+  experience.id = `memory:${milestone}:${state.day}`;
+  experience.milestone = milestone;
+  experience.title = title; experience.text = text; experience.helpTopic = 'milestones';
+  experience.record = state.flags[MILESTONE_ORIGIN] === 'new' ? 'first' : 'first-recorded';
+  delete experience.voice; // A milestone is not an invented first-action quote.
+  return experience;
+}
+function completedHqDefenceMemory(state: RegionState, world: RegionWorld, zoneId: string, crew: readonly RegionSurvivor[], moduleId: string, result: string, lines: ReportLine[]) {
+  if (!hasRecordedExperience(state, 'perimeter')) return;
+  appendMilestone(state, lines, milestoneMemory(state, world, 'hq-defence', 'perimeter', zoneId, crew, 'Et vern å bygge videre på',
+    'Det første perimeteret var en begynnelse. Nå har hovedkvarteret fått et ferdig forsvarsanlegg. Arbeidet gjør en forskjell, men noen må fortsatt holde oversikt over hva som trenger vedlikehold.',
+    result, { completedHqDefence: true, moduleId }));
+}
 export interface OperationExperienceSnapshot {
   status: string; searched: number; health: Record<string, number>; stock: Stock; killed: number;
   gearIds: string[]; barricades: Record<string, number>; upgrades: string[]; modules: string[]; hadHq: boolean;
+  controlledCount: number;
 }
 /** Capture immediately before a valid operation, after travel/cargo reservation. */
 export function captureOperationExperience(state: RegionState, order: RegionOrder, killed: number): OperationExperienceSnapshot {
   const z = state.zones[order.zoneId];
   return { status: z.status, searched: z.searched, health: Object.fromEntries(order.survivorIds.map(id => [id, state.survivors.find(p => p.id === id)?.health ?? 0])),
-    stock: { ...state.stock }, killed, gearIds: (state.gear?.items ?? []).map(i => i.id), barricades: { ...state.barricades }, upgrades: [...z.upgrades], modules: [...(state.hq?.modules ?? [])], hadHq: !!state.hq };
+    stock: { ...state.stock }, killed, gearIds: (state.gear?.items ?? []).map(i => i.id), barricades: { ...state.barricades }, upgrades: [...z.upgrades], modules: [...(state.hq?.modules ?? [])], hadHq: !!state.hq,
+    controlledCount: Object.values(state.zones).filter(zone => zone.status === 'controlled').length };
 }
 /** Only outcomes of the operation that just ran. Neither creates nor publishes knowledge. */
 export function recordOperationExperience(state: RegionState, world: RegionWorld, order: RegionOrder, before: OperationExperienceSnapshot,
@@ -94,10 +132,21 @@ export function recordOperationExperience(state: RegionState, world: RegionWorld
   }
   const killedHere = Math.max(0, killed - before.killed), injured = crew.filter(p => p.health < before.health[p.id]).length;
   if (['clear', 'search', 'claim'].includes(order.action) && (killedHere > 0 || order.action === 'clear' && injured > 0)) add('combat', `${killedHere} zombier ble drept under oppdraget.${injured ? ` ${injured} i laget ble skadet.` : ''}`, { killed: killedHere, injuredCount: injured, ammoUsed: Math.max(0, (before.stock.ammo ?? 0) - (state.stock.ammo ?? 0)) });
-  if (before.status !== 'controlled' && zone.status === 'controlled' && ['claim', 'assault'].includes(order.action)) add('claim', 'Sonen er nå kontrollert av gruppen.', { controlled: true });
+  if (before.status !== 'controlled' && zone.status === 'controlled' && ['claim', 'assault'].includes(order.action)) {
+    add('claim', 'Sonen er nå kontrollert av gruppen.', { controlled: true });
+    const controlledCount = Object.values(state.zones).filter(zone => zone.status === 'controlled').length;
+    if (before.controlledCount < 10 && controlledCount >= 10) appendMilestone(state, lines, milestoneMemory(state, world, 'ten-zones', 'claim', order.zoneId, crew,
+      'Et større ansvar', 'Det er flere steder å vende tilbake til nå. Hver ny grense betyr også noen som må passe på, hente forsyninger og komme hjem. Gruppen må tenke lenger enn neste tur.',
+      `${controlledCount} soner er nå under gruppens kontroll.`, { controlledCount }));
+  }
   const newBarriers = Object.entries(state.barricades).filter(([id, durability]) => durability > (before.barricades[id] ?? 0)).length;
   const builtPost = zone.upgrades.some(id => ['watchpost', 'barricades'].includes(id) && !before.upgrades.includes(id));
   const builtModule = (state.hq?.modules ?? []).some(id => ['gate', 'watchtower', 'walls', 'overview'].includes(id) && !before.modules.includes(id));
+  if (order.action === 'module' && builtModule && !before.modules.some(id => DEFENCE_MODULES.has(id))) {
+    const moduleId = state.hq!.modules.find(id => DEFENCE_MODULES.has(id) && !before.modules.includes(id))!;
+    const completion = produced.find(line => line.title.endsWith('er ferdig'));
+    completedHqDefenceMemory(state, world, order.zoneId, crew, moduleId, completion ? `${completion.title}.` : 'Hovedkvarterets første forsvarsmodul er ferdig.', lines);
+  }
   if (['fortify', 'block', 'build', 'module'].includes(order.action) && (newBarriers > 0 || builtPost || builtModule)) add('perimeter', source(order.action)?.text || 'Et varig forsvarsverk er ferdig bygget.', { barriersBuiltOrStrengthened: newBarriers, completedPost: builtPost, completedHqDefence: builtModule });
   if (!before.hadHq && state.hq?.zoneId === order.zoneId && order.action === 'establishHq') add('hq', produced.find(l => l.title.startsWith('HQ etablert:'))?.text ?? 'HQ er etablert.', { hqType: state.hq.type }, 'hq');
   if (['scout', 'search'].includes(order.action)) {
@@ -108,6 +157,23 @@ export function recordOperationExperience(state: RegionState, world: RegionWorld
 /** Anonymous builders are not replaced by invented named participants. */
 export function recordCompletedDefenceExperience(state: RegionState, world: RegionWorld, zoneId: string, sourceId: string, result: string, lines: ReportLine[]) {
   append(state, lines, make(state, world, 'perimeter', zoneId, [], sourceId, result, { completedDefence: true }));
+  if (sourceId.startsWith('module:') && (state.hq?.modules.filter(id => DEFENCE_MODULES.has(id)).length ?? 0) === 1) {
+    completedHqDefenceMemory(state, world, zoneId, [], sourceId.slice('module:'.length), result, lines);
+  }
+}
+/** Called only around an actual checkPhase transition, never when loading a save. */
+export function recordPhaseExperience(state: RegionState, world: RegionWorld, previousPhase: number, lines: ReportLine[]) {
+  if (state.phase !== previousPhase + 1 || state.phase < 2 || state.phase > 5) return;
+  const stories = {
+    2: ['Mer enn en natt til', 'Det som begynte som et sted å skjule seg, har fått en hverdag. Nå må folk dele på arbeidet, ikke bare på bekymringen.'],
+    3: ['Flere å stole på', 'Gruppen har blitt større enn den første kretsen. Det blir viktigere å forklare hva man vil, og å vite hvem som faktisk kan ta ansvar.'],
+    4: ['Ansvar over avstand', 'Kartet rommer flere oppgaver enn én gruppe kan rekke. Noe må planlegges på avstand, og menneskene som tar ansvar må kunne stole på hverandre.'],
+    5: ['En hverdag å forsvare', 'Det finnes mer å tenke på enn neste døgn. Hva slags samfunn skal dette bli, og hva er gruppen villig til å gjøre for å holde det sammen?'],
+  } as const;
+  const [title, text] = stories[state.phase as keyof typeof stories];
+  const crew = state.survivors.filter(person => { const position = crewPositionFor(state, person.id); return person.alive && !person.left && person.health > 0 && position?.kind === 'zone' && position.zoneId === state.homeZoneId; });
+  appendMilestone(state, lines, milestoneMemory(state, world, `phase-${state.phase}` as EarnedMemoryKind, 'hq', state.homeZoneId, crew,
+    title, text, `Gruppen har nådd fase ${state.phase}.`, { previousPhase, phase: state.phase }));
 }
 /** Night combat is reported in its actual defended zone, never as off-screen kills by a named crew. */
 export function recordDefenceCombatExperience(state: RegionState, world: RegionWorld, zoneId: string, killed: number, crew: readonly RegionSurvivor[], lines: ReportLine[], anonymousGuard = false) {
@@ -123,6 +189,15 @@ export function finalizeExperienceReport(state: RegionState, report: RegionRepor
   for (const line of report.lines) {
     const experience = line.experience;
     if (!experience) continue;
+    if (experience.milestone) {
+      const key = earnedMemoryMarker(experience.milestone);
+      if (hasEarnedMemory(state, experience.milestone)) { delete line.experience; if (line.category === 'experience') discarded.add(line); }
+      else {
+        state.earnedMemories = [...recordedMemories(state).filter(memory => memory.milestone), experience].slice(-MEMORY_LIMIT);
+        state.flags[key] = experience.id;
+      }
+      continue;
+    }
     const key = marker(experience.kind);
     if (hasRecordedExperience(state, experience.kind)) { delete line.experience; if (line.category === 'experience') discarded.add(line); }
     else {

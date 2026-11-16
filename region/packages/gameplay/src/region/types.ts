@@ -90,9 +90,12 @@ export type WorkId = 'farm' | 'fish' | 'scavenge' | 'clear' | 'guard' | 'build' 
 
 /** A saved presentation of a real, reportable field result. Never an invented event. */
 export type ExperienceKind = 'scout' | 'search' | 'combat' | 'gear' | 'claim' | 'perimeter' | 'poi' | 'hq';
+export type EarnedMemoryKind = 'hq-defence' | 'phase-2' | 'phase-3' | 'phase-4' | 'phase-5' | 'ten-zones';
 export interface ExpeditionExperience {
   version: 1;
   id: string; kind: ExperienceKind; day: number;
+  /** A later, finite milestone; absent on the original eight first experiences. */
+  milestone?: EarnedMemoryKind;
   zoneId: string; zoneName: string;
   title: string; text: string; result: string;
   participants: { id: string; name: string; role: string }[];
@@ -210,6 +213,8 @@ export interface RegionState {
   discoveries?: DiscoveryState;
   /** At most one public first-experience snapshot per kind; survives the 30-report window. */
   experiences?: ExpeditionExperience[];
+  /** Later public milestones, separate from the eight permanent firsts; bounded to twelve. */
+  earnedMemories?: ExpeditionExperience[];
   campaign?: CampaignState;
   administration?: AdministrationState;
   /** Canonical v0.4 geography; optional only to read old region-2 saves. */

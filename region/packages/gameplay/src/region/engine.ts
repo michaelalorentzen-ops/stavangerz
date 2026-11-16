@@ -13,7 +13,7 @@ import { crewPositionFor, type CrewMission } from './location';
 import { ensureMobility, missionPreview, beginMission, advanceTravel, returnMission, loadCargo, unloadCargo, reserveMissionStores, cargoWeight, failEmptyMissions, completeLegacyReturns, localStock, missionStoreRequest, missionLoad, transmitMissionReports, carriedGearWeight } from './mobility';
 import { reserveMissionRadio, communicationsStatus, shouldEscalateField, fieldMandate } from './communications';
 import { centralCommunity, centralAvailablePopulation, regionalDay, regionalWorkDay, regionalSurvivorIds, regionalGuardFor, regionalOverrun, regionalL1 } from './administration';
-import { initializeExperienceJournal, captureOperationExperience, recordOperationExperience, recordCompletedDefenceExperience, recordDefenceCombatExperience, finalizeExperienceReport } from './experiences';
+import { initializeExperienceJournal, captureOperationExperience, recordOperationExperience, recordCompletedDefenceExperience, recordDefenceCombatExperience, recordPhaseExperience, finalizeExperienceReport } from './experiences';
 import { observeDiscoveries, deliverDiscoveryReports, maintainDiscoveries, discoveryOrderPreview, executeDiscoveryOrder } from './discoveries';
 import {
   GEAR_CATALOG, crewGearAway, departGear, discoverSearchGear, equippedGear, gearDamageMultiplier, gearWeapon, gearWorkMultiplier, gearStateFor,
@@ -1122,7 +1122,9 @@ export function resumeRegionDay(
   deliverDiscoveryReports(state, world, lines);
   updateFactions(state, world, lines);
   checkMilestones(state, world, lines, foodMade);
+  const previousPhase = state.phase;
   checkPhase(state, world, lines);
+  recordPhaseExperience(state, world, previousPhase, lines);
   checkVictory(state, madeFood - eaten - spoiled - flows.food.upkeep);
   if (!state.gameOver) {
     if (!living(state).length) state.gameOver = { day: state.day, reason: 'Alle i crewet er døde.' };
