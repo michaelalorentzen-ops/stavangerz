@@ -317,7 +317,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
       if (!stage) continue;
       const projected = replayStageScenes(replay.before, world, stage);
       const eligible = projected.featured.filter(scene => scene.importance >= 65);
-      const scenes = eligible.slice(0, Math.min(2, Math.max(0, 4 - used)));
+      const scenes = eligible.slice(0, Math.min(3, Math.max(0, 4 - used)));
       const compact = [...projected.featured.filter(scene => !scenes.includes(scene)).map(scene => ({ title: scene.title, text: scene.result, tone: scene.tone, zoneId: scene.zoneId })), ...projected.compact];
       if (i === replayStep) return { scenes, compact, preceding: used };
       used += scenes.length;
@@ -435,7 +435,9 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
       const next = resolveEvent(state, world, choice).state;
       setState(next);
       // Present only an outcome the engine just recorded for this event.
-      const consequence = next.reports.at(-1)?.lines.findLast(line => line.facts?.eventId === eventId);
+      const previousReport = state.reports.at(-1), nextReport = next.reports.at(-1);
+      const addedLines = nextReport?.lines.slice(previousReport?.day === nextReport.day ? previousReport.lines.length : 0);
+      const consequence = addedLines?.findLast(line => line.facts?.eventId === eventId);
       setMessage(consequence ? `${consequence.title}. ${consequence.text}` : '');
     } catch (error) { setMessage((error as Error).message); }
   };

@@ -8,4 +8,4 @@
 @media(max-width:600px){.sz-game .live-replay-status{top:100px;width:calc(100vw - 34px);padding:9px 12px;gap:5px 7px}.live-replay-status h2{font-size:15px}.live-replay-status .rz-kicker,.live-replay-phases span{font-size:12px}.live-replay-supplies{font-size:12px}.live-replay-fallback-controls button{min-height:44px}.live-decision-art{height:105px}}
 
 /* Planning panels describe dawn, not the reached replay snapshot. */
-.sz-game.is-replaying .sz-top,.sz-game.is-replaying .sz-command-bar,.sz-game.is-replaying .sz-brief-wrap,.sz-game.is-replaying .sz-show-brief,.sz-game.is-replaying .sz-toast{visibility:hidden}
+.sz-game.is-replaying .sz-top,.sz-game.is-replaying .sz-command-bar,.sz-game.is-replaying .sz-map-status-stack,.sz-game.is-replaying .sz-search,.sz-game.is-replaying .sz-nav,.sz-game.is-replaying .sz-show-brief,.sz-game.is-replaying .sz-toast{visibility:hidden}
