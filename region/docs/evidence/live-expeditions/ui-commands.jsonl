@@ -1,0 +1,61 @@
+{"command":"plan","intent":"Første tur: la alle fire observere Hundvåg 2 sammen før vi velger videre risiko.","orders":[{"action":"scout","zoneId":"z3-0006","survivorIds":["ingrid","marius","leila","tor"]}]}
+{"command":"advance"}
+{"command":"choose","id":"proceed"}
+{"command":"state"}
+{"command":"plan","intent":"Søke sammen i nærområdet for å skaffe forsyninger og møte den faktiske risikoen før vi etablerer oss.","orders":[{"action":"search","zoneId":"z3-0018","survivorIds":["ingrid","marius","leila","tor"]}]}
+{"command":"advance"}
+{"command":"finish"}
+{"command":"plan","intent":"Sikre hjemområdet med de to friske kampdyktige, behandle Tor og Amina, mens Leila skaffer mer forsyning.","orders":[{"action":"clear","zoneId":"z3-0018","survivorIds":["ingrid","marius"]},{"action":"heal","zoneId":"z3-0018","survivorIds":["tor","r1-4"]},{"action":"search","zoneId":"z3-0018","survivorIds":["leila"]}]}
+{"command":"advance"}
+{"command":"reload"}
+{"command":"plan","intent":"Overta Lundsneset etter bekjempelsen, og la resten hente seg inn før byggingen.","orders":[{"action":"claim","zoneId":"z3-0018","survivorIds":["ingrid","marius"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["leila","tor","r1-4"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"Gjøre Lundsneset kystgård til HQ, behandle skadene og gi speiderne en hviledag.","orders":[{"action":"establishHq","zoneId":"z3-0018","target":"poi-020","survivorIds":["tor","leila"]},{"action":"heal","zoneId":"z3-0018","survivorIds":["r1-4"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["ingrid","marius"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"Bygge første varige perimeter med tre personer, mens Leila og Amina søker etter mat og flere spor i hjemområdet.","orders":[{"action":"fortify","zoneId":"z3-0018","survivorIds":["ingrid","marius","tor"]},{"action":"search","zoneId":"z3-0018","survivorIds":["leila","r1-4"]}]}
+{"command":"advance"}
+{"command":"choose","id":"ok"}
+{"command":"plan","intent":"Bygge vakttårn ved HQ, følge Ingrids spor og la de andre hente seg inn.","orders":[{"action":"module","zoneId":"z3-0018","target":"watchtower","survivorIds":["tor"]},{"action":"investigate","zoneId":"z3-0018","target":"ingrid-route-notes","survivorIds":["ingrid"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["marius","leila","r1-4"]}]}
+{"command":"advance"}
+{"command":"choose","id":"chance"}
+{"command":"plan","intent":"Fullføre vakttårnet, ta rasjonene i Ingrids spor og sende Marius og Amina for å bekjempe zombier i Hundvåg 2. Leila søker hjemme.","orders":[{"action":"module","zoneId":"z3-0018","target":"watchtower","survivorIds":["tor"]},{"action":"discoveryChoice","zoneId":"z3-0018","target":"ingrid-route-notes:supplies","survivorIds":["ingrid"]},{"action":"clear","zoneId":"z3-0006","survivorIds":["marius","r1-4"]},{"action":"search","zoneId":"z3-0018","survivorIds":["leila"]}]}
+{"command":"advance"}
+{"command":"choose","id":"go"}
+{"command":"plan","intent":"Fullføre bekjempelsen i Hundvåg 2, undersøke Leilas mappe og bruke hvile fremfor unødvendig medisin for lett skadde.","orders":[{"action":"clear","zoneId":"z3-0006","survivorIds":["marius","ingrid"]},{"action":"investigate","zoneId":"z3-0018","target":"leila-care-notes","survivorIds":["leila"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["tor","r1-4"]}]}
+{"command":"advance"}
+{"command":"choose","id":"proceed"}
+{"command":"plan","intent":"Forsøke å overta Hundvåg 2 etter to bekjempelsesoppdrag, prioritere Leilas førstehjelpskasse og hvile speiderne.","orders":[{"action":"claim","zoneId":"z3-0006","survivorIds":["tor","r1-4"]},{"action":"discoveryChoice","zoneId":"z3-0018","target":"leila-care-notes:supplies","survivorIds":["leila"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["ingrid","marius"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"Overtakelsen ble avvist med konkret kjent restfare og manglende søk. Vi undersøker derfor Hundvåg 2 med tre uthvilte, mens de to mest slitne hviler.","orders":[{"action":"search","zoneId":"z3-0006","survivorIds":["tor","leila","r1-4"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["ingrid","marius"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"Bekjempe resten i Hundvåg 2, behandle Amina nå som hun er under behandlingsterskelen og undersøke mer rundt HQ.","orders":[{"action":"clear","zoneId":"z3-0006","survivorIds":["marius","ingrid"]},{"action":"heal","zoneId":"z3-0018","survivorIds":["leila"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["r1-4"]},{"action":"search","zoneId":"z3-0018","survivorIds":["tor"]}]}
+{"command":"advance"}
+{"command":"choose","id":"proceed"}
+{"command":"plan","intent":"Marius undersøker hjemområdet etter de siste turene; Ingrid og Tor undersøker og sikrer kunnskapen om Hundvåg 2 videre. Leila avslutter sitt spor med førstehjelpskassen.","orders":[{"action":"search","zoneId":"z3-0018","survivorIds":["marius"]},{"action":"search","zoneId":"z3-0006","survivorIds":["ingrid","tor","r1-4"]},{"action":"discoveryChoice","zoneId":"z3-0018","target":"leila-care-notes:supplies","survivorIds":["leila"]}]}
+{"command":"advance"}
+{"command":"choose","id":"proceed"}
+{"command":"plan","intent":"Sette av ett oppdrag til Marius sin HQ-gjennomgang, la det slitne feltlaget hvile og fortsette forsyningssøk med Leila.","orders":[{"action":"investigate","zoneId":"z3-0018","target":"field-home-debrief","survivorIds":["marius"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["ingrid","tor","r1-4"]},{"action":"search","zoneId":"z3-0018","survivorIds":["leila"]}]}
+{"command":"advance"}
+{"command":"finish"}
+{"command":"plan","intent":"Forsøke kontroll i Hundvåg 2 etter videre søk og bekjempelse, la Leila og Marius hvile, og la Amina søke ved HQ.","orders":[{"action":"claim","zoneId":"z3-0006","survivorIds":["ingrid","tor"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["marius","leila"]},{"action":"search","zoneId":"z3-0018","survivorIds":["r1-4"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"Et siste bekjempelsesoppdrag med tre friske før overtakelse, mens de mest slitne hviler ved HQ.","orders":[{"action":"clear","zoneId":"z3-0006","survivorIds":["ingrid","tor","r1-4"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["marius","leila"]}]}
+{"command":"advance"}
+{"command":"choose","id":"proceed"}
+{"command":"choose","id":"go"}
+{"command":"plan","intent":"Mens Ingrid og Marius er borte på radiosporet, søker Tor og Amina videre rundt HQ. Leila blir hjemme uten et nytt feltoppdrag.","orders":[{"action":"search","zoneId":"z3-0018","survivorIds":["tor","r1-4"]}]}
+{"command":"advance"}
+{"command":"choose","id":"honour"}
+{"command":"plan","intent":"Leila søker i hjemområdet mens Tor og Amina får hvile; de to utsendte speiderne forventes tilbake etter radiosporet.","orders":[{"action":"search","zoneId":"z3-0018","survivorIds":["leila"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["tor","r1-4"]}]}
+{"command":"advance"}
+{"command":"choose","id":"mark"}
+{"command":"plan","intent":"Samle alle fem etter at radiospeiderne er tilbake og legge full innsats i å gjøre Hundvåg 2 klart for overtakelse.","orders":[{"action":"clear","zoneId":"z3-0006","survivorIds":["ingrid","marius","leila","tor","r1-4"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"Overta Hundvåg 2 etter at hele laget fullførte bekjempelsen, og hente nye forsyninger ved HQ med de andre.","orders":[{"action":"claim","zoneId":"z3-0006","survivorIds":["ingrid","tor"]},{"action":"search","zoneId":"z3-0018","survivorIds":["marius","leila","r1-4"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"Etter at overtakelsen faktisk ble stanset, prioriterer vi tryggere personhistorie, restitusjon og vedlikehold av kunnskapen framfor enda et identisk bekjempelsesoppdrag.","orders":[{"action":"investigate","zoneId":"z3-0006","target":"marius-return-notes","survivorIds":["marius"]},{"action":"rest","zoneId":"z3-0018","survivorIds":["ingrid","leila","tor","r1-4"]}]}
+{"command":"advance"}
+{"command":"plan","intent":"La Marius følge lista videre ved det kjente HQ-et, samtidig som det uthvilte laget undersøker de siste delene av hjemområdet.","orders":[{"action":"discoveryChoice","zoneId":"z3-0006","target":"marius-return-notes:follow","survivorIds":["marius"]},{"action":"search","zoneId":"z3-0018","survivorIds":["ingrid","leila","tor","r1-4"]}]}
+{"command":"advance"}
+{"command":"reload"}
+{"command":"finish"}

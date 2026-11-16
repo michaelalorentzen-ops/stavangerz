@@ -59,6 +59,10 @@ Kilde: Mikkis oppdrag «Fra fungerende system til levende spillopplevelse». Tid
 | --- | --- | --- | --- |
 | D36 | LÅST | Flere bilder er ønsket når de gir variasjon og personlighet. Generering skal ikke unngås av hensyn til et lavt antall bilder. | Mikki: «ikke ver redd for å generere bilder. Variasjon og personlighet med flere bilder er bra». Kuratert stil, faktisk integrasjon og D33 om sannferdige hendelser gjelder fortsatt. |
 
+## Eiermandat 16.11.2026 – levende ekspedisjoner
+
+Mikki prioriterer nå korte, autoritative opplevelser i selve døgnavspillingen foran flere etterfølgende rapportkort. Første tur, mindre administrativ repetisjon og historier som reagerer på faktisk utvikling skal testes gjennom 15–25 døgn, deretter med scenarioer etter førstegangene og ved fase 2. Kartet forblir hovedgrensesnittet. Skip kan aldri omgå påkrevde valg. Ingen nye eksakte handlingstidspunkter, hus-for-hus-system eller separat kampmotor er godkjent. D25–D36, særlig D29/D32/D33/D35, gjelder fortsatt. Vesentlige nye mekanikker eller datamodeller krever eget produktvalg. [Leveranse og konkrete bevis](45_V04_LIVE_EXPEDITIONS.md).
+
 ## Åpne produkt- og balansevalg
 
 Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når disse trenger svar, **ikke** alle på én gang.

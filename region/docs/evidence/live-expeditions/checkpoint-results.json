@@ -1,0 +1,22 @@
+[
+  {
+    "kind": "field",
+    "choice": "withdraw",
+    "skipUnavailable": true,
+    "escapeBlocked": true,
+    "exactReloadBeforeAndAfter": true,
+    "oracleEqual": true,
+    "day": 1,
+    "ammo": 40
+  },
+  {
+    "kind": "night",
+    "choice": "fire",
+    "skipUnavailable": true,
+    "escapeBlocked": true,
+    "exactReloadBeforeAndAfter": true,
+    "oracleEqual": true,
+    "day": 1,
+    "ammo": 35
+  }
+]

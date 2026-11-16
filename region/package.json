@@ -34,7 +34,9 @@
     "check:region-cues-ui": "node scripts/check-expedition-cues-ui.mjs",
     "check:region-protest-ui": "node --import tsx scripts/check-public-protest-ui.ts",
     "check:region-replay-ui": "node --import tsx scripts/check-expedition-replay-ui.ts",
-    "check:region-phase-two-ui": "node --import tsx scripts/check-expedition-phase-two-ui.ts"
+    "check:region-phase-two-ui": "node --import tsx scripts/check-expedition-phase-two-ui.ts",
+    "check:region-setback-ui": "node --import tsx scripts/check-expedition-setback-ui.ts",
+    "check:region-rest-group-ui": "node scripts/check-rest-group-ui.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",

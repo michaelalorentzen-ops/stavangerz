@@ -6,7 +6,7 @@ import { indexWorld, phaseOneReadiness, startRegionDay, type RegionState, type R
 const out=process.env.REGION_TEST_ARTIFACTS??'artifacts/live-phase-two';mkdirSync(out,{recursive:true});
 async function main(){
  const world=JSON.parse(readFileSync('apps/game-client/public/world/region-v1.json','utf8')) as RegionWorld;
- const state=JSON.parse(readFileSync(process.env.REGION_SCENARIO_SOURCE??'artifacts/live-expedition-journey/day-6.json','utf8')) as RegionState;
+ const state=JSON.parse(readFileSync(process.env.REGION_SCENARIO_SOURCE??'docs/evidence/live-expeditions/actual-save6.json','utf8')) as RegionState;
  assert.equal(new Set(state.experiences?.map(e=>e.kind)).size,8,'Source is an actual campaign that used all eight first experiences');
  delete state.event; const index=indexWorld(world),core=[state.homeZoneId],l2=index.byId.get(state.homeZoneId)!.parentId;
  for(let i=0;i<core.length&&core.length<3;i++)for(const e of index.adjacent.get(core[i])??[])if(!core.includes(e.to)&&index.byId.get(e.to)?.parentId===l2){core.push(e.to);if(core.length===3)break;}

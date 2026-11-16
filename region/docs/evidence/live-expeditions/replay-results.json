@@ -1,0 +1,38 @@
+[
+  {
+    "width": 1280,
+    "sceneIds": [
+      "experience:combat:0:o0-search-z3-0018-ingrid.marius.leila.tor",
+      "experience:search:0:o0-search-z3-0018-ingrid.marius.leila.tor",
+      "experience:poi:0:o0-search-z3-0018-ingrid.marius.leila.tor"
+    ],
+    "layout": {
+      "width": 478,
+      "height": 288,
+      "scroll": 288,
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "images": true,
+      "badge": "11px"
+    },
+    "errors": []
+  },
+  {
+    "width": 390,
+    "sceneIds": [
+      "experience:combat:0:o0-search-z3-0018-ingrid.marius.leila.tor",
+      "experience:search:0:o0-search-z3-0018-ingrid.marius.leila.tor",
+      "experience:poi:0:o0-search-z3-0018-ingrid.marius.leila.tor"
+    ],
+    "layout": {
+      "width": 368,
+      "height": 254,
+      "scroll": 254,
+      "viewport": 390,
+      "documentWidth": 390,
+      "images": true,
+      "badge": "12px"
+    },
+    "errors": []
+  }
+]

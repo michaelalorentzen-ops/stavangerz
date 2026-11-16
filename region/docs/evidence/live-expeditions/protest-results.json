@@ -1,0 +1,22 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "kind": "Synthetic event fixture; actual UI choice and report",
+    "adultsBefore": 4,
+    "adultsAfter": 2,
+    "immediateToast": true,
+    "visibleDepartureLine": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "kind": "Synthetic event fixture; actual UI choice and report",
+    "adultsBefore": 4,
+    "adultsAfter": 2,
+    "immediateToast": true,
+    "visibleDepartureLine": true,
+    "errors": []
+  }
+]

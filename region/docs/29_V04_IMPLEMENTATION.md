@@ -198,3 +198,7 @@ Nytt eiermandat D29–D35: bevar godkjent geografi og tall, utvid innhold og vis
 ## QA34 runde 2 – flere bilder og opptjente minner, 16.11.2026
 
 [44_V04_MEMORY_VARIATION.md](44_V04_MEMORY_VARIATION.md) følger D36 med tolv nye motiv, miljøtilpasset kamp, identitetsbevarte personscener og seks faktiske fremgangsminner etter førstegangene. J-binding, mobilens sitatnavn og synlig protestutfall er rettet. Valgfritt, avgrenset minnearkiv bevarer originalåtte og eldre saves; D32/D35 gjelder fortsatt.
+
+## Levende ekspedisjoner i døgnavspillingen, 16.11.2026
+
+[45_V04_LIVE_EXPEDITIONS.md](45_V04_LIVE_EXPEDITIONS.md) viderefører PR #34 med offentlige ekspedisjonsøyeblikk i nådd replayfase, pause/Skip som bevarer påkrevde valg, ressursikoner, mindre personvalg-repetisjon, åtte reaktive observasjoner og tre kortere valgfrie historier. Hvile publiserer eksisterende faktiske virkninger uten endret beregning. En naturlig 20-døgns UI-kampanje og eksplisitte PC-/mobilscenarioer dekker førsteganger, videre innhold, lagring og inngang til fase 2. Overtakelsestempo og gjentatte feltvalg er registrerte tuningfunn; D32/D35 gjelder fortsatt. Leveransen erklærer ikke hele spillet ferdig.
