@@ -69,5 +69,10 @@ const duplicate = replayStageScenes(before, world, { ...operations, lines: [
   { tone: 'info', title: memory.title, text: memory.result, zoneId: target, experience: { ...memory, kind: 'search', zoneId: target } },
 ] });
 assert.equal(duplicate.featured.length, 1); assert.equal(duplicate.compact.length, 0, 'First scene replaces ordinary duplicate');
+const crowded = replayStageScenes(before, world, { ...operations, lines: ['search', 'gear', 'combat'].map(kind => ({
+  tone: 'info' as const, title: `Test ${kind}`, text: 'Testresultat', zoneId: home,
+  experience: { ...memory, id: `priority:${kind}`, kind: kind as ExpeditionExperience['kind'], zoneId: home },
+})) });
+assert.equal(crowded.featured[0].kind, 'combat', 'First fight cannot be crowded out by an equipment card');
 assert.equal(departureScene(actual.state, world, [order]), undefined, 'First introduction ends once scouting is recorded');
 console.log('Expedition replay projection: authoritative day, privacy, no lookahead, JSON retention, bounded scenes, truthful planning PASS');
