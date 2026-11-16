@@ -1,0 +1,794 @@
+[
+  {
+    "width": 1280,
+    "large": false,
+    "label": "summary-danger-with-memories",
+    "size": {
+      "h": 737,
+      "s": 737,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "first-scout",
+    "size": {
+      "h": 659,
+      "s": 659,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "first-hq",
+    "size": {
+      "h": 659,
+      "s": 659,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "journal",
+    "size": {
+      "h": 608,
+      "s": 608,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "journal-history",
+    "size": {
+      "h": 502,
+      "s": 502,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-utstein",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-utstein",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-tower",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-tower",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-cruise",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-cruise",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-plane",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-plane",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-cathedral",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-cathedral",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-arena",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-arena",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "summary-danger-with-memories",
+    "size": {
+      "h": 822,
+      "s": 838,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "first-scout",
+    "size": {
+      "h": 748,
+      "s": 748,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "first-hq",
+    "size": {
+      "h": 748,
+      "s": 748,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "journal",
+    "size": {
+      "h": 822,
+      "s": 834,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "journal-history",
+    "size": {
+      "h": 640,
+      "s": 640,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder",
+    "size": {
+      "h": 783,
+      "s": 783,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-utstein",
+    "size": {
+      "h": 783,
+      "s": 783,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-utstein",
+    "size": {
+      "h": 635,
+      "s": 635,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-tower",
+    "size": {
+      "h": 783,
+      "s": 783,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-tower",
+    "size": {
+      "h": 635,
+      "s": 635,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-cruise",
+    "size": {
+      "h": 783,
+      "s": 783,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-cruise",
+    "size": {
+      "h": 652,
+      "s": 652,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-plane",
+    "size": {
+      "h": 783,
+      "s": 783,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-plane",
+    "size": {
+      "h": 652,
+      "s": 652,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-cathedral",
+    "size": {
+      "h": 783,
+      "s": 783,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-cathedral",
+    "size": {
+      "h": 635,
+      "s": 635,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-arena",
+    "size": {
+      "h": 783,
+      "s": 783,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-arena",
+    "size": {
+      "h": 652,
+      "s": 652,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "summary-danger-with-memories",
+    "size": {
+      "h": 749,
+      "s": 749,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "first-scout",
+    "size": {
+      "h": 680,
+      "s": 680,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "first-hq",
+    "size": {
+      "h": 680,
+      "s": 680,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "journal",
+    "size": {
+      "h": 661,
+      "s": 661,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "journal-history",
+    "size": {
+      "h": 516,
+      "s": 516,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-utstein",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-utstein",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-tower",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-tower",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-cruise",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-cruise",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-plane",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-plane",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-cathedral",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-cathedral",
+    "size": {
+      "h": 519,
+      "s": 519,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-arena",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-arena",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "summary-danger-with-memories",
+    "size": {
+      "h": 822,
+      "s": 861,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "first-scout",
+    "size": {
+      "h": 821,
+      "s": 821,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "first-hq",
+    "size": {
+      "h": 821,
+      "s": 821,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "journal",
+    "size": {
+      "h": 822,
+      "s": 936,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "journal-history",
+    "size": {
+      "h": 669,
+      "s": 669,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-utstein",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-place-utstein",
+    "size": {
+      "h": 756,
+      "s": 756,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-tower",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-place-tower",
+    "size": {
+      "h": 756,
+      "s": 756,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-cruise",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-place-cruise",
+    "size": {
+      "h": 756,
+      "s": 756,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-plane",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-place-plane",
+    "size": {
+      "h": 756,
+      "s": 756,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-cathedral",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-place-cathedral",
+    "size": {
+      "h": 735,
+      "s": 735,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-arena",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": true,
+    "label": "wonder-place-arena",
+    "size": {
+      "h": 756,
+      "s": 756,
+      "w": 368,
+      "sw": 368
+    }
+  }
+]

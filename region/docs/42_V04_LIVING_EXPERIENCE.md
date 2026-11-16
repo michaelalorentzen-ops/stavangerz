@@ -1,5 +1,7 @@
 # v0.4 – fra system til levende spillopplevelse
 
+QA-runde 1 av denne leveransen og påfølgende polish er dokumentert i [43_V04_QA34_POLISH.md](43_V04_QA34_POLISH.md). Den faktiske reisen og bevisene nedenfor tilhører opprinnelig kandidat `913b458`.
+
 ## Mandat og baseline, 15.11.2026
 
 Eierens nye oppdrag låser geografi og utsetter tallbalanse, men prioriterer historier, karakter, utforsking og visuelle hendelser. D29–D35 i beslutningsloggen gjelder. Leveransen bygges på `main 5a2bebe` (PR33). Remote er kontrollert; main og origin/main var like. Root og eldre arbeidskopier var rene. Ingen aktive andre agentarbeider var i gang ved oppstart.

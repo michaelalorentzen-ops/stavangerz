@@ -188,3 +188,8 @@ Eieren ba om å fullføre gjenværende QA-punkter før tallbalansering. [41_V04_
 ## Levende spillopplevelse, 15.11.2026
 
 Nytt eiermandat D29–D35: bevar godkjent geografi og tall, utvid innhold og visuell feedback rundt faktisk spilling. [42_V04_LIVING_EXPERIENCE.md](42_V04_LIVING_EXPERIENCE.md) inneholder gjenopprettet baseline/QA33, innholdskart for fem faser, disjunkt filansvar, felles rapportkontrakt og verifisert spillerreise når integrert. Eksisterende hendelser, fysisk rapportering, kartmotor, arkiv og saves gjenbrukes. Leveransen er draft; ingen automatisk merge/deploy.
+
+
+## QA34 – visuell og redaksjonell polish, 16.11.2026
+
+[43_V04_QA34_POLISH.md](43_V04_QA34_POLISH.md) følger opp seks lave funn med lesbar metadata, tre egne hendelsesmotiver, synlig minneknapp på skadedager, fast feltjournal, menneskelig etterspill og korrekt HQ-semantikk. Låste regler, geografi, saves og tallbalanse beholdes. D32/D35 gjelder fortsatt.
