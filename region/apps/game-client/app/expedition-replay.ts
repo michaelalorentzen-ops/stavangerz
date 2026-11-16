@@ -80,23 +80,44 @@ export function replayStageScenes(before: RegionState, world: RegionWorld, stage
   const featured: ExpeditionReplayScene[] = [];
   const sources = new Map<string, ReportLine>();
   const suppressed = new Set<ReportLine>();
+  // Operation metadata is the only safe join: a shared zone, person's name or
+  // present-day health cannot establish that two reports describe one fight.
+  const foldedInjuries = new Map<ReportLine, ReportLine[]>();
+  const injuryOwner = new Set<ReportLine>();
+  for (const combat of stage.lines) {
+    const experience = combat.experience;
+    const orderId = combat.facts?.orderId, missionId = combat.facts?.missionId;
+    if (experience?.kind !== 'combat' || Number(experience.facts.injuredCount ?? 0) <= 0
+      || !knownZone(before, stage, experience.zoneId) || !knownZone(before, stage, combat.zoneId)
+      || typeof orderId !== 'string' || !orderId.trim() || typeof missionId !== 'string' || !missionId.trim()) continue;
+    const injuries = stage.lines.filter(line => !injuryOwner.has(line) && !line.experience && line.tone === 'bad'
+      && line.category === 'loot' && /\bble skadet$/u.test(line.title)
+      && line.facts?.orderId === orderId && line.facts?.missionId === missionId);
+    if (injuries.length) {
+      foldedInjuries.set(combat, injuries);
+      for (const injury of injuries) { injuryOwner.add(injury); suppressed.add(injury); }
+    }
+  }
   for (const [index, line] of stage.lines.entries()) {
+    if (injuryOwner.has(line)) continue;
     if (!knownZone(before, stage, line.zoneId)) continue;
     const experience = line.experience;
     if (experience) {
       if (!knownZone(before, stage, experience.zoneId)) continue;
       const injury = Number(experience.facts.injuredCount ?? 0) > 0;
+      const namedInjuries = foldedInjuries.get(line) ?? [];
       featured.push({
         id: experience.id, kind: experience.kind, phase: stage.phase,
-        title: experience.title, text: experience.text, result: experience.result,
+        title: experience.title, text: experience.text,
+        result: [experience.result, ...namedInjuries.map(injury => `${injury.title}. ${injury.text}`)].join(' '),
         zoneId: experience.zoneId, zoneName: experience.zoneName,
         participants: experience.participants.map(p => ({ ...p })),
         voice: experience.voice ? { ...experience.voice } : undefined,
         image: experienceArt(experience.kind, experience.illustration, experience.milestone),
-        importance: injury ? 110 : experience.milestone ? 105 : experience.kind === 'combat' ? 103
+        importance: namedInjuries.length ? 115 : injury ? 110 : experience.milestone ? 105 : experience.kind === 'combat' ? 103
           : experience.kind === 'hq' ? 102 : ['claim', 'perimeter'].includes(experience.kind) ? 100
             : experience.kind === 'gear' ? 90 : 95,
-        tone: injury ? 'warn' : line.tone, first: true, milestone: !!experience.milestone,
+        tone: namedInjuries.length ? 'bad' : injury ? 'warn' : line.tone, first: true, milestone: !!experience.milestone,
       });
       sources.set(experience.id, line);
       continue;

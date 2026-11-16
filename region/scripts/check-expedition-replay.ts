@@ -76,5 +76,24 @@ const crowded = replayStageScenes(before, world, { ...operations, lines: ['searc
   experience: { ...memory, id: `priority:${kind}`, kind: kind as ExpeditionExperience['kind'], zoneId: home },
 })) });
 assert.equal(crowded.featured[0].kind, 'combat', 'First fight cannot be crowded out by an equipment card');
+const combatLine: ReportLine = { tone: 'info', category: 'experience', title: 'Første kamp', text: 'Resultat', zoneId: home,
+  facts: { orderId: 'injury-order', missionId: 'injury-mission' },
+  experience: { ...memory, id: 'injury-combat', kind: 'combat', zoneId: home, result: '2 zombier ble drept. 1 i laget ble skadet.', facts: { injuredCount: 1 } } };
+const namedInjury: ReportLine = { tone: 'bad', category: 'loot', title: 'Tor ble skadet', text: 'I testområdet: 8 i skade.',
+  facts: { action: 'search', orderId: 'injury-order', missionId: 'injury-mission' } };
+const fold = (lines: ReportLine[]) => replayStageScenes(before, world, { ...operations, lines });
+const merged = fold([namedInjury, combatLine]);
+assert.equal(merged.featured.length, 1, 'Named same-operation injury is part of first combat, not a second scene');
+assert.equal(merged.featured[0].kind, 'combat'); assert.equal(merged.featured[0].tone, 'bad');
+assert(merged.featured[0].result.includes(`${namedInjury.title}. ${namedInjury.text}`), 'Exact public injury title and damage text preserved');
+assert.equal(merged.featured[0].result.split(namedInjury.title).length - 1, 1, 'Named injury appears exactly once');
+assert.equal(merged.compact.length, 0, 'Merged named injury is not duplicated in compact strip');
+assert.deepEqual(merged, fold([combatLine, namedInjury]), 'Joining does not depend on injury/report order');
+assert.equal(fold([namedInjury, { ...combatLine, facts: { orderId: 'injury-order', missionId: 'another-mission' } }]).featured.length, 2, 'Different mission must remain independent');
+assert.equal(fold([namedInjury, { ...combatLine, facts: { orderId: 'another-order', missionId: 'injury-mission' } }]).featured.length, 2, 'Different order must remain independent');
+assert.equal(fold([namedInjury, { ...combatLine, facts: { orderId: '', missionId: '' } }]).featured.length, 2, 'Empty operation identities cannot authorize merging');
+assert.equal(fold([namedInjury, { ...combatLine, experience: { ...combatLine.experience!, facts: { injuredCount: 0 } } }]).featured.length, 2, 'No injured combat fact means no suppression');
+assert.equal(fold([{ ...namedInjury, title: 'Tor døde' }, combatLine]).featured.length, 2, 'Death/loss is never folded away');
+assert.equal(fold([{ ...namedInjury, category: 'combat' }, combatLine]).featured.length, 2, 'Narrow loot injury contract only');
 assert.equal(departureScene(actual.state, world, [order]), undefined, 'First introduction ends once scouting is recorded');
 console.log('Expedition replay projection: authoritative day, privacy, no lookahead, JSON retention, bounded scenes, truthful planning PASS');
