@@ -89,6 +89,22 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
   const riskClass = risk === 'Høy' ? 'high' : risk === 'Middels' ? 'medium' : risk === 'Lav' ? 'low' : 'unknown';
   const selectedOrigin = draft.survivorIds.map(personId => crewPositionFor(state, personId)).find(p => p?.kind === 'zone');
   const remainingOrders = orders.filter(o => o.id !== draft.id);
+  // Reuse each canonical availability probe for both the shortcut and its row.
+  const crewProbes = new Map(state.survivors.filter(p => p.alive && !p.left).map(person => [person.id,
+    prepareGearPlan(state, world, equipmentDraftOrders(orders, { ...draft, survivorIds: [person.id], gear: undefined })).orders.find(o => o.orderId === draft.id)?.crew[0],
+  ]));
+  // Explicit opt-in shortcut using the same eligibility probe as individual rows.
+  const readyHere = state.survivors.filter(person => {
+    if (!person.alive || person.left) return false;
+    const position = crewPositionFor(state, person.id);
+    const origin = selectedOrigin?.kind === 'zone' ? selectedOrigin.zoneId : state.homeZoneId;
+    if (position?.kind !== 'zone' || position.zoneId !== origin || activeMissions(state).some(m => m.survivorIds.includes(person.id)) || remainingOrders.some(o => o.survivorIds.includes(person.id))) return false;
+    return !crewProbes.get(person.id)?.unavailable;
+  }).map(person => person.id);
+  const selectReadyHere = () => {
+    const survivorIds = [...new Set([...draft.survivorIds, ...readyHere])];
+    onChange({ ...draft, survivorIds, communication: draft.communication ? { ...draft.communication, leaderId: draft.communication.leaderId ?? survivorIds[0] } : undefined });
+  };
   const toggle = (personId: string) => {
     const selected = draft.survivorIds.includes(personId);
     const survivorIds = selected ? draft.survivorIds.filter(p => p !== personId) : [...draft.survivorIds, personId];
@@ -112,13 +128,13 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
         </ol>
         <p className="cmd-return-plan">{hasCrew ? <>Fra {commandZone(world, movement.originZoneId)} → {commandZone(world, movement.returnZoneId)} · {movement.returnsToday ? 'planlagt før natt' : returnHours === undefined ? 'returtid ukjent' : `ca. ${Math.max(1, Math.ceil((movement.travelHours + movement.workHours + returnHours) / 15))} døgn, laget er bundet`}</> : 'Velg mannskap for å beregne reise og retur.'}</p>
       </section>
-      <section className="cmd-crew-section" aria-labelledby={`${id}-crew`}><header><HudIcon name="crew" /><h3 id={`${id}-crew`}>Folk</h3><span>{draft.survivorIds.length} valgt</span></header><div className="cmd-crew-list">{state.survivors.filter(p => p.alive && !p.left).map(person => {
+      <section className="cmd-crew-section" aria-labelledby={`${id}-crew`}><header><HudIcon name="crew" /><h3 id={`${id}-crew`}>Folk</h3><span>{draft.survivorIds.length} valgt</span>{['scout', 'search', 'clear', 'claim', 'fortify'].includes(draft.action) && readyHere.some(personId => !draft.survivorIds.includes(personId)) && <button type="button" className="cmd-select-ready" title="Velg tilgjengelige folk på samme avreisested. Vurder helse og utmattelse før avreise; laget kan justeres." onClick={selectReadyHere}><HudIcon name="crew" size={15} />Velg ledige her</button>}</header><div className="cmd-crew-list">{state.survivors.filter(p => p.alive && !p.left).map(person => {
         const selected = draft.survivorIds.includes(person.id);
         const position = crewPositionFor(state, person.id);
         const bound = activeMissions(state).find(m => m.survivorIds.includes(person.id));
         const reserved = remainingOrders.find(o => o.survivorIds.includes(person.id));
         // Ask the canonical reservation planner about this person, rather than guessing from HQ presence.
-        const probe = selected ? undefined : prepareGearPlan(state, world, equipmentDraftOrders(orders, { ...draft, survivorIds: [person.id], gear: undefined })).orders.find(o => o.orderId === draft.id)?.crew[0];
+        const probe = selected ? undefined : crewProbes.get(person.id);
         const unavailable = bound ? 'Bundet til pågående oppdrag' : reserved ? 'Reservert i en annen ordre' : position?.kind === 'away-unknown' ? 'Eldre oppdrag · posisjon ukjent' : !position ? 'Posisjon mangler' : position.kind === 'transit' ? 'Underveis' : position.kind === 'area-duty' ? 'Bundet til områdevakt' : probe?.unavailable;
         const differentOrigin = !selected && selectedOrigin?.kind === 'zone' && position?.kind === 'zone' && position.zoneId !== selectedOrigin.zoneId;
         const reason = unavailable ?? (differentOrigin ? 'Et annet avreisested enn laget' : undefined);
@@ -130,7 +146,7 @@ export function OrderComposer({ state, world, orders, draft, targetOptions, onCh
       <details className="cmd-details"><summary><HudIcon name="settings" />Avansert <span>Auto equip, mandat, leder og retursted</span></summary><CrewEquipment state={state} world={world} orders={orders} draftOrder={draft} onChange={onChange} /><MissionOptions state={budget} world={world} order={draft} onChange={onChange} /></details>
       {hasCrew && !!errors.length && <div className="cmd-errors" id={`${id}-errors`} role="status"><strong>Ordren kan ikke legges i planen ennå</strong><ul>{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}
     </div>
-    <footer className="cmd-confirm"><div className="cmd-confirm-facts" aria-label="Planlagte konsekvenser ved vellykket retur"><div className="cmd-confirm-return" title={`Retur til ${commandZone(world, movement.returnZoneId)} · ${movement.returnsToday ? 'før natt' : 'flere døgn'}`}><HudIcon name="route" size={14} /><span>{hasCrew ? `Retur ${movement.returnsToday ? 'før natt' : 'flere døgn'} · ${commandZone(world, movement.returnZoneId)}` : 'Velg folk for å beregne reisen'}</span></div><div className="cmd-confirm-home"><HudIcon name="crew" size={15} /><span><b>Ved {baseLabel} til natten:</b> {home.map(p => p.name).join(', ') || 'Ingen navngitte folk'}<small>Planlagt ved vellykket retur · kan bli forsinket</small></span></div><div className="cmd-confirm-load"><HudIcon name="stock" size={14} /><span title={`Faktisk reservert last: ${reservedManifest}`}>Last: {reservedManifest}</span><b>{commandNumber(movement.availableCapacity)}/{commandNumber(movement.capacity)} ledig</b></div></div><div className="cmd-confirm-actions"><button type="button" onClick={onCancel}>Avbryt</button><button type="button" className="cmd-primary" disabled={!valid} aria-describedby={hasCrew && errors.length ? `${id}-errors` : undefined} onClick={() => { if (valid) onConfirm(draft); }}><HudIcon name="check" />{editing ? 'Oppdater ordren' : 'Legg i dagsplanen'}</button></div></footer>
+    <footer className="cmd-confirm"><div className="cmd-confirm-facts" aria-label="Planlagte konsekvenser ved vellykket retur"><div className="cmd-confirm-return" title={`Retur til ${commandZone(world, movement.returnZoneId)} · ${movement.returnsToday ? 'før natt' : 'flere døgn'}`}><HudIcon name="route" size={14} /><span>{hasCrew ? `${commandNumber(movement.travelHours)} t ut · ${commandNumber(movement.workHours)} t arbeid · Retur ${movement.returnsToday ? 'før natt' : 'flere døgn'} · ${commandZone(world, movement.returnZoneId)}` : 'Velg folk for å beregne reisen'}</span></div><div className="cmd-confirm-home"><HudIcon name="crew" size={15} /><span><b>Ved {baseLabel} til natten:</b> {home.map(p => p.name).join(', ') || 'Ingen navngitte folk'}<small>Planlagt ved vellykket retur · kan bli forsinket</small></span></div><div className="cmd-confirm-load"><HudIcon name="stock" size={14} /><span title={`Faktisk reservert last: ${reservedManifest}`}>Last: {reservedManifest}</span><b>{commandNumber(movement.availableCapacity)}/{commandNumber(movement.capacity)} ledig</b></div></div><div className="cmd-confirm-actions"><button type="button" onClick={onCancel}>Avbryt</button><button type="button" className="cmd-primary" disabled={!valid} aria-describedby={hasCrew && errors.length ? `${id}-errors` : undefined} onClick={() => { if (valid) onConfirm(draft); }}><HudIcon name="check" />{editing ? 'Oppdater ordren' : 'Legg i dagsplanen'}</button></div></footer>
   </div>;
 }
 

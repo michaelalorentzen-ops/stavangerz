@@ -60,13 +60,13 @@ export function DayPlan({ state, world, orders, onEdit, onRemove, onLocate, onRe
           const known = state.zones[order.zoneId];
           const risk = !known?.intel && known?.status !== 'controlled' ? 'Ukjent' : String(preview.risk);
           return <article className={`cmd-order ${errors.length ? 'has-errors' : ''}`} key={order.id}>
-            <header><h4>{ACTIONS[order.action].label}</h4><span className={`cmd-risk ${risk === 'Ukjent' ? 'cmd-risk-unknown' : ''}`}>{risk} risiko</span></header>
+            <header><h4>{ACTIONS[order.action].label}</h4><span className={`cmd-risk cmd-risk-${risk === 'Høy' ? 'high' : risk === 'Middels' ? 'medium' : risk === 'Lav' ? 'low' : 'unknown'}`}>{risk} risiko</span></header>
             <button type="button" className="cmd-locate" onClick={() => onLocate(order.zoneId)}><HudIcon name="location" size={14} />{commandZone(world, order.zoneId)}</button>
             {portraits(order.survivorIds)}
-            <p className="cmd-order-return">Retur: {commandZone(world, movement.returnZoneId)} · {movement.returnsToday ? 'før natt' : 'flere døgn'}</p>
+            <p className="cmd-order-timing"><HudIcon name="route" size={14} />{commandNumber(movement.travelHours)} t ut · {commandNumber(movement.workHours)} t arbeid</p><p className="cmd-order-return">Retur: {commandZone(world, movement.returnZoneId)} · {movement.returnsToday ? 'før natt' : 'flere døgn'}</p>
             {!!errors.length && <p className="cmd-order-invalid" role="status">Må avklares før avreise</p>}
             <div className="cmd-order-bottom">
-              <details className="cmd-order-details"><summary>Detaljer</summary><div><p>{preview.text}</p><p>{commandNumber(movement.travelHours)} t reise ut · {commandNumber(movement.workHours)} t arbeid</p><p>Utstyr: {[...new Set(gear)].join(' · ') || 'Ingen valgt'}</p><p>Avreiselast: {commandStock(reservations)}</p>{!!errors.length && <p className="cmd-errors">{errors.join(' ')}</p>}</div></details>
+              <details className="cmd-order-details"><summary>Detaljer</summary><div><p>{preview.text}</p><p>Utstyr: {[...new Set(gear)].join(' · ') || 'Ingen valgt'}</p><p>Avreiselast: {commandStock(reservations)}</p>{!!errors.length && <p className="cmd-errors">{errors.join(' ')}</p>}</div></details>
               <div className="cmd-order-actions"><button type="button" onClick={() => onEdit(order.id)}><HudIcon name="edit" size={15} />Rediger</button><button type="button" onClick={() => onRemove(order.id)} aria-label={`Fjern ${ACTIONS[order.action].label}, ordre ${offset + index + 1}`}><HudIcon name="remove" size={15} />Fjern</button></div>
             </div>
           </article>;
