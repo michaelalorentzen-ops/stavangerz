@@ -51,6 +51,8 @@ hidden.mapSnapshot!.zones[target].status = 'unknown';
 const old = structuredClone(before); old.zones[target].status = 'unknown';
 hidden.lines = [{ tone: 'info', title: memory.title, text: memory.result, zoneId: target, experience: { ...memory, zoneId: target } }];
 assert.equal(replayStageScenes(old, world, hidden).featured.length, 0, 'Unknown zone cannot authorize a first-experience scene');
+const travel = { tone: 'info' as const, category: 'travel', title: 'Arbeidet fortsetter neste døgn', text: 'Dagens operasjonsvindu gikk med til faktisk reise.', zoneId: target };
+assert.equal(replayStageScenes(old, world, { ...hidden, lines: [travel] }).compact[0], travel, 'Public travel progress is not hidden target intelligence');
 hidden.mapSnapshot!.zones[target].status = 'scouted';
 assert.equal(replayStageScenes(old, world, hidden).featured.length, 1, 'Reached scouting snapshot authorizes newly known zone');
 
