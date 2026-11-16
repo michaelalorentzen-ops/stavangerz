@@ -3,6 +3,7 @@
  * pending discoveries, hidden POIs, zombie totals or unreported cargo. */
 import type { RegionOrder, RegionReplayStage, RegionState, RegionWorld, ReportLine } from '../../../packages/gameplay/src/region/types';
 import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
+import { experienceEnvironment } from '../../../packages/gameplay/src/region/experiences';
 import { discoveryArt, experienceArt } from './story-art';
 
 export interface ExpeditionReplayScene {
@@ -27,7 +28,8 @@ export interface ExpeditionReplayScene {
  * outward expedition from the shelter gets this introduction. Static place
  * names are public geography; no POI or unobserved zone contents are consulted. */
 export function departureScene(before: RegionState, world: RegionWorld, orders: readonly RegionOrder[]): ExpeditionReplayScene | undefined {
-  if (before.phase !== 1 || before.experiences?.some(e => ['scout', 'search', 'combat'].includes(e.kind))) return;
+  if (before.phase !== 1 || ['scout', 'search', 'combat'].some(kind => before.flags[`experience:first:${kind}`])
+    || before.experiences?.some(e => ['scout', 'search', 'combat'].includes(e.kind))) return;
   const active = new Set(Object.values(before.crewMissions ?? {}).filter(m => !['complete', 'failed'].includes(m.status)).flatMap(m => m.survivorIds));
   for (const order of orders) {
     if (order.zoneId === before.homeZoneId || !['scout', 'search', 'clear', 'claim', 'travel', 'investigate'].includes(order.action)) continue;
@@ -105,7 +107,10 @@ export function replayStageScenes(before: RegionState, world: RegionWorld, stage
       && (other.experience.kind === kind || kind === 'discovery' && other.experience.kind === 'poi'))) {
       suppressed.add(line); continue;
     }
-    const environment = typeof line.facts?.illustration === 'string' ? line.facts.illustration : undefined;
+    // Static terrain is public geography, not hidden operational intelligence.
+    // It prevents a routine coastal/forest/farm fight using an urban image.
+    const environment = typeof line.facts?.illustration === 'string' ? line.facts.illustration
+      : line.zoneId ? experienceEnvironment(world, line.zoneId) : undefined;
     const storyId = typeof line.facts?.storyId === 'string' ? line.facts.storyId : undefined;
     const discoveryId = typeof line.facts?.discoveryId === 'string' ? line.facts.discoveryId : undefined;
     featured.push({
