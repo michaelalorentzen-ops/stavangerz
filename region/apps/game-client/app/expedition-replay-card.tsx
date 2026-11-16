@@ -46,7 +46,7 @@ export function ExpeditionReplaySceneCard({ scene, position, total, paused, onTo
       <button type="button" onClick={onTogglePause} aria-label={paused ? 'Fortsett avspillingen' : 'Sett avspillingen på pause'} aria-pressed={paused}>
         {paused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />} {paused ? 'Fortsett' : 'Pause'}
       </button>
-      <button type="button" onClick={onSkip}><SkipForward size={16} aria-hidden="true" /> Hopp over</button>
+      <button type="button" data-testid="skip-replay" onClick={onSkip}><SkipForward size={16} aria-hidden="true" /> Hopp over</button>
     </footer>
   </section>;
 }
