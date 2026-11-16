@@ -30,6 +30,7 @@ async function main() {
           assert(fit.sh <= fit.h + 2 && fit.sw <= fit.w + 2, `${label}: desktop window must fit`);
         }
         await exact();
+        for (const image of await page.locator('.pj-scene img,.zab-experience-layout img,.exp-scene img').all()) await image.evaluate(element=>(element as HTMLImageElement).decode());
         await page.screenshot({ path: `${output}/${label}-${width}.png` });
       };
       await shot('actual-camp');
@@ -52,36 +53,55 @@ async function main() {
       assert.equal(state.experiences.length, 8);
       await shot('actual-first-memory');
       const memoryImages: string[] = [];
-      for (let index = 0; index < 8; index++) {
+      const memoryCount = state.experiences.length + (state.earnedMemories?.length ?? 0);
+      for (let index = 0; index < memoryCount; index++) {
         const image = page.locator('.zab-experience-layout>img');
         await image.evaluate(element => (element as HTMLImageElement).decode());
         memoryImages.push((await image.getAttribute('src'))!);
         const citations=await page.locator('.zab-experience-layout cite').evaluateAll(elements=>elements.map(element=>parseFloat(getComputedStyle(element).fontSize)));
         assert(citations.every(size=>size>=(width===390?12:11)),'Names in memory quotations must meet the text floor');
         if (memoryImages.at(-1)?.includes('/experiences/')) await shot(`actual-memory-${memoryImages.at(-1)!.split('/').at(-1)!.split('.')[0]}`);
-        if (index < 7) await page.getByRole('navigation', { name: 'Sider i feltnotatene' }).getByRole('button', { name: 'Neste', exact: true }).click();
+        if (index < memoryCount - 1) await page.getByRole('navigation', { name: 'Sider i feltnotatene' }).getByRole('button', { name: 'Neste', exact: true }).click();
       }
-      assert.equal(new Set(memoryImages).size, 8, 'Each of the eight actual firsts has its own motif, with terrain-appropriate combat');
+      assert.equal(new Set(memoryImages.slice(0,8)).size, 8, 'Each of the eight actual firsts has its own motif, with terrain-appropriate combat');
+      if (state.earnedMemories?.length) await shot('actual-earned-book-memory');
       await page.keyboard.press('Escape');
       await page.getByTestId('nav-journal').click();
-      await page.getByRole('button', { name: /^Funn og avsluttede/ }).click();
-      await page.getByRole('combobox', { name: 'Velg rapportert spor' }).selectOption('marius-return-notes');
-      await shot('actual-marius-resolved');
-      await page.getByRole('button', { name: /^Feltnotater ·/ }).click();
-      await shot('actual-marius-history');
+      const resolvedMarius = state.discoveries?.entries?.['marius-return-notes']?.status === 'resolved';
+      if (resolvedMarius) {
+        await page.getByRole('button', { name: /^Funn og avsluttede/ }).click();
+        for (const id of ['ingrid-route-notes','leila-care-notes','marius-return-notes']) {
+          if (state.discoveries?.entries?.[id]?.status !== 'resolved') continue;
+          await page.getByRole('combobox', { name: 'Velg rapportert spor' }).selectOption(id);
+          await shot(`actual-story-${id}`);
+        }
+        await page.getByRole('combobox', { name: 'Velg rapportert spor' }).selectOption('marius-return-notes');
+        await shot('actual-marius-resolved');
+        await page.getByRole('button', { name: /^Feltnotater ·/ }).click();
+        await shot('actual-marius-history');
+      } else await shot('actual-open-stories');
       await page.keyboard.press('Escape');
       await page.getByTestId('nav-hq').click();
       assert.equal(await page.locator('.hq-work-bar').getAttribute('role'), 'group', 'The labelled workforce distribution has valid ARIA semantics');
       await shot('actual-hq');
       await page.keyboard.press('Escape');
+      const earnedReport = state.reports.findLast((report: any) => report.lines.some((line: any) => line.experience?.milestone));
+      if (earnedReport) {
+        await page.getByRole('button', { name: 'Dagsrapporter', exact: true }).click();
+        await page.getByRole('combobox', { name: 'Velg dagsrapport' }).selectOption(String(earnedReport.day));
+        if (await page.locator('.dr-memory-teaser').isVisible()) await page.locator('.dr-memory-teaser').click();
+        assert.match(await page.locator('.exp-record').innerText(), /ET STEG VIDERE/);
+        await shot('actual-earned-report-memory');
+        await page.keyboard.press('Escape');
+      }
       await page.reload();
       await page.getByRole('button', { name: new RegExp(`Fortsett dag ${state.day}`) }).click();
       await page.locator('.rz-map[aria-busy=false]').waitFor();
       await exact();
       assert.equal(await page.locator('.exp-card').count(), 0, 'Restoring a save does not replay a first-experience scene');
       assert.deepEqual(errors, []);
-      results.push({ width, height, actualDay: state.day, firsts: state.experiences.map((entry: { kind: string }) => entry.kind), memoryImages, rail, openStories, hqWorkforceRole: 'group', exactReload: true, errors });
-      console.log(`PASS actual day ${state.day} save ${width}: camp, permanent memories, resolved story/history, HQ, exact reload; no simulation edits.`);
+      results.push({ width, height, actualDay: state.day, firsts: state.experiences.map((entry: { kind: string }) => entry.kind), earned: state.earnedMemories?.map((entry: { milestone: string }) => entry.milestone) ?? [], resolvedMarius, memoryImages, rail, openStories, hqWorkforceRole: 'group', exactReload: true, errors });
+      console.log(`PASS actual day ${state.day} save ${width}: camp, ${memoryCount} permanent memories, journal, HQ, exact reload; no simulation edits.`);
       await context.close();
     }
   } finally {

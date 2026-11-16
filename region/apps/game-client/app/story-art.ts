@@ -43,6 +43,11 @@ const EARNED_SCENES = Object.freeze({
   'phase-5': '/art/phases/5.webp',
   'ten-zones': '/art/experiences/claim.webp',
 } as const);
+const PERSON_STORY_SCENES = Object.freeze({
+  'ingrid-route-notes': '/art/stories/ingrid.webp',
+  'leila-care-notes': '/art/stories/leila.webp',
+  'marius-return-notes': '/art/stories/marius.webp',
+} as const);
 export type StoryEnvironment = keyof typeof STORY_ENVIRONMENTS;
 export type StoryWonder = keyof typeof STORY_WONDERS;
 
@@ -60,6 +65,12 @@ export function experienceArt(kind: string, environment?: string, milestone?: st
   if (kind === 'combat' && scene && Object.hasOwn(COMBAT_SCENES, scene)) return COMBAT_SCENES[scene as keyof typeof COMBAT_SCENES];
   return Object.hasOwn(EXPERIENCE_SCENES, kind)
     ? EXPERIENCE_SCENES[kind as keyof typeof EXPERIENCE_SCENES] : environmentArt(environment);
+}
+/** The caller supplies an already-public story, never a hidden person or POI. */
+export function discoveryArt(storyId?: string, kind?: string, environment?: string): string | undefined {
+  if (storyId && Object.hasOwn(PERSON_STORY_SCENES, storyId)) return PERSON_STORY_SCENES[storyId as keyof typeof PERSON_STORY_SCENES];
+  if (kind === 'tor') return '/art/stories/tor.webp';
+  return environmentArt(environment ?? 'shop');
 }
 /** Only six registered asset IDs; unknown IDs and arbitrary URL/path strings have no fallback. */
 export function wonderArt(id?: string): string | undefined {

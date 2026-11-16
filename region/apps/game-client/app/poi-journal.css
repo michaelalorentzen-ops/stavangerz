@@ -16,3 +16,5 @@
 
 /* Metadata stays readable at touch widths and follows the text-size preference. */
 @media(max-width:820px){.rz-poi-journal{--story-meta-text:max(12px,var(--ui-secondary-text,12px))}}
+
+.pj-scene.pj-scene-person>img{object-position:50% 30%}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { RegionState, RegionWorld } from '../../../packages/gameplay/src/region/types';
 import { discoveryOrderPreview, visibleDiscoveries, type DiscoveryEntry, type DiscoveryRegionState } from '../../../packages/gameplay/src/region/discoveries';
 import { HudIcon } from './hud-icons';
-import { environmentArt } from './story-art';
+import { discoveryArt } from './story-art';
 import './poi-journal.css';
 
 export interface PoiJournalProps {
@@ -32,8 +32,8 @@ function Entry({ entry, state, world, crewIds = [], onSelectZone, onOrder }: Poi
   const requiredPerson = entry.boundPersonId ? state.survivors.find(p => p.id === entry.boundPersonId) : undefined;
   const note = history ? entry.notes[Math.min(noteIndex, Math.max(0, entry.notes.length - 1))] : entry.notes.at(-1);
   const parts = noteParts(note?.text ?? 'Ingen feltnotater er rapportert.'), partIndex = Math.min(part, parts.length - 1);
-  // Old entries have no illustration tag. A generic interior is decorative, not a claimed POI photograph.
-  const illustration = environmentArt(entry.illustration ?? (entry.kind === 'tor' ? 'industry' : 'shop'));
+  // Person scenes illustrate a reported story; ordinary legacy notes keep a generic interior, never a claimed POI photograph.
+  const illustration = discoveryArt(entry.storyId, entry.kind, entry.illustration);
   const action = (target: string, kind: 'investigate' | 'choice', label: string, detail: string) => {
     const preview = discoveryOrderPreview(state as DiscoveryRegionState, world, entry.zoneId, target, crewIds, kind);
     const cost = Object.entries(preview.cost).map(([id, n]) => `${n} ${id === 'parts' ? 'deler' : id}`).join(', ');
@@ -45,7 +45,7 @@ function Entry({ entry, state, world, crewIds = [], onSelectZone, onOrder }: Poi
     </div>;
   };
   return <article className={`rz-poi-journal-entry rz-poi-journal-${entry.status}`} data-discovery-id={entry.id}>
-    <div className="pj-scene" aria-hidden="true">{illustration && <img src={illustration} alt=""/>}<HudIcon name={entry.boundPersonId ? 'crew' : 'compass'} size={27}/></div>
+    <div className={`pj-scene${entry.storyId || entry.kind === 'tor' ? ' pj-scene-person' : ''}`} aria-hidden="true">{illustration && <img src={illustration} alt=""/>}<HudIcon name={entry.boundPersonId ? 'crew' : 'compass'} size={27}/></div>
     <div className="pj-entry-main">
       <header><span className="rz-poi-journal-status">{STATUS[entry.status]}</span><small>{entry.boundPersonId ? 'Personbundet historie' : 'Lokalt funn'} · valgfritt</small></header>
       <h3>{entry.title}</h3>
