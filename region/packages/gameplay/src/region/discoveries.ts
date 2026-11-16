@@ -398,7 +398,7 @@ export function executeDiscoveryOrder(state: DiscoveryRegionState, world: Region
         : choiceId === 'medical' ? 'ordinaryMedical' : 'ordinaryFood';
       cargo = { ...DISCOVERY_WORK[preset] };
       const picked = r.entries[id].choices.find(c => c.id === choiceId)!;
-      note(entry, state.day, `${personName(state, entry.boundPersonId)} og laget valgte «${picked.label}». ${picked.detail} Funnet er endelig og følger laget fysisk; det blir ikke fylt opp igjen.`);
+      note(entry, state.day, `${personName(state, entry.boundPersonId)} og laget valgte «${picked.label}». De berget ${Object.entries(cargo).map(([key, amount]) => `${amount} ${{ parts: 'deler', building: 'byggematerialer', medicine: 'medisiner', batteries: 'batterier', food: 'mat', water: 'vann' }[key] ?? key}`).join(' og ')}. Resten ble igjen; dette funnet kan ikke hentes på nytt.`);
     }
   } else if (entry.storyId) {
     const result = executePersonStory(state, world, entry, work.kind, choiceId);
