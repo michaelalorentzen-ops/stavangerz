@@ -7,7 +7,7 @@ import {
 } from '../../../packages/gameplay/src/region/index';
 import './za-book.css';
 import { visibleDiscoveries } from '../../../packages/gameplay/src/region/discoveries';
-import { recordedExperiences } from '../../../packages/gameplay/src/region/experiences';
+import { recordedMemories } from '../../../packages/gameplay/src/region/experiences';
 import { experienceArt } from './story-art';
 import { HudIcon } from './hud-icons';
 
@@ -180,6 +180,7 @@ const MANUAL: { id: ManualSectionId; heading: string; description: string; entri
     entries: [
       { lead: 'Forsyninger', body: 'Se på forbruk og produksjon, ikke bare hvor mye som ligger på lageret. Flere folk krever mer mat og vann.' },
       { lead: 'Forsvar og fase 2', body: 'Et HQ, et sammenhengende kjerneområde, varig forsvar og utholdenhet for mat og vann åpner neste fase. Hele hjemmets L2 er en større prestasjon, men er ikke obligatorisk. Se de faktiske fasekravene for hva som mangler hos dere.' },
+      { lead: 'Fremgang og minner', body: 'Faser og mål viser hva samfunnet trenger før det kan gå videre. Feltguiden bevarer de første turene og viktige steg som nye faser, ferdig HQ-forsvar og ti kontrollerte soner. Minnene forteller om det dere har oppnådd; dagens krav og lagre finner du fortsatt i de vanlige oversiktene.' },
       { lead: 'Forskning', body: 'Fra fase 2 kan dere starte tilgjengelige forskningsprosjekter med riktig HQ og ressurser. Fullførte resultater blir skrevet inn i feltguiden.' },
       { lead: 'Bygging', body: 'Soneutbygging åpner i fase 2. Bygg krever både materialer og arbeidstid på stedet. Fremgangen vises mens arbeidet pågår; anlegget er ikke ferdig fordi ordren er lagt inn. Et større arbeidslag kan få mer gjort, mens reise og utmattelse tar av kapasiteten.' },
       { lead: 'Nett i distriktet', body: 'Nettverk åpner i fase 3. Strøm, vann, veier og samband er nett for et L2-distrikt. De ulike nettene krever forskjellige kontrollerte områder eller anlegg, varer og arbeid. Ordrekortet viser kravene for nettet dere velger; et nytt nett gir ikke automatisk kontroll over hele distriktet.' },
@@ -208,6 +209,8 @@ export const BOOK_HELP_TOPICS = {
   perimeter: { section: 'camp', lead: 'Forsvar og fase 2' },
   poi: { section: 'map', lead: 'Spesielle steder' },
   hq: { section: 'camp', lead: 'Forsvar og fase 2' },
+  milestones: { section: 'camp', lead: 'Fremgang og minner' },
+  phases: { section: 'camp', lead: 'Fremgang og minner' },
   discoveries: { section: 'discoveries', lead: 'Spor og undersøkelser' },
   zone: { section: 'map', lead: 'Kontroll' },
 } as const satisfies Record<string, { section: ManualSectionId; lead: string }>;
@@ -259,9 +262,9 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
   const index = indexWorld(world);
   const homeName = index.byId.get(state.homeZoneId)?.name ?? 'ukjent område';
   const discoveries = visibleDiscoveries(state);
-  const experiences = recordedExperiences(state);
+  const experiences = recordedMemories(state);
   const fieldCounts = {experiences:experiences.length, discoveries:discoveries.length, mutations:visibleMutations.length, research:research.length, gear:foundGear.length, memory:state.memory.length};
-  const fieldLabels = {experiences:'Våre første steg', discoveries:'Lokale spor', mutations:'De døde', research:'Forskning', gear:'Utstyr', memory:'Krøniken'};
+  const fieldLabels = {experiences:'Våre minner', discoveries:'Lokale spor', mutations:'De døde', research:'Forskning', gear:'Utstyr', memory:'Krøniken'};
   const fieldSize = field==='experiences'||field==='discoveries'?1:2;
   const fieldPages = Math.max(1,Math.ceil(fieldCounts[field]/fieldSize));
   const activeFieldPage = Math.min(fieldPage,fieldPages-1);
@@ -341,8 +344,8 @@ export default function ZaBook({ state, world, onGoals, onDiscoveries, initialTo
 
     {tab === 'field' && <div className="zab-field">
       <label className="zab-field-select">Feltnotater<select aria-label="Velg feltnotater" value={field} onChange={event=>{setField(event.target.value as typeof field);setFieldPage(0);}}>{(Object.keys(fieldLabels) as (keyof typeof fieldLabels)[]).map(id=><option key={id} value={id}>{fieldLabels[id]} · {fieldCounts[id]}</option>)}</select></label>
-      {field==='experiences'&&<section className="zab-field-card zab-experience-card" aria-label="Våre første steg">
-        {experience?<><p className="zab-eyebrow">DAG {experience.day} · {experience.zoneName}</p><div className="zab-experience-layout"><img src={experienceArt(experience.kind, experience.illustration)} alt=""/><div><h3>{experience.title}</h3><p>{experience.text}</p><p className="zab-experience-result">{experience.result}</p>{experience.voice&&<blockquote>«{experience.voice.text}»<cite>{experience.voice.name}</cite></blockquote>}<small>{experience.participants.map(p=>p.name).join(' · ')}</small></div></div><p className="zab-unknown">Et bevart feltnotat. Dagens forhold og lagre kan ha endret seg.</p></>:<><h3>Den første turen gjenstår</h3><p className="zab-unknown">Rapporterte opplevelser blir bevart her når dere faktisk speider, søker, kjemper og bygger et tilhold. Du velger rekkefølgen.</p></>}
+      {field==='experiences'&&<section className="zab-field-card zab-experience-card" aria-label="Våre minner">
+        {experience?<><p className="zab-eyebrow">DAG {experience.day} · {experience.zoneName}</p><div className="zab-experience-layout"><img src={experienceArt(experience.kind, experience.illustration, experience.milestone)} alt=""/><div><h3>{experience.title}</h3><p>{experience.text}</p><p className="zab-experience-result">{experience.result}</p>{experience.voice&&<blockquote>«{experience.voice.text}»<cite>{experience.voice.name}</cite></blockquote>}<small>{experience.participants.map(p=>p.name).join(' · ')}</small></div></div><p className="zab-unknown">Et bevart feltnotat. Dagens forhold og lagre kan ha endret seg.</p></>:<><h3>Den første turen gjenstår</h3><p className="zab-unknown">Rapporterte opplevelser blir bevart her når dere faktisk speider, søker, kjemper og bygger et tilhold. Du velger rekkefølgen.</p></>}
       </section>}
       {field==='discoveries'&&<section className="zab-field-card"><p className="zab-eyebrow">RAPPORTERTE SPOR</p><h3>Det noen har fortalt videre</h3>
         {!discoveries.length&&<p className="zab-unknown">Ingen lokale historier er rapportert. Urapporterte feltobservasjoner og ukjente steder blir ikke vist her.</p>}

@@ -53,6 +53,12 @@ Kilde: Mikkis oppdrag «Fra fungerende system til levende spillopplevelse». Tid
 | D34 | LÅST | Lag et innholdskart for fem faser og implementer først en sammenhengende innholdsslice for de første 15–25 døgnene, med lokale illustrasjoner og eksisterende grafikkmotor. | Kvalitet og spillerens faktiske opplevelser prioriteres foran antall hendelser; fullføring av funksjoner er ikke bevis på spillglede. |
 | D35 | LÅST | Denne leveransen kan committes, pushes og åpnes som draft PR. Ingen merge til main eller deployment uten ny godkjenning. | Nytt mandat 15.11 overstyrer tidligere publiseringsfullmakt for denne leveransen. |
 
+## Eieravklaring 16.11.2026 – bildevariasjon
+
+| ID | Status | Beslutning | Begrunnelse / konsekvens |
+| --- | --- | --- | --- |
+| D36 | LÅST | Flere bilder er ønsket når de gir variasjon og personlighet. Generering skal ikke unngås av hensyn til et lavt antall bilder. | Mikki: «ikke ver redd for å generere bilder. Variasjon og personlighet med flere bilder er bra». Kuratert stil, faktisk integrasjon og D33 om sannferdige hendelser gjelder fortsatt. |
+
 ## Åpne produkt- og balansevalg
 
 Ikke tolk manglende svar som stilltiende godkjenning. Orkestratoren velger når disse trenger svar, **ikke** alle på én gang.

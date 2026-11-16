@@ -166,7 +166,7 @@ export function recordPhaseExperience(state: RegionState, world: RegionWorld, pr
   if (state.phase !== previousPhase + 1 || state.phase < 2 || state.phase > 5) return;
   const stories = {
     2: ['Mer enn en natt til', 'Det som begynte som et sted å skjule seg, har fått en hverdag. Nå må folk dele på arbeidet, ikke bare på bekymringen.'],
-    3: ['Flere å stole på', 'Gruppen har blitt større enn den første kretsen. Det blir viktigere å forklare hva man vil, og å vite hvem som faktisk kan ta ansvar.'],
+    3: ['Ingen kan huske alt', 'Det er ikke lenger nok at én person husker alt. Beskjeder må fram, ansvar må deles, og noen må følge opp det som ble avtalt.'],
     4: ['Ansvar over avstand', 'Kartet rommer flere oppgaver enn én gruppe kan rekke. Noe må planlegges på avstand, og menneskene som tar ansvar må kunne stole på hverandre.'],
     5: ['En hverdag å forsvare', 'Det finnes mer å tenke på enn neste døgn. Hva slags samfunn skal dette bli, og hva er gruppen villig til å gjøre for å holde det sammen?'],
   } as const;

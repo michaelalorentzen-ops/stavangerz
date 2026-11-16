@@ -21,9 +21,27 @@ export const STORY_WONDERS = Object.freeze({
 /** Event scenes complement the reported environment; they never assert a
  * specific building, injury, item count or participant beyond the report. */
 export const EXPERIENCE_SCENES = Object.freeze({
+  scout: '/art/experiences/scout.webp',
+  poi: '/art/experiences/poi.webp',
+  claim: '/art/experiences/claim.webp',
+  perimeter: '/art/experiences/perimeter.webp',
   combat: '/art/experiences/combat.webp',
   search: '/art/experiences/search.webp',
   gear: '/art/experiences/gear.webp',
+} as const);
+const COMBAT_SCENES = Object.freeze({
+  farm: '/art/experiences/combat-farm.webp',
+  coast: '/art/experiences/combat-coast.webp',
+  forest: '/art/experiences/combat-forest.webp',
+  industrial: '/art/experiences/combat-industrial.webp',
+} as const);
+const EARNED_SCENES = Object.freeze({
+  'hq-defence': '/art/experiences/perimeter.webp',
+  'phase-2': '/art/phases/2.webp',
+  'phase-3': '/art/phases/3.webp',
+  'phase-4': '/art/phases/4.webp',
+  'phase-5': '/art/phases/5.webp',
+  'ten-zones': '/art/experiences/claim.webp',
 } as const);
 export type StoryEnvironment = keyof typeof STORY_ENVIRONMENTS;
 export type StoryWonder = keyof typeof STORY_WONDERS;
@@ -36,7 +54,10 @@ export function environmentArt(key?: string): string | undefined {
     ? STORY_ENVIRONMENTS[key as StoryEnvironment] : undefined;
 }
 /** Presentation only: existing saved memories retain their recorded facts. */
-export function experienceArt(kind: string, environment?: string): string | undefined {
+export function experienceArt(kind: string, environment?: string, milestone?: string): string | undefined {
+  if (milestone && Object.hasOwn(EARNED_SCENES, milestone)) return EARNED_SCENES[milestone as keyof typeof EARNED_SCENES];
+  const scene = environment === 'industry' ? 'industrial' : environment;
+  if (kind === 'combat' && scene && Object.hasOwn(COMBAT_SCENES, scene)) return COMBAT_SCENES[scene as keyof typeof COMBAT_SCENES];
   return Object.hasOwn(EXPERIENCE_SCENES, kind)
     ? EXPERIENCE_SCENES[kind as keyof typeof EXPERIENCE_SCENES] : environmentArt(environment);
 }

@@ -58,7 +58,7 @@ import './expedition-presentation.css';
 import './detail-presentation.css';
 import './item-art.css';
 
-const HUD_SHORTCUT_ACTIONS:Record<string,ShortcutAction>={crew:'crew',book:'book',settings:'settings',hq:'hq'};
+const HUD_SHORTCUT_ACTIONS:Record<string,ShortcutAction>={crew:'crew',journal:'journal',book:'book',settings:'settings',hq:'hq'};
 const shortcutAria = (code: string) => code.startsWith('Key') ? code.slice(3) : code.startsWith('Digit') ? code.slice(5) : code;
 function reportSound(report:RegionReport):GameSound {
   if(report.lines.some(line=>line.tone==='bad'))return 'event';
@@ -459,6 +459,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
     event.preventDefault();shortcutKeyDown.current=event.code;
     if(action==='crew')setDrawer(previous=>previous==='crew'?null:'crew');
     else if(action==='book'){setBookTopic(undefined);setBookReturn(null);setModal('book');}
+    else if(action==='journal')setModal('discoveries');
     else if(action==='plan')setModal('plan');
     else if(action==='hq')setModal(state.hq?'hq':'community');
     else if(action==='settings')setModal('settings');

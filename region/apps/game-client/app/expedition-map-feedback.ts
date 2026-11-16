@@ -11,7 +11,7 @@ export interface ExpeditionMapCue { id: string; kind: MapExperienceKind; zoneId:
 /** This deliberately narrow projection also reads old report types safely.
  * Full narrative snapshots belong to the engine; this adapter needs no private state.
  */
-type PublishedExperience = { version?: number; id?: unknown; kind?: unknown; zoneId?: unknown; zoneName?: unknown; title?: unknown; result?: unknown };
+type PublishedExperience = { milestone?: unknown; version?: number; id?: unknown; kind?: unknown; zoneId?: unknown; zoneName?: unknown; title?: unknown; result?: unknown };
 const PRIORITY: Record<MapExperienceKind, number> = { hq: 7, gear: 6, perimeter: 5, combat: 4, poi: 3, search: 2, scout: 1 };
 const LABELS: Record<MapExperienceKind, string> = { scout: 'Området kartlagt', search: 'Søk gjennomført', combat: 'Kamp registrert', gear: 'Nytt utstyr', perimeter: 'Et varig vern', poi: 'Et sted å undersøke', hq: 'Et fast tilhold' };
 const PATHS: Record<MapExperienceKind, string> = {
@@ -32,7 +32,7 @@ export function expeditionMapCues(lines: readonly ReportLine[], world: RegionWor
   const byZone = new Map<string, ExpeditionMapCue>();
   for (const line of lines) {
     const experience = (line as ReportLine & { experience?: PublishedExperience }).experience;
-    if (!experience || experience.version !== 1 || typeof experience.id !== 'string' || typeof experience.kind !== 'string' || !Object.hasOwn(PRIORITY, experience.kind)
+    if (!experience || experience.milestone || experience.version !== 1 || typeof experience.id !== 'string' || typeof experience.kind !== 'string' || !Object.hasOwn(PRIORITY, experience.kind)
       || typeof experience.zoneId !== 'string' || typeof experience.title !== 'string' || typeof experience.result !== 'string') continue;
     const zone = byId.get(experience.zoneId), status = zones[experience.zoneId]?.status;
     if (zone?.level !== 3 || !zone.at?.every(Number.isFinite) || !status || status === 'unknown') continue;

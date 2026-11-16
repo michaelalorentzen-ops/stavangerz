@@ -33,6 +33,11 @@ async function main() {
         await page.screenshot({ path: `${output}/${label}-${width}.png` });
       };
       await shot('actual-camp');
+      assert.equal(await page.getByTestId('nav-journal').getAttribute('aria-keyshortcuts'),'J');
+      await page.keyboard.press('j');
+      await page.locator('.rz-poi-journal').waitFor();
+      await exact();
+      await page.keyboard.press('Escape');
       const rail = await page.locator('.sz-nav>button').evaluateAll(elements => elements.map(element => {
         const r = element.getBoundingClientRect(); return { name: element.getAttribute('aria-label'), x: r.x, y: r.y, width: r.width, height: r.height, bottom: r.bottom };
       }));
@@ -40,6 +45,8 @@ async function main() {
       const openStories = Object.values(state.discoveries?.entries ?? {}).filter((entry: any) => !['resolved', 'lost'].includes(entry.status)).length;
       assert.equal(await page.getByTestId('nav-journal').getAttribute('aria-description'), `${openStories} åpne spor`);
       await page.getByTestId('nav-book').click();
+      await page.keyboard.press('j');
+      assert.equal(await page.locator('.rz-poi-journal').count(),0,'Journal shortcut must not interrupt the open book');
       await page.getByRole('button', { name: /^Feltguide/ }).click();
       await page.getByRole('combobox', { name: 'Velg feltnotater' }).selectOption('experiences');
       assert.equal(state.experiences.length, 8);
@@ -49,10 +56,12 @@ async function main() {
         const image = page.locator('.zab-experience-layout>img');
         await image.evaluate(element => (element as HTMLImageElement).decode());
         memoryImages.push((await image.getAttribute('src'))!);
+        const citations=await page.locator('.zab-experience-layout cite').evaluateAll(elements=>elements.map(element=>parseFloat(getComputedStyle(element).fontSize)));
+        assert(citations.every(size=>size>=(width===390?12:11)),'Names in memory quotations must meet the text floor');
         if (memoryImages.at(-1)?.includes('/experiences/')) await shot(`actual-memory-${memoryImages.at(-1)!.split('/').at(-1)!.split('.')[0]}`);
         if (index < 7) await page.getByRole('navigation', { name: 'Sider i feltnotatene' }).getByRole('button', { name: 'Neste', exact: true }).click();
       }
-      assert(new Set(memoryImages).size >= 5, 'Eight real memories should no longer repeat the same environment for combat, search and gear');
+      assert.equal(new Set(memoryImages).size, 8, 'Each of the eight actual firsts has its own motif, with terrain-appropriate combat');
       await page.keyboard.press('Escape');
       await page.getByTestId('nav-journal').click();
       await page.getByRole('button', { name: /^Funn og avsluttede/ }).click();

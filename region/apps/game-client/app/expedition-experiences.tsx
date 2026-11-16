@@ -35,13 +35,13 @@ export function ExpeditionExperienceCards({ experiences, onZone, onHelp }: {
   const current = Math.min(index, Math.max(0, experiences.length - 1));
   const experience = experiences[current];
   if (!experience) return null;
-  const image = experienceArt(experience.kind, experience.illustration);
+  const image = experienceArt(experience.kind, experience.illustration, experience.milestone);
   const voice = experience.voice;
   return <section className="exp-experiences" aria-label="Opplevelser fra toktet">
     <article className={`exp-card exp-${experience.kind}`} data-experience-id={experience.id}>
       <div className="exp-scene" aria-hidden="true">{image && <img src={image} alt=""/>}<span><HudIcon name={ICONS[experience.kind]} size={24}/>{LABELS[experience.kind]}</span></div>
       <div className="exp-copy">
-        <p className="exp-record">{experience.record === 'first' ? 'DET FØRSTE STEGET' : 'FRA FELTJOURNALEN'} <span>· opplevd dag {experience.day}</span></p>
+        <p className="exp-record">{experience.milestone ? 'ET STEG VIDERE' : experience.record === 'first' ? 'DET FØRSTE STEGET' : 'FRA FELTJOURNALEN'} <span>· opplevd dag {experience.day}</span></p>
         <h3>{experience.title}</h3>
         <p className="exp-story">{experience.text}</p>
         <p className="exp-result"><HudIcon name="report" size={17}/><span>{experience.result}</span></p>
