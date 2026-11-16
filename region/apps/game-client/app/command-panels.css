@@ -216,3 +216,11 @@
 .cmd-day-plan-compact .cmd-risk-medium{color:#f1cc82}
 .cmd-day-plan-compact .cmd-risk-high{color:#f2b2a4}
 @media(max-width:480px){.cmd-composer .cmd-crew-section>header .cmd-select-ready{margin-left:2px;min-height:44px}.cmd-composer .cmd-crew-section>header{gap:5px}}
+/* Five-person parties use the available width; controls and names keep their size. */
+@media(min-width:1000px){
+ .sz-game .cmd-composer .cmd-crew-list:has(>.cmd-person:nth-child(5)){grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
+}
+@media(max-width:650px){
+ .sz-game .cmd-composer .cmd-crew-list:has(>.cmd-person:nth-child(5)){row-gap:0}
+ .sz-game .cmd-composer .cmd-crew-list:has(>.cmd-person:nth-child(5))>.cmd-person{padding-block:2px}
+}
