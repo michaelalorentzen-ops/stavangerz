@@ -78,7 +78,7 @@ export const PERSON_DISCOVERY_STORIES: readonly PersonDiscoveryStory[] = [
 export const personDiscoveryStory = (id?: string) => PERSON_DISCOVERY_STORIES.find(story => story.id === id);
 
 /** Snapshot a story's observed setting, not the personality theme. Existing saved notes stay unchanged. */
-export function personStoryIllustration(story: PersonDiscoveryStory, poi: RegionPoi): DiscoveryIllustration {
+export function personStoryIllustration(story: Pick<PersonDiscoveryStory, 'illustration'>, poi: RegionPoi): DiscoveryIllustration {
   const site = poi.siteType ?? poi.hqType ?? poi.facilityType ?? poi.kind;
   const setting: Record<string, DiscoveryIllustration> = {
     coastFarm: 'farm', greenhouse: 'farm',

@@ -180,11 +180,12 @@ function observeLocalContent(state: DiscoveryRegionState, world: RegionWorld, ev
       const debrief = story.id === 'field-home-debrief';
       const destination = debrief ? state.hq!.zoneId : zone.id;
       const destinationName = world.zones.find(z => z.id === destination)?.name ?? zone.name;
+      const setting = debrief ? world.pois.find(p => p.zoneId === destination && p.hqType === state.hq?.type) : poi;
       const entry: DiscoveryEntry = { id: story.id, kind: 'ordinary', title: story.title,
         poiId: debrief ? '' : poi.id, poiName: debrief ? `Arbeidsbordet i ${destinationName}` : poi.name,
         zoneId: destination, status: debrief ? 'followup' : 'choice', step: 1, revision: 0,
         discoveredDay: state.day, sources: [evidence.source], notes: [], choices: debrief ? [] : structuredClone(story.choices),
-        boundPersonId: story.personId, illustration: story.illustration };
+        boundPersonId: story.personId, illustration: setting ? personStoryIllustration(story, setting) : story.illustration };
       note(entry, state.day, debrief
         ? `${story.opening} Gjennomgangen krever ett arbeidsoppdrag på ${DISCOVERY_WORK.ordinaryHours} timer ved ${entry.poiName}; håp og Marius sin tillit øker med fem når erfaringen er rapportert. Sporet kan ligge uten kostnad.`
         : `Ved ${poi.name}: ${story.opening}`);
