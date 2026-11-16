@@ -1,0 +1,132 @@
+/** UI-only projection. Pass one ALREADY REACHED, public replay stage, never the
+ * completed report or resulting state. Nothing here reads private mission lines,
+ * pending discoveries, hidden POIs, zombie totals or unreported cargo. */
+import type { RegionOrder, RegionReplayStage, RegionState, RegionWorld, ReportLine } from '../../../packages/gameplay/src/region/types';
+import { crewPositionFor } from '../../../packages/gameplay/src/region/location';
+import { discoveryArt, experienceArt } from './story-art';
+
+export interface ExpeditionReplayScene {
+  id: string;
+  kind: 'departure' | 'scout' | 'search' | 'combat' | 'gear' | 'claim' | 'perimeter' | 'poi' | 'hq' | 'discovery' | 'warning';
+  phase: 'departure' | RegionReplayStage['phase'];
+  title: string;
+  text: string;
+  result: string;
+  zoneId?: string;
+  zoneName?: string;
+  participants: { id: string; name: string; role: string }[];
+  voice?: { personId: string; name: string; text: string };
+  image?: string;
+  importance: number;
+  tone: ReportLine['tone'];
+  first: boolean;
+  milestone: boolean;
+}
+
+/** A planning intention, not evidence of departure or arrival. Only the first
+ * outward expedition from the shelter gets this introduction. Static place
+ * names are public geography; no POI or unobserved zone contents are consulted. */
+export function departureScene(before: RegionState, world: RegionWorld, orders: readonly RegionOrder[]): ExpeditionReplayScene | undefined {
+  if (before.phase !== 1 || before.experiences?.some(e => ['scout', 'search', 'combat'].includes(e.kind))) return;
+  const active = new Set(Object.values(before.crewMissions ?? {}).filter(m => !['complete', 'failed'].includes(m.status)).flatMap(m => m.survivorIds));
+  for (const order of orders) {
+    if (order.zoneId === before.homeZoneId || !['scout', 'search', 'clear', 'claim', 'travel', 'investigate'].includes(order.action)) continue;
+    const zone = world.zones.find(z => z.id === order.zoneId && z.level === 3);
+    if (!zone) continue;
+    const crew = before.survivors.filter(p => order.survivorIds.includes(p.id) && p.alive && !p.left && p.health > 0 && !active.has(p.id)
+      && !(p.awayUntil !== undefined && p.awayUntil > before.day));
+    // An incomplete/unavailable selection is not a departure to narrate.
+    if (!crew.length || crew.length !== new Set(order.survivorIds).size || crew.some(p => {
+      const position = crewPositionFor(before, p.id);
+      return position?.kind !== 'zone' || position.zoneId !== before.homeZoneId;
+    })) continue;
+    const intentions: Record<string, string> = { scout: 'observere området', search: 'lete etter forsyninger', clear: 'bekjempe zombier', claim: 'forsøke å sikre området', travel: 'reise dit', investigate: 'undersøke et kjent spor' };
+    const participants = crew.map(({ id, name, role }) => ({ id, name, role }));
+    return {
+      id: `departure:${before.day}:${order.id}`, kind: 'departure', phase: 'departure',
+      title: 'Før avreise', zoneId: zone.id, zoneName: zone.name,
+      text: `${participants.map(p => p.name).join(', ')} skal ${intentions[order.action]} i ${zone.name}.`,
+      result: 'Utenfor tilholdsstedet må laget finne ut hva som faktisk venter. Det de kan rapportere, blir grunnlaget for neste trekk.',
+      participants, importance: 55, tone: 'info', first: true, milestone: false,
+      // An atmosphere illustration, not a pictured route or promised encounter.
+      image: experienceArt('scout'),
+    };
+  }
+}
+
+function knownZone(before: RegionState, stage: RegionReplayStage, zoneId?: string): boolean {
+  if (!zoneId) return true;
+  const status = stage.mapSnapshot?.zones[zoneId]?.status ?? before.zones[zoneId]?.status;
+  return status === 'scouted' || status === 'controlled';
+}
+
+function kindForLine(line: ReportLine): ExpeditionReplayScene['kind'] | undefined {
+  if (line.category === 'discovery') return 'discovery';
+  if (line.tone === 'bad') return 'warning';
+  if (line.facts?.action === 'clear' && Number(line.facts.killed) > 0) return 'combat';
+  if (line.facts?.action === 'search' && Number(line.facts.searchAfter) > Number(line.facts.searchBefore)) return 'search';
+  if (line.category === 'loot') return 'gear';
+  if (line.tone === 'warn' && (line.priority ?? 0) >= 80) return 'warning';
+}
+
+/** Featured cards are bounded; all source report lines remain available in the
+ * existing report. The caller additionally enforces the day's shared budget.
+ * No lookahead: selection never scans another stage or the report's final lines. */
+export function replayStageScenes(before: RegionState, world: RegionWorld, stage: RegionReplayStage): {
+  featured: ExpeditionReplayScene[]; compact: readonly ReportLine[];
+} {
+  const featured: ExpeditionReplayScene[] = [];
+  const sources = new Map<string, ReportLine>();
+  const suppressed = new Set<ReportLine>();
+  for (const [index, line] of stage.lines.entries()) {
+    if (!knownZone(before, stage, line.zoneId)) continue;
+    const experience = line.experience;
+    if (experience) {
+      if (!knownZone(before, stage, experience.zoneId)) continue;
+      const injury = Number(experience.facts.injuredCount ?? 0) > 0;
+      featured.push({
+        id: experience.id, kind: experience.kind, phase: stage.phase,
+        title: experience.title, text: experience.text, result: experience.result,
+        zoneId: experience.zoneId, zoneName: experience.zoneName,
+        participants: experience.participants.map(p => ({ ...p })),
+        voice: experience.voice ? { ...experience.voice } : undefined,
+        image: experienceArt(experience.kind, experience.illustration, experience.milestone),
+        importance: injury ? 110 : experience.milestone ? 105 : 95,
+        tone: injury ? 'warn' : line.tone, first: true, milestone: !!experience.milestone,
+      });
+      sources.set(experience.id, line);
+      continue;
+    }
+    const kind = kindForLine(line);
+    if (!kind) continue;
+    // A first-experience card already explains this operation. Avoid a second
+    // picture of its ordinary result, but retain a separate serious warning.
+    if (kind !== 'warning' && stage.lines.some(other => other.experience && other.experience.zoneId === line.zoneId
+      && (other.experience.kind === kind || kind === 'discovery' && other.experience.kind === 'poi'))) {
+      suppressed.add(line); continue;
+    }
+    const environment = typeof line.facts?.illustration === 'string' ? line.facts.illustration : undefined;
+    const storyId = typeof line.facts?.storyId === 'string' ? line.facts.storyId : undefined;
+    const discoveryId = typeof line.facts?.discoveryId === 'string' ? line.facts.discoveryId : undefined;
+    featured.push({
+      id: `${stage.phase}:${index}:${line.zoneId ?? 'camp'}`, kind, phase: stage.phase,
+      title: line.title, text: '', result: line.text, zoneId: line.zoneId,
+      zoneName: line.zoneId ? world.zones.find(z => z.id === line.zoneId)?.name : undefined,
+      // Routine reports don't identify every participant; never infer them from
+      // all orders or from the final crew roster/position.
+      participants: [], image: kind === 'discovery' ? discoveryArt(storyId, discoveryId === 'tor-repair-notes' ? 'tor' : undefined, environment)
+        : kind === 'warning' ? undefined : experienceArt(kind, environment),
+      importance: line.tone === 'bad' ? 115 : kind === 'warning' ? 100 : kind === 'discovery' ? 80 : kind === 'gear' ? 65 : 35,
+      tone: line.tone, first: false, milestone: false,
+    });
+    sources.set(`${stage.phase}:${index}:${line.zoneId ?? 'camp'}`, line);
+  }
+  const selected = featured.sort((a, b) => b.importance - a.importance).slice(0, 3);
+  const used = new Set(selected.map(scene => sources.get(scene.id)));
+  // The compact strip carries actual warnings/progress, not routine inventory
+  // returns or a fabricated "quiet day". Empty phases are allowed to be empty.
+  const compact = stage.lines.filter(line => !used.has(line) && !suppressed.has(line) && !line.experience && knownZone(before, stage, line.zoneId)
+    && (line.tone === 'bad' || line.tone === 'warn' || line.category === 'discovery' || line.facts?.action === 'search' || line.facts?.action === 'clear'))
+    .sort((a, b) => (b.tone === 'bad' ? 100 : b.priority ?? 0) - (a.tone === 'bad' ? 100 : a.priority ?? 0)).slice(0, 2);
+  return { featured: selected, compact };
+}
