@@ -33,14 +33,28 @@ async function main() {
         await page.screenshot({ path: `${output}/${label}-${width}.png` });
       };
       await shot('actual-camp');
+      const rail = await page.locator('.sz-nav>button').evaluateAll(elements => elements.map(element => {
+        const r = element.getBoundingClientRect(); return { name: element.getAttribute('aria-label'), x: r.x, y: r.y, width: r.width, height: r.height, bottom: r.bottom };
+      }));
+      assert(rail.every(button => button.width >= 44 && button.height >= 44 && button.y >= 0 && button.bottom <= height), 'All fixed HUD actions must remain visible and reachable');
+      const openStories = Object.values(state.discoveries?.entries ?? {}).filter((entry: any) => !['resolved', 'lost'].includes(entry.status)).length;
+      assert.equal(await page.getByTestId('nav-journal').getAttribute('aria-description'), `${openStories} åpne spor`);
       await page.getByTestId('nav-book').click();
       await page.getByRole('button', { name: /^Feltguide/ }).click();
       await page.getByRole('combobox', { name: 'Velg feltnotater' }).selectOption('experiences');
       assert.equal(state.experiences.length, 8);
       await shot('actual-first-memory');
+      const memoryImages: string[] = [];
+      for (let index = 0; index < 8; index++) {
+        const image = page.locator('.zab-experience-layout>img');
+        await image.evaluate(element => (element as HTMLImageElement).decode());
+        memoryImages.push((await image.getAttribute('src'))!);
+        if (memoryImages.at(-1)?.includes('/experiences/')) await shot(`actual-memory-${memoryImages.at(-1)!.split('/').at(-1)!.split('.')[0]}`);
+        if (index < 7) await page.getByRole('navigation', { name: 'Sider i feltnotatene' }).getByRole('button', { name: 'Neste', exact: true }).click();
+      }
+      assert(new Set(memoryImages).size >= 5, 'Eight real memories should no longer repeat the same environment for combat, search and gear');
       await page.keyboard.press('Escape');
-      await page.getByRole('button', { name: 'Flere oversikter', exact: true }).click();
-      await page.getByRole('button', { name: /^Oppdagelser og spor/ }).click();
+      await page.getByTestId('nav-journal').click();
       await page.getByRole('button', { name: /^Funn og avsluttede/ }).click();
       await page.getByRole('combobox', { name: 'Velg rapportert spor' }).selectOption('marius-return-notes');
       await shot('actual-marius-resolved');
@@ -48,6 +62,7 @@ async function main() {
       await shot('actual-marius-history');
       await page.keyboard.press('Escape');
       await page.getByTestId('nav-hq').click();
+      assert.equal(await page.locator('.hq-work-bar').getAttribute('role'), 'group', 'The labelled workforce distribution has valid ARIA semantics');
       await shot('actual-hq');
       await page.keyboard.press('Escape');
       await page.reload();
@@ -56,7 +71,7 @@ async function main() {
       await exact();
       assert.equal(await page.locator('.exp-card').count(), 0, 'Restoring a save does not replay a first-experience scene');
       assert.deepEqual(errors, []);
-      results.push({ width, height, actualDay: state.day, firsts: state.experiences.map((entry: { kind: string }) => entry.kind), exactReload: true, errors });
+      results.push({ width, height, actualDay: state.day, firsts: state.experiences.map((entry: { kind: string }) => entry.kind), memoryImages, rail, openStories, hqWorkforceRole: 'group', exactReload: true, errors });
       console.log(`PASS actual day ${state.day} save ${width}: camp, permanent memories, resolved story/history, HQ, exact reload; no simulation edits.`);
       await context.close();
     }

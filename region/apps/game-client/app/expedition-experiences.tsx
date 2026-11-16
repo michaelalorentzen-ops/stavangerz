@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { ExpeditionExperience, ExperienceKind, RegionReport } from '../../../packages/gameplay/src/region/types';
 import { HudIcon, type HudIconName } from './hud-icons';
-import { environmentArt } from './story-art';
+import { experienceArt } from './story-art';
 import './expedition-experiences.css';
 
 const ICONS: Record<ExperienceKind, HudIconName> = { scout: 'scout', search: 'search', combat: 'clear', gear: 'gear', claim: 'claim', perimeter: 'shield', poi: 'compass', hq: 'hq' };
@@ -35,7 +35,7 @@ export function ExpeditionExperienceCards({ experiences, onZone, onHelp }: {
   const current = Math.min(index, Math.max(0, experiences.length - 1));
   const experience = experiences[current];
   if (!experience) return null;
-  const image = environmentArt(experience.illustration);
+  const image = experienceArt(experience.kind, experience.illustration);
   const voice = experience.voice;
   return <section className="exp-experiences" aria-label="Opplevelser fra toktet">
     <article className={`exp-card exp-${experience.kind}`} data-experience-id={experience.id}>

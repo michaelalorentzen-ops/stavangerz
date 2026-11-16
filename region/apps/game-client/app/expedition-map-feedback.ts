@@ -7,11 +7,11 @@ import type { RegionState, RegionWorld, ReportLine } from '../../../packages/gam
 
 export interface ExpeditionMapFeedback { key: string; lines: readonly ReportLine[] }
 export type MapExperienceKind = 'scout' | 'search' | 'combat' | 'gear' | 'perimeter' | 'poi' | 'hq';
-export interface ExpeditionMapCue { id: string; kind: MapExperienceKind; zoneId: string; at: [number, number]; title: string; result: string }
+export interface ExpeditionMapCue { id: string; kind: MapExperienceKind; zoneId: string; at: [number, number]; title: string; result: string; place: string }
 /** This deliberately narrow projection also reads old report types safely.
  * Full narrative snapshots belong to the engine; this adapter needs no private state.
  */
-type PublishedExperience = { version?: number; id?: unknown; kind?: unknown; zoneId?: unknown; title?: unknown; result?: unknown };
+type PublishedExperience = { version?: number; id?: unknown; kind?: unknown; zoneId?: unknown; zoneName?: unknown; title?: unknown; result?: unknown };
 const PRIORITY: Record<MapExperienceKind, number> = { hq: 7, gear: 6, perimeter: 5, combat: 4, poi: 3, search: 2, scout: 1 };
 const LABELS: Record<MapExperienceKind, string> = { scout: 'Området kartlagt', search: 'Søk gjennomført', combat: 'Kamp registrert', gear: 'Nytt utstyr', perimeter: 'Et varig vern', poi: 'Et sted å undersøke', hq: 'Et fast tilhold' };
 const PATHS: Record<MapExperienceKind, string> = {
@@ -37,7 +37,8 @@ export function expeditionMapCues(lines: readonly ReportLine[], world: RegionWor
     const zone = byId.get(experience.zoneId), status = zones[experience.zoneId]?.status;
     if (zone?.level !== 3 || !zone.at?.every(Number.isFinite) || !status || status === 'unknown') continue;
     const kind = experience.kind as MapExperienceKind;
-    const cue = { id: experience.id, kind, zoneId: experience.zoneId, at: zone.at, title: experience.title, result: experience.result };
+    const cue = { id: experience.id, kind, zoneId: experience.zoneId, at: zone.at, title: experience.title, result: experience.result,
+      place: typeof experience.zoneName === 'string' ? experience.zoneName : zone.name ?? zone.id };
     const old = byZone.get(cue.zoneId);
     if (!old || PRIORITY[kind] > PRIORITY[old.kind]) byZone.set(cue.zoneId, cue);
   }
@@ -68,10 +69,10 @@ export function attachExpeditionMapFeedback(map: LibreMap, lib: typeof import('m
     // The replay summary occupies the upper map. Put the short field result
     // below its geographic point, with room for the chip above the lower HUD.
     // Drop edge results instead of moving the camera or covering the controls.
-    if (point.x < 100 || point.x > canvas.clientWidth - 100 || point.y < 145 || point.y > canvas.clientHeight - 130) return false;
+    if (point.x < 100 || point.x > canvas.clientWidth - 100 || point.y < 145 || point.y > canvas.clientHeight - 170) return false;
     const bounds = canvas.getBoundingClientRect();
     // Reserve the maximum chip rectangle, not merely its geographic anchor.
-    const chip = { left: bounds.left + point.x - 100, right: bounds.left + point.x + 100, top: bounds.top + point.y + 40, bottom: bounds.top + point.y + 120 };
+    const chip = { left: bounds.left + point.x - 100, right: bounds.left + point.x + 100, top: bounds.top + point.y + 40, bottom: bounds.top + point.y + 160 };
     return ![...document.querySelectorAll('.rz-replay-card,.sz-top,.sz-search[open],.sz-brief-wrap,.sz-territory-button')].some(element => {
       const rect = element.getBoundingClientRect();
       return rect.width > 0 && rect.height > 0 && chip.left < rect.right && chip.right > rect.left && chip.top < rect.bottom && chip.bottom > rect.top;
@@ -116,7 +117,9 @@ export function attachExpeditionMapFeedback(map: LibreMap, lib: typeof import('m
         icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${PATHS[cue.kind]}</svg>`;
         const text = document.createElement('span'); text.className = 'rz-expedition-cue-text';
         const title = document.createElement('strong'); title.textContent = LABELS[cue.kind];
-        const result = document.createElement('small'); result.textContent = cue.result;
+        // The full factual result is in the report. A complete place name is
+        // more useful here than a sentence cut off halfway through the result.
+        const result = document.createElement('small'); result.textContent = cue.place;
         text.append(title, result); element.append(icon, text);
         const marker = new lib.Marker({ element, anchor: 'top', offset: [0, 40] }).setLngLat(cue.at).addTo(map);
         markers.push({ cue, marker });
