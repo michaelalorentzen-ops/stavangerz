@@ -767,7 +767,7 @@ export const EVENTS_PEOPLE: EventDef[] = [
       const good = rng() < .55 ? 1 : 0;
       const loss = Math.min(2, s.population.adults);
       const lossText = loss ? `${loss === 1 ? 'Én voksen har' : 'To voksne har'} bestemt seg for å dra i protest. «${loss === 1 ? 'Jeg' : 'Vi'} stoler ikke på ledelsen lenger.» Avgjørelsen står fast.` : 'Misnøyen har blitt til et spørsmål ingen lar ligge: «Hvordan skal vi stole på ledelsen nå?»';
-      return event(good ? 'Den andre sjansen' : 'Igjen', good
+      return event(good ? 'Den andre sjansen' : 'Splittet', good
         ? `Folk begynner å snakke om ${p.name} som en av dem igjen. De vil høre at du fortsatt står ved den nye sjansen du ga. Noen få ord fra deg kan gjøre det lettere å legge saken bak seg.`
         : `Den nye sjansen til ${p.name} har splittet gruppen. ${lossText} Hva vil du gjøre med ${p.name}?${noLawNote(s)}`, good
         ? [
@@ -784,6 +784,11 @@ export const EVENTS_PEOPLE: EventDef[] = [
       const p = crewById(s, str(s, 'who'));
       if (num(s, 'good')) { if (p) loyalty(p, c === 'honour' ? 15 : 5); hope(s, c === 'honour' ? 6 : 2); return; }
       const lost = removePeople(s, 'adults', 2); hope(s, -6); unrest(s, 6);
+      lines.push({ tone: 'warn', category: 'population', priority: 75,
+        title: lost ? `${lost} ${lost === 1 ? 'voksen forlot' : 'voksne forlot'} gruppen` : 'Protesten svekket tilliten',
+        text: lost ? 'Avgangen var en protest mot den nye sjansen.' : 'Protesten svekket håpet og økte uroen i gruppen.',
+        facts: { eventId: 'cowardAgain', departedAdults: lost },
+      });
       remember(s, lost ? `${lost} ${lost === 1 ? 'voksen forlot' : 'voksne forlot'} gruppen i protest mot den nye sjansen.` : 'Den nye sjansen førte til protest og svekket tillit.');
       if (!p) return;
       if (c === 'law') applyLaw(s, lines, p, p.name);
