@@ -92,4 +92,12 @@ for (const line of lines) {
   assert.equal(line.facts!.destinationCount, 45);
   assert.ok(line.title.includes(migrationWorld.zones.find(z => z.id === line.zoneId)!.name));
 }
+// The actual day-20 screenshot showed 24% promised with only9% left.
+// This caps presentation only; the search operation and its cost stay unchanged.
+const nearlySearched = fresh(), previewTotal = searchHoursTotal(world.zones[0]);
+nearlySearched.zones.a.searched = previewTotal - 1;
+const searchPreviewInput = JSON.stringify(nearlySearched);
+const cappedPreview = previewOrder(nearlySearched, world, order('search', nearlySearched.survivors.map(p=>p.id)));
+assert.match(cappedPreview.text, new RegExp(`om lag ${Math.round(100 / previewTotal)} % av sonen`));
+assert.equal(JSON.stringify(nearlySearched), searchPreviewInput, 'Remaining-search preview cannot mutate simulation');
 console.log(JSON.stringify({ result: 'PASS orders UX', searchHours: [searchOne.hours, searchThree.hours], searched: [searchedOne, searchedThree], combatHours: [clearOne.hours, clearThree.hours], estimatedKills: [killsOne, killsThree], incomingDestinations: lines.length, incomingTotal: total }));

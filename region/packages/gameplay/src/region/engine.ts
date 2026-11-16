@@ -418,7 +418,7 @@ export function previewOrder(state0: RegionState, world: RegionWorld, order: Omi
     }
     case 'search': {
       const left = Math.max(0, total - z.searched);
-      text = left ? `Gjennomsøker om lag ${Math.round(Math.min(100, hours / total * 100))} % av sonen. ${Math.round(z.searched / total * 100)} % er gjort.` : 'Sonen er allerede gjennomsøkt.';
+      text = left ? `Gjennomsøker om lag ${Math.round(Math.min(left, hours) / total * 100)} % av sonen. ${Math.round(z.searched / total * 100)} % er gjort.` : 'Sonen er allerede gjennomsøkt.';
       if (!left) errors.push('Ingenting igjen å søke gjennom.');
       if (z.status === 'unknown' || !z.intel) risk = 'Ukjent';
       else risk = z.intel.max > crew.length * 6 ? 'Høy' : z.intel.max > crew.length * 2 ? 'Middels' : 'Lav';
