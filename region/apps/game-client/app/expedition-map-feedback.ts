@@ -65,8 +65,17 @@ export function attachExpeditionMapFeedback(map: LibreMap, lib: typeof import('m
     const status = map.getFeatureState({ source: 'l3', id: cue.zoneId }).s;
     if (!status || status === 'unknown') return false;
     const point = map.project(cue.at), canvas = map.getCanvas();
-    // Keep the chip within the map canvas; never reposition the camera for it.
-    return point.x >= 90 && point.x <= canvas.clientWidth - 90 && point.y >= 145 && point.y <= canvas.clientHeight - 35;
+    // The replay summary occupies the upper map. Put the short field result
+    // below its geographic point, with room for the chip above the lower HUD.
+    // Drop edge results instead of moving the camera or covering the controls.
+    if (point.x < 100 || point.x > canvas.clientWidth - 100 || point.y < 145 || point.y > canvas.clientHeight - 130) return false;
+    const bounds = canvas.getBoundingClientRect();
+    // Reserve the maximum chip rectangle, not merely its geographic anchor.
+    const chip = { left: bounds.left + point.x - 100, right: bounds.left + point.x + 100, top: bounds.top + point.y + 40, bottom: bounds.top + point.y + 120 };
+    return ![...document.querySelectorAll('.rz-replay-card,.sz-top,.sz-search[open],.sz-brief-wrap,.sz-territory-button')].some(element => {
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && chip.left < rect.right && chip.right > rect.left && chip.top < rect.bottom && chip.bottom > rect.top;
+    });
   };
   const prune = () => {
     if (document.hidden) { clear(); return; }
@@ -109,7 +118,7 @@ export function attachExpeditionMapFeedback(map: LibreMap, lib: typeof import('m
         const title = document.createElement('strong'); title.textContent = LABELS[cue.kind];
         const result = document.createElement('small'); result.textContent = cue.result;
         text.append(title, result); element.append(icon, text);
-        const marker = new lib.Marker({ element, anchor: 'bottom', offset: [0, -92] }).setLngLat(cue.at).addTo(map);
+        const marker = new lib.Marker({ element, anchor: 'top', offset: [0, 40] }).setLngLat(cue.at).addTo(map);
         markers.push({ cue, marker });
       }
       if (markers.length) timeout = setTimeout(clear, 2400);
