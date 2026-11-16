@@ -1,5 +1,7 @@
 # QA34 – tydeligere minner og bedre lesbarhet
 
+Oppfølgingen etter QA-runde 2 og Mikkis ønske om flere bilder finnes i [44_V04_MEMORY_VARIATION.md](44_V04_MEMORY_VARIATION.md).
+
 ## Baseline og ramme
 
 [QA runde 1 på PR34](https://github.com/michaelalorentzen-ops/stavangerz/pull/34#issuecomment-6904278053) dekker `913b458` og bekrefter at alle seks funn fra QA33 er lukket. Alle tekniske kontroller består; verdensdata og tallbalanse er verifisert uendret. QA gir UX 4,73 og finner seks nye lave avvik. Dette notatet gjelder oppfølgingen på samme draft PR; ingen merge eller deploy er godkjent.

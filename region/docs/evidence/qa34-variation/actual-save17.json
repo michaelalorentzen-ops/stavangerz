@@ -1,0 +1,196 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "actualDay": 17,
+    "firsts": [
+      "poi",
+      "scout",
+      "combat",
+      "gear",
+      "search",
+      "claim",
+      "hq",
+      "perimeter"
+    ],
+    "earned": [],
+    "resolvedMarius": true,
+    "memoryImages": [
+      "/art/experiences/poi.webp",
+      "/art/experiences/scout.webp",
+      "/art/experiences/combat-farm.webp",
+      "/art/experiences/gear.webp",
+      "/art/experiences/search.webp",
+      "/art/experiences/claim.webp",
+      "/art/phases/2.webp",
+      "/art/experiences/perimeter.webp"
+    ],
+    "rail": [
+      {
+        "name": "Mannskap",
+        "x": 22,
+        "y": 120,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 172.796875
+      },
+      {
+        "name": "Feltjournal",
+        "x": 22,
+        "y": 175.796875,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 228.59375
+      },
+      {
+        "name": "Mine områder",
+        "x": 22,
+        "y": 231.59375,
+        "width": 70,
+        "height": 66.59375,
+        "bottom": 298.1875
+      },
+      {
+        "name": "Innstillinger",
+        "x": 22,
+        "y": 301.1875,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 353.984375
+      },
+      {
+        "name": "ZA-boka",
+        "x": 22,
+        "y": 356.984375,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 409.78125
+      },
+      {
+        "name": "Hovedkvarter",
+        "x": 22,
+        "y": 412.78125,
+        "width": 70,
+        "height": 52.796875,
+        "bottom": 465.578125
+      },
+      {
+        "name": "Dagsrapporter",
+        "x": 22,
+        "y": 484.578125,
+        "width": 70,
+        "height": 51.796875,
+        "bottom": 536.375
+      },
+      {
+        "name": "Flere oversikter",
+        "x": 22,
+        "y": 539.375,
+        "width": 70,
+        "height": 51.796875,
+        "bottom": 591.171875
+      }
+    ],
+    "openStories": 0,
+    "hqWorkforceRole": "group",
+    "exactReload": true,
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "actualDay": 17,
+    "firsts": [
+      "poi",
+      "scout",
+      "combat",
+      "gear",
+      "search",
+      "claim",
+      "hq",
+      "perimeter"
+    ],
+    "earned": [],
+    "resolvedMarius": true,
+    "memoryImages": [
+      "/art/experiences/poi.webp",
+      "/art/experiences/scout.webp",
+      "/art/experiences/combat-farm.webp",
+      "/art/experiences/gear.webp",
+      "/art/experiences/search.webp",
+      "/art/experiences/claim.webp",
+      "/art/phases/2.webp",
+      "/art/experiences/perimeter.webp"
+    ],
+    "rail": [
+      {
+        "name": "Mannskap",
+        "x": 12,
+        "y": 136,
+        "width": 44,
+        "height": 44,
+        "bottom": 180
+      },
+      {
+        "name": "Feltjournal",
+        "x": 12,
+        "y": 183,
+        "width": 44,
+        "height": 44,
+        "bottom": 227
+      },
+      {
+        "name": "Mine områder",
+        "x": 12,
+        "y": 230,
+        "width": 44,
+        "height": 44,
+        "bottom": 274
+      },
+      {
+        "name": "Innstillinger",
+        "x": 12,
+        "y": 277,
+        "width": 44,
+        "height": 44,
+        "bottom": 321
+      },
+      {
+        "name": "ZA-boka",
+        "x": 12,
+        "y": 324,
+        "width": 44,
+        "height": 44,
+        "bottom": 368
+      },
+      {
+        "name": "Hovedkvarter",
+        "x": 12,
+        "y": 371,
+        "width": 44,
+        "height": 44,
+        "bottom": 415
+      },
+      {
+        "name": "Dagsrapporter",
+        "x": 12,
+        "y": 434,
+        "width": 44,
+        "height": 44,
+        "bottom": 478
+      },
+      {
+        "name": "Flere oversikter",
+        "x": 12,
+        "y": 481,
+        "width": 44,
+        "height": 44,
+        "bottom": 525
+      }
+    ],
+    "openStories": 0,
+    "hqWorkforceRole": "group",
+    "exactReload": true,
+    "errors": []
+  }
+]

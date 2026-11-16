@@ -1,0 +1,62 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "large": false,
+    "fit": {
+      "height": 617,
+      "scrollHeight": 617,
+      "width": 758,
+      "scrollWidth": 758
+    },
+    "migration": "crew J retained, journal O",
+    "remap": "L persists after reload",
+    "explicitReset": "J; other preferences preserved",
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "height": 800,
+    "large": true,
+    "fit": {
+      "height": 623,
+      "scrollHeight": 623,
+      "width": 758,
+      "scrollWidth": 758
+    },
+    "migration": "crew J retained, journal O",
+    "remap": "L persists after reload",
+    "explicitReset": "J; other preferences preserved",
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "large": false,
+    "fit": {
+      "height": 759,
+      "scrollHeight": 759,
+      "width": 368,
+      "scrollWidth": 368
+    },
+    "migration": "crew J retained, journal O",
+    "remap": "L persists after reload",
+    "explicitReset": "J; other preferences preserved",
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "large": true,
+    "fit": {
+      "height": 774,
+      "scrollHeight": 774,
+      "width": 368,
+      "scrollWidth": 368
+    },
+    "migration": "crew J retained, journal O",
+    "remap": "L persists after reload",
+    "explicitReset": "J; other preferences preserved",
+    "errors": []
+  }
+]

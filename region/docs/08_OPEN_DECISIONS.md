@@ -144,3 +144,8 @@ Eksempel: 100×100m er ikke et krav. Hvis 150–250m kuraterte polygoner gir bed
 ## v0.4 – innhold før tallbalansering (15.11.2026)
 
 Mikki godkjente eksisterende geografi og ba om en levende, ikke-lineær spillerreise med førstegangsopplevelser, lokale historier og kuraterte illustrasjoner. Tallbalansering utsettes; eldre UX-funn må kontrolleres i siste versjon. D29–D35 i [beslutningsloggen](28_V04_DECISIONS.md) er styrende. [Innholdskart og leveranse](42_V04_LIVING_EXPERIENCE.md). Kun utviklingsgren/draft PR; ingen merge eller deployment uten ny godkjenning.
+
+
+### 16.11.2026 – bildevariasjon (D36)
+
+Mikki ønsker flere bilder for variasjon og personlighet. Dette er låst i [28](28_V04_DECISIONS.md); implementering og test av nye motiv og opptjente minner følger [44](44_V04_MEMORY_VARIATION.md). Ingen tallbalanse eller publiseringsfullmakt er endret.

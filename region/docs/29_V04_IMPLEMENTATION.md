@@ -193,3 +193,8 @@ Nytt eiermandat D29–D35: bevar godkjent geografi og tall, utvid innhold og vis
 ## QA34 – visuell og redaksjonell polish, 16.11.2026
 
 [43_V04_QA34_POLISH.md](43_V04_QA34_POLISH.md) følger opp seks lave funn med lesbar metadata, tre egne hendelsesmotiver, synlig minneknapp på skadedager, fast feltjournal, menneskelig etterspill og korrekt HQ-semantikk. Låste regler, geografi, saves og tallbalanse beholdes. D32/D35 gjelder fortsatt.
+
+
+## QA34 runde 2 – flere bilder og opptjente minner, 16.11.2026
+
+[44_V04_MEMORY_VARIATION.md](44_V04_MEMORY_VARIATION.md) følger D36 med tolv nye motiv, miljøtilpasset kamp, identitetsbevarte personscener og seks faktiske fremgangsminner etter førstegangene. J-binding, mobilens sitatnavn og synlig protestutfall er rettet. Valgfritt, avgrenset minnearkiv bevarer originalåtte og eldre saves; D32/D35 gjelder fortsatt.
