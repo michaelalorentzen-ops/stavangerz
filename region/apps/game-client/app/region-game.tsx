@@ -46,7 +46,7 @@ import { PoiProfile } from './poi-profile';
 import { HQManagement } from './hq-management';
 import { OrderComposer } from './order-composer';
 import { DayPlan } from './day-plan';
-import { departureScene, replayStageScenes, type ExpeditionReplayScene } from './expedition-replay';
+import { departureScene, replayStageScenes, publicReplayMoves, type ExpeditionReplayScene } from './expedition-replay';
 import { ExpeditionReplaySceneCard, ExpeditionReplayCompact } from './expedition-replay-card';
 import { environmentArt } from './story-art';
 import { experienceEnvironment } from '../../../packages/gameplay/src/region/experiences';
@@ -212,7 +212,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
   const [replayPaused, setReplayPaused] = useState(false);
   const audibleState = replay?.before ?? committedState;
   const knownHarbor = audibleState.zones[audibleState.homeZoneId]?.status !== 'unknown' && world.pois.some(poi => poi.zoneId === audibleState.homeZoneId && poi.siteType === 'marina');
-  const playSound = useGameAudio(preferences, replay && replayStep === 0 ? 'night' : knownHarbor ? 'harbor' : 'camp');
+  const playSound = useGameAudio(preferences, replay && replayStep === 1 ? 'night' : knownHarbor ? 'harbor' : 'camp');
   const previousEnding = useRef(committedState.gameOver);
   useEffect(() => {
     if (replay) return;
@@ -286,10 +286,9 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
     }
     return { ...replay.before, zones };
   }, [replay, replayStep, state]);
-  // -1 = operations running (07→22), 0 = night running (22→07),
-  // 1 = night settled at 07, 2 = new-day journal settled.
-  // Show night movements during the night window only, not beforehand.
-  const replayMoves = replay ? (replayStep === 0 ? replay.report.replay?.[1]?.moves ?? [] : []) : undefined;
+  // -1 = planning intent, 0 = public operations, 1 = public night,
+  // 2 = public new-day journal. Never animate the following phase early.
+  const replayMoves = replay ? publicReplayMoves(replay.report.replay?.[replayStep]) : undefined;
   // Only stages already reached may drive feedback; keep the last published batch through empty later stages.
   const expeditionFeedback = useMemo(() => {
     if (!replay || replayStep < 0) return null;
@@ -305,7 +304,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
     if (replay.pendingEvent) {playSound('event');setReportAfterEvent(replay.report);setModal(null);}
     else {playSound(reportSound(replay.report));setModal('report');}
   };
-  useEffect(()=>{if(replay&&replayStep===0)playSound('night');},[replay?.report.day,replayStep,playSound]);
+  useEffect(()=>{if(replay&&replayStep===1)playSound('night');},[replay?.report.day,replayStep,playSound]);
   // Resolve only stages already reached. Earlier selections consume the small
   // daily attention budget; future stages and the committed world stay unread.
   const replayPresentation = useMemo(() => {

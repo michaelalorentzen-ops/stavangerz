@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { newRegionGame, endDay } from '../packages/gameplay/src/region/engine';
 import type { ExpeditionExperience, RegionWorld, RegionReplayStage, RegionOrder, ReportLine } from '../packages/gameplay/src/region/types';
-import { departureScene, replayStageScenes } from '../apps/game-client/app/expedition-replay';
+import { departureScene, replayStageScenes, publicReplayMoves } from '../apps/game-client/app/expedition-replay';
 
 const world = JSON.parse(readFileSync('apps/game-client/public/world/region-v1.json', 'utf8')) as RegionWorld;
 const before = newRegionGame(world, world.starts[0].zoneId, 101);
@@ -118,3 +118,9 @@ console.log('Expedition replay projection: authoritative day, privacy, no lookah
 const stoppedClaim: ReportLine = {tone:'warn',category:'claim',priority:75,title:'Overtakelsen ble stanset',text:'Laget fant flere zombier enn rapporten antydet.',zoneId:home};
 const stoppedScene=replayStageScenes(before,world,{...empty,lines:[stoppedClaim]}).featured[0];
 assert.equal(stoppedScene.kind,'warning');assert.equal(stoppedScene.zoneName,world.zones.find(z=>z.id===home)!.name);assert.equal(stoppedScene.result,stoppedClaim.text);
+
+const publicMoves=[{from:home,to:target,n:3}];
+assert.deepEqual(publicReplayMoves(undefined),[]);
+assert.deepEqual(publicReplayMoves({...operations,moves:publicMoves}),[],'Operations cannot animate the following night early');
+assert.deepEqual(publicReplayMoves({...operations,phase:'night',moves:publicMoves}),publicMoves,'Reached public night can animate its own visible moves');
+assert.deepEqual(publicReplayMoves({...operations,phase:'new-day',moves:publicMoves}),[],'Night movements do not replay at daybreak');

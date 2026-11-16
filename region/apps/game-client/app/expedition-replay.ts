@@ -29,6 +29,10 @@ export interface ExpeditionReplayScene {
 
 const RESOURCE_IDS = new Set(['food', 'water', 'medicine', 'fuel', 'ammo', 'building', 'metal', 'parts', 'electronics', 'salt',
   'batteries', 'solar', 'generator', 'antibiotics', 'primers', 'radio', 'engine', 'boat', 'printer', 'explosives']);
+/** The caller passes only the reached stage, never the following night. */
+export function publicReplayMoves(stage?: RegionReplayStage) {
+  return stage?.phase === 'night' ? stage.moves ?? [] : [];
+}
 function firstSearchLoot(experience: NonNullable<ReportLine['experience']>): ExpeditionReplayScene['loot'] {
   if (experience.kind !== 'search') return;
   const entries = Object.entries(experience.facts);
