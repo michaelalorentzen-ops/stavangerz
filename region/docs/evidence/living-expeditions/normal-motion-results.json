@@ -1,0 +1,63 @@
+{
+  "kind": "Actual UI operations, normal motion, DOM geometry proof; not a synthetic report fixture",
+  "sourceExport": "artifacts/living-live-cues/day-1.json",
+  "sourceSha256": "cc5cb209bc7f1d67e239c575824611c89d4f252056999ac36fb4a1d973646bfc",
+  "action": "All four survivors scout Lundsneset through actual planner after exact restore",
+  "productionCommits": [
+    "f143441",
+    "cc5bc8d"
+  ],
+  "note": "Reduced motion intentionally skips day replay and goes directly to the accessible report. No camera/simulation changes. Final z-index refinement is CSS-only after these DOM captures.",
+  "results": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "cue": {
+        "id": "experience:scout:1:o1-scout-z3-0018-ingrid.marius.leila.tor",
+        "kind": "scout",
+        "text": "Området kartlagt\nAnslag: 8–10 zombier.",
+        "rect": {
+          "x": 549.7890625,
+          "y": 448,
+          "width": 180.421875,
+          "height": 48.640625
+        },
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        }
+      },
+      "archiveReplayedCue": false,
+      "exactReload": true,
+      "pageErrors": [],
+      "screenshotLimitation": "Software GPU capture completed after cue was cleared; screenshots are NOT evidence of the live cue."
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "cue": {
+        "id": "experience:scout:1:o1-scout-z3-0018-ingrid.marius.leila.tor",
+        "kind": "scout",
+        "text": "Området kartlagt\nAnslag: 8–10 zombier.",
+        "rect": {
+          "x": 115,
+          "y": 470,
+          "width": 160,
+          "height": 60.5
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844
+        }
+      },
+      "archiveReplayedCue": false,
+      "exactReload": true,
+      "pageErrors": [],
+      "screenshotLimitation": "Software GPU capture completed after cue was cleared; screenshots are NOT evidence of the live cue."
+    }
+  ]
+}

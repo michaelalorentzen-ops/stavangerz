@@ -1,0 +1,40 @@
+{
+  "kind": "Final candidate verification; no deployment or merge",
+  "productionCodeCommit": "1bd30d7",
+  "baselineMain": "5a2bebe",
+  "functionalGate": {
+    "checks": 26,
+    "passed": true,
+    "source": "738abd6",
+    "log": "functional-gate.log"
+  },
+  "finalTargetedChecks": [
+    "production build including TypeScript",
+    "117-event registry and choices after narrative fix",
+    "public map-cue projection",
+    "world map GLBs, fog and context restoration",
+    "actual day17 export: PC/mobile journal, memories, HQ and exact reload",
+    "actual normal-motion first scout: PC/mobile cue rectangles, archive and reload"
+  ],
+  "officialBrowserSuites": [
+    "start 1280/1920/390",
+    "HUD desktop8days/mobile6days",
+    "HQ/POI/supply contexts both sizes",
+    "field/night checkpoints",
+    "world map",
+    "clarity both sizes"
+  ],
+  "actualHumanDirectedJourneyDays": 17,
+  "syntheticLayoutOnly": "8 first cards, 6 installations, journal/history, 6 fieldguide categories; desktop/mobile/large text",
+  "unchanged": [
+    "geography and world files",
+    "rules and numeric balance",
+    "main and production deployment"
+  ],
+  "limitations": [
+    "SwiftShader, no physical GPU measurement",
+    "live cue proven by DOM geometry, not a captured animation frame",
+    "not proof of enjoyment or balanced campaign pacing",
+    "new late-phase-specific person chains remain future work"
+  ]
+}

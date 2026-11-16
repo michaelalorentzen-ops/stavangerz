@@ -1,0 +1,761 @@
+[
+  {
+    "width": 1280,
+    "large": false,
+    "label": "first-scout",
+    "size": {
+      "h": 602,
+      "s": 602,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "first-hq",
+    "size": {
+      "h": 602,
+      "s": 602,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "journal",
+    "size": {
+      "h": 608,
+      "s": 608,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "journal-history",
+    "size": {
+      "h": 502,
+      "s": 502,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-utstein",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-utstein",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-tower",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-tower",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-cruise",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-cruise",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-plane",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-plane",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-cathedral",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-cathedral",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-arena",
+    "size": {
+      "h": 660,
+      "s": 660,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "wonder-place-arena",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "book-experiences",
+    "size": {
+      "h": 688,
+      "s": 688,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "book-discoveries",
+    "size": {
+      "h": 666,
+      "s": 666,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "book-mutations",
+    "size": {
+      "h": 517,
+      "s": 517,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "book-research",
+    "size": {
+      "h": 517,
+      "s": 517,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "book-gear",
+    "size": {
+      "h": 517,
+      "s": 517,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": false,
+    "label": "book-memory",
+    "size": {
+      "h": 566,
+      "s": 566,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "first-scout",
+    "size": {
+      "h": 692,
+      "s": 692,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "first-hq",
+    "size": {
+      "h": 692,
+      "s": 692,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "journal",
+    "size": {
+      "h": 813,
+      "s": 813,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "journal-history",
+    "size": {
+      "h": 639,
+      "s": 639,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder",
+    "size": {
+      "h": 780,
+      "s": 780,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-utstein",
+    "size": {
+      "h": 780,
+      "s": 780,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-utstein",
+    "size": {
+      "h": 632,
+      "s": 632,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-tower",
+    "size": {
+      "h": 780,
+      "s": 780,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-tower",
+    "size": {
+      "h": 632,
+      "s": 632,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-cruise",
+    "size": {
+      "h": 780,
+      "s": 780,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-cruise",
+    "size": {
+      "h": 649,
+      "s": 649,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-plane",
+    "size": {
+      "h": 780,
+      "s": 780,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-plane",
+    "size": {
+      "h": 649,
+      "s": 649,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-cathedral",
+    "size": {
+      "h": 780,
+      "s": 780,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-cathedral",
+    "size": {
+      "h": 632,
+      "s": 632,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-arena",
+    "size": {
+      "h": 780,
+      "s": 780,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "wonder-place-arena",
+    "size": {
+      "h": 649,
+      "s": 649,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "book-experiences",
+    "size": {
+      "h": 822,
+      "s": 887,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "book-discoveries",
+    "size": {
+      "h": 777,
+      "s": 777,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "book-mutations",
+    "size": {
+      "h": 561,
+      "s": 561,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "book-research",
+    "size": {
+      "h": 561,
+      "s": 561,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "book-gear",
+    "size": {
+      "h": 561,
+      "s": 561,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 390,
+    "large": false,
+    "label": "book-memory",
+    "size": {
+      "h": 632,
+      "s": 632,
+      "w": 368,
+      "sw": 368
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "first-scout",
+    "size": {
+      "h": 618,
+      "s": 618,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "first-hq",
+    "size": {
+      "h": 618,
+      "s": 618,
+      "w": 978,
+      "sw": 978
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "journal",
+    "size": {
+      "h": 659,
+      "s": 659,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "journal-history",
+    "size": {
+      "h": 514,
+      "s": 514,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-utstein",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-utstein",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-tower",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-tower",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-cruise",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-cruise",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-plane",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-plane",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-cathedral",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-cathedral",
+    "size": {
+      "h": 519,
+      "s": 519,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-arena",
+    "size": {
+      "h": 693,
+      "s": 693,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "wonder-place-arena",
+    "size": {
+      "h": 537,
+      "s": 537,
+      "w": 1038,
+      "sw": 1038
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "book-experiences",
+    "size": {
+      "h": 706,
+      "s": 706,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "book-discoveries",
+    "size": {
+      "h": 689,
+      "s": 689,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "book-mutations",
+    "size": {
+      "h": 532,
+      "s": 532,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "book-research",
+    "size": {
+      "h": 532,
+      "s": 532,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "book-gear",
+    "size": {
+      "h": 532,
+      "s": 532,
+      "w": 1158,
+      "sw": 1158
+    }
+  },
+  {
+    "width": 1280,
+    "large": true,
+    "label": "book-memory",
+    "size": {
+      "h": 585,
+      "s": 585,
+      "w": 1158,
+      "sw": 1158
+    }
+  }
+]

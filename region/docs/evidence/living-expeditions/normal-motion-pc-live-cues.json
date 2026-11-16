@@ -1,0 +1,17 @@
+[
+  {
+    "id": "experience:scout:1:o1-scout-z3-0018-ingrid.marius.leila.tor",
+    "kind": "scout",
+    "text": "Området kartlagt\nAnslag: 8–10 zombier.",
+    "rect": {
+      "x": 549.7890625,
+      "y": 448,
+      "width": 180.421875,
+      "height": 48.640625
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    }
+  }
+]
