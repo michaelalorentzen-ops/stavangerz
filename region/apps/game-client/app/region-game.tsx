@@ -416,7 +416,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
     else { setTargeting(true); setModal(null); setMessage('Velg målsonen på kartet.'); }
   };
   const showCompletedDay = (before: RegionState, result: { state: RegionState; report: RegionReport }, continuation = false) => {
-      setState(result.state); setOrders([]); setCrew([]); setReport(result.report);
+      setState(result.state); setOrders([]); setCrew([]); setReport(result.report); setDrawer(null);
       const stages = result.report.replay;
       if (stages?.length === 3 && stages[0].phase === 'operations' && stages[1].phase === 'night' && stages[2].phase === 'new-day'
         && !preferences.reducedMotion) {
@@ -427,6 +427,17 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
         playSound('event');setReportAfterEvent(result.report);
         setModal(null);
       } else {playSound(reportSound(result.report));setModal('report');}
+  };
+  const answerEvent = (choice: string) => {
+    if (!state.event) return;
+    const eventId = state.event.id;
+    try {
+      const next = resolveEvent(state, world, choice).state;
+      setState(next);
+      // Present only an outcome the engine just recorded for this event.
+      const consequence = next.reports.at(-1)?.lines.findLast(line => line.facts?.eventId === eventId);
+      setMessage(consequence ? `${consequence.title}. ${consequence.text}` : '');
+    } catch (error) { setMessage((error as Error).message); }
   };
   const finishDay = () => {
     if (gearPlan.errors.length) { setMessage(gearPlan.errors.join(' ')); setDrawer('crew'); return; }
@@ -528,7 +539,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
   const ownedCount=Object.values(state.zones).filter(z=>z.status==='controlled').length;
   const fitTerritory=()=>{setOverlay('territory');setMapFocus({zoneId:state.homeZoneId,key:Date.now(),scope:'territory'});};
   const zoneContent = territoryList?<TerritoryOverview state={state} world={world} onZone={focusZone}/>:<ZoneContext key={selectedArea??selected} state={state} world={world} zoneId={selected} areaId={selectedArea} tab={zoneTab} onTab={setZoneTab} onLevel={changeAreaLevel} onZone={focusZone} onTask={action=>addOrder(action)} onPoi={selectPoi} onHq={()=>setModal('hq')} onHelp={openHelp}/>;
-  return <main className={`rz-shell sz-game ${drawer?'has-drawer':''} ${targeting?'is-targeting':''} ${preferences.reducedMotion?'pref-reduced-motion':''} ${preferences.textScale==='large'?'pref-large-text':''}`}>
+  return <main className={`rz-shell sz-game ${drawer?'has-drawer':''} ${replay?'is-replaying':''} ${targeting?'is-targeting':''} ${preferences.reducedMotion?'pref-reduced-motion':''} ${preferences.textScale==='large'?'pref-large-text':''}`}>
     <div className="sz-map-stage"><RegionWorldMap feedback={expeditionFeedback} reducedMotion={preferences.reducedMotion} focus={mapFocus} world={world} state={mapState} flows={flows} overlay={replay?'zombies':overlay} selected={mapSelectionTouched?selectedArea??selected:''} hops={hops} replayMoves={replayMoves} onSelect={selectZone} onOverlay={setOverlay} onSelectPoi={selectPoi} onSelectCrew={id=>{const position=crewPositionFor(state,id);if(targeting&&position?.kind==='zone')selectZone(position.zoneId);else openProfile(id);}} targeting={targeting&&commandDraft?{action:commandDraft.action,crewIds:commandDraft.survivorIds}:undefined}/></div>
     <header className="sz-top" aria-label="Samfunnets status">
       <div className="sz-brand-group"><button className="sz-brand" onClick={()=>setModal('menu')} aria-label="Spillmeny"><span className="sz-brand-mark"><HudIcon name="compass" size={25}/></span><span>STAVANGER<em>Z</em></span></button><button className="sz-home-location" onClick={()=>setModal(state.hq?'hq':'community')}><HudIcon name="location" size={10}/><span>Leiren · {index.byId.get(state.homeZoneId)?.name}</span></button></div>
@@ -557,7 +568,7 @@ function Play({ world, state: committedState, setState, onQuit, onRestart, onLib
       <Art path={`events/${state.event.id}`} className="rz-art rz-art-wide" />
       <p className="rz-kicker">{state.event.kicker ?? `HENDELSE · DAG ${state.day}`}</p><h2>{state.event.title}</h2><p>{state.event.text}</p>
       {!!state.event.voices?.length && <ul className="rz-voices">{state.event.voices.map(v => <li key={v}>{v}</li>)}</ul>}
-      {state.event.choices.map(c => <button key={c.id} disabled={!!c.disabled} onClick={() => apply(() => resolveEvent(state, world, c.id).state, true, `event:${state.event!.id}:${c.id}`)}><strong>{c.label}</strong><small>{c.disabled ?? c.detail}</small></button>)}
+      {state.event.choices.map(c => <button key={c.id} disabled={!!c.disabled} onClick={() => answerEvent(c.id)}><strong>{c.label}</strong><small>{c.disabled ?? c.detail}</small></button>)}
     </section></div>}
     {avatarNeedsSelection && <div className="rz-overlay"><section className="rz-dialog rz-avatar-choice" role="dialog" aria-modal="true" aria-label="Velg hovedperson">
       <p className="rz-kicker">DIN HISTORIE · FASE {state.phase}</p>
