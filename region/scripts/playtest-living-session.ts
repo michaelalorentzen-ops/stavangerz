@@ -1,4 +1,4 @@
-/** Human-directed UI playtest driver. Every order/choice is entered through the real UI.
+/** Orchestrator-directed UI playtest driver. Every order/choice is entered through the real UI.
  * Reads JSON lines from stdin; never calls botPlay or edits the simulation. REGION_PLAYTEST_RESUME restores an exact saved UI export after environment interruption.
  * {"command":"plan","intent":"...","orders":[{"action":"search","zoneId":"z3-0018","survivorIds":["ingrid"]}]}
  * Other commands: advance, choose (id), state, shot (name), reload, finish.

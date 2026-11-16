@@ -1,5 +1,5 @@
 {
-  "kind": "Human-directed orders and choices entered through real browser UI; no bot planning or simulation edits",
+  "kind": "Orchestrator-directed orders and choices entered through real browser UI; no bot planning or simulation edits",
   "seed": 101,
   "start": "Lundsneset",
   "difficulty": "Survival",

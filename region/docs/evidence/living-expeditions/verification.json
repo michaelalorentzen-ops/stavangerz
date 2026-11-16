@@ -24,7 +24,7 @@
     "world map",
     "clarity both sizes"
   ],
-  "actualHumanDirectedJourneyDays": 17,
+  "actualOrchestratorDirectedJourneyDays": 17,
   "syntheticLayoutOnly": "8 first cards, 6 installations, journal/history, 6 fieldguide categories; desktop/mobile/large text",
   "unchanged": [
     "geography and world files",

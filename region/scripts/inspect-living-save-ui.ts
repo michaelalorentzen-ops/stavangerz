@@ -1,4 +1,4 @@
-/** Inspect an unedited export from the human-directed playtest; never simulate or fabricate state. */
+/** Inspect an unedited export from the orchestrator-directed playtest; never simulate or fabricate state. */
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
