@@ -35,9 +35,12 @@ async function main() {
       await page.getByTestId('open-plan').click();
       await page.getByRole('button', { name: 'Gjennomfør døgnet', exact: true }).click();
       const scene = page.locator('.exp-replay-scene'); await scene.waitFor();
-      const sceneId = await scene.getAttribute('data-scene-id');
+      let sceneId = await scene.getAttribute('data-scene-id');
       assert(sceneId && !sceneId.startsWith('departure:'), 'Home search is not narrated as shelter departure');
       await scene.getByRole('button', { name: 'Sett avspillingen på pause', exact: true }).click();
+      await scene.getByRole('button', { name: 'Fortsett avspillingen', exact: true }).waitFor();
+      sceneId = await scene.getAttribute('data-scene-id'); // Read the scene actually paused, not an earlier auto-advanced frame.
+      assert(sceneId);
       await page.waitForTimeout(6000);
       assert.equal(await scene.getAttribute('data-scene-id'), sceneId, 'Pause holds actual scene beyond its normal duration');
       assert.equal(await page.locator('.exp-replay-scene').count(), 1, 'Exactly one featured moment');
@@ -53,14 +56,23 @@ async function main() {
       const focused = await page.evaluate(() => !!document.activeElement?.closest('.rz-replay-shield'));
       assert(focused, 'Keyboard focus stays in replay');
       await scene.getByRole('button', { name: 'Fortsett avspillingen', exact: true }).click();
-      const seen: string[] = [sceneId];
+      const seen: string[] = [sceneId]; let searchCaptured = false;
       const start = Date.now();
-      while (await page.locator('.rz-replay-shield').count() && Date.now() - start < 30000) {
+      while (await page.locator('.rz-replay-shield').count() && Date.now() - start < 60000) {
         const id = await scene.getAttribute('data-scene-id').catch(() => null);
         if (id && !seen.includes(id)) seen.push(id);
+        if (id?.startsWith('experience:search:') && !searchCaptured) {
+          await scene.getByRole('button', { name: 'Sett avspillingen på pause', exact: true }).click();
+          assert(await scene.locator('.exp-replay-loot li').count() > 0, 'Actual verified search result renders resource icons');
+          const content = await scene.locator('.exp-replay-content').evaluate(e=>({height:e.clientHeight,scroll:e.scrollHeight}));
+          assert(content.scroll <= content.height + 2, 'Actual first-search resources fit without internal scroll');
+          await page.screenshot({path:`${output}/search-${width}.png`}); searchCaptured = true;
+          await scene.getByRole('button',{name:'Fortsett avspillingen',exact:true}).click();
+        }
         await page.waitForTimeout(200);
       }
       assert.equal(await page.locator('.rz-replay-shield').count(), 0, 'Playback auto-advances to report/mandatory decision');
+      assert(searchCaptured, 'Search visuals were inspected in actual playback');
       assert(seen.length >= 2, 'Real operation produces multiple distinct, auto-advanced moments');
       assert.deepEqual(errors, []);
       results.push({ width, sceneIds: seen, layout, errors });

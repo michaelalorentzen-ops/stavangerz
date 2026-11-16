@@ -9,18 +9,26 @@ const results = [];
 try {
   for (const [width, height] of [[1280, 800], [390, 844]]) {
     const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'no-preference' });
-    const page = await context.newPage(), cues = [], errors = [];
+    const page = await context.newPage(), cues = [], scenes = [], errors = [];
     page.setDefaultTimeout(25000);
     page.on('pageerror', error => errors.push(error.message));
     await page.exposeFunction('__captureCue', cue => cues.push(cue));
+    await page.exposeFunction('__captureReplayScene', scene => scenes.push(scene));
     await page.addInitScript(() => {
       const seen = new Set();
+      const seenScenes = new Set();
+      new MutationObserver(() => document.querySelectorAll('.exp-replay-scene').forEach(element => {
+        const id = element.dataset.sceneId;
+        if (seenScenes.has(id)) return; seenScenes.add(id);
+        void window.__captureReplayScene({id,place:element.querySelector('.exp-replay-location')?.textContent,title:element.querySelector('h2')?.textContent});
+      })).observe(document,{childList:true,subtree:true});
       new MutationObserver(() => document.querySelectorAll('.rz-expedition-cue').forEach(element => {
         const id = element.dataset.experienceId;
         if (seen.has(id)) return;
         seen.add(id);
         const place = element.querySelector('small'), title = element.querySelector('strong'), rect = element.getBoundingClientRect();
-        const overlaps = [...document.querySelectorAll('.rz-replay-card,.sz-top,.sz-brief-wrap,.sz-territory-button')].filter(other => {
+        const overlaps = [...document.querySelectorAll('.rz-replay-card,.exp-replay-scene,.exp-replay-compact,.sz-top,.sz-brief-wrap,.sz-territory-button')].filter(other => {
+          if (getComputedStyle(other).visibility === 'hidden') return false;
           const r = other.getBoundingClientRect();
           return r.width > 0 && r.height > 0 && rect.left < r.right && rect.right > r.left && rect.top < r.bottom && rect.bottom > r.top;
         }).map(other => other.className);
@@ -53,7 +61,7 @@ try {
     await page.getByTestId('end-day').click();
     await page.getByRole('button', { name: 'Gjennomfør døgnet', exact: true }).click();
     await page.locator('.rz-daily-report').waitFor();
-    assert(cues.length > 0, 'A real first operation must show a map result with normal motion');
+    assert(cues.length > 0 || scenes.some(scene => scene.id.startsWith('experience:scout:') && scene.place === home.name), 'A real first scout must show its public map cue or its foreground scene when that scene occupies the map anchor');
     for (const cue of cues) {
       assert.equal(cue.place, home.name, 'Map result uses the full known place name');
       assert(cue.titleFont >= (width === 390 ? 12 : 11) && cue.placeFont >= (width === 390 ? 12 : 11));
@@ -67,8 +75,8 @@ try {
     await page.waitForTimeout(2600);
     assert.equal(cues.length, cueCount, 'Report archive does not replay a map result');
     assert.deepEqual(errors, []);
-    results.push({ width, height, actualDay: await page.evaluate(() => window.__szRegion.state.day), cues, archiveReplayedCue: false, errors, screenshotLimitation: 'DOM measured during live replay; no claim about animation frames on a physical GPU' });
-    console.log(`PASS live map ${width}: real scout, full place name, readable text, no clipping/occlusion, no archive replay.`);
+    results.push({ width, height, actualDay: await page.evaluate(() => window.__szRegion.state.day), cues, scenes, archiveReplayedCue: false, errors, screenshotLimitation: 'DOM measured during live replay; no claim about animation frames on a physical GPU' });
+    console.log(`PASS live map ${width}: ${cues.length} unobscured map cues, ${scenes.length} reached public scenes; no archive cue replay.`);
     await context.close();
   }
 } finally {

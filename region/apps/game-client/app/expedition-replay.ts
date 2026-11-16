@@ -93,7 +93,7 @@ function kindForLine(line: ReportLine): ExpeditionReplayScene['kind'] | undefine
   if (line.facts?.action === 'search' && Number(line.facts.searchAfter) > Number(line.facts.searchBefore)) return 'search';
   if (line.category === 'loot' && ['Personlig utstyr funnet', 'Utstyr rapportert fra feltet'].includes(line.title)) return 'gear';
   if (line.category === 'loot' && / ble med$/u.test(line.title)) return 'arrival';
-  if (line.tone === 'warn' && (line.priority ?? 0) >= 80) return 'warning';
+  if (line.tone === 'warn' && ((line.priority ?? 0) >= 80 || line.category === 'claim')) return 'warning';
 }
 
 /** Featured cards are bounded; all source report lines remain available in the

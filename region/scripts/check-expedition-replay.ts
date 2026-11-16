@@ -113,3 +113,8 @@ assert.equal(recruit.featured[0].kind, 'arrival'); assert.equal(recruit.featured
 assert.deepEqual(recruit.featured[0].participants, [], 'No portrait/person details inferred from future survivor state');
 assert.equal(departureScene(actual.state, world, [order]), undefined, 'First introduction ends once scouting is recorded');
 console.log('Expedition replay projection: authoritative day, privacy, no lookahead, JSON retention, bounded scenes, truthful planning PASS');
+// A failed takeover is a material setback; its exact place must be visible
+// during playback, rather than only in a generic compact warning title.
+const stoppedClaim: ReportLine = {tone:'warn',category:'claim',priority:75,title:'Overtakelsen ble stanset',text:'Laget fant flere zombier enn rapporten antydet.',zoneId:home};
+const stoppedScene=replayStageScenes(before,world,{...empty,lines:[stoppedClaim]}).featured[0];
+assert.equal(stoppedScene.kind,'warning');assert.equal(stoppedScene.zoneName,world.zones.find(z=>z.id===home)!.name);assert.equal(stoppedScene.result,stoppedClaim.text);
