@@ -874,7 +874,25 @@ function runRegionDayOperations(state0: RegionState, world: RegionWorld, orders0
       }
       case 'farm': { const food = farmYield(state, zone, crew.length, hours); add(state.stock, 'food', food); foodMade += food; break; }
       case 'fish': { const food = fishYield(mission.transportBoat ? { ...state, stock: { ...state.stock, boat: (state.stock.boat ?? 0) + mission.transportBoat } } : state, z, crew.length); add(state.stock, 'food', food); foodMade += food; if (rng() < .03) { if (mission.transportBoat) mission.transportBoat -= 1; else add(state.stock, 'boat', -1); lines.push({ tone: 'bad', title: 'En båt gikk tapt', text: 'Været snudde mens dere var ute.' }); } break; }
-      case 'rest': for (const s of crew) { s.fatigue = Math.max(0, s.fatigue - 50); s.health = Math.min(100, s.health + (state.hq?.zoneId === order.zoneId && state.hq.modules.includes('medbay') ? 10 : 5)); } break;
+      case 'rest': {
+        let fatigueReduced = 0, healthRecovered = 0;
+        const recoveredNames: string[] = [];
+        for (const s of crew) {
+          const fatigueBefore = s.fatigue, healthBefore = s.health;
+          s.fatigue = Math.max(0, s.fatigue - 50);
+          s.health = Math.min(100, s.health + (state.hq?.zoneId === order.zoneId && state.hq.modules.includes('medbay') ? 10 : 5));
+          fatigueReduced += fatigueBefore - s.fatigue;
+          healthRecovered += s.health - healthBefore;
+          if (s.fatigue < fatigueBefore || s.health > healthBefore) recoveredNames.push(s.name);
+        }
+        if (recoveredNames.length) lines.push({
+          tone: 'good', category: 'recovery', priority: 30, zoneId: order.zoneId,
+          title: `${recoveredNames.join(', ')} fikk hvile`,
+          text: `Til sammen: ${fatigueReduced.toLocaleString('nb-NO', { maximumFractionDigits: 1 })} poeng mindre utmattelse · ${healthRecovered.toLocaleString('nb-NO', { maximumFractionDigits: 1 })} helse tilbake under hvilen.`,
+          facts: { action: 'rest', orderId: order.id, missionId: mission.id, fatigueReduced, healthRecovered, recoveredCount: recoveredNames.length },
+        });
+        break;
+      }
       case 'heal': {
         const patients = patientsInZone(state, order.zoneId);
         const medic = Math.max(...crew.map(s => s.skills.medical + (equippedGear(state, s.id, 'tool')?.medical ?? 0)));
