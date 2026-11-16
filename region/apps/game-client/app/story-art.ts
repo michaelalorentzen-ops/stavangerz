@@ -36,7 +36,7 @@ const COMBAT_SCENES = Object.freeze({
   industrial: '/art/experiences/combat-industrial.webp',
 } as const);
 const EARNED_SCENES = Object.freeze({
-  'hq-defence': '/art/experiences/perimeter.webp',
+  'hq-defence': '/art/experiences/hq-defence.webp',
   'phase-2': '/art/phases/2.webp',
   'phase-3': '/art/phases/3.webp',
   'phase-4': '/art/phases/4.webp',
